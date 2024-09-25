@@ -4,12 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"emporium/internal/myhandlers"
-)
-
-const (
-	Timeout = time.Second * 3
-	Address = ":8080"
+	"emporium/internal/handlers"
 )
 
 type Server struct {
@@ -17,7 +12,13 @@ type Server struct {
 }
 
 func (srv *Server) Run() error {
-	http.HandleFunc("/adverts", myhandlers.GetadvertsHandler)
+	srv.server = &http.Server{
+		Addr:         ":8080",
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
+	}
+	handlers.AddTestAdvert()
+	http.HandleFunc("/adverts", handlers.GetAdvertsHandler)
 
 	return srv.server.ListenAndServe()
 }
