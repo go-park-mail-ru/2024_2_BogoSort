@@ -1,42 +1,39 @@
 package handlers
 
 import (
-	"emporium/internal/models"
+	"emporium/internal/storage"
 	"encoding/json"
 	"net/http"
-	"sync"
-)
-
-var (
-	adverts         []models.Advert
-	advertIDCounter = 0
-	mu              sync.Mutex
+	"strconv"
 )
 
 func GetAdvertsHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	mu.Lock()
-	defer mu.Unlock()
-	w.Header().Set("Content-Type", "application/json")
-	err := json.NewEncoder(w).Encode(models.Advert{})
-	if err != nil {
-		return
-	}
+	adverts := storage.GetAdverts()
+	json.NewEncoder(w).Encode(adverts)
 }
 
-func AddTestAdvert() {
-	mu.Lock()
-	defer mu.Unlock()
-
-	advert := models.Advert{
-		ID:      1,
-		Title:   "Test advert",
-		Content: "This is a test advert.",
+func GetAdvertByIDHandler(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get("id")
+	uintID, err := strconv.ParseUint(id, 10, 64)
+	if err != nil {
+		http.Error(w, "Неверный формат ID", http.StatusBadRequest)
+		return
 	}
-	adverts = append(adverts, advert)
-	advertIDCounter++
+	advert, err := storage.GetAdvertByID(uint(uintID))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	json.NewEncoder(w).Encode(advert)
+}
+
+func AddAdvertHandler(w http.ResponseWriter, r *http.Request) {
+	var advert storage.Advert
+	err := json.NewDecoder(r.Body).Decode(&advert)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	storage.AddAdvert(advert)
+	json.NewEncoder(w).Encode(advert)
 }
