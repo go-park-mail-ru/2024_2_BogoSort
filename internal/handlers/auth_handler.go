@@ -124,7 +124,6 @@ func (ah *AuthHandler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Invalidate the session
 	cookie.Expires = time.Now().Add(-1 * time.Hour)
 	http.SetCookie(w, cookie)
 
