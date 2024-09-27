@@ -12,46 +12,96 @@ type Advert struct {
 }
 
 type AdvertsList struct {
-	adverts []Advert
+	adverts []*Advert
+	mu      sync.Mutex
 }
 
 var (
-	adv      = AdvertsList{}
-	advCount uint
-	mu       sync.Mutex
+	advertsList = &AdvertsList{}
+	advCount    uint
 )
 
-func init() {
-	FillAdverts()
-}
-
-func AddAdvert(advert Advert) {
-	mu.Lock()
-	defer mu.Unlock()
-	adv.adverts = append(adv.adverts, advert)
+func (l *AdvertsList) Add(a *Advert) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
 	advCount++
+	a.ID = advCount
+	l.adverts = append(l.adverts, a)
 }
 
-func GetAdverts() []Advert {
-	mu.Lock()
-	defer mu.Unlock()
-	return adv.adverts
-}
-
-func GetAdvertByID(id uint) (Advert, error) {
-	mu.Lock()
-	defer mu.Unlock()
-	for _, advert := range adv.adverts {
-		if advert.ID == id {
-			return advert, nil
+func (l *AdvertsList) Update(a *Advert) error {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	for i, adv := range l.adverts {
+		if adv.ID == a.ID {
+			l.adverts[i] = a
+			return nil
 		}
 	}
-	return Advert{}, fmt.Errorf("advert not found")
+	return fmt.Errorf("объявление не найдено")
 }
 
-func FillAdverts() {
-	AddAdvert(Advert{ID: 1, Title: "First advert", Content: "This is the first advert"})
-	AddAdvert(Advert{ID: 2, Title: "Second advert", Content: "This is the second advert"})
-	AddAdvert(Advert{ID: 3, Title: "Third advert", Content: "This is the third advert"})
-	advCount = 3
+func (l *AdvertsList) DeleteAdvert(id uint) error {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	for i, adv := range l.adverts {
+		if adv.ID == id {
+			l.adverts = append(l.adverts[:i], l.adverts[i+1:]...)
+			return nil
+		}
+	}
+	return fmt.Errorf("объявление не найдено")
+}
+
+func (l *AdvertsList) GetAdverts() []Advert {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	result := make([]Advert, len(l.adverts))
+	for i, advert := range l.adverts {
+		result[i] = *advert
+	}
+	return result
+}
+
+func (l *AdvertsList) GetAdvertByID(id uint) (Advert, error) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	for _, advert := range l.adverts {
+		if advert.ID == id {
+			return *advert, nil
+		}
+	}
+	return Advert{}, fmt.Errorf("объявление не найдено")
+}
+
+func NewAdvertsList() *AdvertsList {
+	return &AdvertsList{
+		adverts: make([]*Advert, 0),
+		mu:      sync.Mutex{},
+	}
+}
+
+func FillAdverts(ads *AdvertsList) {
+	ads.mu.Lock()
+	defer ads.mu.Unlock()
+
+	testAdverts := []*Advert{
+		{
+			ID:      1,
+			Title:   "Продается автомобиль",
+			Content: "Хорошее состояние, небольшой пробег",
+		},
+		{
+			ID:      2,
+			Title:   "Сдается квартира",
+			Content: "2 комнаты, центр города",
+		},
+		{
+			ID:      3,
+			Title:   "Продам ноутбук",
+			Content: "Почти новый, игровой",
+		},
+	}
+
+	ads.adverts = append(ads.adverts, testAdverts...)
 }
