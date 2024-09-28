@@ -23,7 +23,7 @@ type Config struct {
 var cfg Config
 
 func Init() error {
-	f, err := os.Open("./internal/config/config.yaml")
+	f, err := os.Open("./config/config.yaml")
 	if err != nil {
 		return err
 	}
