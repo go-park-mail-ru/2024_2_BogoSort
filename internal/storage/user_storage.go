@@ -14,8 +14,6 @@ var (
 
 type User struct {
 	ID           uint   `json:"id"`
-	Name         string `json:"name"`
-	Surname      string `json:"surname"`
 	Email        string `json:"email"`
 	PasswordHash string `json:"-"`
 }
@@ -30,8 +28,6 @@ func NewUserStorage() *UserStorage {
 		Users: map[string]*User{
 			"test@test.com": {
 				ID: 1,
-				Name: "John",
-				Surname: "Doe",
 				Email: "test@test.com",
 				PasswordHash: utils.HashPassword("password"),
 			},
@@ -39,7 +35,7 @@ func NewUserStorage() *UserStorage {
 	}
 }
 
-func (s *UserStorage) CreateUser(email, password, name, surname string) (*User, error) {
+func (s *UserStorage) CreateUser(email, password string) (*User, error) {
 	hash := utils.HashPassword(password)
 
 	if hash == "" {
@@ -56,8 +52,6 @@ func (s *UserStorage) CreateUser(email, password, name, surname string) (*User, 
 	newUser := &User{
 		ID:           uint(len(s.Users) + 1),
 		Email:        email,
-		Name:         name,
-		Surname:      surname,
 		PasswordHash: hash,
 	}
 

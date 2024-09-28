@@ -12,8 +12,6 @@ import (
 type AuthData struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
-	Name     string `json:"name"`
-	Surname  string `json:"surname"`
 }
 
 type LoginCredentials struct {
@@ -48,7 +46,7 @@ func (ah *AuthHandler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := ah.UserStorage.CreateUser(credentials.Email, credentials.Password, credentials.Name, credentials.Surname)
+	user, err := ah.UserStorage.CreateUser(credentials.Email, credentials.Password)
 	if err != nil {
 		if err.Error() == "user already exists" {
 			sendErrorResponse(w, http.StatusBadRequest, "User already exists")
