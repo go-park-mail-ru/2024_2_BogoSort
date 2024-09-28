@@ -1,9 +1,10 @@
 package storage
 
 import (
-	"emporium/internal/services"
 	"fmt"
 	"sync"
+
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/services"
 )
 
 type Advert struct {

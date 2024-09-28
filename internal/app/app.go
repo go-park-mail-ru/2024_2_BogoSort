@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"emporium/internal/handlers"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/handlers"
 )
 
 type Server struct {

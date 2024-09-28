@@ -1,10 +1,11 @@
 package handlers
 
 import (
-	"emporium/internal/services"
-	"emporium/internal/storage"
 	"log"
 	"net/http"
+
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/services"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/storage"
 
 	"github.com/gorilla/mux"
 )
