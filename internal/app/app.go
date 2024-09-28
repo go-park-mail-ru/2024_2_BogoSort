@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"time"
 
-	"emporium/internal/config"
-	"emporium/internal/handlers"
-	"emporium/internal/utils"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/config"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/handlers"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/pkg/utils"
 )
 
 type Server struct {

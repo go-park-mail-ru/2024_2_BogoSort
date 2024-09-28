@@ -1,9 +1,9 @@
 package utils
 
 import (
-	"emporium/internal/config"
 	"errors"
 	"time"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/config"
 
 	"github.com/golang-jwt/jwt/v5"
 )

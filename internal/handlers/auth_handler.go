@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"net/http"
 	"time"
-	"emporium/internal/storage"
-	"emporium/internal/config"
-	"emporium/internal/utils"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/storage"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/config"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/pkg/utils"
 )
 
 type AuthData struct {

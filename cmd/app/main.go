@@ -1,7 +1,7 @@
 package main
 
 import (
-	"emporium/internal/app"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/app"
 	"log"
 )
 
