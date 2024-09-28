@@ -46,13 +46,25 @@ func GetJWTSecretKey() string {
 	if envKey := os.Getenv("JWT_SECRET_KEY"); envKey != "" {
 		return envKey
 	}
+
 	return cfg.JWT.SecretKey
 }
 
 func GetJWTExpirationTime() time.Duration {
+	if envTime := os.Getenv("JWT_EXPIRATION_TIME"); envTime != "" {
+		duration, err := time.ParseDuration(envTime)
+		if err == nil {
+			return duration
+		}
+	}
+
 	return cfg.JWT.ExpirationTime
 }
 
 func GetJWTIssuer() string {
+	if envIssuer := os.Getenv("JWT_ISSUER"); envIssuer != "" {
+		return envIssuer
+	}
+	
 	return cfg.JWT.Issuer
 }

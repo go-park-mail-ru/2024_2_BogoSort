@@ -3,6 +3,6 @@ server:
   host: localhost
 
 jwt:
-  secret_key: your_very_long_and_secure_secret_key_here
+  secret_key: 1234432123992392939923923923923923923923923923923923923923923923
   expiration_time: 24h 
-  issuer: your_app_name
+  issuer: emporium
