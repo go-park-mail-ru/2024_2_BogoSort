@@ -1,0 +1,210 @@
+info:
+  title: API Documentation
+  version: 1.0.0
+  description: API documentation for the adverts service
+  contact:
+    name: API Support
+    email: support@example.com
+    url: https://www.example.com
+
+definitions:
+  handlers.AuthData:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  handlers.AuthErrResponse:
+    properties:
+      code:
+        type: integer
+      status:
+        type: string
+    type: object
+  handlers.AuthResponse:
+    properties:
+      token:
+        type: string
+      user:
+        $ref: '#/definitions/storage.User'
+    type: object
+  storage.Advert:
+    properties:
+      id:
+        type: integer
+      image_url:
+        type: string
+      location:
+        type: string
+      price:
+        type: integer
+      title:
+        type: string
+    type: object
+  storage.User:
+    properties:
+      email:
+        type: string
+      id:
+        type: integer
+    type: object
+paths:
+  /adverts:
+    get:
+      description: Retrieves a list of all adverts
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/storage.Advert'
+            type: array
+      summary: Get all adverts
+      tags:
+      - adverts
+    post:
+      consumes:
+      - application/json
+      description: Adds a new advert to the list
+      parameters:
+      - description: Advert object
+        in: body
+        name: advert
+        required: true
+        schema:
+          $ref: '#/definitions/storage.Advert'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/storage.Advert'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+      summary: Add a new advert
+      tags:
+      - adverts
+  /adverts/{id}:
+    delete:
+      description: Deletes an advert by its ID
+      parameters:
+      - description: Advert ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Delete an advert
+      tags:
+      - adverts
+    get:
+      description: Retrieves a single advert by its ID
+      parameters:
+      - description: Advert ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/storage.Advert'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+      summary: Get an advert by ID
+      tags:
+      - adverts
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing advert by its ID
+      parameters:
+      - description: Advert ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Updated Advert object
+        in: body
+        name: advert
+        required: true
+        schema:
+          $ref: '#/definitions/storage.Advert'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/storage.Advert'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+      summary: Update an existing advert
+      tags:
+      - adverts
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: Register a new user with email and password
+      parameters:
+      - description: User credentials
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.AuthData'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.AuthResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.AuthErrResponse'
+        "405":
+          description: Method Not Allowed
+          schema:
+            $ref: '#/definitions/handlers.AuthErrResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.AuthErrResponse'
+      summary: Register a new user
+      tags:
+      - auth
+swagger: "2.0"

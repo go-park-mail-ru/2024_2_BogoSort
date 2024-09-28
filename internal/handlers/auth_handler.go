@@ -34,6 +34,18 @@ type AuthErrResponse struct {
 	Status string `json:"status"`
 }
 
+// RegisterHandler godoc
+// @Summary Register a new user
+// @Description Register a new user with email and password
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param credentials body AuthData true "User credentials"
+// @Success 201 {object} AuthResponse
+// @Failure 400 {object} AuthErrResponse
+// @Failure 405 {object} AuthErrResponse
+// @Failure 500 {object} AuthErrResponse
+// @Router /register [post]
 func (ah *AuthHandler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		sendErrorResponse(w, http.StatusMethodNotAllowed, "Method not allowed")
@@ -73,6 +85,15 @@ func (ah *AuthHandler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 
 	sendJSONResponse(w, http.StatusCreated, AuthResponse{Token: tokenString, User: *user})
 }
+
+// LoginHandler godoc
+// @Summary Login a user
+// @Description Login a user with email and password
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param credentials body LoginCredentials true "User credentials"
+// @Success
 
 func (ah *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
