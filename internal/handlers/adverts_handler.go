@@ -3,6 +3,7 @@ package handlers
 import (
 	"emporium/internal/storage"
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -11,6 +12,16 @@ import (
 
 func (h *AdvertsHandler) GetAdvertsHandler(w http.ResponseWriter, r *http.Request) {
 	adverts := h.List.GetAdverts()
+
+	for i := range adverts {
+		imageURL, err := h.ImageService.GetImageURL(adverts[i].ID)
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+		adverts[i].ImageURL = imageURL
+	}
+
 	json.NewEncoder(w).Encode(adverts)
 }
 
@@ -57,7 +68,10 @@ func (h *AdvertsHandler) UpdateAdvertHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	advert.ID = uint(uintID)
+	if advert.ID != uint(uintID) {
+		http.Error(w, "ID в URL и JSON не совпадают", http.StatusBadRequest)
+		return
+	}
 
 	err = h.List.Update(&advert)
 	if err != nil {

@@ -1,31 +1,30 @@
 package storage
 
 import (
+	"emporium/internal/services"
 	"fmt"
 	"sync"
 )
 
 type Advert struct {
-	ID      uint   `json:"id"`
-	Title   string `json:"title"`
-	Content string `json:"content"`
+	ID       uint   `json:"id"`
+	Title    string `json:"title"`
+	ImageURL string `json:"image_url"`
+	Price    uint   `json:"price"`
+	Location string `json:"location"`
 }
 
 type AdvertsList struct {
-	adverts []*Advert
-	mu      sync.Mutex
+	adverts  []*Advert
+	advCount uint
+	mu       sync.Mutex
 }
-
-var (
-	advertsList = &AdvertsList{}
-	advCount    uint
-)
 
 func (l *AdvertsList) Add(a *Advert) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	advCount++
-	a.ID = advCount
+	l.advCount++
+	a.ID = l.advCount
 	l.adverts = append(l.adverts, a)
 }
 
@@ -81,27 +80,26 @@ func NewAdvertsList() *AdvertsList {
 	}
 }
 
-func FillAdverts(ads *AdvertsList) {
+func FillAdverts(ads *AdvertsList, imageService *services.ImageService) {
 	ads.mu.Lock()
 	defer ads.mu.Unlock()
 
-	testAdverts := []*Advert{
-		{
-			ID:      1,
-			Title:   "Продается автомобиль",
-			Content: "Хорошее состояние, небольшой пробег",
-		},
-		{
-			ID:      2,
-			Title:   "Сдается квартира",
-			Content: "2 комнаты, центр города",
-		},
-		{
-			ID:      3,
-			Title:   "Продам ноутбук",
-			Content: "Почти новый, игровой",
-		},
+	locations := []string{"Москва", "Санкт-Петербург", "Новосибирск", "Екатеринбург", "Казань"}
+
+	for i := 1; i <= 60; i++ {
+		imageURL := fmt.Sprintf("/static/images/image%d.jpg", i)
+		advert := &Advert{
+			ID:       uint(i),
+			Title:    fmt.Sprintf("Объявление %d", i),
+			ImageURL: imageURL,
+			Price:    uint(1000 + i*100),
+			Location: locations[i%len(locations)],
+		}
+		ads.adverts = append(ads.adverts, advert)
+
+		// Добавляем URL изображения в ImageService
+		imageService.SetImageURL(uint(i), imageURL)
 	}
 
-	ads.adverts = append(ads.adverts, testAdverts...)
+	ads.advCount = uint(len(ads.adverts))
 }
