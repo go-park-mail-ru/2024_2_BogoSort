@@ -5,7 +5,9 @@ import (
 	"net/http"
 	"time"
 
+	"emporium/internal/config"
 	"emporium/internal/handlers"
+	"emporium/internal/utils"
 )
 
 type Server struct {
@@ -17,10 +19,15 @@ func NewServer() *Server {
 }
 
 func (s *Server) Run() error {
+	if err := config.Init(); err != nil {
+		return err
+	}
+	utils.InitJWT()
+
 	router := handlers.NewRouter()
 
 	s.server = &http.Server{
-		Addr:         ":8080",
+		Addr:         config.GetServerAddress(),
 		Handler:      router,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,

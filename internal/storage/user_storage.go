@@ -39,7 +39,7 @@ func NewUserStorage() *UserStorage {
 	}
 }
 
-func (s *UserStorage) CreateUser(email, password string) (*User, error) {
+func (s *UserStorage) CreateUser(email, password, name, surname string) (*User, error) {
 	hash := utils.HashPassword(password)
 
 	if hash == "" {
@@ -49,7 +49,6 @@ func (s *UserStorage) CreateUser(email, password string) (*User, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	// Check if user already exists
 	if _, exists := s.Users[email]; exists {
 		return nil, errors.New("user already exists")
 	}
@@ -57,6 +56,8 @@ func (s *UserStorage) CreateUser(email, password string) (*User, error) {
 	newUser := &User{
 		ID:           uint(len(s.Users) + 1),
 		Email:        email,
+		Name:         name,
+		Surname:      surname,
 		PasswordHash: hash,
 	}
 
