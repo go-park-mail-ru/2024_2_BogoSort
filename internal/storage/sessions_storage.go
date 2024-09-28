@@ -2,10 +2,12 @@ package storage
 
 import (
 	"sync"
+
+	"errors"
 )
 
 type SessionStorage struct {
-	Sessions map[string]string // email -> token
+	Sessions map[string]string 
 	mu       sync.Mutex
 }
 
@@ -21,10 +23,15 @@ func (s *SessionStorage) AddSession(email, token string) {
 	s.Sessions[email] = token
 }
 
-func (s *SessionStorage) RemoveSession(email string) {
+func (s *SessionStorage) RemoveSession(email string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	if _, exists := s.Sessions[email]; !exists {
+		return errors.New("session does not exist")
+	}
 	delete(s.Sessions, email)
+
+	return nil
 }
 
 func (s *SessionStorage) SessionExists(email string) bool {

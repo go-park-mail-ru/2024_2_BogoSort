@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	ErrUserNotFound = errors.New("user not found")
+	ErrUserNotFound    = errors.New("user not found")
 	ErrInvalidPassword = errors.New("invalid password")
 )
 
@@ -20,15 +20,15 @@ type User struct {
 
 type UserStorage struct {
 	Users map[string]*User
-	mu sync.Mutex
+	mu    sync.Mutex
 }
 
 func NewUserStorage() *UserStorage {
 	return &UserStorage{
 		Users: map[string]*User{
 			"test@test.com": {
-				ID: 1,
-				Email: "test@test.com",
+				ID:           1,
+				Email:        "test@test.com",
 				PasswordHash: utils.HashPassword("password"),
 			},
 		},
@@ -63,6 +63,9 @@ func (s *UserStorage) CreateUser(email, password string) (*User, error) {
 }
 
 func (s *UserStorage) GetUserByEmail(email string) (*User, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	user, ok := s.Users[email]
 
 	if !ok {
@@ -98,6 +101,7 @@ func (s *UserStorage) GetAllUsers() ([]*User, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	users = make([]*User, 0, len(s.Users))
 	for _, user := range s.Users {
 		users = append(users, user)
 	}

@@ -71,8 +71,7 @@ func (ah *AuthHandler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 
 	http.SetCookie(w, cookie)
 
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(AuthResponse{Token: tokenString, User: *user})
+	sendJSONResponse(w, http.StatusCreated, AuthResponse{Token: tokenString, User: *user})
 }
 
 func (ah *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
@@ -115,7 +114,7 @@ func (ah *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	ah.SessionStorage.AddSession(user.Email, tokenString)
 
-	json.NewEncoder(w).Encode(AuthResponse{Token: tokenString, User: *user})
+	sendJSONResponse(w, http.StatusOK, AuthResponse{Token: tokenString, User: *user})
 }
 
 func (ah *AuthHandler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
@@ -140,32 +139,26 @@ func (ah *AuthHandler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ah.SessionStorage.RemoveSession(email)
+	if !ah.SessionStorage.SessionExists(email) {
+		sendErrorResponse(w, http.StatusUnauthorized, "Session does not exist")
+		return
+	}
 
-	cookie.Expires = time.Now().Add(-1 * time.Hour)
+	err = ah.SessionStorage.RemoveSession(email)
+	if err != nil {
+		sendErrorResponse(w, http.StatusInternalServerError, "Failed to remove session")
+		return
+	}
+
+	cookie = &http.Cookie{
+		Name:     "session_id",
+		Value:    "",
+		Expires:  time.Now().Add(-1 * time.Hour),
+		HttpOnly: true,
+	}
 	http.SetCookie(w, cookie)
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"message": "Logged out successfully"})
-}
-
-func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		cookie, err := r.Cookie("session_id")
-		if err != nil {
-			sendErrorResponse(w, http.StatusUnauthorized, "Unauthorized")
-			return
-		}
-
-		email, err := utils.ValidateToken(cookie.Value)
-		if err != nil {
-			sendErrorResponse(w, http.StatusUnauthorized, "Unauthorized")
-			return
-		}
-
-		r.Header.Set("User", email)
-		next.ServeHTTP(w, r)
-	}
+	sendJSONResponse(w, http.StatusOK, map[string]string{"message": "Logged out successfully"})
 }
 
 func sendErrorResponse(w http.ResponseWriter, code int, status string) {
@@ -173,3 +166,7 @@ func sendErrorResponse(w http.ResponseWriter, code int, status string) {
 	json.NewEncoder(w).Encode(AuthErrResponse{Code: code, Status: status})
 }
 
+func sendJSONResponse(w http.ResponseWriter, code int, payload interface{}) {
+	w.WriteHeader(code)
+	json.NewEncoder(w).Encode(payload)
+}
