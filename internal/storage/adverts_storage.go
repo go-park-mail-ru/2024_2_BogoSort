@@ -103,7 +103,7 @@ func FillAdverts(ads *AdvertsList, imageService *services.ImageService) {
 		"Продам телефон", "Продам дом", "Аренда гаража", "Продам планшет", "Продам телевизор",
 	}
 
-	const testAdvCount = 60
+	const testAdvCount = 30
 	for i := 1; i <= testAdvCount; i++ {
 		imageURL := fmt.Sprintf("/static/images/image%d.jpg", i)
 		advert := &Advert{
@@ -115,7 +115,7 @@ func FillAdverts(ads *AdvertsList, imageService *services.ImageService) {
 		}
 		ads.adverts = append(ads.adverts, advert)
 
-		imageService.SetImageURL(uint(i)%10+1, imageURL)
+		imageService.SetImageURL(uint(i), imageURL)
 	}
 
 	ads.advCount = uint(len(ads.adverts))

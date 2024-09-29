@@ -1,10 +1,11 @@
 package handlers
 
 import (
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/storage"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/services"
 	"log"
 	"net/http"
+
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/services"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/storage"
 
 	"github.com/gorilla/mux"
 )
@@ -43,8 +44,8 @@ func NewRouter() *mux.Router {
 	router.HandleFunc("/api/v1/adverts/{id}", advertsHandler.UpdateAdvertHandler).Methods("PUT")
 	router.HandleFunc("/api/v1/adverts/{id}", advertsHandler.DeleteAdvertHandler).Methods("DELETE")
 
-	fs := http.FileServer(http.Dir("./static"))
-	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fs))
+	// Настройка для обслуживания статических файлов
+	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
 	return router
 }
@@ -59,4 +60,17 @@ func recoveryMiddleware(next http.Handler) http.Handler {
 		}()
 		next.ServeHTTP(w, r)
 	})
+}
+
+func main() {
+	router := NewRouter()
+
+	corsHandler := cors.New(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:8008"},         // Замените на порт вашего фронтенда
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},  // Разрешенные методы
+		AllowedHeaders:   []string{"Content-Type", "Authorization"}, // Разрешенные заголовки
+		AllowCredentials: true,
+	}).Handler(router)
+
+	log.Fatal(http.ListenAndServe(":8080", corsHandler))
 }

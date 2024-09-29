@@ -61,6 +61,14 @@ func (h *AdvertsHandler) GetAdvertByIDHandler(w http.ResponseWriter, r *http.Req
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
+
+	imageURL, err := h.ImageService.GetImageURL(advert.ID)
+	if err == nil {
+		advert.ImageURL = imageURL
+	} else {
+		log.Println(err)
+	}
+
 	err = json.NewEncoder(w).Encode(advert)
 	if err != nil {
 		log.Println(err)
