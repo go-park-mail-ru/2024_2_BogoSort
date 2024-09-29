@@ -47,6 +47,8 @@ definitions:
         type: string
     type: object
 info:
+  title: "API Documentation"
+  version: "1.0.0" 
   contact: {}
 paths:
   /api/v1/adverts:
