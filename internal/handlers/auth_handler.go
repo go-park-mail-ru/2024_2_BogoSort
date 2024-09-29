@@ -34,9 +34,9 @@ type AuthErrResponse struct {
 	Status string `json:"status"`
 }
 
-// RegisterHandler godoc
-// @Summary Register a new user
-// @Description Register a new user with email and password
+// SignupHandler godoc
+// @Summary Signup a new user
+// @Description Signup a new user with email and password
 // @Tags auth
 // @Accept json
 // @Produce json
