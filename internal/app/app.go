@@ -27,11 +27,10 @@ func (s *Server) Run() error {
 
 	router := handlers.NewRouter()
 
-	// Настройка CORS
 	corsHandler := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:8008"},         // Замените на порт вашего фронтенда
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},  // Разрешенные методы
-		AllowedHeaders:   []string{"Content-Type", "Authorization"}, // Разрешенные заголовки
+		AllowedOrigins:   []string{"http://localhost:8008"}, // пока фронт не развернут, поставлю локалхост
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
+		AllowedHeaders:   []string{"Content-Type", "Authorization"},
 		AllowCredentials: true,
 	}).Handler(router)
 
