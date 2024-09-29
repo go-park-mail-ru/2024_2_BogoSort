@@ -5,6 +5,9 @@ definitions:
         type: string
       password:
         type: string
+    required:
+    - email
+    - password
     type: object
   handlers.AuthErrResponse:
     properties:
@@ -15,10 +18,10 @@ definitions:
     type: object
   handlers.AuthResponse:
     properties:
+      email:
+        type: string
       token:
         type: string
-      user:
-        $ref: '#/definitions/storage.User'
     type: object
   storage.Advert:
     properties:
@@ -33,17 +36,10 @@ definitions:
       title:
         type: string
     type: object
-  storage.User:
-    properties:
-      email:
-        type: string
-      id:
-        type: integer
-    type: object
 info:
   contact: {}
-  title: Emporium API
-  version: 1.0.0
+  title: "BogoSort API"
+  version: "1.0.0"
 paths:
   /adverts:
     get:

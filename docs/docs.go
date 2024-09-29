@@ -257,6 +257,10 @@ const docTemplate = `{
     "definitions": {
         "handlers.AuthData": {
             "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
             "properties": {
                 "email": {
                     "type": "string"
@@ -280,11 +284,11 @@ const docTemplate = `{
         "handlers.AuthResponse": {
             "type": "object",
             "properties": {
-                "token": {
+                "email": {
                     "type": "string"
                 },
-                "user": {
-                    "$ref": "#/definitions/storage.User"
+                "token": {
+                    "type": "string"
                 }
             }
         },
@@ -305,17 +309,6 @@ const docTemplate = `{
                 },
                 "title": {
                     "type": "string"
-                }
-            }
-        },
-        "storage.User": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
                 }
             }
         }

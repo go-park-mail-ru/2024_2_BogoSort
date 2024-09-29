@@ -246,6 +246,10 @@
     "definitions": {
         "handlers.AuthData": {
             "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
             "properties": {
                 "email": {
                     "type": "string"
@@ -269,11 +273,11 @@
         "handlers.AuthResponse": {
             "type": "object",
             "properties": {
-                "token": {
+                "email": {
                     "type": "string"
                 },
-                "user": {
-                    "$ref": "#/definitions/storage.User"
+                "token": {
+                    "type": "string"
                 }
             }
         },
@@ -294,17 +298,6 @@
                 },
                 "title": {
                     "type": "string"
-                }
-            }
-        },
-        "storage.User": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
                 }
             }
         }

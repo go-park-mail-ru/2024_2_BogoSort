@@ -7,16 +7,19 @@ import (
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/storage"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/config"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/pkg/utils"
+	"github.com/go-playground/validator/v10"
 )
 
+var validate = validator.New()
+
 type AuthData struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required"`
 }
 
 type LoginCredentials struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required"`
 }
 
 type AuthHandler struct {
@@ -25,8 +28,8 @@ type AuthHandler struct {
 }
 
 type AuthResponse struct {
-	Token string       `json:"token"`
-	User  storage.User `json:"user"`
+	Token string `json:"token"`
+	Email string `json:"email"`
 }
 
 type AuthErrResponse struct {
@@ -58,6 +61,11 @@ func (ah *AuthHandler) SignupHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := validate.Struct(credentials); err != nil {
+		sendErrorResponse(w, http.StatusBadRequest, "Invalid request data")
+		return
+	}
+
 	user, err := ah.UserStorage.CreateUser(credentials.Email, credentials.Password)
 	if err != nil {
 		if err.Error() == "user already exists" {
@@ -83,7 +91,7 @@ func (ah *AuthHandler) SignupHandler(w http.ResponseWriter, r *http.Request) {
 
 	http.SetCookie(w, cookie)
 
-	sendJSONResponse(w, http.StatusCreated, AuthResponse{Token: tokenString, User: *user})
+	sendJSONResponse(w, http.StatusCreated, AuthResponse{Token: tokenString, Email: user.Email})
 }
 
 // LoginHandler godoc
@@ -135,7 +143,7 @@ func (ah *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	ah.SessionStorage.AddSession(user.Email, tokenString)
 
-	sendJSONResponse(w, http.StatusOK, AuthResponse{Token: tokenString, User: *user})
+	sendJSONResponse(w, http.StatusOK, AuthResponse{Token: tokenString, Email: user.Email})
 }
 
 func (ah *AuthHandler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
