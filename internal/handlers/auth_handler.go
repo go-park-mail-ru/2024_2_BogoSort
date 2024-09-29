@@ -58,6 +58,11 @@ func (ah *AuthHandler) SignupHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := utils.ValidatePassword(credentials.Password); err != nil {
+		responses.SendErrorResponse(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
 	user, err := ah.UserStorage.CreateUser(credentials.Email, credentials.Password)
 	if err != nil {
 		if err.Error() == "user already exists" {

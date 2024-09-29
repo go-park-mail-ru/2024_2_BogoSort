@@ -31,7 +31,7 @@ func TestRegisterHandler(t *testing.T) {
 		UserStorage: userStorage,
 	}
 
-	reqBody, _ := json.Marshal(AuthData{Email: "newuser@example.com", Password: "password"})
+	reqBody, _ := json.Marshal(AuthData{Email: "newuser@example.com", Password: "Password1!"})
 	req, err := http.NewRequest("POST", "/api/v1/signup", bytes.NewBuffer(reqBody))
 	if err != nil {
 		t.Fatal(err)
