@@ -115,6 +115,11 @@ func (ah *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := validate.Struct(credentials); err != nil {
+		sendErrorResponse(w, http.StatusBadRequest, "Invalid request data")
+		return
+	}
+
 	user, err := ah.UserStorage.ValidateUserByEmailAndPassword(credentials.Email, credentials.Password)
 	if err != nil {
 		sendErrorResponse(w, http.StatusUnauthorized, "Invalid credentials")
