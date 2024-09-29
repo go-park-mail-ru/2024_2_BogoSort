@@ -1,12 +1,3 @@
-info:
-  title: API Documentation
-  version: 1.0.0
-  description: API documentation for the adverts service
-  contact:
-    name: API Support
-    email: support@example.com
-    url: https://www.example.com
-
 definitions:
   handlers.AuthData:
     properties:
@@ -49,6 +40,10 @@ definitions:
       id:
         type: integer
     type: object
+info:
+  contact: {}
+  title: Emporium API
+  version: 1.0.0
 paths:
   /adverts:
     get:
@@ -173,7 +168,7 @@ paths:
       summary: Update an existing advert
       tags:
       - adverts
-  /register:
+  /signup:
     post:
       consumes:
       - application/json

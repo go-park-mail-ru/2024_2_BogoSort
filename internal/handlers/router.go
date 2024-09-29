@@ -20,7 +20,7 @@ func NewRouter() *mux.Router {
 
 	userStorage := storage.NewUserStorage()
 	sessionStorage := storage.NewSessionStorage()
-  	advertsList := storage.NewAdvertsList()
+	advertsList := storage.NewAdvertsList()
 	imageService := services.NewImageService()
 	storage.FillAdverts(advertsList, imageService)
 
@@ -36,16 +36,16 @@ func NewRouter() *mux.Router {
 
 	log.Println("Server is running")
 
-	router.HandleFunc("/register", authHandler.RegisterHandler).Methods("POST")
+	router.HandleFunc("/signup", authHandler.SignupHandler).Methods("POST")
 	router.HandleFunc("/login", authHandler.LoginHandler).Methods("POST")
 	router.HandleFunc("/logout", authHandler.LogoutHandler).Methods("POST")
-  	router.HandleFunc("/adverts", advertsHandler.GetAdvertsHandler).Methods("GET")
+	router.HandleFunc("/adverts", advertsHandler.GetAdvertsHandler).Methods("GET")
 	router.HandleFunc("/adverts/{id}", advertsHandler.GetAdvertByIDHandler).Methods("GET")
 	router.HandleFunc("/adverts", advertsHandler.AddAdvertHandler).Methods("POST")
 	router.HandleFunc("/adverts/{id}", advertsHandler.UpdateAdvertHandler).Methods("PUT")
 	router.HandleFunc("/adverts/{id}", advertsHandler.DeleteAdvertHandler).Methods("DELETE")
-  
-  fs := http.FileServer(http.Dir("./static"))
+
+	fs := http.FileServer(http.Dir("./static"))
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fs))
 
 	return router

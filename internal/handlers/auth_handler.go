@@ -45,8 +45,8 @@ type AuthErrResponse struct {
 // @Failure 400 {object} AuthErrResponse
 // @Failure 405 {object} AuthErrResponse
 // @Failure 500 {object} AuthErrResponse
-// @Router /register [post]
-func (ah *AuthHandler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
+// @Router /signup [post]
+func (ah *AuthHandler) SignupHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		sendErrorResponse(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return

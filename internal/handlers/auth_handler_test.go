@@ -38,7 +38,7 @@ func TestRegisterHandler(t *testing.T) {
 	}
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(authHandler.RegisterHandler)
+	handler := http.HandlerFunc(authHandler.SignupHandler)
 	handler.ServeHTTP(rr, req)
 
 	if status := rr.Code; status != http.StatusCreated {
@@ -243,4 +243,72 @@ func TestLogoutHandler(t *testing.T) {
     if status := rr.Code; status != http.StatusMethodNotAllowed {
         t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusMethodNotAllowed)
     }
+}
+
+func TestSignupHandler(t *testing.T) {
+	userStorage := storage.NewUserStorage()
+	sessionStorage := storage.NewSessionStorage()
+	authHandler := &AuthHandler{
+		UserStorage:    userStorage,
+		SessionStorage: sessionStorage,
+	}
+
+	reqBody, _ := json.Marshal(AuthData{Email: "newuser@example.com", Password: "password"})
+	req, err := http.NewRequest("POST", "/signup", bytes.NewBuffer(reqBody))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(authHandler.SignupHandler)
+	handler.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusCreated {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusCreated)
+	}
+
+	var response AuthResponse
+	if err := json.NewDecoder(rr.Body).Decode(&response); err != nil {
+		t.Errorf("could not decode response: %v", err)
+	}
+
+	if response.User.Email != "newuser@example.com" {
+		t.Errorf("expected email to be newuser@example.com, got %v", response.User.Email)
+	}
+
+	req, err = http.NewRequest("POST", "/signup", bytes.NewBuffer(reqBody))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr = httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusBadRequest {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusBadRequest)
+	}
+
+	req, err = http.NewRequest("GET", "/signup", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr = httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusMethodNotAllowed {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusMethodNotAllowed)
+	}
+
+	req, err = http.NewRequest("POST", "/signup", bytes.NewBuffer([]byte("invalid json")))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr = httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusBadRequest {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusBadRequest)
+	}
 }

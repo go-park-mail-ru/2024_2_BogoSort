@@ -201,7 +201,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/register": {
+        "/signup": {
             "post": {
                 "description": "Register a new user with email and password",
                 "consumes": [
