@@ -4,30 +4,9 @@
         "contact": {}
     },
     "paths": {
-        "/adverts": {
-            "get": {
-                "description": "Retrieves a list of all adverts",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "adverts"
-                ],
-                "summary": "Get all adverts",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/storage.Advert"
-                            }
-                        }
-                    }
-                }
-            },
+        "/login": {
             "post": {
-                "description": "Adds a new advert to the list",
+                "description": "Login a user with email and password or with a valid session cookie or Authorization header",
                 "consumes": [
                     "application/json"
                 ],
@@ -35,17 +14,16 @@
                     "application/json"
                 ],
                 "tags": [
-                    "adverts"
+                    "auth"
                 ],
-                "summary": "Add a new advert",
+                "summary": "Login a user",
                 "parameters": [
                     {
-                        "description": "Advert object",
-                        "name": "advert",
+                        "description": "User credentials",
+                        "name": "credentials",
                         "in": "body",
-                        "required": true,
                         "schema": {
-                            "$ref": "#/definitions/storage.Advert"
+                            "$ref": "#/definitions/handlers.LoginCredentials"
                         }
                     }
                 ],
@@ -53,138 +31,31 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/storage.Advert"
+                            "$ref": "#/definitions/responses.AuthResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/adverts/{id}": {
-            "get": {
-                "description": "Retrieves a single advert by its ID",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "adverts"
-                ],
-                "summary": "Get an advert by ID",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Advert ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/storage.Advert"
+                            "$ref": "#/definitions/responses.AuthErrResponse"
                         }
                     },
-                    "400": {
-                        "description": "Bad Request",
+                    "401": {
+                        "description": "Unauthorized",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/responses.AuthErrResponse"
                         }
                     },
-                    "404": {
-                        "description": "Not Found",
+                    "405": {
+                        "description": "Method Not Allowed",
                         "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            },
-            "put": {
-                "description": "Updates an existing advert by its ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "adverts"
-                ],
-                "summary": "Update an existing advert",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Advert ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Updated Advert object",
-                        "name": "advert",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/storage.Advert"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/storage.Advert"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "description": "Deletes an advert by its ID",
-                "tags": [
-                    "adverts"
-                ],
-                "summary": "Delete an advert",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Advert ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": "No Content"
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/responses.AuthErrResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/responses.AuthErrResponse"
                         }
                     }
                 }
@@ -218,25 +89,25 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/handlers.AuthResponse"
+                            "$ref": "#/definitions/responses.AuthResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/handlers.AuthErrResponse"
+                            "$ref": "#/definitions/responses.AuthErrResponse"
                         }
                     },
                     "405": {
                         "description": "Method Not Allowed",
                         "schema": {
-                            "$ref": "#/definitions/handlers.AuthErrResponse"
+                            "$ref": "#/definitions/responses.AuthErrResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/handlers.AuthErrResponse"
+                            "$ref": "#/definitions/responses.AuthErrResponse"
                         }
                     }
                 }
@@ -259,7 +130,22 @@
                 }
             }
         },
-        "handlers.AuthErrResponse": {
+        "handlers.LoginCredentials": {
+            "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "responses.AuthErrResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -270,33 +156,13 @@
                 }
             }
         },
-        "handlers.AuthResponse": {
+        "responses.AuthResponse": {
             "type": "object",
             "properties": {
                 "email": {
                     "type": "string"
                 },
                 "token": {
-                    "type": "string"
-                }
-            }
-        },
-        "storage.Advert": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "integer"
-                },
-                "image_url": {
-                    "type": "string"
-                },
-                "location": {
-                    "type": "string"
-                },
-                "price": {
-                    "type": "integer"
-                },
-                "title": {
                     "type": "string"
                 }
             }

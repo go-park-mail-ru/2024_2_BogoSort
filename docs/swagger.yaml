@@ -9,161 +9,71 @@ definitions:
     - email
     - password
     type: object
-  handlers.AuthErrResponse:
+  handlers.LoginCredentials:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  responses.AuthErrResponse:
     properties:
       code:
         type: integer
       status:
         type: string
     type: object
-  handlers.AuthResponse:
+  responses.AuthResponse:
     properties:
       email:
         type: string
       token:
         type: string
     type: object
-  storage.Advert:
-    properties:
-      id:
-        type: integer
-      image_url:
-        type: string
-      location:
-        type: string
-      price:
-        type: integer
-      title:
-        type: string
-    type: object
 info:
   contact: {}
-  title: "BogoSort API"
-  version: "1.0.0"
 paths:
-  /adverts:
-    get:
-      description: Retrieves a list of all adverts
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/storage.Advert'
-            type: array
-      summary: Get all adverts
-      tags:
-      - adverts
+  /login:
     post:
       consumes:
       - application/json
-      description: Adds a new advert to the list
+      description: Login a user with email and password or with a valid session cookie
+        or Authorization header
       parameters:
-      - description: Advert object
+      - description: User credentials
         in: body
-        name: advert
-        required: true
+        name: credentials
         schema:
-          $ref: '#/definitions/storage.Advert'
+          $ref: '#/definitions/handlers.LoginCredentials'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/storage.Advert'
+            $ref: '#/definitions/responses.AuthResponse'
         "400":
           description: Bad Request
           schema:
-            type: string
-      summary: Add a new advert
-      tags:
-      - adverts
-  /adverts/{id}:
-    delete:
-      description: Deletes an advert by its ID
-      parameters:
-      - description: Advert ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      responses:
-        "204":
-          description: No Content
-        "400":
-          description: Bad Request
+            $ref: '#/definitions/responses.AuthErrResponse'
+        "401":
+          description: Unauthorized
           schema:
-            type: string
+            $ref: '#/definitions/responses.AuthErrResponse'
+        "405":
+          description: Method Not Allowed
+          schema:
+            $ref: '#/definitions/responses.AuthErrResponse'
         "500":
           description: Internal Server Error
           schema:
-            type: string
-      summary: Delete an advert
+            $ref: '#/definitions/responses.AuthErrResponse'
+      summary: Login a user
       tags:
-      - adverts
-    get:
-      description: Retrieves a single advert by its ID
-      parameters:
-      - description: Advert ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/storage.Advert'
-        "400":
-          description: Bad Request
-          schema:
-            type: string
-        "404":
-          description: Not Found
-          schema:
-            type: string
-      summary: Get an advert by ID
-      tags:
-      - adverts
-    put:
-      consumes:
-      - application/json
-      description: Updates an existing advert by its ID
-      parameters:
-      - description: Advert ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      - description: Updated Advert object
-        in: body
-        name: advert
-        required: true
-        schema:
-          $ref: '#/definitions/storage.Advert'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/storage.Advert'
-        "400":
-          description: Bad Request
-          schema:
-            type: string
-        "404":
-          description: Not Found
-          schema:
-            type: string
-      summary: Update an existing advert
-      tags:
-      - adverts
+      - auth
   /signup:
     post:
       consumes:
@@ -182,19 +92,19 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/handlers.AuthResponse'
+            $ref: '#/definitions/responses.AuthResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/handlers.AuthErrResponse'
+            $ref: '#/definitions/responses.AuthErrResponse'
         "405":
           description: Method Not Allowed
           schema:
-            $ref: '#/definitions/handlers.AuthErrResponse'
+            $ref: '#/definitions/responses.AuthErrResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/handlers.AuthErrResponse'
+            $ref: '#/definitions/responses.AuthErrResponse'
       summary: Signup a new user
       tags:
       - auth

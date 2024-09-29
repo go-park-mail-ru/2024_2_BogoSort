@@ -36,10 +36,10 @@ type AuthHandler struct {
 // @Accept json
 // @Produce json
 // @Param credentials body AuthData true "User credentials"
-// @Success 201 {object} AuthResponse
-// @Failure 400 {object} AuthErrResponse
-// @Failure 405 {object} AuthErrResponse
-// @Failure 500 {object} AuthErrResponse
+// @Success 201 {object} responses.AuthResponse
+// @Failure 400 {object} responses.AuthErrResponse
+// @Failure 405 {object} responses.AuthErrResponse
+// @Failure 500 {object} responses.AuthErrResponse
 // @Router /signup [post]
 func (ah *AuthHandler) SignupHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -93,11 +93,11 @@ func (ah *AuthHandler) SignupHandler(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param credentials body LoginCredentials false "User credentials"
-// @Success 200 {object} AuthResponse
-// @Failure 400 {object} AuthErrResponse
-// @Failure 401 {object} AuthErrResponse
-// @Failure 405 {object} AuthErrResponse
-// @Failure 500 {object} AuthErrResponse
+// @Success 200 {object} responses.AuthResponse
+// @Failure 400 {object} responses.AuthErrResponse
+// @Failure 401 {object} responses.AuthErrResponse
+// @Failure 405 {object} responses.AuthErrResponse
+// @Failure 500 {object} responses.AuthErrResponse
 // @Router /login [post]
 func (ah *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -112,7 +112,7 @@ func (ah *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		email, err = utils.ValidateToken(cookie.Value)
 		if err == nil {
-			sendJSONResponse(w, http.StatusOK, AuthResponse{Token: cookie.Value, Email: email})
+			responses.SendJSONResponse(w, http.StatusOK, responses.AuthResponse{Token: cookie.Value, Email: email})
 			return
 		}
 	}
@@ -122,7 +122,7 @@ func (ah *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
         tokenString := strings.TrimPrefix(authHeader, "Bearer ")
         email, err = utils.ValidateToken(tokenString)
         if err == nil {
-            sendJSONResponse(w, http.StatusOK, AuthResponse{Token: tokenString, Email: email})
+            responses.SendJSONResponse(w, http.StatusOK, responses.AuthResponse{Token: tokenString, Email: email})
             return
         }
     }
@@ -130,24 +130,24 @@ func (ah *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	var credentials LoginCredentials
 	if r.Body != nil && r.ContentLength != 0 {
 		if err := json.NewDecoder(r.Body).Decode(&credentials); err != nil {
-			sendErrorResponse(w, http.StatusBadRequest, "Invalid request body")
+			responses.SendErrorResponse(w, http.StatusBadRequest, "Invalid request body")
 			return
 		}
 
 		if err := validate.Struct(credentials); err != nil {
-			sendErrorResponse(w, http.StatusBadRequest, "Invalid request data")
+			responses.SendErrorResponse(w, http.StatusBadRequest, "Invalid request data")
 			return
 		}
 
 		user, err := ah.UserStorage.ValidateUserByEmailAndPassword(credentials.Email, credentials.Password)
 		if err != nil {
-			sendErrorResponse(w, http.StatusUnauthorized, "Invalid credentials")
+			responses.SendErrorResponse(w, http.StatusUnauthorized, "Invalid credentials")
 			return
 		}
 
 		tokenString, err := utils.CreateToken(user.Email)
 		if err != nil {
-			sendErrorResponse(w, http.StatusInternalServerError, "Failed to generate token")
+			responses.SendErrorResponse(w, http.StatusInternalServerError, "Failed to generate token")
 			return
 		}
 
@@ -158,11 +158,11 @@ func (ah *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 			HttpOnly: true,
 		}
 		http.SetCookie(w, cookie)
-		sendJSONResponse(w, http.StatusOK, AuthResponse{Token: tokenString, Email: user.Email})
+		responses.SendJSONResponse(w, http.StatusOK, responses.AuthResponse{Token: tokenString, Email: user.Email})
 		return
 	}
 
-	sendErrorResponse(w, http.StatusUnauthorized, "Invalid credentials")
+	responses.SendErrorResponse(w, http.StatusUnauthorized, "Invalid credentials")
 }
 
 func (ah *AuthHandler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
@@ -184,17 +184,6 @@ func (ah *AuthHandler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	_, err = utils.ValidateToken(cookie.Value)
 	if err != nil {
 		responses.SendErrorResponse(w, http.StatusUnauthorized, "Invalid token")
-		return
-	}
-
-	if !ah.SessionStorage.SessionExists(email) {
-		sendErrorResponse(w, http.StatusUnauthorized, "Session does not exist")
-		return
-	}
-
-	err = ah.SessionStorage.RemoveSession(email)
-	if err != nil {
-		sendErrorResponse(w, http.StatusInternalServerError, "Failed to remove session")
 		return
 	}
 
