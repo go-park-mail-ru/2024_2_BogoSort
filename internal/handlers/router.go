@@ -34,14 +34,14 @@ func NewRouter() *mux.Router {
 
 	log.Println("Server is running")
 
-	router.HandleFunc("/signup", authHandler.SignupHandler).Methods("POST")
-	router.HandleFunc("/login", authHandler.LoginHandler).Methods("POST")
-	router.HandleFunc("/logout", authHandler.LogoutHandler).Methods("POST")
-	router.HandleFunc("/adverts", advertsHandler.GetAdvertsHandler).Methods("GET")
-	router.HandleFunc("/adverts/{id}", advertsHandler.GetAdvertByIDHandler).Methods("GET")
-	router.HandleFunc("/adverts", advertsHandler.AddAdvertHandler).Methods("POST")
-	router.HandleFunc("/adverts/{id}", advertsHandler.UpdateAdvertHandler).Methods("PUT")
-	router.HandleFunc("/adverts/{id}", advertsHandler.DeleteAdvertHandler).Methods("DELETE")
+	router.HandleFunc("/api/v1/signup", authHandler.SignupHandler).Methods("POST")
+	router.HandleFunc("/api/v1/login", authHandler.LoginHandler).Methods("POST")
+	router.HandleFunc("/api/v1/logout", authHandler.LogoutHandler).Methods("POST")
+	router.HandleFunc("/api/v1/adverts", advertsHandler.GetAdvertsHandler).Methods("GET")
+	router.HandleFunc("/api/v1/adverts/{id}", advertsHandler.GetAdvertByIDHandler).Methods("GET")
+	router.HandleFunc("/api/v1/adverts", advertsHandler.AddAdvertHandler).Methods("POST")
+	router.HandleFunc("/api/v1/adverts/{id}", advertsHandler.UpdateAdvertHandler).Methods("PUT")
+	router.HandleFunc("/api/v1/adverts/{id}", advertsHandler.DeleteAdvertHandler).Methods("DELETE")
 
 	fs := http.FileServer(http.Dir("./static"))
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fs))

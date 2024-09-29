@@ -12,6 +12,13 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// GetAdvertsHandler godoc
+// @Summary Get all adverts
+// @Description Get a list of all adverts
+// @Tags adverts
+// @Produce json
+// @Success 200 {array} storage.Advert
+// @Router /api/v1/adverts [get]
 func (h *AdvertsHandler) GetAdvertsHandler(w http.ResponseWriter, r *http.Request) {
 	adverts := h.List.GetAdverts()
 
@@ -27,6 +34,16 @@ func (h *AdvertsHandler) GetAdvertsHandler(w http.ResponseWriter, r *http.Reques
 	json.NewEncoder(w).Encode(adverts)
 }
 
+// GetAdvertByIDHandler godoc
+// @Summary Get an advert by ID
+// @Description Get a single advert by its ID
+// @Tags adverts
+// @Produce json
+// @Param id path int true "Advert ID"
+// @Success 200 {object} storage.Advert
+// @Failure 400 {object} responses.AuthErrResponse
+// @Failure 404 {object} responses.AuthErrResponse
+// @Router /api/v1/adverts/{id} [get]
 func (h *AdvertsHandler) GetAdvertByIDHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
@@ -43,6 +60,16 @@ func (h *AdvertsHandler) GetAdvertByIDHandler(w http.ResponseWriter, r *http.Req
 	json.NewEncoder(w).Encode(advert)
 }
 
+// AddAdvertHandler godoc
+// @Summary Add a new advert
+// @Description Add a new advert to the list
+// @Tags adverts
+// @Accept json
+// @Produce json
+// @Param advert body storage.Advert true "Advert data"
+// @Success 200 {object} storage.Advert
+// @Failure 400 {object} responses.AuthErrResponse
+// @Router /api/v1/adverts [post]
 func (h *AdvertsHandler) AddAdvertHandler(w http.ResponseWriter, r *http.Request) {
 	var advert storage.Advert
 	err := json.NewDecoder(r.Body).Decode(&advert)
@@ -54,6 +81,18 @@ func (h *AdvertsHandler) AddAdvertHandler(w http.ResponseWriter, r *http.Request
 	json.NewEncoder(w).Encode(advert)
 }
 
+// UpdateAdvertHandler godoc
+// @Summary Update an advert
+// @Description Update an existing advert by its ID
+// @Tags adverts
+// @Accept json
+// @Produce json
+// @Param id path int true "Advert ID"
+// @Param advert body storage.Advert true "Advert data"
+// @Success 200 {object} storage.Advert
+// @Failure 400 {object} responses.AuthErrResponse
+// @Failure 404 {object} responses.AuthErrResponse
+// @Router /api/v1/adverts/{id} [put]
 func (h *AdvertsHandler) UpdateAdvertHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
@@ -84,6 +123,15 @@ func (h *AdvertsHandler) UpdateAdvertHandler(w http.ResponseWriter, r *http.Requ
 	json.NewEncoder(w).Encode(advert)
 }
 
+// DeleteAdvertHandler godoc
+// @Summary Delete an advert
+// @Description Delete an advert by its ID
+// @Tags adverts
+// @Param id path int true "Advert ID"
+// @Success 204
+// @Failure 400 {object} responses.AuthErrResponse
+// @Failure 500 {object} responses.AuthErrResponse
+// @Router /api/v1/adverts/{id} [delete]
 func (h *AdvertsHandler) DeleteAdvertHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]

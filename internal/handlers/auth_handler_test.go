@@ -32,7 +32,7 @@ func TestRegisterHandler(t *testing.T) {
 	}
 
 	reqBody, _ := json.Marshal(AuthData{Email: "newuser@example.com", Password: "password"})
-	req, err := http.NewRequest("POST", "/signup", bytes.NewBuffer(reqBody))
+	req, err := http.NewRequest("POST", "/api/v1/signup", bytes.NewBuffer(reqBody))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -54,7 +54,7 @@ func TestRegisterHandler(t *testing.T) {
 		t.Errorf("expected email to be newuser@example.com, got %v", response.Email)
 	}
 
-	req, err = http.NewRequest("POST", "/signup", bytes.NewBuffer(reqBody))
+	req, err = http.NewRequest("POST", "/api/v1/signup", bytes.NewBuffer(reqBody))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -66,7 +66,7 @@ func TestRegisterHandler(t *testing.T) {
 		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusBadRequest)
 	}
 
-	req, err = http.NewRequest("GET", "/signup", nil)
+	req, err = http.NewRequest("GET", "/api/v1/signup", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -78,7 +78,7 @@ func TestRegisterHandler(t *testing.T) {
 		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusMethodNotAllowed)
 	}
 
-	req, err = http.NewRequest("POST", "/signup", bytes.NewBuffer([]byte("invalid json")))
+	req, err = http.NewRequest("POST", "/api/v1/signup", bytes.NewBuffer([]byte("invalid json")))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -104,7 +104,7 @@ func TestLoginHandler(t *testing.T) {
 
 	// Test login with valid body
 	reqBody, _ := json.Marshal(LoginCredentials{Email: "newuser@example.com", Password: "password"})
-	req, err := http.NewRequest("POST", "/login", bytes.NewBuffer(reqBody))
+	req, err := http.NewRequest("POST", "/api/v1/login", bytes.NewBuffer(reqBody))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -128,7 +128,7 @@ func TestLoginHandler(t *testing.T) {
 
 	// Test login with invalid password
 	reqBody, _ = json.Marshal(LoginCredentials{Email: "newuser@example.com", Password: "wrongpassword"})
-	req, err = http.NewRequest("POST", "/login", bytes.NewBuffer(reqBody))
+	req, err = http.NewRequest("POST", "/api/v1/login", bytes.NewBuffer(reqBody))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -141,7 +141,7 @@ func TestLoginHandler(t *testing.T) {
 	}
 
 	// Test login with invalid method
-	req, err = http.NewRequest("GET", "/login", nil)
+	req, err = http.NewRequest("GET", "/api/v1/login", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -154,7 +154,7 @@ func TestLoginHandler(t *testing.T) {
 	}
 
 	// Test login with invalid JSON
-	req, err = http.NewRequest("POST", "/login", bytes.NewBuffer([]byte("invalid json")))
+	req, err = http.NewRequest("POST", "/api/v1/login", bytes.NewBuffer([]byte("invalid json")))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -181,7 +181,7 @@ func TestSignupHandlerValidation(t *testing.T) {
 
 	for _, reqBody := range invalidReqBodies {
 		body, _ := json.Marshal(reqBody)
-		req, err := http.NewRequest("POST", "/signup", bytes.NewBuffer(body))
+		req, err := http.NewRequest("POST", "/api/v1/signup", bytes.NewBuffer(body))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -210,7 +210,7 @@ func TestLoginHandlerValidation(t *testing.T) {
 
 	for _, reqBody := range invalidReqBodies {
 		body, _ := json.Marshal(reqBody)
-		req, err := http.NewRequest("POST", "/login", bytes.NewBuffer(body))
+		req, err := http.NewRequest("POST", "/api/v1/login", bytes.NewBuffer(body))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -232,7 +232,7 @@ func TestLogoutHandler(t *testing.T) {
 	}
 
 	// Test logout with no session cookie
-	req, err := http.NewRequest("POST", "/logout", nil)
+	req, err := http.NewRequest("POST", "/api/v1/logout", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -246,7 +246,7 @@ func TestLogoutHandler(t *testing.T) {
 	}
 
 	// Test logout with invalid session cookie
-	req, err = http.NewRequest("POST", "/logout", nil)
+	req, err = http.NewRequest("POST", "/api/v1/logout", nil)
 	if err != nil {
 		t.Fatal(err)
 	}

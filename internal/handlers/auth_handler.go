@@ -40,7 +40,7 @@ type AuthHandler struct {
 // @Failure 400 {object} responses.AuthErrResponse
 // @Failure 405 {object} responses.AuthErrResponse
 // @Failure 500 {object} responses.AuthErrResponse
-// @Router /signup [post]
+// @Router /api/v1/signup [post]
 func (ah *AuthHandler) SignupHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		responses.SendErrorResponse(w, http.StatusMethodNotAllowed, "Method not allowed")
@@ -98,7 +98,7 @@ func (ah *AuthHandler) SignupHandler(w http.ResponseWriter, r *http.Request) {
 // @Failure 401 {object} responses.AuthErrResponse
 // @Failure 405 {object} responses.AuthErrResponse
 // @Failure 500 {object} responses.AuthErrResponse
-// @Router /login [post]
+// @Router /api/v1/login [post]
 func (ah *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		responses.SendErrorResponse(w, http.StatusMethodNotAllowed, "Method not allowed")
@@ -165,6 +165,17 @@ func (ah *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	responses.SendErrorResponse(w, http.StatusUnauthorized, "Invalid credentials")
 }
 
+// LogoutHandler godoc
+// @Summary Logout a user
+// @Description Logout a user by invalidating the session cookie
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} responses.AuthErrResponse
+// @Failure 401 {object} responses.AuthErrResponse
+// @Failure 405 {object} responses.AuthErrResponse
+// @Router /api/v1/logout [post]
 func (ah *AuthHandler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		responses.SendErrorResponse(w, http.StatusMethodNotAllowed, "Method not allowed")
