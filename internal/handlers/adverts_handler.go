@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/responses"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/storage"
 
 	"github.com/gorilla/mux"
@@ -31,7 +32,7 @@ func (h *AdvertsHandler) GetAdvertByIDHandler(w http.ResponseWriter, r *http.Req
 	id := vars["id"]
 	uintID, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
-		http.Error(w, "Неверный формат ID", http.StatusBadRequest)
+		responses.SendErrorResponse(w, http.StatusBadRequest, "Invalid ID")
 		return
 	}
 	advert, err := h.List.GetAdvertByID(uint(uintID))
@@ -46,7 +47,7 @@ func (h *AdvertsHandler) AddAdvertHandler(w http.ResponseWriter, r *http.Request
 	var advert storage.Advert
 	err := json.NewDecoder(r.Body).Decode(&advert)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		responses.SendErrorResponse(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	h.List.Add(&advert)
@@ -58,7 +59,7 @@ func (h *AdvertsHandler) UpdateAdvertHandler(w http.ResponseWriter, r *http.Requ
 	id := vars["id"]
 	uintID, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
-		http.Error(w, "Неверный формат ID", http.StatusBadRequest)
+		responses.SendErrorResponse(w, http.StatusBadRequest, "Invalid ID")
 		return
 	}
 
@@ -70,7 +71,7 @@ func (h *AdvertsHandler) UpdateAdvertHandler(w http.ResponseWriter, r *http.Requ
 	}
 
 	if advert.ID != uint(uintID) {
-		http.Error(w, "ID в URL и JSON не совпадают", http.StatusBadRequest)
+		responses.SendErrorResponse(w, http.StatusBadRequest, "Id in URL and JSON do not match")
 		return
 	}
 
@@ -88,13 +89,13 @@ func (h *AdvertsHandler) DeleteAdvertHandler(w http.ResponseWriter, r *http.Requ
 	id := vars["id"]
 	uintID, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
-		http.Error(w, "Неверный формат ID", http.StatusBadRequest)
+		responses.SendErrorResponse(w, http.StatusBadRequest, "Invalid ID")
 		return
 	}
 
 	err = h.List.DeleteAdvert(uint(uintID))
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		responses.SendErrorResponse(w, http.StatusInternalServerError, "Internal server error")
 		return
 	}
 

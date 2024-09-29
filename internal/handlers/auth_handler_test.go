@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/config"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/responses"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/storage"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/pkg/utils"
 )
@@ -45,7 +46,7 @@ func TestRegisterHandler(t *testing.T) {
 		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusCreated)
 	}
 
-	var response AuthResponse
+	var response responses.AuthResponse
 	if err := json.NewDecoder(rr.Body).Decode(&response); err != nil {
 		t.Errorf("could not decode response: %v", err)
 	}
@@ -118,7 +119,7 @@ func TestLoginHandler(t *testing.T) {
 		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
 	}
 
-	var response AuthResponse
+	var response responses.AuthResponse
 	if err := json.NewDecoder(rr.Body).Decode(&response); err != nil {
 		t.Errorf("could not decode response: %v", err)
 	}

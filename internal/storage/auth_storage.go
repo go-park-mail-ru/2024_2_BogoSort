@@ -2,9 +2,10 @@ package storage
 
 import (
 	"errors"
-	"sync"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/pkg/utils"
 	"log"
+	"sync"
+
+	"github.com/go-park-mail-ru/2024_2_BogoSort/pkg/utils"
 )
 
 var (
