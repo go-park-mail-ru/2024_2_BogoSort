@@ -39,7 +39,13 @@ func Init() error {
 }
 
 func GetServerAddress() string {
-	return fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port)
+    port := os.Getenv("PORT")
+
+    if port == "" {
+        port = "8080"
+    }
+
+    return fmt.Sprintf(":%s", port)
 }
 
 func GetJWTSecretKey() string {
