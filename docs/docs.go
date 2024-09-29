@@ -203,7 +203,7 @@ const docTemplate = `{
         },
         "/signup": {
             "post": {
-                "description": "Register a new user with email and password",
+                "description": "Signup a new user with email and password",
                 "consumes": [
                     "application/json"
                 ],
@@ -213,7 +213,7 @@ const docTemplate = `{
                 "tags": [
                     "auth"
                 ],
-                "summary": "Register a new user",
+                "summary": "Signup a new user",
                 "parameters": [
                     {
                         "description": "User credentials",

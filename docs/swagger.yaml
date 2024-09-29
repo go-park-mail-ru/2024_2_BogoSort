@@ -172,7 +172,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: Register a new user with email and password
+      description: Signup a new user with email and password
       parameters:
       - description: User credentials
         in: body
@@ -199,7 +199,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/handlers.AuthErrResponse'
-      summary: Register a new user
+      summary: Signup a new user
       tags:
       - auth
 swagger: "2.0"
