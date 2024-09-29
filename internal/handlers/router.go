@@ -20,7 +20,7 @@ func NewRouter() *mux.Router {
 
 	userStorage := storage.NewUserStorage()
 	sessionStorage := storage.NewSessionStorage()
-  advertsList := storage.NewAdvertsList()
+  	advertsList := storage.NewAdvertsList()
 	imageService := services.NewImageService()
 	storage.FillAdverts(advertsList, imageService)
 
@@ -39,7 +39,7 @@ func NewRouter() *mux.Router {
 	router.HandleFunc("/register", authHandler.RegisterHandler).Methods("POST")
 	router.HandleFunc("/login", authHandler.LoginHandler).Methods("POST")
 	router.HandleFunc("/logout", authHandler.LogoutHandler).Methods("POST")
-  router.HandleFunc("/adverts", advertsHandler.GetAdvertsHandler).Methods("GET")
+  	router.HandleFunc("/adverts", advertsHandler.GetAdvertsHandler).Methods("GET")
 	router.HandleFunc("/adverts/{id}", advertsHandler.GetAdvertByIDHandler).Methods("GET")
 	router.HandleFunc("/adverts", advertsHandler.AddAdvertHandler).Methods("POST")
 	router.HandleFunc("/adverts/{id}", advertsHandler.UpdateAdvertHandler).Methods("PUT")
