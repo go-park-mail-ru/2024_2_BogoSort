@@ -1,0 +1,26 @@
+version: '3'
+
+tasks:
+  build:
+    desc: "Собрать проект"
+    cmds:
+      - go build -o bin/ ./cmd/app/main.go
+    sources:
+      - '**/*.go'
+
+  test:
+    desc: "Запустить тесты"
+    cmds:
+      - go test ./...
+    deps: [build]
+
+  clean:
+    desc: "Очистить скомпилированные файлы"
+    cmds:
+      - rm -rf bin
+  
+  run:
+    desc: "Запустить проект"
+    cmds:
+      - ./bin/main.exe
+    deps: [build]
