@@ -31,7 +31,11 @@ func (h *AdvertsHandler) GetAdvertsHandler(w http.ResponseWriter, r *http.Reques
 		adverts[i].ImageURL = imageURL
 	}
 
-	json.NewEncoder(w).Encode(adverts)
+	err := json.NewEncoder(w).Encode(adverts)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Failed to encode adverts", http.StatusInternalServerError)
+	}
 }
 
 // GetAdvertByIDHandler godoc
@@ -57,7 +61,11 @@ func (h *AdvertsHandler) GetAdvertByIDHandler(w http.ResponseWriter, r *http.Req
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
-	json.NewEncoder(w).Encode(advert)
+	err = json.NewEncoder(w).Encode(advert)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Failed to encode advert", http.StatusInternalServerError)
+	}
 }
 
 // AddAdvertHandler godoc
@@ -78,7 +86,11 @@ func (h *AdvertsHandler) AddAdvertHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 	h.List.Add(&advert)
-	json.NewEncoder(w).Encode(advert)
+	err = json.NewEncoder(w).Encode(advert)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Failed to encode advert", http.StatusInternalServerError)
+	}
 }
 
 // UpdateAdvertHandler godoc
@@ -120,7 +132,11 @@ func (h *AdvertsHandler) UpdateAdvertHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	json.NewEncoder(w).Encode(advert)
+	err = json.NewEncoder(w).Encode(advert)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Failed to encode advert", http.StatusInternalServerError)
+	}
 }
 
 // DeleteAdvertHandler godoc

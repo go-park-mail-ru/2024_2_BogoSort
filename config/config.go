@@ -1,10 +1,10 @@
 package config
 
 import (
-	"fmt"
 	"os"
 	"time"
 
+	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
 
@@ -23,29 +23,29 @@ type Config struct {
 var cfg Config
 
 func Init() error {
-	f, err := os.Open("./config/config.yaml")
+	file, err := os.Open("./config/config.yaml")
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to open config file")
 	}
-	defer f.Close()
+	defer file.Close()
 
-	decoder := yaml.NewDecoder(f)
+	decoder := yaml.NewDecoder(file)
 	err = decoder.Decode(&cfg)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to decode config file")
 	}
 
 	return nil
 }
 
 func GetServerAddress() string {
-    port := os.Getenv("PORT")
+	port := os.Getenv("PORT")
 
-    if port == "" {
-        port = "8080"
-    }
+	if port == "" {
+		port = "8080"
+	}
 
-    return fmt.Sprintf(":%s", port)
+	return ":" + port
 }
 
 func GetJWTSecretKey() string {
@@ -71,6 +71,6 @@ func GetJWTIssuer() string {
 	if envIssuer := os.Getenv("JWT_ISSUER"); envIssuer != "" {
 		return envIssuer
 	}
-	
+
 	return cfg.JWT.Issuer
 }

@@ -97,12 +97,10 @@ func (s *UserStorage) ValidateUserByEmailAndPassword(email, password string) (*U
 }
 
 func (s *UserStorage) GetAllUsers() ([]*User, error) {
-	users := make([]*User, 0, len(s.Users))
-
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	users = make([]*User, 0, len(s.Users))
+	users := make([]*User, 0, len(s.Users))
 	for _, user := range s.Users {
 		users = append(users, user)
 	}
