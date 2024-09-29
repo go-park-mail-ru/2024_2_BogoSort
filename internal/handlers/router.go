@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/storage"
-  "github.com/go-park-mail-ru/2024_2_BogoSort/internal/services"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/services"
 	"log"
 	"net/http"
 
@@ -19,7 +19,6 @@ func NewRouter() *mux.Router {
 	router.Use(recoveryMiddleware)
 
 	userStorage := storage.NewUserStorage()
-	sessionStorage := storage.NewSessionStorage()
 	advertsList := storage.NewAdvertsList()
 	imageService := services.NewImageService()
 	storage.FillAdverts(advertsList, imageService)
@@ -30,8 +29,7 @@ func NewRouter() *mux.Router {
 	}
 
 	authHandler := &AuthHandler{
-		UserStorage:    userStorage,
-		SessionStorage: sessionStorage,
+		UserStorage: userStorage,
 	}
 
 	log.Println("Server is running")

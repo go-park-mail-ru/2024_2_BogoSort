@@ -25,10 +25,8 @@ func TestMain(m *testing.M) {
 
 func TestRegisterHandler(t *testing.T) {
 	userStorage := storage.NewUserStorage()
-	sessionStorage := storage.NewSessionStorage()
 	authHandler := &AuthHandler{
-		UserStorage:    userStorage,
-		SessionStorage: sessionStorage,
+		UserStorage: userStorage,
 	}
 
 	reqBody, _ := json.Marshal(AuthData{Email: "newuser@example.com", Password: "password"})
@@ -93,10 +91,8 @@ func TestRegisterHandler(t *testing.T) {
 
 func TestLoginHandler(t *testing.T) {
 	userStorage := storage.NewUserStorage()
-	sessionStorage := storage.NewSessionStorage()
 	authHandler := &AuthHandler{
-		UserStorage:    userStorage,
-		SessionStorage: sessionStorage,
+		UserStorage: userStorage,
 	}
 
 	_, err := userStorage.CreateUser("newuser@example.com", "password")
@@ -104,6 +100,7 @@ func TestLoginHandler(t *testing.T) {
 		t.Fatalf("expected no error, got %v", err)
 	}
 
+	// Test login with valid body
 	reqBody, _ := json.Marshal(LoginCredentials{Email: "newuser@example.com", Password: "password"})
 	req, err := http.NewRequest("POST", "/login", bytes.NewBuffer(reqBody))
 	if err != nil {
@@ -127,6 +124,7 @@ func TestLoginHandler(t *testing.T) {
 		t.Errorf("expected email to be newuser@example.com, got %v", response.Email)
 	}
 
+	// Test login with invalid password
 	reqBody, _ = json.Marshal(LoginCredentials{Email: "newuser@example.com", Password: "wrongpassword"})
 	req, err = http.NewRequest("POST", "/login", bytes.NewBuffer(reqBody))
 	if err != nil {
@@ -140,6 +138,7 @@ func TestLoginHandler(t *testing.T) {
 		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusUnauthorized)
 	}
 
+	// Test login with invalid method
 	req, err = http.NewRequest("GET", "/login", nil)
 	if err != nil {
 		t.Fatal(err)
@@ -152,20 +151,8 @@ func TestLoginHandler(t *testing.T) {
 		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusMethodNotAllowed)
 	}
 
+	// Test login with invalid JSON
 	req, err = http.NewRequest("POST", "/login", bytes.NewBuffer([]byte("invalid json")))
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	rr = httptest.NewRecorder()
-	handler.ServeHTTP(rr, req)
-
-	if status := rr.Code; status != http.StatusBadRequest {
-		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusBadRequest)
-	}
-
-	reqBody, _ = json.Marshal(LoginCredentials{Email: "newuser@example.com", Password: "password"})
-	req, err = http.NewRequest("POST", "/login", bytes.NewBuffer(reqBody))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -180,10 +167,8 @@ func TestLoginHandler(t *testing.T) {
 
 func TestSignupHandlerValidation(t *testing.T) {
 	userStorage := storage.NewUserStorage()
-	sessionStorage := storage.NewSessionStorage()
 	authHandler := &AuthHandler{
-		UserStorage:    userStorage,
-		SessionStorage: sessionStorage,
+		UserStorage: userStorage,
 	}
 
 	invalidReqBodies := []AuthData{
@@ -211,10 +196,8 @@ func TestSignupHandlerValidation(t *testing.T) {
 
 func TestLoginHandlerValidation(t *testing.T) {
 	userStorage := storage.NewUserStorage()
-	sessionStorage := storage.NewSessionStorage()
 	authHandler := &AuthHandler{
-		UserStorage:    userStorage,
-		SessionStorage: sessionStorage,
+		UserStorage: userStorage,
 	}
 
 	invalidReqBodies := []LoginCredentials{
