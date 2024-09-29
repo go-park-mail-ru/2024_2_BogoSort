@@ -6,7 +6,6 @@ import (
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/services"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/storage"
-
 	"github.com/gorilla/mux"
 )
 
@@ -60,17 +59,4 @@ func recoveryMiddleware(next http.Handler) http.Handler {
 		}()
 		next.ServeHTTP(w, r)
 	})
-}
-
-func main() {
-	router := NewRouter()
-
-	corsHandler := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:8008"},         // Замените на порт вашего фронтенда
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},  // Разрешенные методы
-		AllowedHeaders:   []string{"Content-Type", "Authorization"}, // Разрешенные заголовки
-		AllowCredentials: true,
-	}).Handler(router)
-
-	log.Fatal(http.ListenAndServe(":8080", corsHandler))
 }
