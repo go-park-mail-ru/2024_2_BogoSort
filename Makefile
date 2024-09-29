@@ -19,4 +19,7 @@ clean:
 run: build
 	./$(BIN_DIR)/$(BINARY_NAME)
 
-.PHONY: build test clean run
+swagger:
+	swag init -g $(MAIN_PATH)/main.go -o ./docs
+
+.PHONY: build test clean run swagger
