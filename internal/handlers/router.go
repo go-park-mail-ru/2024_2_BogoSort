@@ -43,20 +43,19 @@ func NewRouter() *mux.Router {
 	router.HandleFunc("/api/v1/adverts/{id}", advertsHandler.UpdateAdvertHandler).Methods("PUT")
 	router.HandleFunc("/api/v1/adverts/{id}", advertsHandler.DeleteAdvertHandler).Methods("DELETE")
 
-	// Настройка для обслуживания статических файлов
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
 	return router
 }
 
 func recoveryMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(writer http.ResponseWriter, r *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {
 				log.Println("Panic occurred:", err)
-				http.Error(writer, "Internal server error", http.StatusInternalServerError)
+				http.Error(w, "Internal server error", http.StatusInternalServerError)
 			}
 		}()
-		next.ServeHTTP(writer, r)
+		next.ServeHTTP(w, r)
 	})
 }
