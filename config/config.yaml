@@ -1,0 +1,8 @@
+server:
+  port: 8080
+  host: localhost
+
+jwt:
+  secret_key: 1234432123992392939923923923923923923923923923923923923923923923
+  expiration_time: 24h 
+  issuer: emporium

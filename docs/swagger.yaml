@@ -1,0 +1,278 @@
+definitions:
+  handlers.AuthData:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  handlers.LoginCredentials:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  responses.AuthErrResponse:
+    properties:
+      code:
+        type: integer
+      status:
+        type: string
+    type: object
+  responses.AuthResponse:
+    properties:
+      email:
+        type: string
+      token:
+        type: string
+    type: object
+  storage.Advert:
+    properties:
+      id:
+        type: integer
+      image_url:
+        type: string
+      location:
+        type: string
+      price:
+        type: integer
+      title:
+        type: string
+    type: object
+info:
+  title: "API Documentation"
+  version: "1.0.0" 
+  contact: {}
+paths:
+  /api/v1/adverts:
+    get:
+      description: Get a list of all adverts
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/storage.Advert'
+            type: array
+      summary: Get all adverts
+      tags:
+      - adverts
+    post:
+      consumes:
+      - application/json
+      description: Add a new advert to the list
+      parameters:
+      - description: Advert data
+        in: body
+        name: advert
+        required: true
+        schema:
+          $ref: '#/definitions/storage.Advert'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/storage.Advert'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.AuthErrResponse'
+      summary: Add a new advert
+      tags:
+      - adverts
+  /api/v1/adverts/{id}:
+    delete:
+      description: Delete an advert by its ID
+      parameters:
+      - description: Advert ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.AuthErrResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.AuthErrResponse'
+      summary: Delete an advert
+      tags:
+      - adverts
+    get:
+      description: Get a single advert by its ID
+      parameters:
+      - description: Advert ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/storage.Advert'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.AuthErrResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/responses.AuthErrResponse'
+      summary: Get an advert by ID
+      tags:
+      - adverts
+    put:
+      consumes:
+      - application/json
+      description: Update an existing advert by its ID
+      parameters:
+      - description: Advert ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Advert data
+        in: body
+        name: advert
+        required: true
+        schema:
+          $ref: '#/definitions/storage.Advert'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/storage.Advert'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.AuthErrResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/responses.AuthErrResponse'
+      summary: Update an advert
+      tags:
+      - adverts
+  /api/v1/login:
+    post:
+      consumes:
+      - application/json
+      description: Login a user with email and password or with a valid session cookie
+        or Authorization header
+      parameters:
+      - description: User credentials
+        in: body
+        name: credentials
+        schema:
+          $ref: '#/definitions/handlers.LoginCredentials'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.AuthResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.AuthErrResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/responses.AuthErrResponse'
+        "405":
+          description: Method Not Allowed
+          schema:
+            $ref: '#/definitions/responses.AuthErrResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.AuthErrResponse'
+      summary: Login a user
+      tags:
+      - auth
+  /api/v1/logout:
+    post:
+      consumes:
+      - application/json
+      description: Logout a user by invalidating the session cookie
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.AuthErrResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/responses.AuthErrResponse'
+        "405":
+          description: Method Not Allowed
+          schema:
+            $ref: '#/definitions/responses.AuthErrResponse'
+      summary: Logout a user
+      tags:
+      - auth
+  /api/v1/signup:
+    post:
+      consumes:
+      - application/json
+      description: Signup a new user with email and password
+      parameters:
+      - description: User credentials
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.AuthData'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/responses.AuthResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.AuthErrResponse'
+        "405":
+          description: Method Not Allowed
+          schema:
+            $ref: '#/definitions/responses.AuthErrResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.AuthErrResponse'
+      summary: Signup a new user
+      tags:
+      - auth
+swagger: "2.0"
