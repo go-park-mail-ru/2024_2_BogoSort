@@ -65,7 +65,7 @@ func (ah *AuthHandler) SignupHandler(w http.ResponseWriter, r *http.Request) {
 
 	user, err := ah.UserStorage.CreateUser(credentials.Email, credentials.Password)
 	if err != nil {
-		if strings.Contains(err.Error(), "user already exists") {
+		if err.Error() == "user already exists" {
 			responses.SendErrorResponse(w, http.StatusBadRequest, "User already exists")
 		} else {
 			responses.SendErrorResponse(w, http.StatusInternalServerError, "Failed to create user")
@@ -161,6 +161,8 @@ func (ah *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 			Value:    tokenString,
 			Expires:  time.Now().Add(config.GetJWTExpirationTime()),
 			HttpOnly: true,
+			SameSite: http.SameSiteNoneMode,
+			Secure:   true,
 		}
 		http.SetCookie(w, cookie)
 		responses.SendJSONResponse(w, http.StatusOK, responses.AuthResponse{Token: tokenString, Email: user.Email})
@@ -208,6 +210,8 @@ func (ah *AuthHandler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 		Value:    "",
 		Expires:  time.Now().Add(-1 * time.Hour),
 		HttpOnly: true,
+		SameSite: http.SameSiteNoneMode,
+		Secure:   true,
 	}
 	http.SetCookie(w, cookie)
 
