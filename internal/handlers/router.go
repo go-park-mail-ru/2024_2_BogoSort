@@ -16,35 +16,24 @@ type AdvertsHandler struct {
 
 func NewRouter() *mux.Router {
 	router := mux.NewRouter()
-	router.Use(recoveryMiddleware)
 
 	userStorage := storage.NewUserStorage()
+	authHandler := &AuthHandler{UserStorage: userStorage}
 	advertsList := storage.NewAdvertsList()
 	imageService := services.NewImageService()
-	storage.FillAdverts(advertsList, imageService)
-
-	advertsHandler := &AdvertsHandler{
-		List:         advertsList,
-		ImageService: imageService,
-	}
-
-	authHandler := &AuthHandler{
-		UserStorage: userStorage,
-	}
-
-	log.Println("Server is running")
+	advertsHandler := &AdvertsHandler{List: advertsList, ImageService: imageService}
 
 	router.HandleFunc("/api/v1/signup", authHandler.SignupHandler).Methods("POST")
 	router.HandleFunc("/api/v1/login", authHandler.LoginHandler).Methods("POST")
-	router.HandleFunc("/api/v1/logout", authHandler.LogoutHandler).Methods("POST")
 	router.HandleFunc("/api/v1/adverts", advertsHandler.GetAdvertsHandler).Methods("GET")
-	router.HandleFunc("/api/v1/adverts/{id}", advertsHandler.GetAdvertByIDHandler).Methods("GET")
-	router.HandleFunc("/api/v1/adverts", advertsHandler.AddAdvertHandler).Methods("POST")
-	router.HandleFunc("/api/v1/adverts/{id}", advertsHandler.UpdateAdvertHandler).Methods("PUT")
-	router.HandleFunc("/api/v1/adverts/{id}", advertsHandler.DeleteAdvertHandler).Methods("DELETE")
 
-	// Настройка для обслуживания статических файлов
-	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+	protected := router.PathPrefix("/api/v1").Subrouter()
+	protected.Use(AuthMiddleware)
+	protected.HandleFunc("/logout", authHandler.LogoutHandler).Methods("POST")
+	protected.HandleFunc("/adverts/{id}", advertsHandler.GetAdvertByIDHandler).Methods("GET")
+	protected.HandleFunc("/adverts", advertsHandler.AddAdvertHandler).Methods("POST")
+	protected.HandleFunc("/adverts/{id}", advertsHandler.UpdateAdvertHandler).Methods("PUT")
+	protected.HandleFunc("/adverts/{id}", advertsHandler.DeleteAdvertHandler).Methods("DELETE")
 
 	return router
 }

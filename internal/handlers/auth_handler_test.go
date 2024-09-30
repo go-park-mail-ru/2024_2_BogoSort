@@ -270,3 +270,85 @@ func TestLogoutHandler(t *testing.T) {
 		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusUnauthorized)
 	}
 }
+
+func TestAuthMiddleware(t *testing.T) {
+
+	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("OK"))
+	})
+
+	ts := httptest.NewServer(AuthMiddleware(testHandler))
+	defer ts.Close()
+
+	tests := []struct {
+		name           string
+		setupRequest   func(req *http.Request)
+		expectedStatus int
+	}{
+		{
+			name: "No token",
+			setupRequest: func(req *http.Request) {
+			},
+			expectedStatus: http.StatusUnauthorized,
+		},
+		{
+			name: "Invalid token in cookie",
+			setupRequest: func(req *http.Request) {
+				req.AddCookie(&http.Cookie{
+					Name:  "session_id",
+					Value: "invalid_token",
+				})
+			},
+			expectedStatus: http.StatusUnauthorized,
+		},
+		{
+			name: "Invalid token in header",
+			setupRequest: func(req *http.Request) {
+				req.Header.Set("Authorization", "Bearer invalid_token")
+			},
+			expectedStatus: http.StatusUnauthorized,
+		},
+		{
+			name: "Valid token in cookie",
+			setupRequest: func(req *http.Request) {
+				token, _ := utils.CreateToken("test@example.com")
+				req.AddCookie(&http.Cookie{
+					Name:    "session_id",
+					Value:   token,
+					Expires: time.Now().Add(config.GetJWTExpirationTime()),
+				})
+			},
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name: "Valid token in header",
+			setupRequest: func(req *http.Request) {
+				token, _ := utils.CreateToken("test@example.com")
+				req.Header.Set("Authorization", "Bearer "+token)
+			},
+			expectedStatus: http.StatusOK,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req, err := http.NewRequest("GET", ts.URL, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			tt.setupRequest(req)
+
+			resp, err := http.DefaultClient.Do(req)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer resp.Body.Close()
+
+			if resp.StatusCode != tt.expectedStatus {
+				t.Errorf("expected status %v, got %v", tt.expectedStatus, resp.StatusCode)
+			}
+		})
+	}
+}
