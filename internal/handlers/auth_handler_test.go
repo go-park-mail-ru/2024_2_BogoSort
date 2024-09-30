@@ -20,9 +20,11 @@ func TestMain(m *testing.M) {
 	os.Setenv("JWT_SECRET_KEY", "your_very_long_and_secure_secret_key_here")
 
 	err := config.Init()
+
 	if err != nil {
 		log.Fatalf("Failed to initialize config: %v", err)
 	}
+
 	utils.InitJWT()
 
 	code := m.Run()
@@ -37,6 +39,7 @@ func TestRegisterHandler(t *testing.T) {
 
 	reqBody, _ := json.Marshal(AuthData{Email: "newuser@example.com", Password: "Password1!"})
 	req, err := http.NewRequest("POST", "/api/v1/signup", bytes.NewBuffer(reqBody))
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -50,6 +53,7 @@ func TestRegisterHandler(t *testing.T) {
 	}
 
 	var response responses.AuthResponse
+
 	if err := json.NewDecoder(rr.Body).Decode(&response); err != nil {
 		t.Errorf("could not decode response: %v", err)
 	}
@@ -106,9 +110,9 @@ func TestLoginHandler(t *testing.T) {
 		t.Fatalf("expected no error, got %v", err)
 	}
 
-	// Test login with valid body
 	reqBody, _ := json.Marshal(LoginCredentials{Email: "newuser@example.com", Password: "password"})
 	req, err := http.NewRequest("POST", "/api/v1/login", bytes.NewBuffer(reqBody))
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -133,6 +137,7 @@ func TestLoginHandler(t *testing.T) {
 	// Test login with invalid password
 	reqBody, _ = json.Marshal(LoginCredentials{Email: "newuser@example.com", Password: "wrongpassword"})
 	req, err = http.NewRequest("POST", "/api/v1/login", bytes.NewBuffer(reqBody))
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -186,6 +191,7 @@ func TestSignupHandlerValidation(t *testing.T) {
 	for _, reqBody := range invalidReqBodies {
 		body, _ := json.Marshal(reqBody)
 		req, err := http.NewRequest("POST", "/api/v1/signup", bytes.NewBuffer(body))
+
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -215,6 +221,7 @@ func TestLoginHandlerValidation(t *testing.T) {
 	for _, reqBody := range invalidReqBodies {
 		body, _ := json.Marshal(reqBody)
 		req, err := http.NewRequest("POST", "/api/v1/login", bytes.NewBuffer(body))
+		
 		if err != nil {
 			t.Fatal(err)
 		}

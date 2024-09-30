@@ -21,6 +21,7 @@ func TestAdvertsHandler_GetAdvertsHandler(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	rr := httptest.NewRecorder()
 	handler.GetAdvertsHandler(rr, req)
 
@@ -41,6 +42,7 @@ func TestAdvertsHandler_GetAdvertByIDHandler(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	rr := httptest.NewRecorder()
 
 	router := mux.NewRouter()
@@ -59,9 +61,11 @@ func TestAdvertsHandler_AddAdvertHandler(t *testing.T) {
 
 	advertJSON := `{"title": "New Advert", "price": 1000, "location": "Москва"}`
 	req, err := http.NewRequest("POST", "/api/v1/adverts", strings.NewReader(advertJSON))
+
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	rr := httptest.NewRecorder()
 	handler.AddAdvertHandler(rr, req)
 
@@ -80,6 +84,7 @@ func TestAdvertsHandler_UpdateAdvertHandler(t *testing.T) {
 
 	updatedAdvertJSON := `{"id": 1, "title": "Updated Advert", "price": 2000, "location": "Санкт-Петербург"}`
 	req, err := http.NewRequest("PUT", "/api/v1/adverts/1", strings.NewReader(updatedAdvertJSON))
+	
 	if err != nil {
 		t.Fatal(err)
 	}
