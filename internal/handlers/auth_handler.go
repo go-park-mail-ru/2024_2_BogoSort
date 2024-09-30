@@ -41,41 +41,41 @@ type AuthHandler struct {
 // @Failure 405 {object} responses.AuthErrResponse
 // @Failure 500 {object} responses.AuthErrResponse
 // @Router /api/v1/signup [post]
-func (ah *AuthHandler) SignupHandler(w http.ResponseWriter, r *http.Request) {
+func (ah *AuthHandler) SignupHandler(writer http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		responses.SendErrorResponse(w, http.StatusMethodNotAllowed, "Method not allowed")
+		responses.SendErrorResponse(writer, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
 
 	var credentials AuthData
 	if err := json.NewDecoder(r.Body).Decode(&credentials); err != nil {
-		responses.SendErrorResponse(w, http.StatusBadRequest, "Invalid request body")
+		responses.SendErrorResponse(writer, http.StatusBadRequest, "Invalid request body")
 		return
 	}
 
 	if err := validate.Struct(credentials); err != nil {
-		responses.SendErrorResponse(w, http.StatusBadRequest, "Invalid request data")
+		responses.SendErrorResponse(writer, http.StatusBadRequest, "Invalid request data")
 		return
 	}
 
 	if err := utils.ValidatePassword(credentials.Password); err != nil {
-		responses.SendErrorResponse(w, http.StatusBadRequest, err.Error())
+		responses.SendErrorResponse(writer, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	user, err := ah.UserStorage.CreateUser(credentials.Email, credentials.Password)
 	if err != nil {
 		if err.Error() == "user already exists" {
-			responses.SendErrorResponse(w, http.StatusBadRequest, "User already exists")
+			responses.SendErrorResponse(writer, http.StatusBadRequest, "User already exists")
 		} else {
-			responses.SendErrorResponse(w, http.StatusInternalServerError, "Failed to create user")
+			responses.SendErrorResponse(writer, http.StatusInternalServerError, "Failed to create user")
 		}
 		return
 	}
 
 	tokenString, err := utils.CreateToken(user.Email)
 	if err != nil {
-		responses.SendErrorResponse(w, http.StatusInternalServerError, "Failed to generate token")
+		responses.SendErrorResponse(writer, http.StatusInternalServerError, "Failed to generate token")
 		return
 	}
 
@@ -86,9 +86,9 @@ func (ah *AuthHandler) SignupHandler(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 	}
 
-	http.SetCookie(w, cookie)
+	http.SetCookie(writer, cookie)
 
-	responses.SendJSONResponse(w, http.StatusCreated, responses.AuthResponse{Token: tokenString, Email: user.Email})
+	responses.SendJSONResponse(writer, http.StatusCreated, responses.AuthResponse{Token: tokenString, Email: user.Email})
 }
 
 // LoginHandler godoc
@@ -110,8 +110,10 @@ func (ah *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var email string
-	var err error
+	var (
+		email string
+		err   error
+	)
 
 	cookie, err := r.Cookie("session_id")
 	if err == nil {
@@ -126,6 +128,7 @@ func (ah *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	if authHeader != "" {
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 		email, err = utils.ValidateToken(tokenString)
+
 		if err == nil {
 			responses.SendJSONResponse(w, http.StatusOK, responses.AuthResponse{Token: tokenString, Email: email})
 			return
@@ -187,8 +190,10 @@ func (ah *AuthHandler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var token string
-	var err error
+	var (
+		token string
+		err   error
+	)
 
 	cookie, err := r.Cookie("session_id")
 	if err == nil {

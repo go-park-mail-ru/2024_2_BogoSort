@@ -19,22 +19,24 @@ import (
 // @Produce json
 // @Success 200 {array} storage.Advert
 // @Router /api/v1/adverts [get]
-func (h *AdvertsHandler) GetAdvertsHandler(w http.ResponseWriter, r *http.Request) {
-	adverts := h.List.GetAdverts()
+func (authHandler *AdvertsHandler) GetAdvertsHandler(writer http.ResponseWriter, reader *http.Request) {
+	adverts := authHandler.List.GetAdverts()
 
-	for i := range adverts {
-		imageURL, err := h.ImageService.GetImageURL(adverts[i].ID)
+	for index := range adverts {
+		imageURL, err := authHandler.ImageService.GetImageURL(adverts[index].ID)
 		if err != nil {
 			log.Println(err)
+
 			continue
 		}
-		adverts[i].ImageURL = imageURL
+
+		adverts[index].ImageURL = imageURL
 	}
 
-	err := json.NewEncoder(w).Encode(adverts)
+	err := json.NewEncoder(writer).Encode(adverts)
 	if err != nil {
 		log.Println(err)
-		http.Error(w, "Failed to encode adverts", http.StatusInternalServerError)
+		http.Error(writer, "Failed to encode adverts", http.StatusInternalServerError)
 	}
 }
 
@@ -48,31 +50,37 @@ func (h *AdvertsHandler) GetAdvertsHandler(w http.ResponseWriter, r *http.Reques
 // @Failure 400 {object} responses.AuthErrResponse
 // @Failure 404 {object} responses.AuthErrResponse
 // @Router /api/v1/adverts/{id} [get]
-func (h *AdvertsHandler) GetAdvertByIDHandler(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
+func (authHandler *AdvertsHandler) GetAdvertByIDHandler(writer http.ResponseWriter, reader *http.Request) {
+	vars := mux.Vars(reader)
 	id := vars["id"]
 	uintID, err := strconv.ParseUint(id, 10, 64)
+
 	if err != nil {
-		responses.SendErrorResponse(w, http.StatusBadRequest, "Invalid ID")
-		return
-	}
-	advert, err := h.List.GetAdvertByID(uint(uintID))
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		responses.SendErrorResponse(writer, http.StatusBadRequest, "Invalid ID")
+
 		return
 	}
 
-	imageURL, err := h.ImageService.GetImageURL(advert.ID)
+	advert, err := authHandler.List.GetAdvertByID(uint(uintID))
+
+	if err != nil {
+		http.Error(writer, err.Error(), http.StatusNotFound)
+
+		return
+	}
+
+	imageURL, err := authHandler.ImageService.GetImageURL(advert.ID)
+
 	if err == nil {
 		advert.ImageURL = imageURL
 	} else {
 		log.Println(err)
 	}
 
-	err = json.NewEncoder(w).Encode(advert)
+	err = json.NewEncoder(writer).Encode(advert)
 	if err != nil {
 		log.Println(err)
-		http.Error(w, "Failed to encode advert", http.StatusInternalServerError)
+		http.Error(writer, "Failed to encode advert", http.StatusInternalServerError)
 	}
 }
 
@@ -86,18 +94,21 @@ func (h *AdvertsHandler) GetAdvertByIDHandler(w http.ResponseWriter, r *http.Req
 // @Success 200 {object} storage.Advert
 // @Failure 400 {object} responses.AuthErrResponse
 // @Router /api/v1/adverts [post]
-func (h *AdvertsHandler) AddAdvertHandler(w http.ResponseWriter, r *http.Request) {
+func (authHandler *AdvertsHandler) AddAdvertHandler(writer http.ResponseWriter, reader *http.Request) {
 	var advert storage.Advert
-	err := json.NewDecoder(r.Body).Decode(&advert)
+	err := json.NewDecoder(reader.Body).Decode(&advert)
+
 	if err != nil {
-		responses.SendErrorResponse(w, http.StatusBadRequest, err.Error())
+		responses.SendErrorResponse(writer, http.StatusBadRequest, err.Error())
 		return
 	}
-	h.List.Add(&advert)
-	err = json.NewEncoder(w).Encode(advert)
+
+	authHandler.List.Add(&advert)
+	err = json.NewEncoder(writer).Encode(advert)
+
 	if err != nil {
 		log.Println(err)
-		http.Error(w, "Failed to encode advert", http.StatusInternalServerError)
+		http.Error(writer, "Failed to encode advert", http.StatusInternalServerError)
 	}
 }
 
@@ -113,37 +124,41 @@ func (h *AdvertsHandler) AddAdvertHandler(w http.ResponseWriter, r *http.Request
 // @Failure 400 {object} responses.AuthErrResponse
 // @Failure 404 {object} responses.AuthErrResponse
 // @Router /api/v1/adverts/{id} [put]
-func (h *AdvertsHandler) UpdateAdvertHandler(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
+func (authHandler *AdvertsHandler) UpdateAdvertHandler(writer http.ResponseWriter, reader *http.Request) {
+	vars := mux.Vars(reader)
 	id := vars["id"]
 	uintID, err := strconv.ParseUint(id, 10, 64)
+
 	if err != nil {
-		responses.SendErrorResponse(w, http.StatusBadRequest, "Invalid ID")
+		responses.SendErrorResponse(writer, http.StatusBadRequest, "Invalid ID")
 		return
 	}
 
 	var advert storage.Advert
-	err = json.NewDecoder(r.Body).Decode(&advert)
+	err = json.NewDecoder(reader.Body).Decode(&advert)
+
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(writer, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	if advert.ID != uint(uintID) {
-		responses.SendErrorResponse(w, http.StatusBadRequest, "Id in URL and JSON do not match")
+		responses.SendErrorResponse(writer, http.StatusBadRequest, "Id in URL and JSON do not match")
 		return
 	}
 
-	err = h.List.Update(&advert)
+	err = authHandler.List.Update(&advert)
+
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		http.Error(writer, err.Error(), http.StatusNotFound)
 		return
 	}
 
-	err = json.NewEncoder(w).Encode(advert)
+	err = json.NewEncoder(writer).Encode(advert)
+
 	if err != nil {
 		log.Println(err)
-		http.Error(w, "Failed to encode advert", http.StatusInternalServerError)
+		http.Error(writer, "Failed to encode advert", http.StatusInternalServerError)
 	}
 }
 
@@ -156,20 +171,22 @@ func (h *AdvertsHandler) UpdateAdvertHandler(w http.ResponseWriter, r *http.Requ
 // @Failure 400 {object} responses.AuthErrResponse
 // @Failure 500 {object} responses.AuthErrResponse
 // @Router /api/v1/adverts/{id} [delete]
-func (h *AdvertsHandler) DeleteAdvertHandler(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
+func (authHandler *AdvertsHandler) DeleteAdvertHandler(writer http.ResponseWriter, reader *http.Request) {
+	vars := mux.Vars(reader)
 	id := vars["id"]
 	uintID, err := strconv.ParseUint(id, 10, 64)
+
 	if err != nil {
-		responses.SendErrorResponse(w, http.StatusBadRequest, "Invalid ID")
+		responses.SendErrorResponse(writer, http.StatusBadRequest, "Invalid ID")
 		return
 	}
 
-	err = h.List.DeleteAdvert(uint(uintID))
+	err = authHandler.List.DeleteAdvert(uint(uintID))
+
 	if err != nil {
-		responses.SendErrorResponse(w, http.StatusInternalServerError, "Internal server error")
+		responses.SendErrorResponse(writer, http.StatusInternalServerError, "Internal server error")
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	writer.WriteHeader(http.StatusNoContent)
 }

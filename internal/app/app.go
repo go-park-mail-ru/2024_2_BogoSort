@@ -23,6 +23,7 @@ func (s *Server) Run() error {
 	if err := config.Init(); err != nil {
 		return err
 	}
+	
 	utils.InitJWT()
 
 	router := handlers.NewRouter()
