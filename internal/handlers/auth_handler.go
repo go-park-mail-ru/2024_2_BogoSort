@@ -172,7 +172,7 @@ func (ah *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 // LogoutHandler godoc
 // @Summary Logout a user
-// @Description Logout a user by invalidating the session cookie
+// @Description Logout a user by invalidating the session cookie or Authorization header
 // @Tags auth
 // @Accept json
 // @Produce json
@@ -187,17 +187,23 @@ func (ah *AuthHandler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var token string
+	var err error
+
 	cookie, err := r.Cookie("session_id")
-	if err != nil {
-		if err == http.ErrNoCookie {
+	if err == nil {
+		token = cookie.Value
+	} else {
+		authHeader := r.Header.Get("Authorization")
+		if authHeader != "" {
+			token = strings.TrimPrefix(authHeader, "Bearer ")
+		} else {
 			responses.SendErrorResponse(w, http.StatusUnauthorized, "No active session")
 			return
 		}
-		responses.SendErrorResponse(w, http.StatusBadRequest, "Failed to retrieve cookie")
-		return
 	}
 
-	_, err = utils.ValidateToken(cookie.Value)
+	_, err = utils.ValidateToken(token)
 	if err != nil {
 		responses.SendErrorResponse(w, http.StatusUnauthorized, "Invalid token")
 		return
