@@ -161,8 +161,6 @@ func (ah *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 			Value:    tokenString,
 			Expires:  time.Now().Add(config.GetJWTExpirationTime()),
 			HttpOnly: true,
-			SameSite: http.SameSiteNoneMode,
-			Secure:   true,
 		}
 		http.SetCookie(w, cookie)
 		responses.SendJSONResponse(w, http.StatusOK, responses.AuthResponse{Token: tokenString, Email: user.Email})
@@ -210,8 +208,6 @@ func (ah *AuthHandler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 		Value:    "",
 		Expires:  time.Now().Add(-1 * time.Hour),
 		HttpOnly: true,
-		SameSite: http.SameSiteNoneMode,
-		Secure:   true,
 	}
 	http.SetCookie(w, cookie)
 
