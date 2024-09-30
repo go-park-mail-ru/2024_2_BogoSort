@@ -38,6 +38,13 @@ func Init() error {
 	return nil
 }
 
+func InitFromEnv() {
+	cfg.JWT.SecretKey = os.Getenv("JWT_SECRET_KEY")
+	expirationTime, _ := time.ParseDuration(os.Getenv("JWT_EXPIRATION_TIME"))
+	cfg.JWT.ExpirationTime = expirationTime
+	cfg.JWT.Issuer = os.Getenv("JWT_ISSUER")
+}
+
 func GetServerAddress() string {
 	port := os.Getenv("PORT")
 

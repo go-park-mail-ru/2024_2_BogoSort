@@ -8,7 +8,6 @@ import (
 	"os"
 	"testing"
 	"time"
-	"log"
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/config"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/responses"
@@ -18,11 +17,10 @@ import (
 
 func TestMain(m *testing.M) {
 	os.Setenv("JWT_SECRET_KEY", "your_very_long_and_secure_secret_key_here")
+	os.Setenv("JWT_EXPIRATION_TIME", "1h")
+	os.Setenv("JWT_ISSUER", "test_issuer")
 
-	err := config.Init()
-	if err != nil {
-		log.Fatalf("Failed to initialize config: %v", err)
-	}
+	config.InitFromEnv()
 	utils.InitJWT()
 
 	code := m.Run()
