@@ -217,6 +217,7 @@ func TestLoginHandlerValidation(t *testing.T) {
 	for _, reqBody := range invalidReqBodies {
 		body, _ := json.Marshal(reqBody)
 		req, err := http.NewRequest("POST", "/api/v1/login", bytes.NewBuffer(body))
+		
 		if err != nil {
 			t.Fatal(err)
 		}
