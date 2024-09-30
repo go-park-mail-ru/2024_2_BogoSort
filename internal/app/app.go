@@ -23,13 +23,13 @@ func (s *Server) Run() error {
 	if err := config.Init(); err != nil {
 		return err
 	}
-	
+
 	utils.InitJWT()
 
 	router := handlers.NewRouter()
 
 	corsHandler := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:8008"}, // пока фронт не развернут, поставлю локалхост
+		AllowedOrigins:   []string{"https://two024-2-bogo-sort.onrender.com"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
 		AllowedHeaders:   []string{"Content-Type", "Authorization"},
 		AllowCredentials: true,
