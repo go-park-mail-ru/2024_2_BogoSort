@@ -115,7 +115,7 @@ func FillAdverts(ads *AdvertsList, imageService *services.ImageService) {
 		}
 		advert := &Advert{
 			ID:       id,
-			Title:    titles[i%len(titles)+1],
+			Title:    titles[i%len(titles)-1],
 			ImageURL: imageURL,
 			Price:    price,
 			Location: locations[i%len(locations)],
