@@ -21,7 +21,6 @@ linters:
     - exportloopref
     - forcetypeassert
     - funlen
-    - gci
     - ginkgolinter
     - gocheckcompilerdirectives
     - gochecknoglobals
@@ -32,7 +31,6 @@ linters:
     - gocyclo
     - godox
     - goerr113
-    - gofmt
     - gofumpt
     - goheader
     - goimports
@@ -61,7 +59,6 @@ linters:
     - nilerr
     - nilnil
     - nlreturn
-    - noctx
     - nolintlint
     - nonamedreturns
     - nosprintfhostport
@@ -78,7 +75,6 @@ linters:
     - tagliatelle
     - tenv
     - testableexamples
-    - testpackage
     - thelper
     - tparallel
     - typecheck
@@ -86,10 +82,8 @@ linters:
     - unparam
     - unused
     - usestdlibvars
-    - varnamelen
     - wastedassign
     - whitespace
-    - wrapcheck
     - wsl
     - zerologlint
 
@@ -106,3 +100,11 @@ linters:
     - deadcode
     - ifshort
     - depguard
+    - wrapcheck
+    - varnamelen
+    - testpackage
+    - tagliatelle
+    - noctx
+    - gochecknoglobals
+    - gofmt
+    - gci
