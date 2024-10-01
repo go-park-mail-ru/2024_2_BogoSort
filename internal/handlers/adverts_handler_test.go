@@ -13,6 +13,8 @@ import (
 )
 
 func TestAdvertsHandler_GetAdvertsHandler(t *testing.T) {
+	t.Parallel()
+
 	list := storage.NewAdvertsList()
 	imageService := services.NewImageService()
 	handler := &AdvertsHandler{List: list, ImageService: imageService}
@@ -31,6 +33,8 @@ func TestAdvertsHandler_GetAdvertsHandler(t *testing.T) {
 }
 
 func TestAdvertsHandler_GetAdvertByIDHandler(t *testing.T) {
+	t.Parallel()
+
 	list := storage.NewAdvertsList()
 	imageService := services.NewImageService()
 	handler := &AdvertsHandler{List: list, ImageService: imageService}
@@ -55,6 +59,8 @@ func TestAdvertsHandler_GetAdvertByIDHandler(t *testing.T) {
 }
 
 func TestAdvertsHandler_AddAdvertHandler(t *testing.T) {
+	t.Parallel()
+
 	list := storage.NewAdvertsList()
 	imageService := services.NewImageService()
 	handler := &AdvertsHandler{List: list, ImageService: imageService}
@@ -75,6 +81,8 @@ func TestAdvertsHandler_AddAdvertHandler(t *testing.T) {
 }
 
 func TestAdvertsHandler_UpdateAdvertHandler(t *testing.T) {
+	t.Parallel()
+
 	list := storage.NewAdvertsList()
 	imageService := services.NewImageService()
 	handler := &AdvertsHandler{List: list, ImageService: imageService}
@@ -84,7 +92,7 @@ func TestAdvertsHandler_UpdateAdvertHandler(t *testing.T) {
 
 	updatedAdvertJSON := `{"id": 1, "title": "Updated Advert", "price": 2000, "location": "Санкт-Петербург"}`
 	req, err := http.NewRequest("PUT", "/api/v1/adverts/1", strings.NewReader(updatedAdvertJSON))
-	
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -100,6 +108,8 @@ func TestAdvertsHandler_UpdateAdvertHandler(t *testing.T) {
 }
 
 func TestAdvertsHandler_DeleteAdvertHandler(t *testing.T) {
+	t.Parallel()
+
 	list := storage.NewAdvertsList()
 	imageService := services.NewImageService()
 	handler := &AdvertsHandler{List: list, ImageService: imageService}

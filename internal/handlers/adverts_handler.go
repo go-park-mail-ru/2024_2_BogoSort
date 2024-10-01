@@ -100,6 +100,7 @@ func (authHandler *AdvertsHandler) AddAdvertHandler(writer http.ResponseWriter, 
 
 	if err != nil {
 		responses.SendErrorResponse(writer, http.StatusBadRequest, err.Error())
+
 		return
 	}
 
@@ -131,6 +132,7 @@ func (authHandler *AdvertsHandler) UpdateAdvertHandler(writer http.ResponseWrite
 
 	if err != nil {
 		responses.SendErrorResponse(writer, http.StatusBadRequest, "Invalid ID")
+
 		return
 	}
 
@@ -139,6 +141,7 @@ func (authHandler *AdvertsHandler) UpdateAdvertHandler(writer http.ResponseWrite
 
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusBadRequest)
+
 		return
 	}
 
@@ -151,6 +154,7 @@ func (authHandler *AdvertsHandler) UpdateAdvertHandler(writer http.ResponseWrite
 
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusNotFound)
+
 		return
 	}
 
@@ -178,6 +182,7 @@ func (authHandler *AdvertsHandler) DeleteAdvertHandler(writer http.ResponseWrite
 
 	if err != nil {
 		responses.SendErrorResponse(writer, http.StatusBadRequest, "Invalid ID")
+
 		return
 	}
 
@@ -185,6 +190,7 @@ func (authHandler *AdvertsHandler) DeleteAdvertHandler(writer http.ResponseWrite
 
 	if err != nil {
 		responses.SendErrorResponse(writer, http.StatusInternalServerError, "Internal server error")
+
 		return
 	}
 
