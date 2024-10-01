@@ -19,7 +19,7 @@ import (
 // @Produce json
 // @Success 200 {array} storage.Advert
 // @Router /api/v1/adverts [get]
-func (authHandler *AdvertsHandler) GetAdvertsHandler(writer http.ResponseWriter, reader *http.Request) {
+func (authHandler *AdvertsHandler) GetAdvertsHandler(writer http.ResponseWriter, _ *http.Request) {
 	adverts := authHandler.List.GetAdverts()
 
 	for index := range adverts {
@@ -147,6 +147,7 @@ func (authHandler *AdvertsHandler) UpdateAdvertHandler(writer http.ResponseWrite
 
 	if advert.ID != uint(uintID) {
 		responses.SendErrorResponse(writer, http.StatusBadRequest, "Id in URL and JSON do not match")
+
 		return
 	}
 

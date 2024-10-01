@@ -22,6 +22,8 @@ type AdvertsList struct {
 	mu       sync.Mutex
 }
 
+var ErrAdvertNotFound = errors.New("объявление не найдено")
+
 func (l *AdvertsList) Add(a *Advert) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
@@ -43,7 +45,7 @@ func (l *AdvertsList) Update(a *Advert) error {
 		}
 	}
 
-	return errors.New("объявление не найдено")
+	return ErrAdvertNotFound
 }
 
 func (l *AdvertsList) DeleteAdvert(id uint) error {
@@ -57,7 +59,7 @@ func (l *AdvertsList) DeleteAdvert(id uint) error {
 		}
 	}
 
-	return errors.New("объявление не найдено")
+	return ErrAdvertNotFound
 }
 
 func (l *AdvertsList) GetAdverts() []Advert {
@@ -83,7 +85,7 @@ func (l *AdvertsList) GetAdvertByID(id uint) (Advert, error) {
 		}
 	}
 
-	return Advert{}, errors.New("объявление не найдено")
+	return Advert{}, ErrAdvertNotFound
 }
 
 func NewAdvertsList() *AdvertsList {
@@ -127,6 +129,8 @@ func FillAdverts(ads *AdvertsList, imageService *services.ImageService) {
 
 		if 1000+i*100 >= 0 {
 			price = uint(1000 + i*100)
+		} else {
+			price = 0
 		}
 
 		advert := &Advert{

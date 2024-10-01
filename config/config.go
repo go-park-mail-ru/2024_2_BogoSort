@@ -31,7 +31,6 @@ func Init() error {
 
 	decoder := yaml.NewDecoder(file)
 	err = decoder.Decode(&cfg)
-	
 	if err != nil {
 		return errors.Wrap(err, "failed to decode config file")
 	}

@@ -11,7 +11,6 @@ func TestImageService_GetImageURL(t *testing.T) {
 	service.SetImageURL(1, "/static/images/image1.jpg")
 
 	url, err := service.GetImageURL(1)
-
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}

@@ -18,7 +18,6 @@ type AuthErrResponse struct {
 func SendErrorResponse(w http.ResponseWriter, code int, status string) {
 	w.WriteHeader(code)
 	err := json.NewEncoder(w).Encode(AuthErrResponse{Code: code, Status: status})
-
 	if err != nil {
 		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 	}
@@ -27,7 +26,6 @@ func SendErrorResponse(w http.ResponseWriter, code int, status string) {
 func SendJSONResponse(w http.ResponseWriter, code int, payload interface{}) {
 	w.WriteHeader(code)
 	err := json.NewEncoder(w).Encode(payload)
-
 	if err != nil {
 		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 	}
