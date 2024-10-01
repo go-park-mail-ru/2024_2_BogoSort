@@ -72,7 +72,6 @@ linters:
     - sqlclosecheck
     - staticcheck
     - stylecheck
-    - tagliatelle
     - tenv
     - testableexamples
     - thelper
