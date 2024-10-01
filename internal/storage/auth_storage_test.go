@@ -4,8 +4,10 @@ import (
 	"testing"
 )
 
-const testEmail = "newuser@example.com"
-const testPassword = "passworD!1"
+const (
+	testEmail    = "newuser@example.com"
+	testPassword = "passworD!1"
+)
 
 func TestCreateUser(t *testing.T) {
 	storage := NewUserStorage()

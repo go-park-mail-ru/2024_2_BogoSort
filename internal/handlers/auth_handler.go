@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strings"
 	"time"
@@ -15,12 +16,13 @@ import (
 
 var validate = validator.New()
 
-type AuthData struct {
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required"`
-}
+var (
+	ErrEmptyRequestBody   = errors.New("empty request body")
+	ErrInvalidRequestBody = errors.New("invalid request body")
+	ErrInvalidRequestData = errors.New("invalid request data")
+)
 
-type LoginCredentials struct {
+type AuthCredentials struct {
 	Email    string `json:"email" validate:"required,email"`
 	Password string `json:"password" validate:"required"`
 }
@@ -44,22 +46,26 @@ type AuthHandler struct {
 func (ah *AuthHandler) SignupHandler(writer http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		responses.SendErrorResponse(writer, http.StatusMethodNotAllowed, "Method not allowed")
+
 		return
 	}
 
-	var credentials AuthData
+	var credentials AuthCredentials
 	if err := json.NewDecoder(r.Body).Decode(&credentials); err != nil {
 		responses.SendErrorResponse(writer, http.StatusBadRequest, "Invalid request body")
+
 		return
 	}
 
 	if err := validate.Struct(credentials); err != nil {
 		responses.SendErrorResponse(writer, http.StatusBadRequest, "Invalid request data")
+
 		return
 	}
 
 	if err := utils.ValidatePassword(credentials.Password); err != nil {
 		responses.SendErrorResponse(writer, http.StatusBadRequest, err.Error())
+
 		return
 	}
 
@@ -70,12 +76,14 @@ func (ah *AuthHandler) SignupHandler(writer http.ResponseWriter, r *http.Request
 		} else {
 			responses.SendErrorResponse(writer, http.StatusInternalServerError, "Failed to create user")
 		}
+
 		return
 	}
 
 	tokenString, err := utils.CreateToken(user.Email)
 	if err != nil {
 		responses.SendErrorResponse(writer, http.StatusInternalServerError, "Failed to generate token")
+
 		return
 	}
 
@@ -107,70 +115,88 @@ func (ah *AuthHandler) SignupHandler(writer http.ResponseWriter, r *http.Request
 func (ah *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		responses.SendErrorResponse(w, http.StatusMethodNotAllowed, "Method not allowed")
+
 		return
 	}
 
-	var (
-		email string
-		err   error
-	)
+	if ah.checkExistingSession(w, r) {
+		return
+	}
 
+	credentials, err := ah.validateCredentials(r)
+	if err != nil {
+		responses.SendErrorResponse(w, http.StatusBadRequest, err.Error())
+
+		return
+	}
+
+	user, err := ah.UserStorage.ValidateUserByEmailAndPassword(credentials.Email, credentials.Password)
+	if err != nil {
+		responses.SendErrorResponse(w, http.StatusUnauthorized, "Invalid credentials")
+
+		return
+	}
+
+	ah.createAndSetToken(w, user)
+}
+
+func (ah *AuthHandler) checkExistingSession(w http.ResponseWriter, r *http.Request) bool {
 	cookie, err := r.Cookie("session_id")
 	if err == nil {
-		email, err = utils.ValidateToken(cookie.Value)
-		if err == nil {
+		if email, err := utils.ValidateToken(cookie.Value); err == nil {
 			responses.SendJSONResponse(w, http.StatusOK, responses.AuthResponse{Token: cookie.Value, Email: email})
-			return
+
+			return true
 		}
 	}
 
 	authHeader := r.Header.Get("Authorization")
 	if authHeader != "" {
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-		email, err = utils.ValidateToken(tokenString)
-
-		if err == nil {
+		if email, err := utils.ValidateToken(tokenString); err == nil {
 			responses.SendJSONResponse(w, http.StatusOK, responses.AuthResponse{Token: tokenString, Email: email})
-			return
+
+			return true
 		}
 	}
 
-	var credentials LoginCredentials
-	if r.Body != nil && r.ContentLength != 0 {
-		if err := json.NewDecoder(r.Body).Decode(&credentials); err != nil {
-			responses.SendErrorResponse(w, http.StatusBadRequest, "Invalid request body")
-			return
-		}
+	return false
+}
 
-		if err := validate.Struct(credentials); err != nil {
-			responses.SendErrorResponse(w, http.StatusBadRequest, "Invalid request data")
-			return
-		}
+func (ah *AuthHandler) validateCredentials(r *http.Request) (AuthCredentials, error) {
+	var credentials AuthCredentials
 
-		user, err := ah.UserStorage.ValidateUserByEmailAndPassword(credentials.Email, credentials.Password)
-		if err != nil {
-			responses.SendErrorResponse(w, http.StatusUnauthorized, "Invalid credentials")
-			return
-		}
+	if r.Body == nil || r.ContentLength == 0 {
+		return credentials, ErrEmptyRequestBody
+	}
 
-		tokenString, err := utils.CreateToken(user.Email)
-		if err != nil {
-			responses.SendErrorResponse(w, http.StatusInternalServerError, "Failed to generate token")
-			return
-		}
+	if err := json.NewDecoder(r.Body).Decode(&credentials); err != nil {
+		return credentials, ErrInvalidRequestBody
+	}
 
-		cookie = &http.Cookie{
-			Name:     "session_id",
-			Value:    tokenString,
-			Expires:  time.Now().Add(config.GetJWTExpirationTime()),
-			HttpOnly: true,
-		}
-		http.SetCookie(w, cookie)
-		responses.SendJSONResponse(w, http.StatusOK, responses.AuthResponse{Token: tokenString, Email: user.Email})
+	if err := validate.Struct(credentials); err != nil {
+		return credentials, ErrInvalidRequestData
+	}
+
+	return credentials, nil
+}
+
+func (ah *AuthHandler) createAndSetToken(w http.ResponseWriter, user *storage.User) {
+	tokenString, err := utils.CreateToken(user.Email)
+	if err != nil {
+		responses.SendErrorResponse(w, http.StatusInternalServerError, "Failed to generate token")
+		
 		return
 	}
 
-	responses.SendErrorResponse(w, http.StatusUnauthorized, "Invalid credentials")
+	cookie := &http.Cookie{
+		Name:     "session_id",
+		Value:    tokenString,
+		Expires:  time.Now().Add(config.GetJWTExpirationTime()),
+		HttpOnly: true,
+	}
+	http.SetCookie(w, cookie)
+	responses.SendJSONResponse(w, http.StatusOK, responses.AuthResponse{Token: tokenString, Email: user.Email})
 }
 
 // LogoutHandler godoc
@@ -187,6 +213,7 @@ func (ah *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 func (ah *AuthHandler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		responses.SendErrorResponse(w, http.StatusMethodNotAllowed, "Method not allowed")
+
 		return
 	}
 
@@ -204,6 +231,7 @@ func (ah *AuthHandler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 			token = strings.TrimPrefix(authHeader, "Bearer ")
 		} else {
 			responses.SendErrorResponse(w, http.StatusUnauthorized, "No active session")
+
 			return
 		}
 	}
@@ -211,6 +239,7 @@ func (ah *AuthHandler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	_, err = utils.ValidateToken(token)
 	if err != nil {
 		responses.SendErrorResponse(w, http.StatusUnauthorized, "Invalid token")
+
 		return
 	}
 

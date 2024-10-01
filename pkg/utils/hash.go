@@ -10,7 +10,6 @@ const (
 
 func HashPassword(password string) string {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcryptCost)
-
 	if err != nil {
 		return ""
 	}

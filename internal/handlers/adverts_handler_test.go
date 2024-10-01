@@ -91,8 +91,9 @@ func TestAdvertsHandler_UpdateAdvertHandler(t *testing.T) {
 	list.Add(advert)
 
 	updatedAdvertJSON := `{"id": 1, "title": "Updated Advert", "price": 2000, "location": "Санкт-Петербург"}`
-	req, err := http.NewRequest(http.MethodPut, "/api/v1/adverts/1", strings.NewReader(updatedAdvertJSON))
 
+	req, err := http.NewRequest(http.MethodPut, "/api/v1/adverts/1", strings.NewReader(updatedAdvertJSON))
+	
 	if err != nil {
 		t.Fatal(err)
 	}

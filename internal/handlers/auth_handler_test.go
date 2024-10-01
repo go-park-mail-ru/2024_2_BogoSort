@@ -27,68 +27,113 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func TestRegisterHandler(t *testing.T) {
+func TestSignupHandler(t *testing.T) {
 	userStorage := storage.NewUserStorage()
-	authHandler := &AuthHandler{
-		UserStorage: userStorage,
-	}
+	authHandler := &AuthHandler{UserStorage: userStorage}
 
-	reqBody, _ := json.Marshal(AuthData{Email: "newuser@example.com", Password: "Password1!"})
-	req, err := http.NewRequest("POST", "/api/v1/signup", bytes.NewBuffer(reqBody))
+	t.Run("Successful signup", func(t *testing.T) {
+		testSuccessfulSignup(t, authHandler)
+	})
+
+	t.Run("Duplicate signup", func(t *testing.T) {
+		testDuplicateSignup(t, authHandler)
+	})
+
+	t.Run("Method not allowed", func(t *testing.T) {
+		testMethodNotAllowed(t, authHandler)
+	})
+
+	t.Run("Invalid JSON", func(t *testing.T) {
+		testInvalidJSON(t, authHandler)
+	})
+}
+
+func testSuccessfulSignup(t *testing.T, authHandler *AuthHandler) {
+	t.Helper()
+
+	reqBody, err := json.Marshal(AuthCredentials{Email: "newuser@example.com", Password: "Password1!"})
 
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("failed to marshal request body: %v", err)
+	}
+
+	req, err := http.NewRequest(http.MethodPost, "/api/v1/signup", bytes.NewBuffer(reqBody))
+	if err != nil {
+		t.Fatalf("failed to create request: %v", err)
 	}
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(authHandler.SignupHandler)
-	handler.ServeHTTP(rr, req)
+	http.HandlerFunc(authHandler.SignupHandler).ServeHTTP(rr, req)
 
 	if status := rr.Code; status != http.StatusCreated {
 		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusCreated)
 	}
 
 	var response responses.AuthResponse
+	err = json.NewDecoder(rr.Body).Decode(&response)
 
-	if err := json.NewDecoder(rr.Body).Decode(&response); err != nil {
-		t.Errorf("could not decode response: %v", err)
+	if err != nil {
+		t.Errorf("failed to decode response: %v", err)
 	}
 
 	if response.Email != "newuser@example.com" {
 		t.Errorf("expected email to be newuser@example.com, got %v", response.Email)
 	}
+}
 
-	req, err = http.NewRequest("POST", "/api/v1/signup", bytes.NewBuffer(reqBody))
+func testDuplicateSignup(t *testing.T, authHandler *AuthHandler) {
+	t.Helper()
+
+	reqBody, err := json.Marshal(AuthCredentials{Email: "newuser@example.com", Password: "Password1!"})
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("failed to marshal request body: %v", err)
 	}
 
-	rr = httptest.NewRecorder()
-	handler.ServeHTTP(rr, req)
+	req, err := http.NewRequest(http.MethodPost, "/api/v1/signup", bytes.NewBuffer(reqBody))
+	
+	if err != nil {
+		t.Fatalf("failed to create request: %v", err)
+	}
+
+	rr := httptest.NewRecorder()
+
+	http.HandlerFunc(authHandler.SignupHandler).ServeHTTP(rr, req)
 
 	if status := rr.Code; status != http.StatusBadRequest {
 		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusBadRequest)
 	}
+}
 
-	req, err = http.NewRequest("GET", "/api/v1/signup", nil)
+func testMethodNotAllowed(t *testing.T, authHandler *AuthHandler) {
+	t.Helper()
+
+	req, err := http.NewRequest(http.MethodGet, "/api/v1/signup", nil)
+
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("failed to create request: %v", err)
 	}
 
-	rr = httptest.NewRecorder()
-	handler.ServeHTTP(rr, req)
+	rr := httptest.NewRecorder()
+
+	http.HandlerFunc(authHandler.SignupHandler).ServeHTTP(rr, req)
 
 	if status := rr.Code; status != http.StatusMethodNotAllowed {
 		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusMethodNotAllowed)
 	}
+}
 
-	req, err = http.NewRequest("POST", "/api/v1/signup", bytes.NewBuffer([]byte("invalid json")))
+func testInvalidJSON(t *testing.T, authHandler *AuthHandler) {
+	t.Helper()
+
+	req, err := http.NewRequest(http.MethodPost, "/api/v1/signup", bytes.NewBufferString("invalid json"))
+
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("failed to create request: %v", err)
 	}
 
-	rr = httptest.NewRecorder()
-	handler.ServeHTTP(rr, req)
+	rr := httptest.NewRecorder()
+
+	http.HandlerFunc(authHandler.SignupHandler).ServeHTTP(rr, req)
 
 	if status := rr.Code; status != http.StatusBadRequest {
 		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusBadRequest)
@@ -106,9 +151,12 @@ func TestLoginHandler(t *testing.T) {
 		t.Fatalf("expected no error, got %v", err)
 	}
 
-	reqBody, _ := json.Marshal(LoginCredentials{Email: "newuser@example.com", Password: "password"})
-	req, err := http.NewRequest("POST", "/api/v1/login", bytes.NewBuffer(reqBody))
-
+	reqBody, err := json.Marshal(AuthCredentials{Email: "newuser@example.com", Password: "password"})
+	if err != nil {
+		t.Fatalf("failed to marshal request body: %v", err)
+	}
+	
+	req, err := http.NewRequest(http.MethodPost, "/api/v1/login", bytes.NewBuffer(reqBody))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -130,10 +178,12 @@ func TestLoginHandler(t *testing.T) {
 		t.Errorf("expected email to be newuser@example.com, got %v", response.Email)
 	}
 
-	// Test login with invalid password
-	reqBody, _ = json.Marshal(LoginCredentials{Email: "newuser@example.com", Password: "wrongpassword"})
-	req, err = http.NewRequest("POST", "/api/v1/login", bytes.NewBuffer(reqBody))
+	reqBody, err = json.Marshal(AuthCredentials{Email: "newuser@example.com", Password: "wrongpassword"})
+	if err != nil {
+		t.Fatalf("failed to marshal request body: %v", err)
+	}
 
+	req, err = http.NewRequest(http.MethodPost, "/api/v1/login", bytes.NewBuffer(reqBody))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -146,7 +196,7 @@ func TestLoginHandler(t *testing.T) {
 	}
 
 	// Test login with invalid method
-	req, err = http.NewRequest("GET", "/api/v1/login", nil)
+	req, err = http.NewRequest(http.MethodGet, "/api/v1/login", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -159,12 +209,13 @@ func TestLoginHandler(t *testing.T) {
 	}
 
 	// Test login with invalid JSON
-	req, err = http.NewRequest("POST", "/api/v1/login", bytes.NewBuffer([]byte("invalid json")))
+	req, err = http.NewRequest(http.MethodPost, "/api/v1/login", bytes.NewBufferString("invalid json"))
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	rr = httptest.NewRecorder()
+
 	handler.ServeHTTP(rr, req)
 
 	if status := rr.Code; status != http.StatusBadRequest {
@@ -178,16 +229,19 @@ func TestSignupHandlerValidation(t *testing.T) {
 		UserStorage: userStorage,
 	}
 
-	invalidReqBodies := []AuthData{
+	invalidReqBodies := []AuthCredentials{
 		{Email: "", Password: "password"},
 		{Email: "invalid-email", Password: "password"},
 		{Email: "newuser@example.com", Password: ""},
 	}
 
 	for _, reqBody := range invalidReqBodies {
-		body, _ := json.Marshal(reqBody)
-		req, err := http.NewRequest("POST", "/api/v1/signup", bytes.NewBuffer(body))
+		body, err := json.Marshal(reqBody)
+		if err != nil {
+			t.Fatalf("failed to marshal request body: %v", err)
+		}
 
+		req, err := http.NewRequest(http.MethodPost, "/api/v1/signup", bytes.NewBuffer(body))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -208,16 +262,19 @@ func TestLoginHandlerValidation(t *testing.T) {
 		UserStorage: userStorage,
 	}
 
-	invalidReqBodies := []LoginCredentials{
+	invalidReqBodies := []AuthCredentials{
 		{Email: "", Password: "password"},
 		{Email: "invalid-email", Password: "password"},
 		{Email: "newuser@example.com", Password: ""},
 	}
 
 	for _, reqBody := range invalidReqBodies {
-		body, _ := json.Marshal(reqBody)
-		req, err := http.NewRequest("POST", "/api/v1/login", bytes.NewBuffer(body))
-		
+		body, err := json.Marshal(reqBody)
+		if err != nil {
+			t.Fatalf("failed to marshal request body: %v", err)
+		}
+
+		req, err := http.NewRequest(http.MethodPost, "/api/v1/login", bytes.NewBuffer(body))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -239,7 +296,7 @@ func TestLogoutHandler(t *testing.T) {
 	}
 
 	// Test logout with no session cookie
-	req, err := http.NewRequest("POST", "/api/v1/logout", nil)
+	req, err := http.NewRequest(http.MethodPost, "/api/v1/logout", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -253,7 +310,7 @@ func TestLogoutHandler(t *testing.T) {
 	}
 
 	// Test logout with invalid session cookie
-	req, err = http.NewRequest("POST", "/api/v1/logout", nil)
+	req, err = http.NewRequest(http.MethodPost, "/api/v1/logout", nil)
 	if err != nil {
 		t.Fatal(err)
 	}

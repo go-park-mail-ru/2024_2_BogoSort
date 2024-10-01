@@ -62,7 +62,6 @@ func (authHandler *AdvertsHandler) GetAdvertByIDHandler(writer http.ResponseWrit
 	}
 
 	advert, err := authHandler.List.GetAdvertByID(uint(uintID))
-
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusNotFound)
 
@@ -138,7 +137,7 @@ func (authHandler *AdvertsHandler) UpdateAdvertHandler(writer http.ResponseWrite
 
 	var advert storage.Advert
 	err = json.NewDecoder(reader.Body).Decode(&advert)
-
+	
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusBadRequest)
 
@@ -152,7 +151,6 @@ func (authHandler *AdvertsHandler) UpdateAdvertHandler(writer http.ResponseWrite
 	}
 
 	err = authHandler.List.Update(&advert)
-
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusNotFound)
 
@@ -160,7 +158,6 @@ func (authHandler *AdvertsHandler) UpdateAdvertHandler(writer http.ResponseWrite
 	}
 
 	err = json.NewEncoder(writer).Encode(advert)
-
 	if err != nil {
 		log.Println(err)
 		http.Error(writer, "Failed to encode advert", http.StatusInternalServerError)
@@ -188,7 +185,6 @@ func (authHandler *AdvertsHandler) DeleteAdvertHandler(writer http.ResponseWrite
 	}
 
 	err = authHandler.List.DeleteAdvert(uint(uintID))
-
 	if err != nil {
 		responses.SendErrorResponse(writer, http.StatusInternalServerError, "Internal server error")
 

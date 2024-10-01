@@ -61,7 +61,6 @@ linters:
     - nolintlint
     - nonamedreturns
     - nosprintfhostport
-    - paralleltest
     - prealloc
     - predeclared
     - promlinter
@@ -106,3 +105,8 @@ linters:
     - gochecknoglobals
     - gofmt
     - gci
+    - paralleltest
+
+linters-settings:
+  funlen:
+    lines: 80
