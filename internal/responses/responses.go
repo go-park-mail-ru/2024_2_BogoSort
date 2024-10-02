@@ -10,14 +10,14 @@ type AuthResponse struct {
 	Email string `json:"email"`
 }
 
-type AuthErrResponse struct {
+type ErrResponse struct {
 	Code   int    `json:"code"`
 	Status string `json:"status"`
 }
 
 func SendErrorResponse(w http.ResponseWriter, code int, status string) {
 	w.WriteHeader(code)
-	err := json.NewEncoder(w).Encode(AuthErrResponse{Code: code, Status: status})
+	err := json.NewEncoder(w).Encode(ErrResponse{Code: code, Status: status})
 	
 	if err != nil {
 		http.Error(w, "Failed to encode response", http.StatusInternalServerError)

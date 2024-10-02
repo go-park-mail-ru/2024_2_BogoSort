@@ -20,10 +20,8 @@ linters:
     - exhaustive
     - exportloopref
     - forcetypeassert
-    - funlen
     - ginkgolinter
     - gocheckcompilerdirectives
-    - gochecknoglobals
     - gochecknoinits
     - gocognit
     - goconst
@@ -31,14 +29,11 @@ linters:
     - gocyclo
     - godox
     - goerr113
-    - gofumpt
     - goheader
-    - goimports
     - gomnd
     - gomoddirectives
     - gomodguard
     - goprintffuncname
-    - gosec
     - gosimple
     - gosmopolitan
     - govet
@@ -62,7 +57,6 @@ linters:
     - nolintlint
     - nonamedreturns
     - nosprintfhostport
-    - paralleltest
     - prealloc
     - predeclared
     - promlinter
@@ -72,7 +66,6 @@ linters:
     - sqlclosecheck
     - staticcheck
     - stylecheck
-    - tagliatelle
     - tenv
     - testableexamples
     - thelper
@@ -108,3 +101,14 @@ linters:
     - gochecknoglobals
     - gofmt
     - gci
+    - paralleltest
+    - gofumpt
+    - gosec
+    - goimports
+    - funlen
+
+
+
+linters-settings:
+  cyclop:
+    max-complexity: 12

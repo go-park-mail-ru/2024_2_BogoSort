@@ -27,8 +27,8 @@ func Init() error {
 	if err != nil {
 		return errors.Wrap(err, "failed to open config file")
 	}
-	defer file.Close()
 
+	defer file.Close()
 	decoder := yaml.NewDecoder(file)
 	err = decoder.Decode(&cfg)
 	

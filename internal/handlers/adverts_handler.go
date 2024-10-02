@@ -19,7 +19,7 @@ import (
 // @Produce json
 // @Success 200 {array} storage.Advert
 // @Router /api/v1/adverts [get]
-func (authHandler *AdvertsHandler) GetAdvertsHandler(writer http.ResponseWriter, reader *http.Request) {
+func (authHandler *AdvertsHandler) GetAdvertsHandler(writer http.ResponseWriter, _ *http.Request) {
 	adverts := authHandler.List.GetAdverts()
 
 	for index := range adverts {
@@ -62,7 +62,6 @@ func (authHandler *AdvertsHandler) GetAdvertByIDHandler(writer http.ResponseWrit
 	}
 
 	advert, err := authHandler.List.GetAdvertByID(uint(uintID))
-
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusNotFound)
 
@@ -100,6 +99,7 @@ func (authHandler *AdvertsHandler) AddAdvertHandler(writer http.ResponseWriter, 
 
 	if err != nil {
 		responses.SendErrorResponse(writer, http.StatusBadRequest, err.Error())
+
 		return
 	}
 
@@ -131,31 +131,33 @@ func (authHandler *AdvertsHandler) UpdateAdvertHandler(writer http.ResponseWrite
 
 	if err != nil {
 		responses.SendErrorResponse(writer, http.StatusBadRequest, "Invalid ID")
+
 		return
 	}
 
 	var advert storage.Advert
 	err = json.NewDecoder(reader.Body).Decode(&advert)
-
+	
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusBadRequest)
+
 		return
 	}
 
 	if advert.ID != uint(uintID) {
 		responses.SendErrorResponse(writer, http.StatusBadRequest, "Id in URL and JSON do not match")
+
 		return
 	}
 
 	err = authHandler.List.Update(&advert)
-
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusNotFound)
+
 		return
 	}
 
 	err = json.NewEncoder(writer).Encode(advert)
-
 	if err != nil {
 		log.Println(err)
 		http.Error(writer, "Failed to encode advert", http.StatusInternalServerError)
@@ -178,13 +180,14 @@ func (authHandler *AdvertsHandler) DeleteAdvertHandler(writer http.ResponseWrite
 
 	if err != nil {
 		responses.SendErrorResponse(writer, http.StatusBadRequest, "Invalid ID")
+
 		return
 	}
 
 	err = authHandler.List.DeleteAdvert(uint(uintID))
-
 	if err != nil {
 		responses.SendErrorResponse(writer, http.StatusInternalServerError, "Internal server error")
+
 		return
 	}
 

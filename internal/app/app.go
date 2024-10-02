@@ -4,11 +4,11 @@ import (
 	"context"
 	"net/http"
 	"time"
-	"github.com/pkg/errors"
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/config"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/handlers"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/pkg/utils"
+	"github.com/pkg/errors"
 	"github.com/rs/cors"
 )
 
@@ -36,17 +36,19 @@ func (server *Server) Run() error {
 		AllowCredentials: true,
 	}).Handler(router)
 
+	const cooldown = 10 * time.Second
 	server.server = &http.Server{
 		Addr:         config.GetServerAddress(),
 		Handler:      corsHandler,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 10 * time.Second,
+		ReadTimeout:  cooldown,
+		WriteTimeout: cooldown,
 	}
 
 	err := server.server.ListenAndServe()
 	if err != nil {
 		return errors.Wrap(err, "failed to listen and serve")
 	}
+
 	return nil
 }
 
@@ -55,5 +57,6 @@ func (server *Server) Shutdown(ctx context.Context) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to shutdown server")
 	}
+
 	return nil
 }

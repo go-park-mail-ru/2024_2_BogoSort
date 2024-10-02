@@ -4,17 +4,20 @@ BIN_DIR=bin
 
 MAIN_PATH=./cmd/app
 
+GOTMPDIR=./tmp
+
 build:
-	go build -o $(BIN_DIR)/$(BINARY_NAME) $(MAIN_PATH)
+	mkdir -p $(BIN_DIR)
+	GOTMPDIR=$(GOTMPDIR) go build -o $(BIN_DIR)/$(BINARY_NAME) $(MAIN_PATH)
 
 test:
-	go test ./...
+	GOTMPDIR=$(GOTMPDIR) go test ./...
 
 test-cover:
-	go test ./... -cover
+	GOTMPDIR=$(GOTMPDIR) go test ./... -cover
 
 clean:
-	rm -rf $(BIN_DIR)
+	rm -rf $(BIN_DIR) $(GOTMPDIR)
 
 run: build
 	./$(BIN_DIR)/$(BINARY_NAME)
