@@ -1,7 +1,10 @@
 {
     "swagger": "2.0",
     "info": {
-        "contact": {}
+        "contact": {},
+        "title": "Emporium API",
+        "description": "API for managing emporium adverts",
+        "version": "1.0.2"
     },
     "paths": {
         "/api/v1/adverts": {
@@ -22,6 +25,12 @@
                             "items": {
                                 "$ref": "#/definitions/storage.Advert"
                             }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ErrResponse"
                         }
                     }
                 }
@@ -102,6 +111,12 @@
                         "schema": {
                             "$ref": "#/definitions/responses.ErrResponse"
                         }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ErrResponse"
+                        }
                     }
                 }
             },
@@ -150,6 +165,12 @@
                     },
                     "404": {
                         "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/responses.ErrResponse"
                         }

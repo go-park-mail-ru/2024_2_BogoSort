@@ -14,6 +14,10 @@ type AdvertsHandler struct {
 	ImageService *services.ImageService
 }
 
+type AuthHandler struct {
+	UserStorage *storage.UserStorage
+}
+
 func NewRouter() *mux.Router {
 	router := mux.NewRouter()
 	router.Use(recoveryMiddleware)

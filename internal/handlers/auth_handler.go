@@ -27,10 +27,6 @@ type AuthCredentials struct {
 	Password string `json:"password" validate:"required"`
 }
 
-type AuthHandler struct {
-	UserStorage *storage.UserStorage
-}
-
 // SignupHandler godoc
 // @Summary Signup a new user
 // @Description Signup a new user with email and password

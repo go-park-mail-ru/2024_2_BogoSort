@@ -90,7 +90,7 @@ func testDuplicateSignup(t *testing.T, authHandler *AuthHandler) {
 	}
 
 	req, err := http.NewRequest(http.MethodPost, "/api/v1/signup", bytes.NewBuffer(reqBody))
-	
+
 	if err != nil {
 		t.Fatalf("failed to create request: %v", err)
 	}
@@ -155,7 +155,7 @@ func TestLoginHandler(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to marshal request body: %v", err)
 	}
-	
+
 	req, err := http.NewRequest(http.MethodPost, "/api/v1/login", bytes.NewBuffer(reqBody))
 	if err != nil {
 		t.Fatal(err)

@@ -20,7 +20,6 @@ linters:
     - exhaustive
     - exportloopref
     - forcetypeassert
-    - funlen
     - ginkgolinter
     - gocheckcompilerdirectives
     - gochecknoinits
@@ -30,14 +29,11 @@ linters:
     - gocyclo
     - godox
     - goerr113
-    - gofumpt
     - goheader
-    - goimports
     - gomnd
     - gomoddirectives
     - gomodguard
     - goprintffuncname
-    - gosec
     - gosimple
     - gosmopolitan
     - govet
@@ -106,7 +102,13 @@ linters:
     - gofmt
     - gci
     - paralleltest
+    - gofumpt
+    - gosec
+    - goimports
+    - funlen
+
+
 
 linters-settings:
-  funlen:
-    lines: 80
+  cyclop:
+    max-complexity: 12

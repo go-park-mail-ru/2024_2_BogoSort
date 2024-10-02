@@ -119,12 +119,13 @@ func FillAdverts(ads *AdvertsList, imageService *services.ImageService) {
 		"Продам телефон", "Продам дом", "Аренда гаража", "Продам планшет", "Продам телевизор",
 	}
 
-	const testAdvCount = 30
+	const testAdvCount, testPrice = 30, 1000
+
 	for i := 1; i <= testAdvCount; i++ {
 		imageURL := fmt.Sprintf("/static/images/image%d.jpg", i)
 
 		id := uint(i)
-		price := uint(1000 + (i-1)*100)
+		price := uint(testPrice + (i-1)*testPrice/10)
 
 		advert := &Advert{
 			ID:       id,

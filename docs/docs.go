@@ -34,6 +34,12 @@ const docTemplate = `{
                                 "$ref": "#/definitions/storage.Advert"
                             }
                         }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ErrResponse"
+                        }
                     }
                 }
             },
@@ -113,6 +119,12 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/responses.ErrResponse"
                         }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ErrResponse"
+                        }
                     }
                 }
             },
@@ -161,6 +173,12 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/responses.ErrResponse"
                         }

@@ -18,6 +18,7 @@ import (
 // @Tags adverts
 // @Produce json
 // @Success 200 {array} storage.Advert
+// @Failure 500 {object} responses.ErrResponse
 // @Router /api/v1/adverts [get]
 func (authHandler *AdvertsHandler) GetAdvertsHandler(writer http.ResponseWriter, _ *http.Request) {
 	adverts := authHandler.List.GetAdverts()
@@ -33,11 +34,7 @@ func (authHandler *AdvertsHandler) GetAdvertsHandler(writer http.ResponseWriter,
 		adverts[index].ImageURL = imageURL
 	}
 
-	err := json.NewEncoder(writer).Encode(adverts)
-	if err != nil {
-		log.Println(err)
-		http.Error(writer, "Failed to encode adverts", http.StatusInternalServerError)
-	}
+	responses.SendJSONResponse(writer, http.StatusOK, adverts)
 }
 
 // GetAdvertByIDHandler godoc
@@ -49,6 +46,7 @@ func (authHandler *AdvertsHandler) GetAdvertsHandler(writer http.ResponseWriter,
 // @Success 200 {object} storage.Advert
 // @Failure 400 {object} responses.ErrResponse
 // @Failure 404 {object} responses.ErrResponse
+// @Failure 500 {object} responses.ErrResponse
 // @Router /api/v1/adverts/{id} [get]
 func (authHandler *AdvertsHandler) GetAdvertByIDHandler(writer http.ResponseWriter, reader *http.Request) {
 	vars := mux.Vars(reader)
@@ -63,7 +61,7 @@ func (authHandler *AdvertsHandler) GetAdvertByIDHandler(writer http.ResponseWrit
 
 	advert, err := authHandler.List.GetAdvertByID(uint(uintID))
 	if err != nil {
-		http.Error(writer, err.Error(), http.StatusNotFound)
+		responses.SendErrorResponse(writer, http.StatusNotFound, "Advert not found")
 
 		return
 	}
@@ -74,13 +72,12 @@ func (authHandler *AdvertsHandler) GetAdvertByIDHandler(writer http.ResponseWrit
 		advert.ImageURL = imageURL
 	} else {
 		log.Println(err)
+		responses.SendErrorResponse(writer, http.StatusInternalServerError, "Internal server error")
+
+		return
 	}
 
-	err = json.NewEncoder(writer).Encode(advert)
-	if err != nil {
-		log.Println(err)
-		http.Error(writer, "Failed to encode advert", http.StatusInternalServerError)
-	}
+	responses.SendJSONResponse(writer, http.StatusOK, advert)
 }
 
 // AddAdvertHandler godoc
@@ -104,12 +101,8 @@ func (authHandler *AdvertsHandler) AddAdvertHandler(writer http.ResponseWriter, 
 	}
 
 	authHandler.List.Add(&advert)
-	err = json.NewEncoder(writer).Encode(advert)
 
-	if err != nil {
-		log.Println(err)
-		http.Error(writer, "Failed to encode advert", http.StatusInternalServerError)
-	}
+	responses.SendJSONResponse(writer, http.StatusOK, advert)
 }
 
 // UpdateAdvertHandler godoc
@@ -123,6 +116,7 @@ func (authHandler *AdvertsHandler) AddAdvertHandler(writer http.ResponseWriter, 
 // @Success 200 {object} storage.Advert
 // @Failure 400 {object} responses.ErrResponse
 // @Failure 404 {object} responses.ErrResponse
+// @Failure 500 {object} responses.ErrResponse
 // @Router /api/v1/adverts/{id} [put]
 func (authHandler *AdvertsHandler) UpdateAdvertHandler(writer http.ResponseWriter, reader *http.Request) {
 	vars := mux.Vars(reader)
@@ -139,7 +133,7 @@ func (authHandler *AdvertsHandler) UpdateAdvertHandler(writer http.ResponseWrite
 	err = json.NewDecoder(reader.Body).Decode(&advert)
 
 	if err != nil {
-		http.Error(writer, err.Error(), http.StatusBadRequest)
+		responses.SendErrorResponse(writer, http.StatusBadRequest, err.Error())
 
 		return
 	}
@@ -152,16 +146,12 @@ func (authHandler *AdvertsHandler) UpdateAdvertHandler(writer http.ResponseWrite
 
 	err = authHandler.List.Update(&advert)
 	if err != nil {
-		http.Error(writer, err.Error(), http.StatusNotFound)
+		responses.SendErrorResponse(writer, http.StatusNotFound, err.Error())
 
 		return
 	}
 
-	err = json.NewEncoder(writer).Encode(advert)
-	if err != nil {
-		log.Println(err)
-		http.Error(writer, "Failed to encode advert", http.StatusInternalServerError)
-	}
+	responses.SendJSONResponse(writer, http.StatusOK, advert)
 }
 
 // DeleteAdvertHandler godoc
@@ -191,5 +181,5 @@ func (authHandler *AdvertsHandler) DeleteAdvertHandler(writer http.ResponseWrite
 		return
 	}
 
-	writer.WriteHeader(http.StatusNoContent)
+	responses.SendJSONResponse(writer, http.StatusNoContent, nil)
 }
