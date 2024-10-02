@@ -64,7 +64,7 @@ func (l *AdvertsList) DeleteAdvert(id uint) error {
 	return ErrAdvertNotFound
 }
 
-func (l *AdvertsList) GetAdverts() []Advert {
+func (l *AdvertsList) GetAdverts() ([]Advert, error) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
@@ -74,7 +74,7 @@ func (l *AdvertsList) GetAdverts() []Advert {
 		result[i] = *advert
 	}
 
-	return result
+	return result, nil
 }
 
 func (l *AdvertsList) GetAdvertByID(id uint) (Advert, error) {

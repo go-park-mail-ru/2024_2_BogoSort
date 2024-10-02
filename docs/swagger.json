@@ -3,7 +3,6 @@
     "info": {
         "contact": {},
         "title": "Emporium API",
-        "description": "API for managing emporium adverts",
         "version": "1.0.2"
     },
     "paths": {
