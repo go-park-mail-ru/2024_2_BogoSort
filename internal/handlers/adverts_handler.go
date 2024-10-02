@@ -21,7 +21,11 @@ import (
 // @Failure 500 {object} responses.ErrResponse
 // @Router /api/v1/adverts [get]
 func (authHandler *AdvertsHandler) GetAdvertsHandler(writer http.ResponseWriter, _ *http.Request) {
-	adverts := authHandler.List.GetAdverts()
+	adverts, err := authHandler.List.GetAdverts()
+	if err != nil {
+		responses.SendErrorResponse(writer, http.StatusInternalServerError, "Failed to get adverts")
+		return
+	}
 
 	for index := range adverts {
 		imageURL, err := authHandler.ImageService.GetImageURL(adverts[index].ID)

@@ -67,7 +67,11 @@ func TestAdvertsList_GetAdverts(t *testing.T) {
 
 	list.Add(advert)
 
-	adverts := list.GetAdverts()
+	adverts, err := list.GetAdverts()
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
 	if len(adverts) != 1 {
 		t.Fatalf("expected 1 advert, got %d", len(adverts))
 	}
