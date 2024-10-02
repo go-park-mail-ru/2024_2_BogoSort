@@ -38,6 +38,21 @@ func CreateToken(email string) (string, error) {
 	return token.SignedString(jwtKey)
 }
 
+func CreateRefreshToken(email string) (string, error) {
+	expirationTime := time.Now().Add(7 * 24 * time.Hour)
+	claims := &jwt.RegisteredClaims{
+		ExpiresAt: jwt.NewNumericDate(expirationTime),
+		IssuedAt:  jwt.NewNumericDate(time.Now()),
+		NotBefore: jwt.NewNumericDate(time.Now()),
+		Issuer:    config.GetJWTIssuer(),
+		Subject:   email,
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	return token.SignedString(jwtKey)
+}
+
 func ValidateToken(tokenString string) (string, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {

@@ -71,14 +71,10 @@ func (authHandler *AdvertsHandler) GetAdvertByIDHandler(writer http.ResponseWrit
 	}
 
 	imageURL, err := authHandler.ImageService.GetImageURL(advert.ID)
-
-	if err == nil {
-		advert.ImageURL = imageURL
+	if err != nil {
+		log.Println("изображение не найдено:", err)
 	} else {
-		log.Println(err)
-		responses.SendErrorResponse(writer, http.StatusInternalServerError, "Internal server error")
-
-		return
+		advert.ImageURL = imageURL
 	}
 
 	responses.SendJSONResponse(writer, http.StatusOK, advert)

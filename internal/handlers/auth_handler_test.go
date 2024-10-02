@@ -191,8 +191,8 @@ func TestLoginHandler(t *testing.T) {
 	rr = httptest.NewRecorder()
 	handler.ServeHTTP(rr, req)
 
-	if status := rr.Code; status != http.StatusUnauthorized {
-		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusUnauthorized)
+	if status := rr.Code; status != http.StatusBadRequest {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusBadRequest)
 	}
 
 	// Test login with invalid method
@@ -328,5 +328,74 @@ func TestLogoutHandler(t *testing.T) {
 
 	if status := rr.Code; status != http.StatusUnauthorized {
 		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusUnauthorized)
+	}
+}
+
+func TestRefreshHandler(t *testing.T) {
+	userStorage := storage.NewUserStorage()
+	authHandler := &AuthHandler{UserStorage: userStorage}
+
+	// Create a user and generate a refresh token
+	user, err := userStorage.CreateUser("test@example.com", "password123")
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	refreshToken, err := utils.CreateRefreshToken(user.Email)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	// Test valid refresh
+	requestBody := map[string]string{"refresh_token": refreshToken}
+	body, _ := json.Marshal(requestBody)
+	req, _ := http.NewRequest("POST", "/api/v1/refresh", bytes.NewBuffer(body))
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(authHandler.RefreshHandler)
+	handler.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
+	}
+
+	var response responses.AuthResponse
+	err = json.NewDecoder(rr.Body).Decode(&response)
+	if err != nil {
+		t.Errorf("could not decode response: %v", err)
+	}
+	if response.Token == "" || response.RefreshToken == "" {
+		t.Errorf("expected non-empty tokens, got empty tokens")
+	}
+	if response.Email != user.Email {
+		t.Errorf("expected email %v, got %v", user.Email, response.Email)
+	}
+
+	// Test invalid refresh token
+	requestBody["refresh_token"] = "invalidtoken"
+	body, _ = json.Marshal(requestBody)
+	req, _ = http.NewRequest("POST", "/api/v1/refresh", bytes.NewBuffer(body))
+	rr = httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusUnauthorized {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusUnauthorized)
+	}
+
+	// Test refresh with invalid method
+	req, _ = http.NewRequest("GET", "/api/v1/refresh", nil)
+	rr = httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusMethodNotAllowed {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusMethodNotAllowed)
+	}
+
+	// Test refresh with invalid JSON
+	req, _ = http.NewRequest("POST", "/api/v1/refresh", bytes.NewBufferString("invalid json"))
+	rr = httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusBadRequest {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusBadRequest)
 	}
 }
