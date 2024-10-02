@@ -110,7 +110,6 @@ func (ah *AuthHandler) SignupHandler(writer http.ResponseWriter, r *http.Request
 func (ah *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		responses.SendErrorResponse(w, http.StatusMethodNotAllowed, "Method not allowed")
-
 		return
 	}
 
@@ -119,12 +118,52 @@ func (ah *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		err   error
 	)
 
+	var credentials AuthCredentials
+	if r.Body != nil && r.ContentLength != 0 {
+		if err := json.NewDecoder(r.Body).Decode(&credentials); err != nil {
+			responses.SendErrorResponse(w, http.StatusBadRequest, "Invalid request body")
+			return
+		}
+
+		if err := validate.Struct(credentials); err != nil {
+			responses.SendErrorResponse(w, http.StatusBadRequest, "Invalid request data")
+			return
+		}
+
+		user, err := ah.UserStorage.ValidateUserByEmailAndPassword(credentials.Email, credentials.Password)
+		if err != nil {
+			http.SetCookie(w, &http.Cookie{
+				Name:     "session_id",
+				Value:    "",
+				Expires:  time.Now().Add(-time.Hour),
+				HttpOnly: true,
+			})
+			responses.SendErrorResponse(w, http.StatusUnauthorized, "Invalid credentials")
+			return
+		}
+
+		tokenString, err := utils.CreateToken(user.Email)
+		if err != nil {
+			responses.SendErrorResponse(w, http.StatusInternalServerError, "Failed to generate token")
+			return
+		}
+
+		cookie := &http.Cookie{
+			Name:     "session_id",
+			Value:    tokenString,
+			Expires:  time.Now().Add(config.GetJWTExpirationTime()),
+			HttpOnly: true,
+		}
+		http.SetCookie(w, cookie)
+		responses.SendJSONResponse(w, http.StatusOK, responses.AuthResponse{Token: tokenString, Email: user.Email})
+		return
+	}
+
 	cookie, err := r.Cookie("session_id")
 	if err == nil {
 		email, err = utils.ValidateToken(cookie.Value)
 		if err == nil {
 			responses.SendJSONResponse(w, http.StatusOK, responses.AuthResponse{Token: cookie.Value, Email: email})
-
 			return
 		}
 	}
@@ -133,52 +172,10 @@ func (ah *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	if authHeader != "" {
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 		email, err = utils.ValidateToken(tokenString)
-
 		if err == nil {
 			responses.SendJSONResponse(w, http.StatusOK, responses.AuthResponse{Token: tokenString, Email: email})
-
 			return
 		}
-	}
-
-	var credentials AuthCredentials
-	if r.Body != nil && r.ContentLength != 0 {
-		if err := json.NewDecoder(r.Body).Decode(&credentials); err != nil {
-			responses.SendErrorResponse(w, http.StatusBadRequest, "Invalid request body")
-
-			return
-		}
-
-		if err := validate.Struct(credentials); err != nil {
-			responses.SendErrorResponse(w, http.StatusBadRequest, "Invalid request data")
-
-			return
-		}
-
-		user, err := ah.UserStorage.ValidateUserByEmailAndPassword(credentials.Email, credentials.Password)
-		if err != nil {
-			responses.SendErrorResponse(w, http.StatusUnauthorized, "Invalid credentials")
-
-			return
-		}
-
-		tokenString, err := utils.CreateToken(user.Email)
-		if err != nil {
-			responses.SendErrorResponse(w, http.StatusInternalServerError, "Failed to generate token")
-
-			return
-		}
-
-		cookie = &http.Cookie{
-			Name:     "session_id",
-			Value:    tokenString,
-			Expires:  time.Now().Add(config.GetJWTExpirationTime()),
-			HttpOnly: true,
-		}
-		http.SetCookie(w, cookie)
-		responses.SendJSONResponse(w, http.StatusOK, responses.AuthResponse{Token: tokenString, Email: user.Email})
-
-		return
 	}
 
 	responses.SendErrorResponse(w, http.StatusUnauthorized, "Invalid credentials")
