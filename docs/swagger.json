@@ -1,10 +1,7 @@
 {
     "swagger": "2.0",
     "info": {
-        "contact": {},
-        "title": "Emporium API",
-        "description": "API for managing emporium adverts",
-        "version": "1.0.2"
+        "contact": {}
     },
     "paths": {
         "/api/v1/adverts": {
@@ -243,12 +240,6 @@
                     },
                     "400": {
                         "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
                         "schema": {
                             "$ref": "#/definitions/responses.ErrResponse"
                         }

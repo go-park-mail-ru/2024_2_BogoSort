@@ -255,12 +255,6 @@ const docTemplate = `{
                             "$ref": "#/definitions/responses.ErrResponse"
                         }
                     },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
-                        }
-                    },
                     "405": {
                         "description": "Method Not Allowed",
                         "schema": {

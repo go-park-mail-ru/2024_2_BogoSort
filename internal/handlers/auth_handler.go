@@ -103,7 +103,6 @@ func (ah *AuthHandler) SignupHandler(writer http.ResponseWriter, r *http.Request
 // @Param credentials body AuthCredentials false "User credentials"
 // @Success 200 {object} responses.AuthResponse
 // @Failure 400 {object} responses.ErrResponse
-// @Failure 401 {object} responses.ErrResponse
 // @Failure 405 {object} responses.ErrResponse
 // @Failure 500 {object} responses.ErrResponse
 // @Router /api/v1/login [post]
