@@ -3,7 +3,10 @@ package app
 import (
 	"context"
 	"net/http"
-	"time"
+	"log"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/config"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/handlers"
@@ -36,18 +39,35 @@ func (server *Server) Run() error {
 		AllowCredentials: true,
 	}).Handler(router)
 
-	const cooldown = 10 * time.Second
+	log.Printf("Server started on %s", config.GetServerAddress())
+
 	server.server = &http.Server{
 		Addr:         config.GetServerAddress(),
 		Handler:      corsHandler,
-		ReadTimeout:  cooldown,
-		WriteTimeout: cooldown,
+		ReadTimeout:  config.GetReadTimeout(),
+		WriteTimeout: config.GetWriteTimeout(),
 	}
 
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+
 	err := server.server.ListenAndServe()
-	if err != nil {
-		return errors.Wrap(err, "failed to listen and serve")
+	if !errors.Is(err, http.ErrServerClosed) {
+		log.Fatalf("server failed: %v", err)
 	}
+
+	<-stop
+	log.Println("shutting down server...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), config.GetShutdownTimeout())
+	defer cancel()
+
+	if err := server.Shutdown(ctx); err != nil {
+		log.Printf("server forced to shutdown: %v", err)
+		os.Exit(1)
+	}
+
+	log.Println("server exiting")
 
 	return nil
 }
