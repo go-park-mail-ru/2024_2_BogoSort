@@ -38,6 +38,9 @@ definitions:
     type: object
 info:
   contact: {}
+  description: API for managing adverts and user authentication
+  title: BogoSort API
+  version: 1.0.0
 paths:
   /api/v1/adverts:
     get:

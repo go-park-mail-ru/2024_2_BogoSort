@@ -36,8 +36,6 @@ func NewRouter() *mux.Router {
 		UserStorage: userStorage,
 	}
 
-	log.Println("Server is running")
-
 	router.HandleFunc("/api/v1/signup", authHandler.SignupHandler).Methods("POST")
 	router.HandleFunc("/api/v1/login", authHandler.LoginHandler).Methods("POST")
 	router.HandleFunc("/api/v1/logout", authHandler.LogoutHandler).Methods("POST")
