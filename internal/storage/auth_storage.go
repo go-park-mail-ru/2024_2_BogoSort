@@ -9,8 +9,10 @@ import (
 )
 
 var (
-	ErrUserNotFound    = errors.New("user not found")
-	ErrInvalidPassword = errors.New("invalid password")
+	ErrUserNotFound      = errors.New("user not found")
+	ErrInvalidPassword   = errors.New("invalid password")
+	ErrHashPassword      = errors.New("failed to hash password")
+	ErrUserAlreadyExists = errors.New("user already exists")
 )
 
 type User struct {
@@ -33,6 +35,7 @@ func NewUserStorage() *UserStorage {
 				PasswordHash: utils.HashPassword("password"),
 			},
 		},
+		mu: sync.Mutex{},
 	}
 }
 
@@ -40,14 +43,14 @@ func (s *UserStorage) CreateUser(email, password string) (*User, error) {
 	hash := utils.HashPassword(password)
 
 	if hash == "" {
-		return nil, errors.New("failed to hash password")
+		return nil, ErrHashPassword
 	}
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	if _, exists := s.Users[email]; exists {
-		return nil, errors.New("user already exists")
+		return nil, ErrUserAlreadyExists
 	}
 
 	newUser := &User{
@@ -78,9 +81,9 @@ func (s *UserStorage) GetUserByEmail(email string) (*User, error) {
 
 func (s *UserStorage) ValidateUserByEmailAndPassword(email, password string) (*User, error) {
 	user, err := s.GetUserByEmail(email)
-
 	if err != nil {
 		log.Printf("User not found: %v", email)
+
 		return nil, err
 	}
 
@@ -88,6 +91,7 @@ func (s *UserStorage) ValidateUserByEmailAndPassword(email, password string) (*U
 
 	if !valid {
 		log.Printf("Invalid password for user: %v", email)
+		
 		return nil, ErrInvalidPassword
 	}
 

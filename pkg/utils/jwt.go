@@ -11,6 +11,11 @@ import (
 
 var jwtKey []byte
 
+var (
+	ErrUnexpectedSigningMethod = errors.New("unexpected signing method")
+	ErrInvalidToken            = errors.New("invalid token")
+)
+
 func InitJWT() {
 	jwtKey = []byte(config.GetJWTSecretKey())
 	if len(jwtKey) == 0 {
@@ -29,17 +34,18 @@ func CreateToken(email string) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
 	return token.SignedString(jwtKey)
 }
 
 func ValidateToken(tokenString string) (string, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, errors.New("unexpected signing method")
+			return nil, ErrUnexpectedSigningMethod
 		}
+
 		return jwtKey, nil
 	})
-
 	if err != nil {
 		return "", err
 	}
@@ -48,5 +54,5 @@ func ValidateToken(tokenString string) (string, error) {
 		return claims.Subject, nil
 	}
 
-	return "", errors.New("invalid token")
+	return "", ErrInvalidToken
 }

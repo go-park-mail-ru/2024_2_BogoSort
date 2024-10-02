@@ -14,6 +14,10 @@ type AdvertsHandler struct {
 	ImageService *services.ImageService
 }
 
+type AuthHandler struct {
+	UserStorage *storage.UserStorage
+}
+
 func NewRouter() *mux.Router {
 	router := mux.NewRouter()
 	router.Use(recoveryMiddleware)
@@ -31,8 +35,6 @@ func NewRouter() *mux.Router {
 	authHandler := &AuthHandler{
 		UserStorage: userStorage,
 	}
-
-	log.Println("Server is running")
 
 	router.HandleFunc("/api/v1/signup", authHandler.SignupHandler).Methods("POST")
 	router.HandleFunc("/api/v1/login", authHandler.LoginHandler).Methods("POST")

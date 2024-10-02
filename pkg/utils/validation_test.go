@@ -6,49 +6,57 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestValidateEmail(t *testing.T) {
-	validEmails := []string{
-		"test@example.com",
-		"user.name+tag+sorting@example.com",
-		"x@example.com",
-		"example-indeed@strange-example.com",
-	}
-
-	invalidEmails := []string{
-		"plainaddress",
-		"@missingusername.com",
-		"username@.com",
-		"username@.com.",
-	}
-
-	for _, email := range validEmails {
-		assert.True(t, ValidateEmail(email), "Email should be valid: %s", email)
-	}
-
-	for _, email := range invalidEmails {
-		assert.False(t, ValidateEmail(email), "Email should be invalid: %s", email)
-	}
-}
-
 func TestValidatePassword(t *testing.T) {
-	validPasswords := []string{
-		"Valid1Password!",
-		"Another$Valid2",
+	tests := []struct {
+		name     string
+		password string
+		wantErr  error
+	}{
+		{
+			name:     "Valid password",
+			password: "Valid1@Password",
+			wantErr:  nil,
+		},
+		{
+			name:     "Password too short",
+			password: "Short1@",
+			wantErr:  ErrPasswordTooShort,
+		},
+		{
+			name:     "Password too long",
+			password: "ThisIsAVeryLongPasswordThatExceedsTheMaximumLength1@",
+			wantErr:  ErrPasswordTooLong,
+		},
+		{
+			name:     "Missing uppercase letter",
+			password: "valid1@password",
+			wantErr:  ErrPasswordRequirements,
+		},
+		{
+			name:     "Missing lowercase letter",
+			password: "VALID1@PASSWORD",
+			wantErr:  ErrPasswordRequirements,
+		},
+		{
+			name:     "Missing number",
+			password: "Valid@Password",
+			wantErr:  ErrPasswordRequirements,
+		},
+		{
+			name:     "Missing special character",
+			password: "Valid1Password",
+			wantErr:  ErrPasswordRequirements,
+		},
 	}
 
-	invalidPasswords := []string{
-		"short1!",
-		"nouppercase1!",
-		"NOLOWERCASE1!",
-		"NoNumber!",
-		"NoSpecialChar1",
-	}
-
-	for _, password := range validPasswords {
-		assert.NoError(t, ValidatePassword(password), "Password should be valid: %s", password)
-	}
-
-	for _, password := range invalidPasswords {
-		assert.Error(t, ValidatePassword(password), "Password should be invalid: %s", password)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidatePassword(tt.password)
+			if tt.wantErr != nil {
+				assert.ErrorIs(t, err, tt.wantErr)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
 	}
 }

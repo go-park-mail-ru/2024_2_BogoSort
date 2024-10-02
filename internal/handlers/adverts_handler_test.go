@@ -13,11 +13,13 @@ import (
 )
 
 func TestAdvertsHandler_GetAdvertsHandler(t *testing.T) {
+	t.Parallel()
+
 	list := storage.NewAdvertsList()
 	imageService := services.NewImageService()
 	handler := &AdvertsHandler{List: list, ImageService: imageService}
 
-	req, err := http.NewRequest("GET", "/api/v1/adverts", nil)
+	req, err := http.NewRequest(http.MethodGet, "/api/v1/adverts", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -31,6 +33,8 @@ func TestAdvertsHandler_GetAdvertsHandler(t *testing.T) {
 }
 
 func TestAdvertsHandler_GetAdvertByIDHandler(t *testing.T) {
+	t.Parallel()
+
 	list := storage.NewAdvertsList()
 	imageService := services.NewImageService()
 	handler := &AdvertsHandler{List: list, ImageService: imageService}
@@ -38,7 +42,7 @@ func TestAdvertsHandler_GetAdvertByIDHandler(t *testing.T) {
 	advert := &storage.Advert{ID: 1, Title: "Test Advert"}
 	list.Add(advert)
 
-	req, err := http.NewRequest("GET", "/api/v1/adverts/1", nil)
+	req, err := http.NewRequest(http.MethodGet, "/api/v1/adverts/1", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -55,12 +59,14 @@ func TestAdvertsHandler_GetAdvertByIDHandler(t *testing.T) {
 }
 
 func TestAdvertsHandler_AddAdvertHandler(t *testing.T) {
+	t.Parallel()
+
 	list := storage.NewAdvertsList()
 	imageService := services.NewImageService()
 	handler := &AdvertsHandler{List: list, ImageService: imageService}
 
 	advertJSON := `{"title": "New Advert", "price": 1000, "location": "Москва"}`
-	req, err := http.NewRequest("POST", "/api/v1/adverts", strings.NewReader(advertJSON))
+	req, err := http.NewRequest(http.MethodPost, "/api/v1/adverts", strings.NewReader(advertJSON))
 
 	if err != nil {
 		t.Fatal(err)
@@ -75,6 +81,8 @@ func TestAdvertsHandler_AddAdvertHandler(t *testing.T) {
 }
 
 func TestAdvertsHandler_UpdateAdvertHandler(t *testing.T) {
+	t.Parallel()
+
 	list := storage.NewAdvertsList()
 	imageService := services.NewImageService()
 	handler := &AdvertsHandler{List: list, ImageService: imageService}
@@ -83,11 +91,13 @@ func TestAdvertsHandler_UpdateAdvertHandler(t *testing.T) {
 	list.Add(advert)
 
 	updatedAdvertJSON := `{"id": 1, "title": "Updated Advert", "price": 2000, "location": "Санкт-Петербург"}`
-	req, err := http.NewRequest("PUT", "/api/v1/adverts/1", strings.NewReader(updatedAdvertJSON))
+
+	req, err := http.NewRequest(http.MethodPut, "/api/v1/adverts/1", strings.NewReader(updatedAdvertJSON))
 	
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	rr := httptest.NewRecorder()
 
 	router := mux.NewRouter()
@@ -100,6 +110,8 @@ func TestAdvertsHandler_UpdateAdvertHandler(t *testing.T) {
 }
 
 func TestAdvertsHandler_DeleteAdvertHandler(t *testing.T) {
+	t.Parallel()
+
 	list := storage.NewAdvertsList()
 	imageService := services.NewImageService()
 	handler := &AdvertsHandler{List: list, ImageService: imageService}
@@ -107,10 +119,11 @@ func TestAdvertsHandler_DeleteAdvertHandler(t *testing.T) {
 	advert := &storage.Advert{ID: 1, Title: "Test Advert"}
 	list.Add(advert)
 
-	req, err := http.NewRequest("DELETE", "/api/v1/adverts/1", nil)
+	req, err := http.NewRequest(http.MethodDelete, "/api/v1/adverts/1", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	rr := httptest.NewRecorder()
 
 	router := mux.NewRouter()

@@ -1,5 +1,5 @@
 definitions:
-  handlers.AuthData:
+  handlers.AuthCredentials:
     properties:
       email:
         type: string
@@ -8,29 +8,19 @@ definitions:
     required:
     - email
     - password
-    type: object
-  handlers.LoginCredentials:
-    properties:
-      email:
-        type: string
-      password:
-        type: string
-    required:
-    - email
-    - password
-    type: object
-  responses.AuthErrResponse:
-    properties:
-      code:
-        type: integer
-      status:
-        type: string
     type: object
   responses.AuthResponse:
     properties:
       email:
         type: string
       token:
+        type: string
+    type: object
+  responses.ErrResponse:
+    properties:
+      code:
+        type: integer
+      status:
         type: string
     type: object
   storage.Advert:
@@ -47,8 +37,6 @@ definitions:
         type: string
     type: object
 info:
-  title: "API Documentation"
-  version: "1.0.0" 
   contact: {}
 paths:
   /api/v1/adverts:
@@ -63,6 +51,10 @@ paths:
             items:
               $ref: '#/definitions/storage.Advert'
             type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.ErrResponse'
       summary: Get all adverts
       tags:
       - adverts
@@ -87,7 +79,7 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/responses.AuthErrResponse'
+            $ref: '#/definitions/responses.ErrResponse'
       summary: Add a new advert
       tags:
       - adverts
@@ -106,11 +98,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/responses.AuthErrResponse'
+            $ref: '#/definitions/responses.ErrResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/responses.AuthErrResponse'
+            $ref: '#/definitions/responses.ErrResponse'
       summary: Delete an advert
       tags:
       - adverts
@@ -132,11 +124,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/responses.AuthErrResponse'
+            $ref: '#/definitions/responses.ErrResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/responses.AuthErrResponse'
+            $ref: '#/definitions/responses.ErrResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.ErrResponse'
       summary: Get an advert by ID
       tags:
       - adverts
@@ -166,11 +162,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/responses.AuthErrResponse'
+            $ref: '#/definitions/responses.ErrResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/responses.AuthErrResponse'
+            $ref: '#/definitions/responses.ErrResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.ErrResponse'
       summary: Update an advert
       tags:
       - adverts
@@ -185,7 +185,7 @@ paths:
         in: body
         name: credentials
         schema:
-          $ref: '#/definitions/handlers.LoginCredentials'
+          $ref: '#/definitions/handlers.AuthCredentials'
       produces:
       - application/json
       responses:
@@ -196,19 +196,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/responses.AuthErrResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/responses.AuthErrResponse'
+            $ref: '#/definitions/responses.ErrResponse'
         "405":
           description: Method Not Allowed
           schema:
-            $ref: '#/definitions/responses.AuthErrResponse'
+            $ref: '#/definitions/responses.ErrResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/responses.AuthErrResponse'
+            $ref: '#/definitions/responses.ErrResponse'
       summary: Login a user
       tags:
       - auth
@@ -216,7 +212,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Logout a user by invalidating the session cookie
+      description: Logout a user by invalidating the session cookie or Authorization
+        header
       produces:
       - application/json
       responses:
@@ -229,15 +226,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/responses.AuthErrResponse'
+            $ref: '#/definitions/responses.ErrResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/responses.AuthErrResponse'
+            $ref: '#/definitions/responses.ErrResponse'
         "405":
           description: Method Not Allowed
           schema:
-            $ref: '#/definitions/responses.AuthErrResponse'
+            $ref: '#/definitions/responses.ErrResponse'
       summary: Logout a user
       tags:
       - auth
@@ -252,7 +249,7 @@ paths:
         name: credentials
         required: true
         schema:
-          $ref: '#/definitions/handlers.AuthData'
+          $ref: '#/definitions/handlers.AuthCredentials'
       produces:
       - application/json
       responses:
@@ -263,15 +260,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/responses.AuthErrResponse'
+            $ref: '#/definitions/responses.ErrResponse'
         "405":
           description: Method Not Allowed
           schema:
-            $ref: '#/definitions/responses.AuthErrResponse'
+            $ref: '#/definitions/responses.ErrResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/responses.AuthErrResponse'
+            $ref: '#/definitions/responses.ErrResponse'
       summary: Signup a new user
       tags:
       - auth

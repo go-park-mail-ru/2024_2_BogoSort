@@ -8,9 +8,8 @@ const (
 	bcryptCost = 14
 )
 
-func HashPassword(password string) (string) {
+func HashPassword(password string) string {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcryptCost)
-
 	if err != nil {
 		return ""
 	}

@@ -1,10 +1,11 @@
 package services
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"sync"
+
+	"github.com/pkg/errors"
 )
 
 type ImageService struct {
@@ -25,7 +26,8 @@ func (s *ImageService) GetImageURL(advertID uint) (string, error) {
 	if url, ok := s.images[advertID]; ok {
 		return url, nil
 	}
-	return "", fmt.Errorf("изображение не найдено")
+
+	return "", errors.New("изображение не найдено")
 }
 
 func (s *ImageService) SetImageURL(advertID uint, url string) {
@@ -38,5 +40,6 @@ func (s *ImageService) SetImageURL(advertID uint, url string) {
 func (s *ImageService) ValidateImage(imagePath string) error {
 	fullPath := filepath.Join("static", imagePath)
 	_, err := os.Stat(fullPath)
-	return err
+
+	return errors.Wrap(err, "failed to validate image")
 }
