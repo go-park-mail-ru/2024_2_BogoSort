@@ -37,11 +37,11 @@ type AuthHandler struct {
 // @Tags auth
 // @Accept json
 // @Produce json
-// @Param credentials body AuthData true "User credentials"
+// @Param credentials body AuthCredentials true "User credentials"
 // @Success 201 {object} responses.AuthResponse
-// @Failure 400 {object} responses.AuthErrResponse
-// @Failure 405 {object} responses.AuthErrResponse
-// @Failure 500 {object} responses.AuthErrResponse
+// @Failure 400 {object} responses.ErrResponse
+// @Failure 405 {object} responses.ErrResponse
+// @Failure 500 {object} responses.ErrResponse
 // @Router /api/v1/signup [post]
 func (ah *AuthHandler) SignupHandler(writer http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -105,12 +105,12 @@ func (ah *AuthHandler) SignupHandler(writer http.ResponseWriter, r *http.Request
 // @Tags auth
 // @Accept json
 // @Produce json
-// @Param credentials body LoginCredentials false "User credentials"
+// @Param credentials body AuthCredentials false "User credentials"
 // @Success 200 {object} responses.AuthResponse
-// @Failure 400 {object} responses.AuthErrResponse
-// @Failure 401 {object} responses.AuthErrResponse
-// @Failure 405 {object} responses.AuthErrResponse
-// @Failure 500 {object} responses.AuthErrResponse
+// @Failure 400 {object} responses.ErrResponse
+// @Failure 401 {object} responses.ErrResponse
+// @Failure 405 {object} responses.ErrResponse
+// @Failure 500 {object} responses.ErrResponse
 // @Router /api/v1/login [post]
 func (ah *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -196,9 +196,9 @@ func (ah *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Success 200 {object} map[string]string
-// @Failure 400 {object} responses.AuthErrResponse
-// @Failure 401 {object} responses.AuthErrResponse
-// @Failure 405 {object} responses.AuthErrResponse
+// @Failure 400 {object} responses.ErrResponse
+// @Failure 401 {object} responses.ErrResponse
+// @Failure 405 {object} responses.ErrResponse
 // @Router /api/v1/logout [post]
 func (ah *AuthHandler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
