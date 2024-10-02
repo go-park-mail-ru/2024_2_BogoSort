@@ -14,6 +14,7 @@ type Config struct {
 		Host         string        `yaml:"host"`
 		ReadTimeout  time.Duration `yaml:"read_timeout"`
 		WriteTimeout time.Duration `yaml:"write_timeout"`
+		ShutdownTimeout time.Duration `yaml:"shutdown_timeout"`
 	} `yaml:"server"`
 	JWT struct {
 		SecretKey      string        `yaml:"secret_key"`
@@ -64,6 +65,10 @@ func GetReadTimeout() time.Duration {
 
 func GetWriteTimeout() time.Duration {
 	return cfg.Server.WriteTimeout
+}
+
+func GetShutdownTimeout() time.Duration {
+	return cfg.Server.ShutdownTimeout
 }
 
 func GetJWTSecretKey() string {

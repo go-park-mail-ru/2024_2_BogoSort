@@ -37,11 +37,11 @@ type AuthHandler struct {
 // @Tags auth
 // @Accept json
 // @Produce json
-// @Param credentials body AuthCredentials true "User credentials"
+// @Param credentials body AuthData true "User credentials"
 // @Success 201 {object} responses.AuthResponse
-// @Failure 400 {object} responses.ErrResponse
-// @Failure 405 {object} responses.ErrResponse
-// @Failure 500 {object} responses.ErrResponse
+// @Failure 400 {object} responses.AuthErrResponse
+// @Failure 405 {object} responses.AuthErrResponse
+// @Failure 500 {object} responses.AuthErrResponse
 // @Router /api/v1/signup [post]
 func (ah *AuthHandler) SignupHandler(writer http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -76,7 +76,7 @@ func (ah *AuthHandler) SignupHandler(writer http.ResponseWriter, r *http.Request
 		} else {
 			responses.SendErrorResponse(writer, http.StatusInternalServerError, "Failed to create user")
 		}
-
+		
 		return
 	}
 
@@ -105,12 +105,12 @@ func (ah *AuthHandler) SignupHandler(writer http.ResponseWriter, r *http.Request
 // @Tags auth
 // @Accept json
 // @Produce json
-// @Param credentials body AuthCredentials false "User credentials"
+// @Param credentials body LoginCredentials false "User credentials"
 // @Success 200 {object} responses.AuthResponse
-// @Failure 400 {object} responses.ErrResponse
-// @Failure 401 {object} responses.ErrResponse
-// @Failure 405 {object} responses.ErrResponse
-// @Failure 500 {object} responses.ErrResponse
+// @Failure 400 {object} responses.AuthErrResponse
+// @Failure 401 {object} responses.AuthErrResponse
+// @Failure 405 {object} responses.AuthErrResponse
+// @Failure 500 {object} responses.AuthErrResponse
 // @Router /api/v1/login [post]
 func (ah *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -119,84 +119,74 @@ func (ah *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if ah.checkExistingSession(w, r) {
-		return
-	}
+	var (
+		email string
+		err   error
+	)
 
-	credentials, err := ah.validateCredentials(r)
-	if err != nil {
-		responses.SendErrorResponse(w, http.StatusBadRequest, err.Error())
-
-		return
-	}
-
-	user, err := ah.UserStorage.ValidateUserByEmailAndPassword(credentials.Email, credentials.Password)
-	if err != nil {
-		responses.SendErrorResponse(w, http.StatusUnauthorized, "Invalid credentials")
-
-		return
-	}
-
-	ah.createAndSetToken(w, user)
-}
-
-func (ah *AuthHandler) checkExistingSession(w http.ResponseWriter, r *http.Request) bool {
 	cookie, err := r.Cookie("session_id")
 	if err == nil {
-		if email, err := utils.ValidateToken(cookie.Value); err == nil {
+		email, err = utils.ValidateToken(cookie.Value)
+		if err == nil {
 			responses.SendJSONResponse(w, http.StatusOK, responses.AuthResponse{Token: cookie.Value, Email: email})
 
-			return true
+			return
 		}
 	}
 
 	authHeader := r.Header.Get("Authorization")
 	if authHeader != "" {
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-		if email, err := utils.ValidateToken(tokenString); err == nil {
+		email, err = utils.ValidateToken(tokenString)
+
+		if err == nil {
 			responses.SendJSONResponse(w, http.StatusOK, responses.AuthResponse{Token: tokenString, Email: email})
 
-			return true
+			return
 		}
 	}
 
-	return false
-}
-
-func (ah *AuthHandler) validateCredentials(r *http.Request) (AuthCredentials, error) {
 	var credentials AuthCredentials
+	if r.Body != nil && r.ContentLength != 0 {
+		if err := json.NewDecoder(r.Body).Decode(&credentials); err != nil {
+			responses.SendErrorResponse(w, http.StatusBadRequest, "Invalid request body")
 
-	if r.Body == nil || r.ContentLength == 0 {
-		return credentials, ErrEmptyRequestBody
-	}
+			return
+		}
 
-	if err := json.NewDecoder(r.Body).Decode(&credentials); err != nil {
-		return credentials, ErrInvalidRequestBody
-	}
+		if err := validate.Struct(credentials); err != nil {
+			responses.SendErrorResponse(w, http.StatusBadRequest, "Invalid request data")
 
-	if err := validate.Struct(credentials); err != nil {
-		return credentials, ErrInvalidRequestData
-	}
+			return
+		}
 
-	return credentials, nil
-}
+		user, err := ah.UserStorage.ValidateUserByEmailAndPassword(credentials.Email, credentials.Password)
+		if err != nil {
+			responses.SendErrorResponse(w, http.StatusUnauthorized, "Invalid credentials")
 
-func (ah *AuthHandler) createAndSetToken(w http.ResponseWriter, user *storage.User) {
-	tokenString, err := utils.CreateToken(user.Email)
-	if err != nil {
-		responses.SendErrorResponse(w, http.StatusInternalServerError, "Failed to generate token")
-		
+			return
+		}
+
+		tokenString, err := utils.CreateToken(user.Email)
+		if err != nil {
+			responses.SendErrorResponse(w, http.StatusInternalServerError, "Failed to generate token")
+
+			return
+		}
+
+		cookie = &http.Cookie{
+			Name:     "session_id",
+			Value:    tokenString,
+			Expires:  time.Now().Add(config.GetJWTExpirationTime()),
+			HttpOnly: true,
+		}
+		http.SetCookie(w, cookie)
+		responses.SendJSONResponse(w, http.StatusOK, responses.AuthResponse{Token: tokenString, Email: user.Email})
+
 		return
 	}
 
-	cookie := &http.Cookie{
-		Name:     "session_id",
-		Value:    tokenString,
-		Expires:  time.Now().Add(config.GetJWTExpirationTime()),
-		HttpOnly: true,
-	}
-	http.SetCookie(w, cookie)
-	responses.SendJSONResponse(w, http.StatusOK, responses.AuthResponse{Token: tokenString, Email: user.Email})
+	responses.SendErrorResponse(w, http.StatusUnauthorized, "Invalid credentials")
 }
 
 // LogoutHandler godoc
@@ -206,9 +196,9 @@ func (ah *AuthHandler) createAndSetToken(w http.ResponseWriter, user *storage.Us
 // @Accept json
 // @Produce json
 // @Success 200 {object} map[string]string
-// @Failure 400 {object} responses.ErrResponse
-// @Failure 401 {object} responses.ErrResponse
-// @Failure 405 {object} responses.ErrResponse
+// @Failure 400 {object} responses.AuthErrResponse
+// @Failure 401 {object} responses.AuthErrResponse
+// @Failure 405 {object} responses.AuthErrResponse
 // @Router /api/v1/logout [post]
 func (ah *AuthHandler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {

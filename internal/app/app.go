@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"net/http"
-	"time"
 	"log"
 	"os"
 	"os/signal"
@@ -52,18 +51,20 @@ func (server *Server) Run() error {
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
-	if err := server.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+	err := server.server.ListenAndServe()
+	if !errors.Is(err, http.ErrServerClosed) {
 		log.Fatalf("server failed: %v", err)
 	}
 
 	<-stop
 	log.Println("shutting down server...")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), config.GetShutdownTimeout())
 	defer cancel()
 
 	if err := server.Shutdown(ctx); err != nil {
-		log.Fatalf("server forced to shutdown: %v", err)
+		log.Printf("server forced to shutdown: %v", err)
+		os.Exit(1)
 	}
 
 	log.Println("server exiting")
