@@ -70,7 +70,7 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/responses.AuthErrResponse"
+                            "$ref": "#/definitions/responses.ErrResponse"
                         }
                     }
                 }
@@ -105,13 +105,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/responses.AuthErrResponse"
+                            "$ref": "#/definitions/responses.ErrResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/responses.AuthErrResponse"
+                            "$ref": "#/definitions/responses.ErrResponse"
                         }
                     }
                 }
@@ -156,13 +156,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/responses.AuthErrResponse"
+                            "$ref": "#/definitions/responses.ErrResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/responses.AuthErrResponse"
+                            "$ref": "#/definitions/responses.ErrResponse"
                         }
                     }
                 }
@@ -189,13 +189,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/responses.AuthErrResponse"
+                            "$ref": "#/definitions/responses.ErrResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/responses.AuthErrResponse"
+                            "$ref": "#/definitions/responses.ErrResponse"
                         }
                     }
                 }
@@ -220,7 +220,7 @@ const docTemplate = `{
                         "name": "credentials",
                         "in": "body",
                         "schema": {
-                            "$ref": "#/definitions/handlers.LoginCredentials"
+                            "$ref": "#/definitions/handlers.AuthCredentials"
                         }
                     }
                 ],
@@ -234,25 +234,25 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/responses.AuthErrResponse"
+                            "$ref": "#/definitions/responses.ErrResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/responses.AuthErrResponse"
+                            "$ref": "#/definitions/responses.ErrResponse"
                         }
                     },
                     "405": {
                         "description": "Method Not Allowed",
                         "schema": {
-                            "$ref": "#/definitions/responses.AuthErrResponse"
+                            "$ref": "#/definitions/responses.ErrResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/responses.AuthErrResponse"
+                            "$ref": "#/definitions/responses.ErrResponse"
                         }
                     }
                 }
@@ -260,7 +260,7 @@ const docTemplate = `{
         },
         "/api/v1/logout": {
             "post": {
-                "description": "Logout a user by invalidating the session cookie",
+                "description": "Logout a user by invalidating the session cookie or Authorization header",
                 "consumes": [
                     "application/json"
                 ],
@@ -284,19 +284,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/responses.AuthErrResponse"
+                            "$ref": "#/definitions/responses.ErrResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/responses.AuthErrResponse"
+                            "$ref": "#/definitions/responses.ErrResponse"
                         }
                     },
                     "405": {
                         "description": "Method Not Allowed",
                         "schema": {
-                            "$ref": "#/definitions/responses.AuthErrResponse"
+                            "$ref": "#/definitions/responses.ErrResponse"
                         }
                     }
                 }
@@ -322,7 +322,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handlers.AuthData"
+                            "$ref": "#/definitions/handlers.AuthCredentials"
                         }
                     }
                 ],
@@ -336,19 +336,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/responses.AuthErrResponse"
+                            "$ref": "#/definitions/responses.ErrResponse"
                         }
                     },
                     "405": {
                         "description": "Method Not Allowed",
                         "schema": {
-                            "$ref": "#/definitions/responses.AuthErrResponse"
+                            "$ref": "#/definitions/responses.ErrResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/responses.AuthErrResponse"
+                            "$ref": "#/definitions/responses.ErrResponse"
                         }
                     }
                 }
@@ -356,7 +356,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "handlers.AuthData": {
+        "handlers.AuthCredentials": {
             "type": "object",
             "required": [
                 "email",
@@ -367,32 +367,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "password": {
-                    "type": "string"
-                }
-            }
-        },
-        "handlers.LoginCredentials": {
-            "type": "object",
-            "required": [
-                "email",
-                "password"
-            ],
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
-                }
-            }
-        },
-        "responses.AuthErrResponse": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "integer"
-                },
-                "status": {
                     "type": "string"
                 }
             }
@@ -404,6 +378,17 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "responses.ErrResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "status": {
                     "type": "string"
                 }
             }

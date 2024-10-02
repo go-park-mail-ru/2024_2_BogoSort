@@ -47,8 +47,8 @@ func (authHandler *AdvertsHandler) GetAdvertsHandler(writer http.ResponseWriter,
 // @Produce json
 // @Param id path int true "Advert ID"
 // @Success 200 {object} storage.Advert
-// @Failure 400 {object} responses.AuthErrResponse
-// @Failure 404 {object} responses.AuthErrResponse
+// @Failure 400 {object} responses.ErrResponse
+// @Failure 404 {object} responses.ErrResponse
 // @Router /api/v1/adverts/{id} [get]
 func (authHandler *AdvertsHandler) GetAdvertByIDHandler(writer http.ResponseWriter, reader *http.Request) {
 	vars := mux.Vars(reader)
@@ -91,7 +91,7 @@ func (authHandler *AdvertsHandler) GetAdvertByIDHandler(writer http.ResponseWrit
 // @Produce json
 // @Param advert body storage.Advert true "Advert data"
 // @Success 200 {object} storage.Advert
-// @Failure 400 {object} responses.AuthErrResponse
+// @Failure 400 {object} responses.ErrResponse
 // @Router /api/v1/adverts [post]
 func (authHandler *AdvertsHandler) AddAdvertHandler(writer http.ResponseWriter, reader *http.Request) {
 	var advert storage.Advert
@@ -121,8 +121,8 @@ func (authHandler *AdvertsHandler) AddAdvertHandler(writer http.ResponseWriter, 
 // @Param id path int true "Advert ID"
 // @Param advert body storage.Advert true "Advert data"
 // @Success 200 {object} storage.Advert
-// @Failure 400 {object} responses.AuthErrResponse
-// @Failure 404 {object} responses.AuthErrResponse
+// @Failure 400 {object} responses.ErrResponse
+// @Failure 404 {object} responses.ErrResponse
 // @Router /api/v1/adverts/{id} [put]
 func (authHandler *AdvertsHandler) UpdateAdvertHandler(writer http.ResponseWriter, reader *http.Request) {
 	vars := mux.Vars(reader)
@@ -137,7 +137,7 @@ func (authHandler *AdvertsHandler) UpdateAdvertHandler(writer http.ResponseWrite
 
 	var advert storage.Advert
 	err = json.NewDecoder(reader.Body).Decode(&advert)
-	
+
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusBadRequest)
 
@@ -170,8 +170,8 @@ func (authHandler *AdvertsHandler) UpdateAdvertHandler(writer http.ResponseWrite
 // @Tags adverts
 // @Param id path int true "Advert ID"
 // @Success 204
-// @Failure 400 {object} responses.AuthErrResponse
-// @Failure 500 {object} responses.AuthErrResponse
+// @Failure 400 {object} responses.ErrResponse
+// @Failure 500 {object} responses.ErrResponse
 // @Router /api/v1/adverts/{id} [delete]
 func (authHandler *AdvertsHandler) DeleteAdvertHandler(writer http.ResponseWriter, reader *http.Request) {
 	vars := mux.Vars(reader)
