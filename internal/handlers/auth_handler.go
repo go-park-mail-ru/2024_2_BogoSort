@@ -9,7 +9,6 @@ import (
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/config"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/responses"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/storage"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/pkg/utils"
 	"github.com/go-playground/validator/v10"
 )
@@ -72,7 +71,7 @@ func (ah *AuthHandler) SignupHandler(writer http.ResponseWriter, r *http.Request
 		} else {
 			responses.SendErrorResponse(writer, http.StatusInternalServerError, "Failed to create user")
 		}
-		
+
 		return
 	}
 
