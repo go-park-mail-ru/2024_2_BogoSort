@@ -38,9 +38,6 @@ definitions:
     type: object
 info:
   contact: {}
-  description: API for managing adverts and user authentication
-  title: BogoSort API
-  version: 1.0.0
 paths:
   /api/v1/adverts:
     get:
@@ -198,10 +195,6 @@ paths:
             $ref: '#/definitions/responses.AuthResponse'
         "400":
           description: Bad Request
-          schema:
-            $ref: '#/definitions/responses.ErrResponse'
-        "401":
-          description: Unauthorized
           schema:
             $ref: '#/definitions/responses.ErrResponse'
         "405":
