@@ -138,7 +138,7 @@ func (ah *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 				Expires:  time.Now().Add(-time.Hour),
 				HttpOnly: true,
 			})
-			responses.SendErrorResponse(w, http.StatusUnauthorized, "Invalid credentials")
+			responses.SendErrorResponse(w, http.StatusBadRequest, "Invalid credentials: user not found")
 			return
 		}
 
