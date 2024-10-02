@@ -59,19 +59,20 @@ func (authHandler *AdvertsHandler) GetAdvertByIDHandler(writer http.ResponseWrit
 
 	if err != nil {
 		responses.SendErrorResponse(writer, http.StatusBadRequest, "Invalid ID")
+
 		return
 	}
 
 	advert, err := authHandler.List.GetAdvertByID(uint(uintID))
 	if err != nil {
 		responses.SendErrorResponse(writer, http.StatusNotFound, "Advert not found")
+
 		return
 	}
 
 	imageURL, err := authHandler.ImageService.GetImageURL(advert.ID)
 	if err != nil {
 		log.Println("изображение не найдено:", err)
-		// Не возвращаем ошибку, продолжаем выполнение
 	} else {
 		advert.ImageURL = imageURL
 	}
