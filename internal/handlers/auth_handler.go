@@ -27,21 +27,17 @@ type AuthCredentials struct {
 	Password string `json:"password" validate:"required"`
 }
 
-type AuthHandler struct {
-	UserStorage *storage.UserStorage
-}
-
 // SignupHandler godoc
 // @Summary Signup a new user
 // @Description Signup a new user with email and password
 // @Tags auth
 // @Accept json
 // @Produce json
-// @Param credentials body AuthData true "User credentials"
+// @Param credentials body AuthCredentials true "User credentials"
 // @Success 201 {object} responses.AuthResponse
-// @Failure 400 {object} responses.AuthErrResponse
-// @Failure 405 {object} responses.AuthErrResponse
-// @Failure 500 {object} responses.AuthErrResponse
+// @Failure 400 {object} responses.ErrResponse
+// @Failure 405 {object} responses.ErrResponse
+// @Failure 500 {object} responses.ErrResponse
 // @Router /api/v1/signup [post]
 func (ah *AuthHandler) SignupHandler(writer http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -105,12 +101,12 @@ func (ah *AuthHandler) SignupHandler(writer http.ResponseWriter, r *http.Request
 // @Tags auth
 // @Accept json
 // @Produce json
-// @Param credentials body LoginCredentials false "User credentials"
+// @Param credentials body AuthCredentials false "User credentials"
 // @Success 200 {object} responses.AuthResponse
-// @Failure 400 {object} responses.AuthErrResponse
-// @Failure 401 {object} responses.AuthErrResponse
-// @Failure 405 {object} responses.AuthErrResponse
-// @Failure 500 {object} responses.AuthErrResponse
+// @Failure 400 {object} responses.ErrResponse
+// @Failure 401 {object} responses.ErrResponse
+// @Failure 405 {object} responses.ErrResponse
+// @Failure 500 {object} responses.ErrResponse
 // @Router /api/v1/login [post]
 func (ah *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -185,7 +181,7 @@ func (ah *AuthHandler) createAndSetToken(w http.ResponseWriter, user *storage.Us
 	tokenString, err := utils.CreateToken(user.Email)
 	if err != nil {
 		responses.SendErrorResponse(w, http.StatusInternalServerError, "Failed to generate token")
-		
+
 		return
 	}
 
@@ -206,9 +202,9 @@ func (ah *AuthHandler) createAndSetToken(w http.ResponseWriter, user *storage.Us
 // @Accept json
 // @Produce json
 // @Success 200 {object} map[string]string
-// @Failure 400 {object} responses.AuthErrResponse
-// @Failure 401 {object} responses.AuthErrResponse
-// @Failure 405 {object} responses.AuthErrResponse
+// @Failure 400 {object} responses.ErrResponse
+// @Failure 401 {object} responses.ErrResponse
+// @Failure 405 {object} responses.ErrResponse
 // @Router /api/v1/logout [post]
 func (ah *AuthHandler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
