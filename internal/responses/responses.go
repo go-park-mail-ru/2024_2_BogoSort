@@ -6,8 +6,9 @@ import (
 )
 
 type AuthResponse struct {
-	Token string `json:"token"`
-	Email string `json:"email"`
+	Token        string `json:"token"`
+	RefreshToken string `json:"refresh_token"`
+	Email        string `json:"email"`
 }
 
 type ErrResponse struct {

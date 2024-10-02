@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/config"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/responses"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/storage"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/pkg/utils"
 	"github.com/go-playground/validator/v10"
 )
@@ -82,6 +83,13 @@ func (ah *AuthHandler) SignupHandler(writer http.ResponseWriter, r *http.Request
 		return
 	}
 
+	refreshToken, err := utils.CreateRefreshToken(user.Email)
+	if err != nil {
+		responses.SendErrorResponse(writer, http.StatusInternalServerError, "Failed to generate refresh token")
+
+		return
+	}
+
 	cookie := &http.Cookie{
 		Name:     "session_id",
 		Value:    tokenString,
@@ -91,7 +99,7 @@ func (ah *AuthHandler) SignupHandler(writer http.ResponseWriter, r *http.Request
 
 	http.SetCookie(writer, cookie)
 
-	responses.SendJSONResponse(writer, http.StatusCreated, responses.AuthResponse{Token: tokenString, Email: user.Email})
+	responses.SendJSONResponse(writer, http.StatusCreated, responses.AuthResponse{Token: tokenString, RefreshToken: refreshToken, Email: user.Email})
 }
 
 // LoginHandler godoc
@@ -103,12 +111,14 @@ func (ah *AuthHandler) SignupHandler(writer http.ResponseWriter, r *http.Request
 // @Param credentials body AuthCredentials false "User credentials"
 // @Success 200 {object} responses.AuthResponse
 // @Failure 400 {object} responses.ErrResponse
+// @Failure 401 {object} responses.ErrResponse
 // @Failure 405 {object} responses.ErrResponse
 // @Failure 500 {object} responses.ErrResponse
 // @Router /api/v1/login [post]
 func (ah *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		responses.SendErrorResponse(w, http.StatusMethodNotAllowed, "Method not allowed")
+
 		return
 	}
 
@@ -121,11 +131,13 @@ func (ah *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Body != nil && r.ContentLength != 0 {
 		if err := json.NewDecoder(r.Body).Decode(&credentials); err != nil {
 			responses.SendErrorResponse(w, http.StatusBadRequest, "Invalid request body")
+
 			return
 		}
 
 		if err := validate.Struct(credentials); err != nil {
 			responses.SendErrorResponse(w, http.StatusBadRequest, "Invalid request data")
+
 			return
 		}
 
@@ -138,12 +150,21 @@ func (ah *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 				HttpOnly: true,
 			})
 			responses.SendErrorResponse(w, http.StatusBadRequest, "Invalid credentials: user not found")
+
 			return
 		}
 
 		tokenString, err := utils.CreateToken(user.Email)
 		if err != nil {
 			responses.SendErrorResponse(w, http.StatusInternalServerError, "Failed to generate token")
+
+			return
+		}
+
+		refreshToken, err := utils.CreateRefreshToken(user.Email)
+		if err != nil {
+			responses.SendErrorResponse(w, http.StatusInternalServerError, "Failed to generate refresh token")
+
 			return
 		}
 
@@ -154,7 +175,8 @@ func (ah *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 			HttpOnly: true,
 		}
 		http.SetCookie(w, cookie)
-		responses.SendJSONResponse(w, http.StatusOK, responses.AuthResponse{Token: tokenString, Email: user.Email})
+		responses.SendJSONResponse(w, http.StatusOK, responses.AuthResponse{Token: tokenString, RefreshToken: refreshToken, Email: user.Email})
+
 		return
 	}
 
@@ -163,6 +185,7 @@ func (ah *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		email, err = utils.ValidateToken(cookie.Value)
 		if err == nil {
 			responses.SendJSONResponse(w, http.StatusOK, responses.AuthResponse{Token: cookie.Value, Email: email})
+
 			return
 		}
 	}
@@ -173,11 +196,78 @@ func (ah *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		email, err = utils.ValidateToken(tokenString)
 		if err == nil {
 			responses.SendJSONResponse(w, http.StatusOK, responses.AuthResponse{Token: tokenString, Email: email})
+
 			return
 		}
 	}
 
 	responses.SendErrorResponse(w, http.StatusUnauthorized, "Invalid credentials")
+}
+
+// RefreshHandler godoc
+// @Summary Refresh a user's token
+// @Description Refresh a user's token using a valid refresh token
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param refresh_token body string true "Refresh token"
+// @Success 200 {object} responses.AuthResponse
+// @Failure 400 {object} responses.ErrResponse
+// @Failure 401 {object} responses.ErrResponse
+// @Failure 405 {object} responses.ErrResponse
+// @Failure 500 {object} responses.ErrResponse
+// @Router /api/v1/refresh [post]
+func (ah *AuthHandler) RefreshHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		responses.SendErrorResponse(w, http.StatusMethodNotAllowed, "Method not allowed")
+
+		return
+	}
+
+	var requestBody struct {
+		RefreshToken string `json:"refresh_token" validate:"required"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
+		responses.SendErrorResponse(w, http.StatusBadRequest, "Invalid request body")
+
+		return
+	}
+
+	if err := validate.Struct(requestBody); err != nil {
+		responses.SendErrorResponse(w, http.StatusBadRequest, "Invalid request data")
+
+		return
+	}
+
+	if storage.IsBlacklisted(requestBody.RefreshToken) {
+		responses.SendErrorResponse(w, http.StatusUnauthorized, "Invalid refresh token")
+
+		return
+	}
+
+	email, err := utils.ValidateToken(requestBody.RefreshToken)
+	if err != nil {
+		responses.SendErrorResponse(w, http.StatusUnauthorized, "Invalid refresh token")
+
+		return
+	}
+
+	tokenString, err := utils.CreateToken(email)
+	if err != nil {
+		responses.SendErrorResponse(w, http.StatusInternalServerError, "Failed to generate token")
+
+		return
+	}
+
+	refreshToken, err := utils.CreateRefreshToken(email)
+	if err != nil {
+		responses.SendErrorResponse(w, http.StatusInternalServerError, "Failed to generate refresh token")
+
+		return
+	}
+
+	responses.SendJSONResponse(w, http.StatusOK, responses.AuthResponse{Token: tokenString, RefreshToken: refreshToken, Email: email})
 }
 
 // LogoutHandler godoc
