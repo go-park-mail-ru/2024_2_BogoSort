@@ -1,7 +1,10 @@
 {
     "swagger": "2.0",
     "info": {
-        "contact": {}
+        "contact": {},
+        "title": "Emporium API",
+        "description": "API for managing emporium adverts",
+        "version": "1.0.2"
     },
     "paths": {
         "/api/v1/adverts": {
