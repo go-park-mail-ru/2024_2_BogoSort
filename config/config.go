@@ -10,8 +10,10 @@ import (
 
 type Config struct {
 	Server struct {
-		Port int    `yaml:"port"`
-		Host string `yaml:"host"`
+		Port         int           `yaml:"port"`
+		Host         string        `yaml:"host"`
+		ReadTimeout  time.Duration `yaml:"read_timeout"`
+		WriteTimeout time.Duration `yaml:"write_timeout"`
 	} `yaml:"server"`
 	JWT struct {
 		SecretKey      string        `yaml:"secret_key"`
@@ -54,6 +56,14 @@ func GetServerAddress() string {
 	}
 
 	return ":" + port
+}
+
+func GetReadTimeout() time.Duration {
+	return cfg.Server.ReadTimeout
+}
+
+func GetWriteTimeout() time.Duration {
+	return cfg.Server.WriteTimeout
 }
 
 func GetJWTSecretKey() string {
