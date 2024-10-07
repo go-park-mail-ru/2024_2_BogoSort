@@ -1,5 +1,15 @@
 definitions:
-  handlers.AuthCredentials:
+  handlers.AuthData:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  handlers.LoginCredentials:
     properties:
       email:
         type: string
@@ -13,7 +23,9 @@ definitions:
     properties:
       email:
         type: string
-      token:
+      is_auth:
+        type: boolean
+      session_id:
         type: string
     type: object
   responses.ErrResponse:
@@ -174,18 +186,11 @@ paths:
       summary: Update an advert
       tags:
       - adverts
-  /api/v1/login:
-    post:
+  /check-auth:
+    get:
       consumes:
       - application/json
-      description: Login a user with email and password or with a valid session cookie
-        or Authorization header
-      parameters:
-      - description: User credentials
-        in: body
-        name: credentials
-        schema:
-          $ref: '#/definitions/handlers.AuthCredentials'
+      description: Verify if the current session is valid and the user is authenticated
       produces:
       - application/json
       responses:
@@ -194,51 +199,51 @@ paths:
           schema:
             $ref: '#/definitions/responses.AuthResponse'
         "400":
-          description: Bad Request
+          description: Failed to retrieve cookie
           schema:
             $ref: '#/definitions/responses.ErrResponse'
-        "405":
-          description: Method Not Allowed
+        "401":
+          description: No active session or session does not exist
           schema:
             $ref: '#/definitions/responses.ErrResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/responses.ErrResponse'
-      summary: Login a user
+      summary: Check if user is authenticated
       tags:
       - auth
-  /api/v1/logout:
+  /login:
     post:
       consumes:
       - application/json
-      description: Logout a user by invalidating the session cookie or Authorization
-        header
+      description: Login a user with email and password
+      parameters:
+      - description: User credentials
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.LoginCredentials'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/responses.AuthResponse'
         "400":
-          description: Bad Request
+          description: Invalid request body or data
           schema:
             $ref: '#/definitions/responses.ErrResponse'
         "401":
-          description: Unauthorized
+          description: Invalid credentials
           schema:
             $ref: '#/definitions/responses.ErrResponse'
         "405":
-          description: Method Not Allowed
+          description: Method not allowed
           schema:
             $ref: '#/definitions/responses.ErrResponse'
-      summary: Logout a user
+      summary: Login a user
       tags:
       - auth
-  /api/v1/signup:
+  /signup:
     post:
       consumes:
       - application/json
@@ -249,7 +254,7 @@ paths:
         name: credentials
         required: true
         schema:
-          $ref: '#/definitions/handlers.AuthCredentials'
+          $ref: '#/definitions/handlers.AuthData'
       produces:
       - application/json
       responses:
@@ -258,15 +263,15 @@ paths:
           schema:
             $ref: '#/definitions/responses.AuthResponse'
         "400":
-          description: Bad Request
+          description: Invalid request body or data
           schema:
             $ref: '#/definitions/responses.ErrResponse'
         "405":
-          description: Method Not Allowed
+          description: Method not allowed
           schema:
             $ref: '#/definitions/responses.ErrResponse'
         "500":
-          description: Internal Server Error
+          description: Failed to create user
           schema:
             $ref: '#/definitions/responses.ErrResponse'
       summary: Signup a new user

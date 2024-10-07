@@ -6,9 +6,9 @@ import (
 )
 
 type AuthResponse struct {
-	Token        string `json:"token"`
-	RefreshToken string `json:"refresh_token"`
-	Email        string `json:"email"`
+	Email string `json:"email"`
+	SessionID string `json:"session_id"`
+	IsAuth    bool   `json:"is_auth"`
 }
 
 type ErrResponse struct {
@@ -21,7 +21,13 @@ func SendErrorResponse(w http.ResponseWriter, code int, status string) {
 	err := json.NewEncoder(w).Encode(ErrResponse{Code: code, Status: status})
 
 	if err != nil {
-		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
+		errResponse := ErrResponse{
+			Code:   http.StatusInternalServerError,
+			Status: "Failed to encode response",
+		}
+		errJSON, _ := json.Marshal(errResponse)
+		w.Write(errJSON)
 	}
 }
 

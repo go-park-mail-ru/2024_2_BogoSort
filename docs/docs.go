@@ -219,9 +219,44 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/login": {
+        "/check-auth": {
+            "get": {
+                "description": "Verify if the current session is valid and the user is authenticated",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Check if user is authenticated",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.AuthResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Failed to retrieve cookie",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ErrResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "No active session or session does not exist",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/login": {
             "post": {
-                "description": "Login a user with email and password or with a valid session cookie or Authorization header",
+                "description": "Login a user with email and password",
                 "consumes": [
                     "application/json"
                 ],
@@ -237,8 +272,9 @@ const docTemplate = `{
                         "description": "User credentials",
                         "name": "credentials",
                         "in": "body",
+                        "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handlers.AuthCredentials"
+                            "$ref": "#/definitions/handlers.LoginCredentials"
                         }
                     }
                 ],
@@ -250,63 +286,19 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
-                        }
-                    },
-                    "405": {
-                        "description": "Method Not Allowed",
-                        "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/logout": {
-            "post": {
-                "description": "Logout a user by invalidating the session cookie or Authorization header",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "auth"
-                ],
-                "summary": "Logout a user",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
+                        "description": "Invalid request body or data",
                         "schema": {
                             "$ref": "#/definitions/responses.ErrResponse"
                         }
                     },
                     "401": {
-                        "description": "Unauthorized",
+                        "description": "Invalid credentials",
                         "schema": {
                             "$ref": "#/definitions/responses.ErrResponse"
                         }
                     },
                     "405": {
-                        "description": "Method Not Allowed",
+                        "description": "Method not allowed",
                         "schema": {
                             "$ref": "#/definitions/responses.ErrResponse"
                         }
@@ -314,7 +306,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/signup": {
+        "/signup": {
             "post": {
                 "description": "Signup a new user with email and password",
                 "consumes": [
@@ -334,7 +326,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handlers.AuthCredentials"
+                            "$ref": "#/definitions/handlers.AuthData"
                         }
                     }
                 ],
@@ -346,19 +338,19 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Invalid request body or data",
                         "schema": {
                             "$ref": "#/definitions/responses.ErrResponse"
                         }
                     },
                     "405": {
-                        "description": "Method Not Allowed",
+                        "description": "Method not allowed",
                         "schema": {
                             "$ref": "#/definitions/responses.ErrResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Failed to create user",
                         "schema": {
                             "$ref": "#/definitions/responses.ErrResponse"
                         }
@@ -368,7 +360,22 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "handlers.AuthCredentials": {
+        "handlers.AuthData": {
+            "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.LoginCredentials": {
             "type": "object",
             "required": [
                 "email",
@@ -389,7 +396,10 @@ const docTemplate = `{
                 "email": {
                     "type": "string"
                 },
-                "token": {
+                "is_auth": {
+                    "type": "boolean"
+                },
+                "session_id": {
                     "type": "string"
                 }
             }
