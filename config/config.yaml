@@ -4,7 +4,5 @@ server:
   read_timeout: 10s
   write_timeout: 10s
 
-jwt:
-  secret_key: 1234432123992392939923923923923923923923923923923923923923923923
-  expiration_time: 2h 
-  issuer: emporium
+session:
+  expiration_time: 12h

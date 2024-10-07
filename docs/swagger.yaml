@@ -58,13 +58,13 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: List of adverts
           schema:
             items:
               $ref: '#/definitions/storage.Advert'
             type: array
         "500":
-          description: Internal Server Error
+          description: Failed to get adverts
           schema:
             $ref: '#/definitions/responses.ErrResponse'
       summary: Get all adverts
@@ -85,11 +85,11 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Advert added successfully
           schema:
             $ref: '#/definitions/storage.Advert'
         "400":
-          description: Bad Request
+          description: Failed to add advert
           schema:
             $ref: '#/definitions/responses.ErrResponse'
       summary: Add a new advert
@@ -106,13 +106,13 @@ paths:
         type: integer
       responses:
         "204":
-          description: No Content
+          description: Advert deleted successfully
         "400":
-          description: Bad Request
+          description: Invalid ID
           schema:
             $ref: '#/definitions/responses.ErrResponse'
         "500":
-          description: Internal Server Error
+          description: Failed to delete advert
           schema:
             $ref: '#/definitions/responses.ErrResponse'
       summary: Delete an advert
@@ -130,19 +130,19 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Advert details
           schema:
             $ref: '#/definitions/storage.Advert'
         "400":
-          description: Bad Request
+          description: Invalid ID
           schema:
             $ref: '#/definitions/responses.ErrResponse'
         "404":
-          description: Not Found
+          description: Advert not found
           schema:
             $ref: '#/definitions/responses.ErrResponse'
         "500":
-          description: Internal Server Error
+          description: Failed to get advert
           schema:
             $ref: '#/definitions/responses.ErrResponse'
       summary: Get an advert by ID
@@ -168,19 +168,19 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Advert updated successfully
           schema:
             $ref: '#/definitions/storage.Advert'
         "400":
-          description: Bad Request
+          description: Invalid ID or data
           schema:
             $ref: '#/definitions/responses.ErrResponse'
         "404":
-          description: Not Found
+          description: Advert not found
           schema:
             $ref: '#/definitions/responses.ErrResponse'
         "500":
-          description: Internal Server Error
+          description: Failed to update advert
           schema:
             $ref: '#/definitions/responses.ErrResponse'
       summary: Update an advert
@@ -195,7 +195,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: User is authenticated
           schema:
             $ref: '#/definitions/responses.AuthResponse'
         "400":
@@ -232,15 +232,36 @@ paths:
           description: Invalid request body or data
           schema:
             $ref: '#/definitions/responses.ErrResponse'
+        "405":
+          description: Method not allowed
+          schema:
+            $ref: '#/definitions/responses.ErrResponse'
+      summary: Login a user
+      tags:
+      - auth
+  /logout:
+    post:
+      consumes:
+      - application/json
+      description: Logout a user by invalidating the session
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Logged out successfully
+          schema:
+            additionalProperties:
+              type: string
+            type: object
         "401":
-          description: Invalid credentials
+          description: No active session or session does not exist
           schema:
             $ref: '#/definitions/responses.ErrResponse'
         "405":
           description: Method not allowed
           schema:
             $ref: '#/definitions/responses.ErrResponse'
-      summary: Login a user
+      summary: Logout a user
       tags:
       - auth
   /signup:
@@ -263,7 +284,7 @@ paths:
           schema:
             $ref: '#/definitions/responses.AuthResponse'
         "400":
-          description: Invalid request body or data
+          description: User already exists
           schema:
             $ref: '#/definitions/responses.ErrResponse'
         "405":
