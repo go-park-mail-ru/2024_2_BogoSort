@@ -15,17 +15,17 @@ import (
 var validate = validator.New()
 
 var (
-	ErrInvalidRequestBody       = errors.New("invalid request body: unable to parse JSON")
-	ErrInvalidRequestData       = errors.New("invalid request data: validation failed")
-	ErrInvalidCredentials       = errors.New("invalid credentials: incorrect email or password")
-	ErrMethodNotAllowed         = errors.New("method not allowed: only POST method is supported")
-	ErrNoActiveSession          = errors.New("no active session: session cookie is missing")
-	ErrSessionDoesNotExist      = errors.New("session does not exist: invalid session ID")
-	ErrFailedToRetrieveCookie   = errors.New("failed to retrieve cookie: unable to read session cookie")
-	ErrFailedToCreateUser       = errors.New("failed to create user: internal server error")
-	ErrUserAlreadyExists        = errors.New("user already exists: email is already registered")
-	ErrFailedToRemoveSession    = errors.New("failed to remove session: internal server error")
-	ErrUserNotFound             = errors.New("user not found: no user with provided credentials")
+	ErrInvalidRequestBody     = errors.New("invalid request body: unable to parse JSON")
+	ErrInvalidRequestData     = errors.New("invalid request data: validation failed")
+	ErrInvalidCredentials     = errors.New("invalid credentials: incorrect email or password")
+	ErrMethodNotAllowed       = errors.New("method not allowed: only POST method is supported")
+	ErrNoActiveSession        = errors.New("no active session: session cookie is missing")
+	ErrSessionDoesNotExist    = errors.New("session does not exist: invalid session ID")
+	ErrFailedToRetrieveCookie = errors.New("failed to retrieve cookie: unable to read session cookie")
+	ErrFailedToCreateUser     = errors.New("failed to create user: internal server error")
+	ErrUserAlreadyExists      = errors.New("user already exists: email is already registered")
+	ErrFailedToRemoveSession  = errors.New("failed to remove session: internal server error")
+	ErrUserNotFound           = errors.New("user not found: no user with provided credentials")
 )
 
 type AuthData struct {
@@ -103,7 +103,6 @@ func (ah *AuthHandler) SignupHandler(w http.ResponseWriter, r *http.Request) {
 	responses.SendJSONResponse(w, http.StatusCreated, responses.AuthResponse{
 		Email:     user.Email,
 		SessionID: sessionID,
-		IsAuth:    true,
 	})
 }
 
@@ -117,7 +116,7 @@ func (ah *AuthHandler) SignupHandler(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} responses.AuthResponse
 // @Failure 400 {object} responses.ErrResponse "Invalid request body or data"
 // @Failure 405 {object} responses.ErrResponse "Method not allowed"
-// @Router /login [post]	
+// @Router /login [post]
 func (ah *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		responses.SendErrorResponse(w, http.StatusMethodNotAllowed, ErrMethodNotAllowed.Error())
@@ -159,7 +158,6 @@ func (ah *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	responses.SendJSONResponse(w, http.StatusOK, responses.AuthResponse{
 		Email:     user.Email,
 		SessionID: sessionID,
-		IsAuth:    true,
 	})
 }
 
@@ -211,44 +209,4 @@ func (ah *AuthHandler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, cookie)
 
 	responses.SendJSONResponse(w, http.StatusOK, map[string]string{"message": "Logged out successfully"})
-}
-
-// CheckAuthHandler godoc
-// @Summary Check if user is authenticated
-// @Description Verify if the current session is valid and the user is authenticated
-// @Tags auth
-// @Accept json
-// @Produce json
-// @Success 200 {object} responses.AuthResponse "User is authenticated"
-// @Failure 400 {object} responses.ErrResponse "Failed to retrieve cookie"
-// @Failure 401 {object} responses.ErrResponse "No active session or session does not exist"
-// @Router /check-auth [get]	
-func (ah *AuthHandler) CheckAuthHandler(w http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie("session_id")
-	if err != nil {
-		if errors.Is(err, http.ErrNoCookie) {
-			responses.SendErrorResponse(w, http.StatusUnauthorized, ErrNoActiveSession.Error())
-			return
-		}
-		responses.SendErrorResponse(w, http.StatusBadRequest, ErrFailedToRetrieveCookie.Error())
-		return
-	}
-
-	sessionID := cookie.Value
-
-	if !ah.SessionStorage.SessionExists(sessionID) {
-		responses.SendJSONResponse(w, http.StatusOK, responses.AuthResponse{
-			Email:     "",
-			SessionID: "",
-			IsAuth:    false,
-		})
-
-		return
-	}
-
-	responses.SendJSONResponse(w, http.StatusOK, responses.AuthResponse{
-		Email:     "",
-		SessionID: sessionID,
-		IsAuth:    true,
-	})
 }

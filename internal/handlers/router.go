@@ -42,7 +42,6 @@ func NewRouter() *mux.Router {
 	router.HandleFunc("/api/v1/signup", authHandler.SignupHandler).Methods("POST")
 	router.HandleFunc("/api/v1/login", authHandler.LoginHandler).Methods("POST")
 	router.HandleFunc("/api/v1/logout", authHandler.LogoutHandler).Methods("POST")
-	router.HandleFunc("/api/v1/isauth", authHandler.CheckAuthHandler).Methods("GET")
 	router.HandleFunc("/api/v1/adverts", advertsHandler.GetAdvertsHandler).Methods("GET")
 	router.HandleFunc("/api/v1/adverts/{id}", advertsHandler.GetAdvertByIDHandler).Methods("GET")
 	router.HandleFunc("/api/v1/adverts", advertsHandler.AddAdvertHandler).Methods("POST")
