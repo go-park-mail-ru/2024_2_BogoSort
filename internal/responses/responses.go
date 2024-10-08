@@ -6,9 +6,8 @@ import (
 )
 
 type AuthResponse struct {
-	Email string `json:"email"`
+	Email     string `json:"email"`
 	SessionID string `json:"session_id"`
-	IsAuth    bool   `json:"is_auth"`
 }
 
 type ErrResponse struct {

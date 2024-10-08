@@ -219,41 +219,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/check-auth": {
-            "get": {
-                "description": "Verify if the current session is valid and the user is authenticated",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "auth"
-                ],
-                "summary": "Check if user is authenticated",
-                "responses": {
-                    "200": {
-                        "description": "User is authenticated",
-                        "schema": {
-                            "$ref": "#/definitions/responses.AuthResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Failed to retrieve cookie",
-                        "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "No active session or session does not exist",
-                        "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/login": {
             "post": {
                 "description": "Login a user with email and password",
@@ -427,9 +392,6 @@ const docTemplate = `{
             "properties": {
                 "email": {
                     "type": "string"
-                },
-                "is_auth": {
-                    "type": "boolean"
                 },
                 "session_id": {
                     "type": "string"

@@ -23,8 +23,6 @@ definitions:
     properties:
       email:
         type: string
-      is_auth:
-        type: boolean
       session_id:
         type: string
     type: object
@@ -186,29 +184,6 @@ paths:
       summary: Update an advert
       tags:
       - adverts
-  /check-auth:
-    get:
-      consumes:
-      - application/json
-      description: Verify if the current session is valid and the user is authenticated
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: User is authenticated
-          schema:
-            $ref: '#/definitions/responses.AuthResponse'
-        "400":
-          description: Failed to retrieve cookie
-          schema:
-            $ref: '#/definitions/responses.ErrResponse'
-        "401":
-          description: No active session or session does not exist
-          schema:
-            $ref: '#/definitions/responses.ErrResponse'
-      summary: Check if user is authenticated
-      tags:
-      - auth
   /login:
     post:
       consumes:
