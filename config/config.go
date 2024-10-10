@@ -16,11 +16,9 @@ type Config struct {
 		WriteTimeout time.Duration `yaml:"write_timeout"`
 		ShutdownTimeout time.Duration `yaml:"shutdown_timeout"`
 	} `yaml:"server"`
-	JWT struct {
-		SecretKey      string        `yaml:"secret_key"`
+	Session struct {
 		ExpirationTime time.Duration `yaml:"expiration_time"`
-		Issuer         string        `yaml:"issuer"`
-	} `yaml:"jwt"`
+	} `yaml:"session"`
 }
 
 var cfg Config
@@ -43,10 +41,8 @@ func Init() error {
 }
 
 func InitFromEnv() {
-	cfg.JWT.SecretKey = os.Getenv("JWT_SECRET_KEY")
-	expirationTime, _ := time.ParseDuration(os.Getenv("JWT_EXPIRATION_TIME"))
-	cfg.JWT.ExpirationTime = expirationTime
-	cfg.JWT.Issuer = os.Getenv("JWT_ISSUER")
+	expirationTime, _ := time.ParseDuration(os.Getenv("SESSION_EXPIRATION_TIME"))
+	cfg.Session.ExpirationTime = expirationTime
 }
 
 func GetServerAddress() string {
@@ -71,29 +67,6 @@ func GetShutdownTimeout() time.Duration {
 	return cfg.Server.ShutdownTimeout
 }
 
-func GetJWTSecretKey() string {
-	if envKey := os.Getenv("JWT_SECRET_KEY"); envKey != "" {
-		return envKey
-	}
-
-	return cfg.JWT.SecretKey
-}
-
-func GetJWTExpirationTime() time.Duration {
-	if envTime := os.Getenv("JWT_EXPIRATION_TIME"); envTime != "" {
-		duration, err := time.ParseDuration(envTime)
-		if err == nil {
-			return duration
-		}
-	}
-
-	return cfg.JWT.ExpirationTime
-}
-
-func GetJWTIssuer() string {
-	if envIssuer := os.Getenv("JWT_ISSUER"); envIssuer != "" {
-		return envIssuer
-	}
-
-	return cfg.JWT.Issuer
+func GetSessionExpirationTime() time.Duration {
+	return cfg.Session.ExpirationTime
 }

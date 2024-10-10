@@ -10,7 +10,6 @@ import (
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/config"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/handlers"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/pkg/utils"
 	"github.com/pkg/errors"
 	"github.com/rs/cors"
 )
@@ -27,8 +26,6 @@ func (server *Server) Run() error {
 	if err := config.Init(); err != nil {
 		return err
 	}
-
-	utils.InitJWT()
 
 	router := handlers.NewRouter()
 

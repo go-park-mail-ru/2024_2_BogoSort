@@ -1,5 +1,15 @@
 definitions:
-  handlers.AuthCredentials:
+  handlers.AuthData:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  handlers.LoginCredentials:
     properties:
       email:
         type: string
@@ -13,7 +23,7 @@ definitions:
     properties:
       email:
         type: string
-      token:
+      session_id:
         type: string
     type: object
   responses.ErrResponse:
@@ -37,6 +47,8 @@ definitions:
         type: string
     type: object
 info:
+  version: "1.0.3"
+  title: "emporium api"
   contact: {}
 paths:
   /api/v1/adverts:
@@ -46,13 +58,13 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: List of adverts
           schema:
             items:
               $ref: '#/definitions/storage.Advert'
             type: array
         "500":
-          description: Internal Server Error
+          description: Failed to get adverts
           schema:
             $ref: '#/definitions/responses.ErrResponse'
       summary: Get all adverts
@@ -73,11 +85,11 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Advert added successfully
           schema:
             $ref: '#/definitions/storage.Advert'
         "400":
-          description: Bad Request
+          description: Failed to add advert
           schema:
             $ref: '#/definitions/responses.ErrResponse'
       summary: Add a new advert
@@ -94,13 +106,13 @@ paths:
         type: integer
       responses:
         "204":
-          description: No Content
+          description: Advert deleted successfully
         "400":
-          description: Bad Request
+          description: Invalid ID
           schema:
             $ref: '#/definitions/responses.ErrResponse'
         "500":
-          description: Internal Server Error
+          description: Failed to delete advert
           schema:
             $ref: '#/definitions/responses.ErrResponse'
       summary: Delete an advert
@@ -118,19 +130,19 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Advert details
           schema:
             $ref: '#/definitions/storage.Advert'
         "400":
-          description: Bad Request
+          description: Invalid ID
           schema:
             $ref: '#/definitions/responses.ErrResponse'
         "404":
-          description: Not Found
+          description: Advert not found
           schema:
             $ref: '#/definitions/responses.ErrResponse'
         "500":
-          description: Internal Server Error
+          description: Failed to get advert
           schema:
             $ref: '#/definitions/responses.ErrResponse'
       summary: Get an advert by ID
@@ -156,89 +168,88 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Advert updated successfully
           schema:
             $ref: '#/definitions/storage.Advert'
         "400":
-          description: Bad Request
+          description: Invalid ID or data
           schema:
             $ref: '#/definitions/responses.ErrResponse'
         "404":
-          description: Not Found
+          description: Advert not found
           schema:
             $ref: '#/definitions/responses.ErrResponse'
         "500":
-          description: Internal Server Error
+          description: Failed to update advert
           schema:
             $ref: '#/definitions/responses.ErrResponse'
       summary: Update an advert
       tags:
       - adverts
-  /api/v1/login:
+  /login:
     post:
       consumes:
       - application/json
-      description: Login a user with email and password or with a valid session cookie
-        or Authorization header
+      description: Login a user with email and password
       parameters:
       - description: User credentials
         in: body
         name: credentials
+        required: true
         schema:
-          $ref: '#/definitions/handlers.AuthCredentials'
+          $ref: '#/definitions/handlers.LoginCredentials'
       produces:
       - application/json
       responses:
         "200":
           description: OK
+          headers:
+            X-Authenticated:
+              description: "true"
+              type: string
           schema:
             $ref: '#/definitions/responses.AuthResponse'
         "400":
-          description: Bad Request
+          description: Invalid request body or data
           schema:
             $ref: '#/definitions/responses.ErrResponse'
         "405":
-          description: Method Not Allowed
-          schema:
-            $ref: '#/definitions/responses.ErrResponse'
-        "500":
-          description: Internal Server Error
+          description: Method not allowed
           schema:
             $ref: '#/definitions/responses.ErrResponse'
       summary: Login a user
       tags:
       - auth
-  /api/v1/logout:
+  /logout:
     post:
       consumes:
       - application/json
-      description: Logout a user by invalidating the session cookie or Authorization
-        header
+      description: Logout a user by invalidating the session
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Logged out successfully
+          headers:
+            X-Authenticated:
+              description: "false"
+              type: string
           schema:
             additionalProperties:
               type: string
             type: object
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/responses.ErrResponse'
         "401":
-          description: Unauthorized
+          description: No active session or session does not exist
           schema:
             $ref: '#/definitions/responses.ErrResponse'
         "405":
-          description: Method Not Allowed
+          description: Method not allowed
           schema:
             $ref: '#/definitions/responses.ErrResponse'
       summary: Logout a user
       tags:
       - auth
-  /api/v1/signup:
+  /signup:
     post:
       consumes:
       - application/json
@@ -249,7 +260,7 @@ paths:
         name: credentials
         required: true
         schema:
-          $ref: '#/definitions/handlers.AuthCredentials'
+          $ref: '#/definitions/handlers.AuthData'
       produces:
       - application/json
       responses:
@@ -258,15 +269,15 @@ paths:
           schema:
             $ref: '#/definitions/responses.AuthResponse'
         "400":
-          description: Bad Request
+          description: User already exists
           schema:
             $ref: '#/definitions/responses.ErrResponse'
         "405":
-          description: Method Not Allowed
+          description: Method not allowed
           schema:
             $ref: '#/definitions/responses.ErrResponse'
         "500":
-          description: Internal Server Error
+          description: Failed to create user
           schema:
             $ref: '#/definitions/responses.ErrResponse'
       summary: Signup a new user

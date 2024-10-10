@@ -4,12 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/config"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/responses"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/storage"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/pkg/utils"
 	"github.com/go-playground/validator/v10"
 )
@@ -17,12 +15,25 @@ import (
 var validate = validator.New()
 
 var (
-	ErrEmptyRequestBody   = errors.New("empty request body")
-	ErrInvalidRequestBody = errors.New("invalid request body")
-	ErrInvalidRequestData = errors.New("invalid request data")
+	ErrInvalidRequestBody     = errors.New("invalid request body: unable to parse JSON")
+	ErrInvalidRequestData     = errors.New("invalid request data: validation failed")
+	ErrInvalidCredentials     = errors.New("invalid credentials: incorrect email or password")
+	ErrMethodNotAllowed       = errors.New("method not allowed: only POST method is supported")
+	ErrNoActiveSession        = errors.New("no active session: session cookie is missing")
+	ErrSessionDoesNotExist    = errors.New("session does not exist: invalid session ID")
+	ErrFailedToRetrieveCookie = errors.New("failed to retrieve cookie: unable to read session cookie")
+	ErrFailedToCreateUser     = errors.New("failed to create user: internal server error")
+	ErrUserAlreadyExists      = errors.New("user already exists: email is already registered")
+	ErrFailedToRemoveSession  = errors.New("failed to remove session: internal server error")
+	ErrUserNotFound           = errors.New("user not found: no user with provided credentials")
 )
 
-type AuthCredentials struct {
+type AuthData struct {
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required"`
+}
+
+type LoginCredentials struct {
 	Email    string `json:"email" validate:"required,email"`
 	Password string `json:"password" validate:"required"`
 }
@@ -33,285 +44,164 @@ type AuthCredentials struct {
 // @Tags auth
 // @Accept json
 // @Produce json
-// @Param credentials body AuthCredentials true "User credentials"
+// @Param credentials body AuthData true "User credentials"
 // @Success 201 {object} responses.AuthResponse
-// @Failure 400 {object} responses.ErrResponse
-// @Failure 405 {object} responses.ErrResponse
-// @Failure 500 {object} responses.ErrResponse
-// @Router /api/v1/signup [post]
-func (ah *AuthHandler) SignupHandler(writer http.ResponseWriter, r *http.Request) {
+// @Header 200 {string} X-Authenticated "true"
+// @Failure 400 {object} responses.ErrResponse "Invalid request body or data"
+// @Failure 400 {object} responses.ErrResponse "User already exists"
+// @Failure 405 {object} responses.ErrResponse "Method not allowed"
+// @Failure 500 {object} responses.ErrResponse "Failed to create user"
+// @Router /signup [post]
+func (ah *AuthHandler) SignupHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		responses.SendErrorResponse(writer, http.StatusMethodNotAllowed, "Method not allowed")
-
+		responses.SendErrorResponse(w, http.StatusMethodNotAllowed, ErrMethodNotAllowed.Error())
 		return
 	}
 
-	var credentials AuthCredentials
+	var credentials AuthData
 	if err := json.NewDecoder(r.Body).Decode(&credentials); err != nil {
-		responses.SendErrorResponse(writer, http.StatusBadRequest, "Invalid request body")
-
+		responses.SendErrorResponse(w, http.StatusBadRequest, ErrInvalidRequestBody.Error())
 		return
 	}
 
 	if err := validate.Struct(credentials); err != nil {
-		responses.SendErrorResponse(writer, http.StatusBadRequest, "Invalid request data")
-
+		responses.SendErrorResponse(w, http.StatusBadRequest, ErrInvalidRequestData.Error())
 		return
 	}
 
 	if err := utils.ValidatePassword(credentials.Password); err != nil {
-		responses.SendErrorResponse(writer, http.StatusBadRequest, err.Error())
+		responses.SendErrorResponse(w, http.StatusBadRequest, err.Error())
+		return
+	}
 
+	existingUser, err := ah.UserStorage.GetUserByEmail(credentials.Email)
+	if err == nil && existingUser != nil {
+		responses.SendErrorResponse(w, http.StatusBadRequest, ErrUserAlreadyExists.Error())
 		return
 	}
 
 	user, err := ah.UserStorage.CreateUser(credentials.Email, credentials.Password)
 	if err != nil {
-		if err.Error() == "user already exists" {
-			responses.SendErrorResponse(writer, http.StatusBadRequest, "User already exists")
+		if errors.Is(err, ErrUserAlreadyExists) {
+			responses.SendErrorResponse(w, http.StatusBadRequest, ErrUserAlreadyExists.Error())
 		} else {
-			responses.SendErrorResponse(writer, http.StatusInternalServerError, "Failed to create user")
+			responses.SendErrorResponse(w, http.StatusInternalServerError, ErrFailedToCreateUser.Error())
 		}
-
 		return
 	}
 
-	tokenString, err := utils.CreateToken(user.Email)
-	if err != nil {
-		responses.SendErrorResponse(writer, http.StatusInternalServerError, "Failed to generate token")
-
-		return
-	}
-
-	refreshToken, err := utils.CreateRefreshToken(user.Email)
-	if err != nil {
-		responses.SendErrorResponse(writer, http.StatusInternalServerError, "Failed to generate refresh token")
-
-		return
-	}
+	sessionID := ah.SessionStorage.AddSession(user.Email)
 
 	cookie := &http.Cookie{
 		Name:     "session_id",
-		Value:    tokenString,
-		Expires:  time.Now().Add(config.GetJWTExpirationTime()),
+		Value:    sessionID,
+		Expires:  time.Now().Add(config.GetSessionExpirationTime()),
 		HttpOnly: true,
 	}
 
-	http.SetCookie(writer, cookie)
+	http.SetCookie(w, cookie)
 
-	responses.SendJSONResponse(writer, http.StatusCreated, responses.AuthResponse{Token: tokenString, RefreshToken: refreshToken, Email: user.Email})
+	w.Header().Set("X-Authenticated", "true")
+
+	responses.SendJSONResponse(w, http.StatusCreated, responses.AuthResponse{
+		Email:     user.Email,
+		SessionID: sessionID,
+	})
 }
 
 // LoginHandler godoc
 // @Summary Login a user
-// @Description Login a user with email and password or with a valid session cookie or Authorization header
+// @Description Login a user with email and password
 // @Tags auth
 // @Accept json
 // @Produce json
-// @Param credentials body AuthCredentials false "User credentials"
+// @Param credentials body LoginCredentials true "User credentials"
 // @Success 200 {object} responses.AuthResponse
-// @Failure 400 {object} responses.ErrResponse
-// @Failure 401 {object} responses.ErrResponse
-// @Failure 405 {object} responses.ErrResponse
-// @Failure 500 {object} responses.ErrResponse
-// @Router /api/v1/login [post]
+// @Header 200 {string} X-Authenticated "true"
+// @Failure 400 {object} responses.ErrResponse "Invalid request body or data"
+// @Failure 405 {object} responses.ErrResponse "Method not allowed"
+// @Router /login [post]
 func (ah *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		responses.SendErrorResponse(w, http.StatusMethodNotAllowed, "Method not allowed")
-
+		responses.SendErrorResponse(w, http.StatusMethodNotAllowed, ErrMethodNotAllowed.Error())
 		return
 	}
 
-	var (
-		email string
-		err   error
-	)
-
-	var credentials AuthCredentials
-	if r.Body != nil && r.ContentLength != 0 {
-		if err := json.NewDecoder(r.Body).Decode(&credentials); err != nil {
-			responses.SendErrorResponse(w, http.StatusBadRequest, "Invalid request body")
-
-			return
-		}
-
-		if err := validate.Struct(credentials); err != nil {
-			responses.SendErrorResponse(w, http.StatusBadRequest, "Invalid request data")
-
-			return
-		}
-
-		user, err := ah.UserStorage.ValidateUserByEmailAndPassword(credentials.Email, credentials.Password)
-		if err != nil {
-			http.SetCookie(w, &http.Cookie{
-				Name:     "session_id",
-				Value:    "",
-				Expires:  time.Now().Add(-time.Hour),
-				HttpOnly: true,
-			})
-
-			responses.SendErrorResponse(w, http.StatusBadRequest, "Invalid credentials: user not found")
-
-			return
-		}
-
-		tokenString, err := utils.CreateToken(user.Email)
-		if err != nil {
-			responses.SendErrorResponse(w, http.StatusInternalServerError, "Failed to generate token")
-
-			return
-		}
-
-		refreshToken, err := utils.CreateRefreshToken(user.Email)
-		if err != nil {
-			responses.SendErrorResponse(w, http.StatusInternalServerError, "Failed to generate refresh token")
-
-			return
-		}
-
-		cookie := &http.Cookie{
-			Name:     "session_id",
-			Value:    tokenString,
-			Expires:  time.Now().Add(config.GetJWTExpirationTime()),
-			HttpOnly: true,
-		}
-		http.SetCookie(w, cookie)
-		responses.SendJSONResponse(w, http.StatusOK, responses.AuthResponse{Token: tokenString, RefreshToken: refreshToken, Email: user.Email})
-
+	var credentials LoginCredentials
+	if err := json.NewDecoder(r.Body).Decode(&credentials); err != nil {
+		responses.SendErrorResponse(w, http.StatusBadRequest, ErrInvalidRequestBody.Error())
 		return
 	}
 
-	cookie, err := r.Cookie("session_id")
-	if err == nil {
-		email, err = utils.ValidateToken(cookie.Value)
-		if err == nil {
-			responses.SendJSONResponse(w, http.StatusOK, responses.AuthResponse{Token: cookie.Value, Email: email})
-
-			return
-		}
-	}
-
-	authHeader := r.Header.Get("Authorization")
-	if authHeader != "" {
-		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-		email, err = utils.ValidateToken(tokenString)
-		if err == nil {
-			responses.SendJSONResponse(w, http.StatusOK, responses.AuthResponse{Token: tokenString, Email: email})
-
-			return
-		}
-	}
-
-	responses.SendErrorResponse(w, http.StatusUnauthorized, "Invalid credentials")
-}
-
-// RefreshHandler godoc
-// @Summary Refresh a user's token
-// @Description Refresh a user's token using a valid refresh token
-// @Tags auth
-// @Accept json
-// @Produce json
-// @Param refresh_token body string true "Refresh token"
-// @Success 200 {object} responses.AuthResponse
-// @Failure 400 {object} responses.ErrResponse
-// @Failure 401 {object} responses.ErrResponse
-// @Failure 405 {object} responses.ErrResponse
-// @Failure 500 {object} responses.ErrResponse
-// @Router /api/v1/refresh [post]
-func (ah *AuthHandler) RefreshHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		responses.SendErrorResponse(w, http.StatusMethodNotAllowed, "Method not allowed")
-
+	if err := validate.Struct(credentials); err != nil {
+		responses.SendErrorResponse(w, http.StatusBadRequest, ErrInvalidRequestData.Error())
 		return
 	}
 
-	var requestBody struct {
-		RefreshToken string `json:"refresh_token" validate:"required"`
-	}
-
-	if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
-		responses.SendErrorResponse(w, http.StatusBadRequest, "Invalid request body")
-
-		return
-	}
-
-	if err := validate.Struct(requestBody); err != nil {
-		responses.SendErrorResponse(w, http.StatusBadRequest, "Invalid request data")
-
-		return
-	}
-
-	if storage.IsBlacklisted(requestBody.RefreshToken) {
-		responses.SendErrorResponse(w, http.StatusUnauthorized, "Invalid refresh token")
-
-		return
-	}
-
-	email, err := utils.ValidateToken(requestBody.RefreshToken)
+	user, err := ah.UserStorage.ValidateUserByEmailAndPassword(credentials.Email, credentials.Password)
 	if err != nil {
-		responses.SendErrorResponse(w, http.StatusUnauthorized, "Invalid refresh token")
-
+		if errors.Is(err, ErrUserNotFound) {
+			responses.SendErrorResponse(w, http.StatusBadRequest, ErrUserNotFound.Error())
+		} else {
+			responses.SendErrorResponse(w, http.StatusBadRequest, ErrInvalidCredentials.Error())
+		}
 		return
 	}
 
-	tokenString, err := utils.CreateToken(email)
-	if err != nil {
-		responses.SendErrorResponse(w, http.StatusInternalServerError, "Failed to generate token")
+	sessionID := ah.SessionStorage.AddSession(user.Email)
 
-		return
+	cookie := &http.Cookie{
+		Name:     "session_id",
+		Value:    sessionID,
+		Expires:  time.Now().Add(config.GetSessionExpirationTime()),
+		HttpOnly: true,
 	}
 
-	refreshToken, err := utils.CreateRefreshToken(email)
-	if err != nil {
-		responses.SendErrorResponse(w, http.StatusInternalServerError, "Failed to generate refresh token")
+	http.SetCookie(w, cookie)
 
-		return
-	}
-
-	responses.SendJSONResponse(w, http.StatusOK, responses.AuthResponse{Token: tokenString, RefreshToken: refreshToken, Email: email})
+	responses.SendJSONResponse(w, http.StatusOK, responses.AuthResponse{
+		Email:     user.Email,
+		SessionID: sessionID,
+	})
 }
 
 // LogoutHandler godoc
 // @Summary Logout a user
-// @Description Logout a user by invalidating the session cookie or Authorization header
+// @Description Logout a user by invalidating the session
 // @Tags auth
 // @Accept json
 // @Produce json
-// @Success 200 {object} map[string]string
-// @Failure 400 {object} responses.ErrResponse
-// @Failure 401 {object} responses.ErrResponse
-// @Failure 405 {object} responses.ErrResponse
-// @Router /api/v1/logout [post]
+// @Success 200 {object} map[string]string "Logged out successfully"
+// @Header 200 {string} X-Authenticated "false"
+// @Failure 401 {object} responses.ErrResponse "No active session or session does not exist"
+// @Failure 405 {object} responses.ErrResponse "Method not allowed"
+// @Router /logout [post]
 func (ah *AuthHandler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		responses.SendErrorResponse(w, http.StatusMethodNotAllowed, "Method not allowed")
-
+		responses.SendErrorResponse(w, http.StatusMethodNotAllowed, ErrMethodNotAllowed.Error())
 		return
 	}
 
-	var (
-		token string
-		err   error
-	)
-
 	cookie, err := r.Cookie("session_id")
-	if err == nil {
-		token = cookie.Value
-	} else {
-		authHeader := r.Header.Get("Authorization")
-		if authHeader != "" {
-			token = strings.TrimPrefix(authHeader, "Bearer ")
-		} else {
-			responses.SendErrorResponse(w, http.StatusUnauthorized, "No active session")
-
+	if err != nil {
+		if errors.Is(err, http.ErrNoCookie) {
+			responses.SendErrorResponse(w, http.StatusUnauthorized, ErrNoActiveSession.Error())
 			return
 		}
+		responses.SendErrorResponse(w, http.StatusBadRequest, ErrFailedToRetrieveCookie.Error())
+		return
 	}
 
-	_, err = utils.ValidateToken(token)
-	if err != nil {
-		responses.SendErrorResponse(w, http.StatusUnauthorized, "Invalid token")
+	sessionID := cookie.Value
 
+	if !ah.SessionStorage.SessionExists(sessionID) {
+		responses.SendErrorResponse(w, http.StatusUnauthorized, ErrSessionDoesNotExist.Error())
+		return
+	}
+
+	err = ah.SessionStorage.RemoveSession(sessionID)
+	if err != nil {
+		responses.SendErrorResponse(w, http.StatusInternalServerError, ErrFailedToRemoveSession.Error())
 		return
 	}
 
@@ -322,6 +212,8 @@ func (ah *AuthHandler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 	}
 	http.SetCookie(w, cookie)
+
+	w.Header().Set("X-Authenticated", "false")
 
 	responses.SendJSONResponse(w, http.StatusOK, map[string]string{"message": "Logged out successfully"})
 }

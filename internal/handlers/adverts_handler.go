@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 	"strconv"
@@ -12,18 +13,27 @@ import (
 	"github.com/gorilla/mux"
 )
 
+var (
+	ErrFailedToGetAdverts     = errors.New("failed to get adverts")
+	ErrInvalidID              = errors.New("invalid ID")
+	ErrAdvertNotFound         = errors.New("advert not found")
+	ErrFailedToAddAdvert      = errors.New("failed to add advert")
+	ErrFailedToUpdateAdvert   = errors.New("failed to update advert")
+	ErrFailedToDeleteAdvert   = errors.New("failed to delete advert")
+)
+
 // GetAdvertsHandler godoc
 // @Summary Get all adverts
 // @Description Get a list of all adverts
 // @Tags adverts
 // @Produce json
-// @Success 200 {array} storage.Advert
-// @Failure 500 {object} responses.ErrResponse
+// @Success 200 {array} storage.Advert "List of adverts"
+// @Failure 500 {object} responses.ErrResponse "Failed to get adverts"
 // @Router /api/v1/adverts [get]
 func (authHandler *AdvertsHandler) GetAdvertsHandler(writer http.ResponseWriter, _ *http.Request) {
 	adverts, err := authHandler.List.GetAdverts()
 	if err != nil {
-		responses.SendErrorResponse(writer, http.StatusInternalServerError, "Failed to get adverts")
+		responses.SendErrorResponse(writer, http.StatusInternalServerError, ErrFailedToGetAdverts.Error())
 		return
 	}
 
@@ -47,10 +57,10 @@ func (authHandler *AdvertsHandler) GetAdvertsHandler(writer http.ResponseWriter,
 // @Tags adverts
 // @Produce json
 // @Param id path int true "Advert ID"
-// @Success 200 {object} storage.Advert
-// @Failure 400 {object} responses.ErrResponse
-// @Failure 404 {object} responses.ErrResponse
-// @Failure 500 {object} responses.ErrResponse
+// @Success 200 {object} storage.Advert "Advert details"
+// @Failure 400 {object} responses.ErrResponse "Invalid ID"
+// @Failure 404 {object} responses.ErrResponse "Advert not found"
+// @Failure 500 {object} responses.ErrResponse "Failed to get advert"
 // @Router /api/v1/adverts/{id} [get]
 func (authHandler *AdvertsHandler) GetAdvertByIDHandler(writer http.ResponseWriter, reader *http.Request) {
 	vars := mux.Vars(reader)
@@ -58,15 +68,13 @@ func (authHandler *AdvertsHandler) GetAdvertByIDHandler(writer http.ResponseWrit
 	uintID, err := strconv.ParseUint(id, 10, 64)
 
 	if err != nil {
-		responses.SendErrorResponse(writer, http.StatusBadRequest, "Invalid ID")
-
+		responses.SendErrorResponse(writer, http.StatusBadRequest, ErrInvalidID.Error())
 		return
 	}
 
 	advert, err := authHandler.List.GetAdvertByID(uint(uintID))
 	if err != nil {
-		responses.SendErrorResponse(writer, http.StatusNotFound, "Advert not found")
-
+		responses.SendErrorResponse(writer, http.StatusNotFound, ErrAdvertNotFound.Error())
 		return
 	}
 
@@ -87,16 +95,15 @@ func (authHandler *AdvertsHandler) GetAdvertByIDHandler(writer http.ResponseWrit
 // @Accept json
 // @Produce json
 // @Param advert body storage.Advert true "Advert data"
-// @Success 200 {object} storage.Advert
-// @Failure 400 {object} responses.ErrResponse
+// @Success 200 {object} storage.Advert "Advert added successfully"
+// @Failure 400 {object} responses.ErrResponse "Failed to add advert"
 // @Router /api/v1/adverts [post]
 func (authHandler *AdvertsHandler) AddAdvertHandler(writer http.ResponseWriter, reader *http.Request) {
 	var advert storage.Advert
 	err := json.NewDecoder(reader.Body).Decode(&advert)
 
 	if err != nil {
-		responses.SendErrorResponse(writer, http.StatusBadRequest, err.Error())
-
+		responses.SendErrorResponse(writer, http.StatusBadRequest, ErrFailedToAddAdvert.Error())
 		return
 	}
 
@@ -113,10 +120,10 @@ func (authHandler *AdvertsHandler) AddAdvertHandler(writer http.ResponseWriter, 
 // @Produce json
 // @Param id path int true "Advert ID"
 // @Param advert body storage.Advert true "Advert data"
-// @Success 200 {object} storage.Advert
-// @Failure 400 {object} responses.ErrResponse
-// @Failure 404 {object} responses.ErrResponse
-// @Failure 500 {object} responses.ErrResponse
+// @Success 200 {object} storage.Advert "Advert updated successfully"
+// @Failure 400 {object} responses.ErrResponse "Invalid ID or data"
+// @Failure 404 {object} responses.ErrResponse "Advert not found"
+// @Failure 500 {object} responses.ErrResponse "Failed to update advert"
 // @Router /api/v1/adverts/{id} [put]
 func (authHandler *AdvertsHandler) UpdateAdvertHandler(writer http.ResponseWriter, reader *http.Request) {
 	vars := mux.Vars(reader)
@@ -124,8 +131,7 @@ func (authHandler *AdvertsHandler) UpdateAdvertHandler(writer http.ResponseWrite
 	uintID, err := strconv.ParseUint(id, 10, 64)
 
 	if err != nil {
-		responses.SendErrorResponse(writer, http.StatusBadRequest, "Invalid ID")
-
+		responses.SendErrorResponse(writer, http.StatusBadRequest, ErrInvalidID.Error())
 		return
 	}
 
@@ -133,8 +139,7 @@ func (authHandler *AdvertsHandler) UpdateAdvertHandler(writer http.ResponseWrite
 	err = json.NewDecoder(reader.Body).Decode(&advert)
 
 	if err != nil {
-		responses.SendErrorResponse(writer, http.StatusBadRequest, err.Error())
-
+		responses.SendErrorResponse(writer, http.StatusBadRequest, ErrFailedToUpdateAdvert.Error())
 		return
 	}
 
@@ -146,7 +151,7 @@ func (authHandler *AdvertsHandler) UpdateAdvertHandler(writer http.ResponseWrite
 
 	err = authHandler.List.Update(&advert)
 	if err != nil {
-		responses.SendErrorResponse(writer, http.StatusNotFound, err.Error())
+		responses.SendErrorResponse(writer, http.StatusNotFound, ErrFailedToUpdateAdvert.Error())
 
 		return
 	}
@@ -159,9 +164,9 @@ func (authHandler *AdvertsHandler) UpdateAdvertHandler(writer http.ResponseWrite
 // @Description Delete an advert by its ID
 // @Tags adverts
 // @Param id path int true "Advert ID"
-// @Success 204
-// @Failure 400 {object} responses.ErrResponse
-// @Failure 500 {object} responses.ErrResponse
+// @Success 204 "Advert deleted successfully"
+// @Failure 400 {object} responses.ErrResponse "Invalid ID"
+// @Failure 500 {object} responses.ErrResponse "Failed to delete advert"
 // @Router /api/v1/adverts/{id} [delete]
 func (authHandler *AdvertsHandler) DeleteAdvertHandler(writer http.ResponseWriter, reader *http.Request) {
 	vars := mux.Vars(reader)
@@ -169,14 +174,14 @@ func (authHandler *AdvertsHandler) DeleteAdvertHandler(writer http.ResponseWrite
 	uintID, err := strconv.ParseUint(id, 10, 64)
 
 	if err != nil {
-		responses.SendErrorResponse(writer, http.StatusBadRequest, "Invalid ID")
+		responses.SendErrorResponse(writer, http.StatusBadRequest, ErrInvalidID.Error())
 
 		return
 	}
 
 	err = authHandler.List.DeleteAdvert(uint(uintID))
 	if err != nil {
-		responses.SendErrorResponse(writer, http.StatusInternalServerError, "Internal server error")
+		responses.SendErrorResponse(writer, http.StatusInternalServerError, ErrFailedToDeleteAdvert.Error())
 
 		return
 	}

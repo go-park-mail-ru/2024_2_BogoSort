@@ -15,7 +15,8 @@ type AdvertsHandler struct {
 }
 
 type AuthHandler struct {
-	UserStorage *storage.UserStorage
+	UserStorage    *storage.UserStorage
+	SessionStorage *storage.SessionStorage
 }
 
 func NewRouter() *mux.Router {
@@ -25,6 +26,7 @@ func NewRouter() *mux.Router {
 	userStorage := storage.NewUserStorage()
 	advertsList := storage.NewAdvertsList()
 	imageService := services.NewImageService()
+	sessionStorage := storage.NewSessionStorage()
 	storage.FillAdverts(advertsList, imageService)
 
 	advertsHandler := &AdvertsHandler{
@@ -33,8 +35,11 @@ func NewRouter() *mux.Router {
 	}
 
 	authHandler := &AuthHandler{
-		UserStorage: userStorage,
+		UserStorage:    userStorage,
+		SessionStorage: sessionStorage,
 	}
+
+	router.Use(authMiddleware(authHandler))
 
 	router.HandleFunc("/api/v1/signup", authHandler.SignupHandler).Methods("POST")
 	router.HandleFunc("/api/v1/login", authHandler.LoginHandler).Methods("POST")
@@ -60,4 +65,32 @@ func recoveryMiddleware(next http.Handler) http.Handler {
 		}()
 		next.ServeHTTP(w, r)
 	})
+}
+
+func (h *AuthHandler) isAuthenticated(r *http.Request) bool {
+	cookie, err := r.Cookie("session_id")
+	if err != nil || cookie == nil {
+		log.Println("No session cookie found")
+
+		return false
+	}
+
+	exists := h.SessionStorage.SessionExists(cookie.Value)
+	log.Printf("Session exists: %v for session_id: %s", exists, cookie.Value)
+
+	return exists
+}
+
+func authMiddleware(authHandler *AuthHandler) mux.MiddlewareFunc {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if authHandler.isAuthenticated(r) {
+				w.Header().Set("X-Authenticated", "true")
+			} else {
+				w.Header().Set("X-Authenticated", "false")
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	}
 }

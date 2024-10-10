@@ -27,7 +27,7 @@ const docTemplate = `{
                 "summary": "Get all adverts",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "List of adverts",
                         "schema": {
                             "type": "array",
                             "items": {
@@ -36,7 +36,7 @@ const docTemplate = `{
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Failed to get adverts",
                         "schema": {
                             "$ref": "#/definitions/responses.ErrResponse"
                         }
@@ -68,13 +68,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Advert added successfully",
                         "schema": {
                             "$ref": "#/definitions/storage.Advert"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Failed to add advert",
                         "schema": {
                             "$ref": "#/definitions/responses.ErrResponse"
                         }
@@ -103,25 +103,25 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Advert details",
                         "schema": {
                             "$ref": "#/definitions/storage.Advert"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Invalid ID",
                         "schema": {
                             "$ref": "#/definitions/responses.ErrResponse"
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "Advert not found",
                         "schema": {
                             "$ref": "#/definitions/responses.ErrResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Failed to get advert",
                         "schema": {
                             "$ref": "#/definitions/responses.ErrResponse"
                         }
@@ -160,25 +160,25 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Advert updated successfully",
                         "schema": {
                             "$ref": "#/definitions/storage.Advert"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Invalid ID or data",
                         "schema": {
                             "$ref": "#/definitions/responses.ErrResponse"
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "Advert not found",
                         "schema": {
                             "$ref": "#/definitions/responses.ErrResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Failed to update advert",
                         "schema": {
                             "$ref": "#/definitions/responses.ErrResponse"
                         }
@@ -202,16 +202,16 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "204": {
-                        "description": "No Content"
+                        "description": "Advert deleted successfully"
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Invalid ID",
                         "schema": {
                             "$ref": "#/definitions/responses.ErrResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Failed to delete advert",
                         "schema": {
                             "$ref": "#/definitions/responses.ErrResponse"
                         }
@@ -219,9 +219,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/login": {
+        "/login": {
             "post": {
-                "description": "Login a user with email and password or with a valid session cookie or Authorization header",
+                "description": "Login a user with email and password",
                 "consumes": [
                     "application/json"
                 ],
@@ -237,8 +237,9 @@ const docTemplate = `{
                         "description": "User credentials",
                         "name": "credentials",
                         "in": "body",
+                        "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handlers.AuthCredentials"
+                            "$ref": "#/definitions/handlers.LoginCredentials"
                         }
                     }
                 ],
@@ -247,22 +248,22 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/responses.AuthResponse"
+                        },
+                        "headers": {
+                            "X-Authenticated": {
+                                "type": "string",
+                                "description": "true"
+                            }
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Invalid request body or data",
                         "schema": {
                             "$ref": "#/definitions/responses.ErrResponse"
                         }
                     },
                     "405": {
-                        "description": "Method Not Allowed",
-                        "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
+                        "description": "Method not allowed",
                         "schema": {
                             "$ref": "#/definitions/responses.ErrResponse"
                         }
@@ -270,9 +271,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/logout": {
+        "/logout": {
             "post": {
-                "description": "Logout a user by invalidating the session cookie or Authorization header",
+                "description": "Logout a user by invalidating the session",
                 "consumes": [
                     "application/json"
                 ],
@@ -285,28 +286,28 @@ const docTemplate = `{
                 "summary": "Logout a user",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Logged out successfully",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
                                 "type": "string"
                             }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
+                        },
+                        "headers": {
+                            "X-Authenticated": {
+                                "type": "string",
+                                "description": "false"
+                            }
                         }
                     },
                     "401": {
-                        "description": "Unauthorized",
+                        "description": "No active session or session does not exist",
                         "schema": {
                             "$ref": "#/definitions/responses.ErrResponse"
                         }
                     },
                     "405": {
-                        "description": "Method Not Allowed",
+                        "description": "Method not allowed",
                         "schema": {
                             "$ref": "#/definitions/responses.ErrResponse"
                         }
@@ -314,7 +315,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/signup": {
+        "/signup": {
             "post": {
                 "description": "Signup a new user with email and password",
                 "consumes": [
@@ -334,7 +335,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handlers.AuthCredentials"
+                            "$ref": "#/definitions/handlers.AuthData"
                         }
                     }
                 ],
@@ -346,19 +347,19 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "User already exists",
                         "schema": {
                             "$ref": "#/definitions/responses.ErrResponse"
                         }
                     },
                     "405": {
-                        "description": "Method Not Allowed",
+                        "description": "Method not allowed",
                         "schema": {
                             "$ref": "#/definitions/responses.ErrResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Failed to create user",
                         "schema": {
                             "$ref": "#/definitions/responses.ErrResponse"
                         }
@@ -368,7 +369,22 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "handlers.AuthCredentials": {
+        "handlers.AuthData": {
+            "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.LoginCredentials": {
             "type": "object",
             "required": [
                 "email",
@@ -389,7 +405,7 @@ const docTemplate = `{
                 "email": {
                     "type": "string"
                 },
-                "token": {
+                "session_id": {
                     "type": "string"
                 }
             }
