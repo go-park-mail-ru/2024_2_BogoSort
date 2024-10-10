@@ -46,6 +46,7 @@ type LoginCredentials struct {
 // @Produce json
 // @Param credentials body AuthData true "User credentials"
 // @Success 201 {object} responses.AuthResponse
+// @Header 200 {string} X-Authenticated "true"
 // @Failure 400 {object} responses.ErrResponse "Invalid request body or data"
 // @Failure 400 {object} responses.ErrResponse "User already exists"
 // @Failure 405 {object} responses.ErrResponse "Method not allowed"
@@ -100,6 +101,8 @@ func (ah *AuthHandler) SignupHandler(w http.ResponseWriter, r *http.Request) {
 
 	http.SetCookie(w, cookie)
 
+	w.Header().Set("X-Authenticated", "true")
+
 	responses.SendJSONResponse(w, http.StatusCreated, responses.AuthResponse{
 		Email:     user.Email,
 		SessionID: sessionID,
@@ -114,6 +117,7 @@ func (ah *AuthHandler) SignupHandler(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param credentials body LoginCredentials true "User credentials"
 // @Success 200 {object} responses.AuthResponse
+// @Header 200 {string} X-Authenticated "true"
 // @Failure 400 {object} responses.ErrResponse "Invalid request body or data"
 // @Failure 405 {object} responses.ErrResponse "Method not allowed"
 // @Router /login [post]
@@ -168,6 +172,7 @@ func (ah *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Success 200 {object} map[string]string "Logged out successfully"
+// @Header 200 {string} X-Authenticated "false"
 // @Failure 401 {object} responses.ErrResponse "No active session or session does not exist"
 // @Failure 405 {object} responses.ErrResponse "Method not allowed"
 // @Router /logout [post]
@@ -207,6 +212,8 @@ func (ah *AuthHandler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 	}
 	http.SetCookie(w, cookie)
+
+	w.Header().Set("X-Authenticated", "false")
 
 	responses.SendJSONResponse(w, http.StatusOK, map[string]string{"message": "Logged out successfully"})
 }

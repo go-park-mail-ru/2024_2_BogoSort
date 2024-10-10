@@ -248,6 +248,12 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/responses.AuthResponse"
+                        },
+                        "headers": {
+                            "X-Authenticated": {
+                                "type": "string",
+                                "description": "true"
+                            }
                         }
                     },
                     "400": {
@@ -285,6 +291,12 @@ const docTemplate = `{
                             "type": "object",
                             "additionalProperties": {
                                 "type": "string"
+                            }
+                        },
+                        "headers": {
+                            "X-Authenticated": {
+                                "type": "string",
+                                "description": "false"
                             }
                         }
                     },

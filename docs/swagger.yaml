@@ -47,6 +47,8 @@ definitions:
         type: string
     type: object
 info:
+  version: "1.0.3"
+  title: "emporium api"
   contact: {}
 paths:
   /api/v1/adverts:
@@ -201,6 +203,10 @@ paths:
       responses:
         "200":
           description: OK
+          headers:
+            X-Authenticated:
+              description: "true"
+              type: string
           schema:
             $ref: '#/definitions/responses.AuthResponse'
         "400":
@@ -224,6 +230,10 @@ paths:
       responses:
         "200":
           description: Logged out successfully
+          headers:
+            X-Authenticated:
+              description: "false"
+              type: string
           schema:
             additionalProperties:
               type: string
