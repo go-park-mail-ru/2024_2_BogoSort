@@ -15,12 +15,6 @@ var (
 	ErrUserAlreadyExists = errors.New("user already exists")
 )
 
-type User struct {
-	ID           uint   `json:"id"`
-	Email        string `json:"email"`
-	PasswordHash string `json:"-"`
-}
-
 type UserStorage struct {
 	Users map[string]*User
 	mu    sync.Mutex
@@ -91,7 +85,7 @@ func (s *UserStorage) ValidateUserByEmailAndPassword(email, password string) (*U
 
 	if !valid {
 		log.Printf("Invalid password for user: %v", email)
-		
+
 		return nil, ErrInvalidPassword
 	}
 

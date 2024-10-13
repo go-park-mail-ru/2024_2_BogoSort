@@ -1,4 +1,4 @@
-package handlers
+package delivery
 
 import (
 	"encoding/json"
@@ -7,20 +7,25 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/pkg/domain"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/pkg/services"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/responses"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/storage"
-
 	"github.com/gorilla/mux"
 )
 
 var (
-	ErrFailedToGetAdverts     = errors.New("failed to get adverts")
-	ErrInvalidID              = errors.New("invalid ID")
-	ErrAdvertNotFound         = errors.New("advert not found")
-	ErrFailedToAddAdvert      = errors.New("failed to add advert")
-	ErrFailedToUpdateAdvert   = errors.New("failed to update advert")
-	ErrFailedToDeleteAdvert   = errors.New("failed to delete advert")
+	ErrFailedToGetAdverts   = errors.New("failed to get adverts")
+	ErrInvalidID            = errors.New("invalid ID")
+	ErrAdvertNotFound       = errors.New("advert not found")
+	ErrFailedToAddAdvert    = errors.New("failed to add advert")
+	ErrFailedToUpdateAdvert = errors.New("failed to update advert")
+	ErrFailedToDeleteAdvert = errors.New("failed to delete advert")
 )
+
+type AdvertsHandler struct {
+	List         domain.AdvertRepository
+	ImageService *services.ImageService
+}
 
 // GetAdvertsHandler godoc
 // @Summary Get all adverts
@@ -31,7 +36,7 @@ var (
 // @Failure 500 {object} responses.ErrResponse "Failed to get adverts"
 // @Router /api/v1/adverts [get]
 func (authHandler *AdvertsHandler) GetAdvertsHandler(writer http.ResponseWriter, _ *http.Request) {
-	adverts, err := authHandler.List.GetAdverts()
+	adverts, err := authHandler.List.GetAllAdverts()
 	if err != nil {
 		responses.SendErrorResponse(writer, http.StatusInternalServerError, ErrFailedToGetAdverts.Error())
 		return
@@ -72,7 +77,7 @@ func (authHandler *AdvertsHandler) GetAdvertByIDHandler(writer http.ResponseWrit
 		return
 	}
 
-	advert, err := authHandler.List.GetAdvertByID(uint(uintID))
+	advert, err := authHandler.List.GetAdvertById(uint(uintID))
 	if err != nil {
 		responses.SendErrorResponse(writer, http.StatusNotFound, ErrAdvertNotFound.Error())
 		return
@@ -99,7 +104,7 @@ func (authHandler *AdvertsHandler) GetAdvertByIDHandler(writer http.ResponseWrit
 // @Failure 400 {object} responses.ErrResponse "Failed to add advert"
 // @Router /api/v1/adverts [post]
 func (authHandler *AdvertsHandler) AddAdvertHandler(writer http.ResponseWriter, reader *http.Request) {
-	var advert storage.Advert
+	var advert domain.Advert
 	err := json.NewDecoder(reader.Body).Decode(&advert)
 
 	if err != nil {

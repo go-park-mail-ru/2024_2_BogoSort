@@ -1,30 +1,17 @@
-package storage
+package repository
 
 import (
 	"errors"
 	"fmt"
 	"sync"
 
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/services"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/pkg/adverts/models"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/pkg/services"
 )
-
-type Advert struct {
-	ID       uint   `json:"id"`
-	Title    string `json:"title"`
-	ImageURL string `json:"image_url"`
-	Price    uint   `json:"price"`
-	Location string `json:"location"`
-}
-
-type AdvertsList struct {
-	adverts  []*Advert
-	advCount uint
-	mu       sync.Mutex
-}
 
 var ErrAdvertNotFound = errors.New("объявление не найдено")
 
-func (l *AdvertsList) Add(a *Advert) {
+func (l *models.AdvertsList) CreateAdvert(a *models.Advert) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
@@ -34,7 +21,7 @@ func (l *AdvertsList) Add(a *Advert) {
 	l.adverts = append(l.adverts, a)
 }
 
-func (l *AdvertsList) Update(a *Advert) error {
+func (l *models.AdvertsList) UpdateAdvert(a *models.Advert) error {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
@@ -49,7 +36,7 @@ func (l *AdvertsList) Update(a *Advert) error {
 	return ErrAdvertNotFound
 }
 
-func (l *AdvertsList) DeleteAdvert(id uint) error {
+func (l *models.AdvertsList) DeleteAdvert(id uint) error {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
@@ -64,11 +51,11 @@ func (l *AdvertsList) DeleteAdvert(id uint) error {
 	return ErrAdvertNotFound
 }
 
-func (l *AdvertsList) GetAdverts() ([]Advert, error) {
+func (l *models.AdvertsList) GetAllAdverts() ([]models.Advert, error) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
-	result := make([]Advert, len(l.adverts))
+	result := make([]models.Advert, len(l.adverts))
 
 	for i, advert := range l.adverts {
 		result[i] = *advert
@@ -77,7 +64,7 @@ func (l *AdvertsList) GetAdverts() ([]Advert, error) {
 	return result, nil
 }
 
-func (l *AdvertsList) GetAdvertByID(id uint) (Advert, error) {
+func (l *models.AdvertsList) GetAdvertById(id uint) (models.Advert, error) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
@@ -87,17 +74,17 @@ func (l *AdvertsList) GetAdvertByID(id uint) (Advert, error) {
 		}
 	}
 
-	return Advert{}, ErrAdvertNotFound
+	return models.Advert{}, ErrAdvertNotFound
 }
 
-func NewAdvertsList() *AdvertsList {
-	return &AdvertsList{
-		adverts: make([]*Advert, 0),
+func NewAdvertsList() *models.AdvertsList {
+	return &models.AdvertsList{
+		adverts: make([]*models.Advert, 0),
 		mu:      sync.Mutex{},
 	}
 }
 
-func FillAdverts(ads *AdvertsList, imageService *services.ImageService) {
+func FillAdverts(ads *models.AdvertsList, imageService *services.ImageService) {
 	ads.mu.Lock()
 	defer ads.mu.Unlock()
 
@@ -127,7 +114,7 @@ func FillAdverts(ads *AdvertsList, imageService *services.ImageService) {
 		id := uint(i)
 		price := uint(testPrice + (i-1)*testPrice/10)
 
-		advert := &Advert{
+		advert := &models.Advert{
 			ID:       id,
 			Title:    titles[(i-1)%len(titles)],
 			ImageURL: imageURL,
