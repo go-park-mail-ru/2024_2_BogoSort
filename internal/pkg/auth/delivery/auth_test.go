@@ -1,4 +1,4 @@
-package handlers
+package delivery
 
 import (
 	"bytes"
@@ -10,8 +10,7 @@ import (
 	"time"
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/config"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/responses"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/storage"
+
 	"github.com/stretchr/testify/assert"
 )
 

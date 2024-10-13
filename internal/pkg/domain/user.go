@@ -7,6 +7,8 @@ type User struct {
 }
 
 type UserRepository interface {
-	Create(user *User) error
-	GetByEmail(email string) (*User, error)
+	CreateUser(email, password string) (*User, error)
+	GetUserByEmail(email string) (*User, error)
+	GetAllUsers() ([]*User, error)
+	ValidateUserByEmailAndPassword(email, password string) (*User, error)
 }

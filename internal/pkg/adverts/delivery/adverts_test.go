@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/services"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/storage"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/pkg/domain"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/pkg/services"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/gorilla/mux"
@@ -16,7 +16,7 @@ import (
 func TestAdvertsHandler_GetAdvertsHandler(t *testing.T) {
 	t.Parallel()
 
-	list := storage.NewAdvertsList()
+	list := domain.NewAdvertsList()
 	imageService := services.NewImageService()
 	handler := &AdvertsHandler{List: list, ImageService: imageService}
 

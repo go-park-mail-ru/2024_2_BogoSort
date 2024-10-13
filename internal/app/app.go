@@ -2,14 +2,13 @@ package app
 
 import (
 	"context"
-	"net/http"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/config"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/handlers"
 	"github.com/pkg/errors"
 	"github.com/rs/cors"
 )

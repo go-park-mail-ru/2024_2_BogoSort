@@ -15,9 +15,9 @@ type Advert struct {
 }
 
 type AdvertsList struct {
-	adverts  []*Advert
-	advCount uint
-	mu       sync.Mutex
+	Adverts  []*Advert
+	AdvCount uint
+	Mu       sync.Mutex
 }
 
 type AdvertRepository interface {
@@ -28,4 +28,12 @@ type AdvertRepository interface {
 	DeleteAdvert(id uint) error
 	NewAdvertsList() *AdvertsList
 	FillAdverts(ads *AdvertsList, imageService *services.ImageService)
+}
+
+type AdvertUseCase interface {
+	CreateAdvert(advert *Advert) error
+	GetAllAdverts() ([]*Advert, error)
+	GetAdvertById(id uint) (*Advert, error)
+	UpdateAdvert(advert *Advert) error
+	DeleteAdvert(id uint) error
 }

@@ -2,13 +2,15 @@ package repository
 
 import (
 	"testing"
+
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/pkg/domain"
 )
 
 func TestAdvertsList_Add(t *testing.T) {
 	t.Parallel()
 
 	list := NewAdvertsList()
-	advert := &Advert{Title: "Test Advert"}
+	advert := &domain.Advert{Title: "Test Advert"}
 
 	list.Add(advert)
 
@@ -25,11 +27,11 @@ func TestAdvertsList_Update(t *testing.T) {
 	t.Parallel()
 
 	list := NewAdvertsList()
-	advert := &Advert{ID: 1, Title: "Test Advert"}
+	advert := &domain.Advert{ID: 1, Title: "Test Advert"}
 
 	list.Add(advert)
 
-	updatedAdvert := &Advert{ID: 1, Title: "Updated Advert"}
+	updatedAdvert := &domain.Advert{ID: 1, Title: "Updated Advert"}
 
 	err := list.Update(updatedAdvert)
 	if err != nil {

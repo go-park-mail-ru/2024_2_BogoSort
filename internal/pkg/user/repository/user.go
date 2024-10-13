@@ -1,10 +1,11 @@
-package storage
+package repository
 
 import (
 	"errors"
 	"log"
 	"sync"
 
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/pkg/domain"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/pkg/utils"
 )
 
@@ -15,14 +16,15 @@ var (
 	ErrUserAlreadyExists = errors.New("user already exists")
 )
 
-type UserStorage struct {
-	Users map[string]*User
-	mu    sync.Mutex
+type userRepository struct {
+	users    map[string]*domain.User
+	sessions map[string]string
+	mu       sync.Mutex
 }
 
-func NewUserStorage() *UserStorage {
-	return &UserStorage{
-		Users: map[string]*User{
+func NewUserRepository() *userRepository {
+	return &userRepository{
+		users: map[string]*domain.User{
 			"test@test.com": {
 				ID:           1,
 				Email:        "test@test.com",
@@ -33,7 +35,7 @@ func NewUserStorage() *UserStorage {
 	}
 }
 
-func (s *UserStorage) CreateUser(email, password string) (*User, error) {
+func (s *userRepository) CreateUser(email, password string) (*domain.User, error) {
 	hash := utils.HashPassword(password)
 
 	if hash == "" {
@@ -43,28 +45,28 @@ func (s *UserStorage) CreateUser(email, password string) (*User, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if _, exists := s.Users[email]; exists {
+	if _, exists := s.users[email]; exists {
 		return nil, ErrUserAlreadyExists
 	}
 
-	newUser := &User{
-		ID:           uint(len(s.Users) + 1),
+	newUser := &domain.User{
+		ID:           uint(len(s.users) + 1),
 		Email:        email,
 		PasswordHash: hash,
 	}
 
-	s.Users[email] = newUser
+	s.users[email] = newUser
 
 	log.Printf("User created: %v", email)
 
 	return newUser, nil
 }
 
-func (s *UserStorage) GetUserByEmail(email string) (*User, error) {
+func (s *userRepository) GetUserByEmail(email string) (*domain.User, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	user, ok := s.Users[email]
+	user, ok := s.users[email]
 
 	if !ok {
 		return nil, ErrUserNotFound
@@ -73,7 +75,7 @@ func (s *UserStorage) GetUserByEmail(email string) (*User, error) {
 	return user, nil
 }
 
-func (s *UserStorage) ValidateUserByEmailAndPassword(email, password string) (*User, error) {
+func (s *userRepository) ValidateUserByEmailAndPassword(email, password string) (*domain.User, error) {
 	user, err := s.GetUserByEmail(email)
 	if err != nil {
 		log.Printf("User not found: %v", email)
@@ -94,14 +96,26 @@ func (s *UserStorage) ValidateUserByEmailAndPassword(email, password string) (*U
 	return user, nil
 }
 
-func (s *UserStorage) GetAllUsers() ([]*User, error) {
+func (s *userRepository) GetAllUsers() ([]*domain.User, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	users := make([]*User, 0, len(s.Users))
-	for _, user := range s.Users {
+	users := make([]*domain.User, 0, len(s.users))
+	for _, user := range s.users {
 		users = append(users, user)
 	}
 
 	return users, nil
+}
+
+func (s *userRepository) GetUserBySession(sessionID string) (string, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	email, exists := s.sessions[sessionID]
+
+	if !exists {
+		// return "", domain.ErrSessionDoesNotExist
+	}
+
+	return email, nil
 }
