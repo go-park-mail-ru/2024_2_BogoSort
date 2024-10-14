@@ -25,7 +25,6 @@ func NewAdvertRepository() domain.AdvertRepository {
 	}
 }
 
-// Создание объявления
 func (l *advertRepository) CreateAdvert(a *domain.Advert) error {
 	l.mu.Lock()
 	defer l.mu.Unlock()
@@ -37,7 +36,6 @@ func (l *advertRepository) CreateAdvert(a *domain.Advert) error {
 	return nil
 }
 
-// Обновление объявления
 func (l *advertRepository) UpdateAdvert(a *domain.Advert) error {
 	l.mu.Lock()
 	defer l.mu.Unlock()
@@ -52,7 +50,6 @@ func (l *advertRepository) UpdateAdvert(a *domain.Advert) error {
 	return ErrAdvertNotFound
 }
 
-// Удаление объявления
 func (l *advertRepository) DeleteAdvert(id uint) error {
 	l.mu.Lock()
 	defer l.mu.Unlock()
@@ -67,7 +64,6 @@ func (l *advertRepository) DeleteAdvert(id uint) error {
 	return ErrAdvertNotFound
 }
 
-// Получение всех объявлений
 func (l *advertRepository) GetAllAdverts() ([]*domain.Advert, error) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
@@ -78,7 +74,6 @@ func (l *advertRepository) GetAllAdverts() ([]*domain.Advert, error) {
 	return result, nil
 }
 
-// Получение объявления по ID
 func (l *advertRepository) GetAdvertById(id uint) (*domain.Advert, error) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
@@ -92,7 +87,6 @@ func (l *advertRepository) GetAdvertById(id uint) (*domain.Advert, error) {
 	return nil, ErrAdvertNotFound
 }
 
-// Создание нового списка объявлений
 func (l *advertRepository) NewAdvertsList() *domain.AdvertsList {
 	return &domain.AdvertsList{
 		Adverts:  make([]*domain.Advert, 0),
@@ -101,7 +95,6 @@ func (l *advertRepository) NewAdvertsList() *domain.AdvertsList {
 	}
 }
 
-// Заполнение объявлений тестовыми данными
 func (l *advertRepository) FillAdverts(ads *domain.AdvertsList, imageService *services.ImageService) {
 	ads.Mu.Lock()
 	defer ads.Mu.Unlock()

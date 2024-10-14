@@ -7,7 +7,10 @@ import (
 	"time"
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/config"
+	sessionRepo "github.com/go-park-mail-ru/2024_2_BogoSort/internal/pkg/auth/repository"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/pkg/domain"
+	userRepo "github.com/go-park-mail-ru/2024_2_BogoSort/internal/pkg/user/repository"
+
 	"github.com/go-park-mail-ru/2024_2_BogoSort/pkg/utils"
 	"github.com/go-playground/validator/v10"
 )
@@ -31,6 +34,16 @@ var (
 type AuthHandler struct {
 	UserRepo    domain.UserRepository
 	SessionRepo domain.SessionRepository
+}
+
+func NewAuthHandler() *AuthHandler {
+	userRepo := userRepo.NewUserRepository()
+	sessionRepo := sessionRepo.NewSessionRepository()
+
+	return &AuthHandler{
+		UserRepo:    userRepo,
+		SessionRepo: sessionRepo,
+	}
 }
 
 // SignupHandler godoc

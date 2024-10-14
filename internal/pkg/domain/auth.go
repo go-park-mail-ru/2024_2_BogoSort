@@ -10,7 +10,6 @@ type Sessions struct {
 type SessionRepository interface {
 	AddSession(email string) string
 	RemoveSession(email string) error
-	GetSession(email string) (string, error)
 	SessionExists(sessionID string) bool
 }
 

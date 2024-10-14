@@ -15,15 +15,11 @@ type sessionRepository struct {
 	mu       sync.Mutex
 }
 
-type SessionRepository interface {
-	AddSession(email string) string
-	RemoveSession(email string) error
-	GetSession(email string) (string, error)
-}
-
-func NewSessionStorage() *domain.Sessions {
-	return &domain.Sessions{
-		Sessions: make(map[string]string),
+func NewSessionRepository() domain.SessionRepository {
+	return &sessionRepository{
+		sessions: domain.Sessions{
+			Sessions: make(map[string]string),
+		},
 	}
 }
 

@@ -9,6 +9,7 @@ import (
 	"syscall"
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/config"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/router"
 	"github.com/pkg/errors"
 	"github.com/rs/cors"
 )
@@ -26,7 +27,7 @@ func (server *Server) Run() error {
 		return err
 	}
 
-	router := handlers.NewRouter()
+	router := router.NewRouter()
 
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins:   []string{"https://two024-2-bogo-sort.onrender.com"},

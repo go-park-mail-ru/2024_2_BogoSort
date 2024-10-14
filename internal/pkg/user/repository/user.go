@@ -22,7 +22,7 @@ type userRepository struct {
 	mu       sync.Mutex
 }
 
-func NewUserRepository() *userRepository {
+func NewUserRepository() domain.UserRepository {
 	return &userRepository{
 		users: map[string]*domain.User{
 			"test@test.com": {

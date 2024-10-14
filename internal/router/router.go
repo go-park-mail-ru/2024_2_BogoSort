@@ -4,34 +4,23 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/pkg/adverts/delivery"
+	advertsHandler "github.com/go-park-mail-ru/2024_2_BogoSort/internal/pkg/adverts/delivery"
+	authHandler "github.com/go-park-mail-ru/2024_2_BogoSort/internal/pkg/auth/delivery"
 	"github.com/gorilla/mux"
 )
-
-// type AuthHandler struct {
-// 	UserStorage    *delivery.UserStorage
-// 	SessionStorage *delivery.SessionStorage
-// }
 
 func NewRouter() *mux.Router {
 	router := mux.NewRouter()
 	router.Use(recoveryMiddleware)
 
-	// userStorage := storage.NewUserStorage()
-	// sessionStorage := storage.NewSessionStorage()
-
-	advertsHandler := delivery.NewAdvertsHandler()
-
-	// authHandler := &AuthHandler{
-	// 	UserStorage:    userStorage,
-	// 	SessionStorage: sessionStorage,
-	// }
+	advertsHandler := advertsHandler.NewAdvertsHandler()
+	authHandler := authHandler.NewAuthHandler()
 
 	// router.Use(authMiddleware(authHandler))
 
-	// router.HandleFunc("/api/v1/signup", authHandler.SignupHandler).Methods("POST")
-	// router.HandleFunc("/api/v1/login", authHandler.LoginHandler).Methods("POST")
-	// router.HandleFunc("/api/v1/logout", authHandler.LogoutHandler).Methods("POST")
+	router.HandleFunc("/api/v1/signup", authHandler.SignupHandler).Methods("POST")
+	router.HandleFunc("/api/v1/login", authHandler.LoginHandler).Methods("POST")
+	router.HandleFunc("/api/v1/logout", authHandler.LogoutHandler).Methods("POST")
 	router.HandleFunc("/api/v1/adverts", advertsHandler.GetAdvertsHandler).Methods("GET")
 	router.HandleFunc("/api/v1/adverts/{id}", advertsHandler.GetAdvertByIDHandler).Methods("GET")
 	router.HandleFunc("/api/v1/adverts", advertsHandler.AddAdvertHandler).Methods("POST")
