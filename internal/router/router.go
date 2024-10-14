@@ -16,7 +16,7 @@ func NewRouter() *mux.Router {
 	advertsHandler := advertsHandler.NewAdvertsHandler()
 	authHandler := authHandler.NewAuthHandler()
 
-	// router.Use(authMiddleware(authHandler))
+	router.Use(authMiddleware(authHandler))
 
 	router.HandleFunc("/api/v1/signup", authHandler.SignupHandler).Methods("POST")
 	router.HandleFunc("/api/v1/login", authHandler.LoginHandler).Methods("POST")
@@ -44,30 +44,30 @@ func recoveryMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-// func (h *AuthHandler) isAuthenticated(r *http.Request) bool {
-// 	cookie, err := r.Cookie("session_id")
-// 	if err != nil || cookie == nil {
-// 		log.Println("No session cookie found")
+func isAuthenticated(r *http.Request, authHandler *authHandler.AuthHandler) bool {
+	cookie, err := r.Cookie("session_id")
+	if err != nil || cookie == nil {
+		log.Println("No session cookie found")
 
-// 		return false
-// 	}
+		return false
+	}
 
-// 	exists := h.SessionStorage.SessionExists(cookie.Value)
-// 	log.Printf("Session exists: %v for session_id: %s", exists, cookie.Value)
+	exists := authHandler.SessionRepo.SessionExists(cookie.Value)
+	log.Printf("Session exists: %v for session_id: %s", exists, cookie.Value)
 
-// 	return exists
-// }
+	return exists
+}
 
-// func authMiddleware(authHandler *AuthHandler) mux.MiddlewareFunc {
-// 	return func(next http.Handler) http.Handler {
-// 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-// 			if authHandler.isAuthenticated(r) {
-// 				w.Header().Set("X-Authenticated", "true")
-// 			} else {
-// 				w.Header().Set("X-Authenticated", "false")
-// 			}
+func authMiddleware(authHandler *authHandler.AuthHandler) mux.MiddlewareFunc {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if isAuthenticated(r, authHandler) {
+				w.Header().Set("X-Authenticated", "true")
+			} else {
+				w.Header().Set("X-Authenticated", "false")
+			}
 
-// 			next.ServeHTTP(w, r)
-// 		})
-// 	}
-// }
+			next.ServeHTTP(w, r)
+		})
+	}
+}
