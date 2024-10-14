@@ -29,8 +29,8 @@ type AdvertsHandler struct {
 }
 
 func NewAdvertsHandler() *AdvertsHandler {
-	repo := repository.NewAdvertRepository()   // Создание репозитория
-	imageService := services.NewImageService() // Предполагается, что у вас есть конструктор для ImageService
+	repo := repository.NewAdvertRepository()
+	imageService := services.NewImageService()
 
 	return &AdvertsHandler{
 		AdvertsRepo:  repo,
