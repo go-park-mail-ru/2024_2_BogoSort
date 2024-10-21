@@ -1,4 +1,4 @@
-package responses
+package auth
 
 import (
 	"encoding/json"

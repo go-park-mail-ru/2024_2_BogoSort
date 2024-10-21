@@ -1,26 +1,42 @@
-package handlers
+package adverts
 
 import (
 	"encoding/json"
 	"errors"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/domain"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/pkg/repository/adverts"
 	"log"
 	"net/http"
 	"strconv"
 
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/responses"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/storage"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/pkg/services"
 
 	"github.com/gorilla/mux"
 )
 
 var (
-	ErrFailedToGetAdverts     = errors.New("failed to get adverts")
-	ErrInvalidID              = errors.New("invalid ID")
-	ErrAdvertNotFound         = errors.New("advert not found")
-	ErrFailedToAddAdvert      = errors.New("failed to add advert")
-	ErrFailedToUpdateAdvert   = errors.New("failed to update advert")
-	ErrFailedToDeleteAdvert   = errors.New("failed to delete advert")
+	ErrFailedToGetAdverts   = errors.New("failed to get adverts")
+	ErrInvalidID            = errors.New("invalid ID")
+	ErrAdvertNotFound       = errors.New("advert not found")
+	ErrFailedToAddAdvert    = errors.New("failed to add advert")
+	ErrFailedToUpdateAdvert = errors.New("failed to update advert")
+	ErrFailedToDeleteAdvert = errors.New("failed to delete advert")
 )
+
+type AdvertsHandler struct {
+	AdvertsRepo  domain.AdvertRepository
+	ImageService *services.ImageService
+}
+
+func NewAdvertsHandler() *AdvertsHandler {
+	repo := adverts.NewAdvertRepository()
+	imageService := services.NewImageService()
+
+	return &AdvertsHandler{
+		AdvertsRepo:  repo,
+		ImageService: imageService,
+	}
+}
 
 // GetAdvertsHandler godoc
 // @Summary Get all adverts
@@ -31,9 +47,9 @@ var (
 // @Failure 500 {object} responses.ErrResponse "Failed to get adverts"
 // @Router /api/v1/adverts [get]
 func (authHandler *AdvertsHandler) GetAdvertsHandler(writer http.ResponseWriter, _ *http.Request) {
-	adverts, err := authHandler.List.GetAdverts()
+	adverts, err := authHandler.AdvertsRepo.GetAllAdverts()
 	if err != nil {
-		responses.SendErrorResponse(writer, http.StatusInternalServerError, ErrFailedToGetAdverts.Error())
+		SendErrorResponse(writer, http.StatusInternalServerError, ErrFailedToGetAdverts.Error())
 		return
 	}
 
@@ -48,7 +64,7 @@ func (authHandler *AdvertsHandler) GetAdvertsHandler(writer http.ResponseWriter,
 		adverts[index].ImageURL = imageURL
 	}
 
-	responses.SendJSONResponse(writer, http.StatusOK, adverts)
+	SendJSONResponse(writer, http.StatusOK, adverts)
 }
 
 // GetAdvertByIDHandler godoc
@@ -68,13 +84,13 @@ func (authHandler *AdvertsHandler) GetAdvertByIDHandler(writer http.ResponseWrit
 	uintID, err := strconv.ParseUint(id, 10, 64)
 
 	if err != nil {
-		responses.SendErrorResponse(writer, http.StatusBadRequest, ErrInvalidID.Error())
+		SendErrorResponse(writer, http.StatusBadRequest, ErrInvalidID.Error())
 		return
 	}
 
-	advert, err := authHandler.List.GetAdvertByID(uint(uintID))
+	advert, err := authHandler.AdvertsRepo.GetAdvertById(uint(uintID))
 	if err != nil {
-		responses.SendErrorResponse(writer, http.StatusNotFound, ErrAdvertNotFound.Error())
+		SendErrorResponse(writer, http.StatusNotFound, ErrAdvertNotFound.Error())
 		return
 	}
 
@@ -85,7 +101,7 @@ func (authHandler *AdvertsHandler) GetAdvertByIDHandler(writer http.ResponseWrit
 		advert.ImageURL = imageURL
 	}
 
-	responses.SendJSONResponse(writer, http.StatusOK, advert)
+	SendJSONResponse(writer, http.StatusOK, advert)
 }
 
 // AddAdvertHandler godoc
@@ -99,17 +115,17 @@ func (authHandler *AdvertsHandler) GetAdvertByIDHandler(writer http.ResponseWrit
 // @Failure 400 {object} responses.ErrResponse "Failed to add advert"
 // @Router /api/v1/adverts [post]
 func (authHandler *AdvertsHandler) AddAdvertHandler(writer http.ResponseWriter, reader *http.Request) {
-	var advert storage.Advert
+	var advert domain.Advert
 	err := json.NewDecoder(reader.Body).Decode(&advert)
 
 	if err != nil {
-		responses.SendErrorResponse(writer, http.StatusBadRequest, ErrFailedToAddAdvert.Error())
+		SendErrorResponse(writer, http.StatusBadRequest, ErrFailedToAddAdvert.Error())
 		return
 	}
 
-	authHandler.List.Add(&advert)
+	authHandler.AdvertsRepo.CreateAdvert(&advert)
 
-	responses.SendJSONResponse(writer, http.StatusOK, advert)
+	SendJSONResponse(writer, http.StatusOK, advert)
 }
 
 // UpdateAdvertHandler godoc
@@ -131,32 +147,32 @@ func (authHandler *AdvertsHandler) UpdateAdvertHandler(writer http.ResponseWrite
 	uintID, err := strconv.ParseUint(id, 10, 64)
 
 	if err != nil {
-		responses.SendErrorResponse(writer, http.StatusBadRequest, ErrInvalidID.Error())
+		SendErrorResponse(writer, http.StatusBadRequest, ErrInvalidID.Error())
 		return
 	}
 
-	var advert storage.Advert
+	var advert domain.Advert
 	err = json.NewDecoder(reader.Body).Decode(&advert)
 
 	if err != nil {
-		responses.SendErrorResponse(writer, http.StatusBadRequest, ErrFailedToUpdateAdvert.Error())
+		SendErrorResponse(writer, http.StatusBadRequest, ErrFailedToUpdateAdvert.Error())
 		return
 	}
 
 	if advert.ID != uint(uintID) {
-		responses.SendErrorResponse(writer, http.StatusBadRequest, "Id in URL and JSON do not match")
+		SendErrorResponse(writer, http.StatusBadRequest, "Id in URL and JSON do not match")
 
 		return
 	}
 
-	err = authHandler.List.Update(&advert)
+	err = authHandler.AdvertsRepo.UpdateAdvert(&advert)
 	if err != nil {
-		responses.SendErrorResponse(writer, http.StatusNotFound, ErrFailedToUpdateAdvert.Error())
+		SendErrorResponse(writer, http.StatusNotFound, ErrFailedToUpdateAdvert.Error())
 
 		return
 	}
 
-	responses.SendJSONResponse(writer, http.StatusOK, advert)
+	SendJSONResponse(writer, http.StatusOK, advert)
 }
 
 // DeleteAdvertHandler godoc
@@ -174,17 +190,17 @@ func (authHandler *AdvertsHandler) DeleteAdvertHandler(writer http.ResponseWrite
 	uintID, err := strconv.ParseUint(id, 10, 64)
 
 	if err != nil {
-		responses.SendErrorResponse(writer, http.StatusBadRequest, ErrInvalidID.Error())
+		SendErrorResponse(writer, http.StatusBadRequest, ErrInvalidID.Error())
 
 		return
 	}
 
-	err = authHandler.List.DeleteAdvert(uint(uintID))
+	err = authHandler.AdvertsRepo.DeleteAdvert(uint(uintID))
 	if err != nil {
-		responses.SendErrorResponse(writer, http.StatusInternalServerError, ErrFailedToDeleteAdvert.Error())
+		SendErrorResponse(writer, http.StatusInternalServerError, ErrFailedToDeleteAdvert.Error())
 
 		return
 	}
 
-	responses.SendJSONResponse(writer, http.StatusNoContent, nil)
+	SendJSONResponse(writer, http.StatusNoContent, nil)
 }

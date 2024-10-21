@@ -1,13 +1,15 @@
-package handlers
+package auth
 
 import (
 	"encoding/json"
 	"errors"
+	domain2 "github.com/go-park-mail-ru/2024_2_BogoSort/internal/domain"
+	sessionRepo "github.com/go-park-mail-ru/2024_2_BogoSort/internal/pkg/repository/auth"
+	userRepo "github.com/go-park-mail-ru/2024_2_BogoSort/internal/pkg/repository/user"
 	"net/http"
 	"time"
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/config"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/responses"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/pkg/utils"
 	"github.com/go-playground/validator/v10"
 )
@@ -28,14 +30,19 @@ var (
 	ErrUserNotFound           = errors.New("user not found: no user with provided credentials")
 )
 
-type AuthData struct {
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required"`
+type AuthHandler struct {
+	UserRepo    domain2.UserRepository
+	SessionRepo domain2.SessionRepository
 }
 
-type LoginCredentials struct {
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required"`
+func NewAuthHandler() *AuthHandler {
+	userRepo := userRepo.NewUserRepository()
+	sessionRepo := sessionRepo.NewSessionRepository()
+
+	return &AuthHandler{
+		UserRepo:    userRepo,
+		SessionRepo: sessionRepo,
+	}
 }
 
 // SignupHandler godoc
@@ -45,52 +52,52 @@ type LoginCredentials struct {
 // @Accept json
 // @Produce json
 // @Param credentials body AuthData true "User credentials"
-// @Success 201 {object} responses.AuthResponse
+// @Success 201 {object} AuthResponse
 // @Header 200 {string} X-Authenticated "true"
-// @Failure 400 {object} responses.ErrResponse "Invalid request body or data"
-// @Failure 400 {object} responses.ErrResponse "User already exists"
-// @Failure 405 {object} responses.ErrResponse "Method not allowed"
-// @Failure 500 {object} responses.ErrResponse "Failed to create user"
+// @Failure 400 {object} ErrResponse "Invalid request body or data"
+// @Failure 400 {object} ErrResponse "User already exists"
+// @Failure 405 {object} ErrResponse "Method not allowed"
+// @Failure 500 {object} ErrResponse "Failed to create user"
 // @Router /signup [post]
 func (ah *AuthHandler) SignupHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		responses.SendErrorResponse(w, http.StatusMethodNotAllowed, ErrMethodNotAllowed.Error())
+		SendErrorResponse(w, http.StatusMethodNotAllowed, ErrMethodNotAllowed.Error())
 		return
 	}
 
-	var credentials AuthData
+	var credentials domain2.AuthData
 	if err := json.NewDecoder(r.Body).Decode(&credentials); err != nil {
-		responses.SendErrorResponse(w, http.StatusBadRequest, ErrInvalidRequestBody.Error())
+		SendErrorResponse(w, http.StatusBadRequest, ErrInvalidRequestBody.Error())
 		return
 	}
 
 	if err := validate.Struct(credentials); err != nil {
-		responses.SendErrorResponse(w, http.StatusBadRequest, ErrInvalidRequestData.Error())
+		SendErrorResponse(w, http.StatusBadRequest, ErrInvalidRequestData.Error())
 		return
 	}
 
 	if err := utils.ValidatePassword(credentials.Password); err != nil {
-		responses.SendErrorResponse(w, http.StatusBadRequest, err.Error())
+		SendErrorResponse(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	existingUser, err := ah.UserStorage.GetUserByEmail(credentials.Email)
+	existingUser, err := ah.UserRepo.GetUserByEmail(credentials.Email)
 	if err == nil && existingUser != nil {
-		responses.SendErrorResponse(w, http.StatusBadRequest, ErrUserAlreadyExists.Error())
+		SendErrorResponse(w, http.StatusBadRequest, ErrUserAlreadyExists.Error())
 		return
 	}
 
-	user, err := ah.UserStorage.CreateUser(credentials.Email, credentials.Password)
+	user, err := ah.UserRepo.CreateUser(credentials.Email, credentials.Password)
 	if err != nil {
 		if errors.Is(err, ErrUserAlreadyExists) {
-			responses.SendErrorResponse(w, http.StatusBadRequest, ErrUserAlreadyExists.Error())
+			SendErrorResponse(w, http.StatusBadRequest, ErrUserAlreadyExists.Error())
 		} else {
-			responses.SendErrorResponse(w, http.StatusInternalServerError, ErrFailedToCreateUser.Error())
+			SendErrorResponse(w, http.StatusInternalServerError, ErrFailedToCreateUser.Error())
 		}
 		return
 	}
 
-	sessionID := ah.SessionStorage.AddSession(user.Email)
+	sessionID := ah.SessionRepo.AddSession(user.Email)
 
 	cookie := &http.Cookie{
 		Name:     "session_id",
@@ -103,7 +110,7 @@ func (ah *AuthHandler) SignupHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("X-Authenticated", "true")
 
-	responses.SendJSONResponse(w, http.StatusCreated, responses.AuthResponse{
+	SendJSONResponse(w, http.StatusCreated, AuthResponse{
 		Email:     user.Email,
 		SessionID: sessionID,
 	})
@@ -116,39 +123,39 @@ func (ah *AuthHandler) SignupHandler(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param credentials body LoginCredentials true "User credentials"
-// @Success 200 {object} responses.AuthResponse
+// @Success 200 {object} AuthResponse
 // @Header 200 {string} X-Authenticated "true"
-// @Failure 400 {object} responses.ErrResponse "Invalid request body or data"
-// @Failure 405 {object} responses.ErrResponse "Method not allowed"
+// @Failure 400 {object} ErrResponse "Invalid request body or data"
+// @Failure 405 {object} ErrResponse "Method not allowed"
 // @Router /login [post]
 func (ah *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		responses.SendErrorResponse(w, http.StatusMethodNotAllowed, ErrMethodNotAllowed.Error())
+		SendErrorResponse(w, http.StatusMethodNotAllowed, ErrMethodNotAllowed.Error())
 		return
 	}
 
-	var credentials LoginCredentials
+	var credentials domain2.LoginCredentials
 	if err := json.NewDecoder(r.Body).Decode(&credentials); err != nil {
-		responses.SendErrorResponse(w, http.StatusBadRequest, ErrInvalidRequestBody.Error())
+		SendErrorResponse(w, http.StatusBadRequest, ErrInvalidRequestBody.Error())
 		return
 	}
 
 	if err := validate.Struct(credentials); err != nil {
-		responses.SendErrorResponse(w, http.StatusBadRequest, ErrInvalidRequestData.Error())
+		SendErrorResponse(w, http.StatusBadRequest, ErrInvalidRequestData.Error())
 		return
 	}
 
-	user, err := ah.UserStorage.ValidateUserByEmailAndPassword(credentials.Email, credentials.Password)
+	user, err := ah.UserRepo.ValidateUserByEmailAndPassword(credentials.Email, credentials.Password)
 	if err != nil {
 		if errors.Is(err, ErrUserNotFound) {
-			responses.SendErrorResponse(w, http.StatusBadRequest, ErrUserNotFound.Error())
+			SendErrorResponse(w, http.StatusBadRequest, ErrUserNotFound.Error())
 		} else {
-			responses.SendErrorResponse(w, http.StatusBadRequest, ErrInvalidCredentials.Error())
+			SendErrorResponse(w, http.StatusBadRequest, ErrInvalidCredentials.Error())
 		}
 		return
 	}
 
-	sessionID := ah.SessionStorage.AddSession(user.Email)
+	sessionID := ah.SessionRepo.AddSession(user.Email)
 
 	cookie := &http.Cookie{
 		Name:     "session_id",
@@ -159,7 +166,7 @@ func (ah *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	http.SetCookie(w, cookie)
 
-	responses.SendJSONResponse(w, http.StatusOK, responses.AuthResponse{
+	SendJSONResponse(w, http.StatusOK, AuthResponse{
 		Email:     user.Email,
 		SessionID: sessionID,
 	})
@@ -173,35 +180,35 @@ func (ah *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Success 200 {object} map[string]string "Logged out successfully"
 // @Header 200 {string} X-Authenticated "false"
-// @Failure 401 {object} responses.ErrResponse "No active session or session does not exist"
-// @Failure 405 {object} responses.ErrResponse "Method not allowed"
+// @Failure 401 {object} ErrResponse "No active session or session does not exist"
+// @Failure 405 {object} ErrResponse "Method not allowed"
 // @Router /logout [post]
 func (ah *AuthHandler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		responses.SendErrorResponse(w, http.StatusMethodNotAllowed, ErrMethodNotAllowed.Error())
+		SendErrorResponse(w, http.StatusMethodNotAllowed, ErrMethodNotAllowed.Error())
 		return
 	}
 
 	cookie, err := r.Cookie("session_id")
 	if err != nil {
 		if errors.Is(err, http.ErrNoCookie) {
-			responses.SendErrorResponse(w, http.StatusUnauthorized, ErrNoActiveSession.Error())
+			SendErrorResponse(w, http.StatusUnauthorized, ErrNoActiveSession.Error())
 			return
 		}
-		responses.SendErrorResponse(w, http.StatusBadRequest, ErrFailedToRetrieveCookie.Error())
+		SendErrorResponse(w, http.StatusBadRequest, ErrFailedToRetrieveCookie.Error())
 		return
 	}
 
 	sessionID := cookie.Value
 
-	if !ah.SessionStorage.SessionExists(sessionID) {
-		responses.SendErrorResponse(w, http.StatusUnauthorized, ErrSessionDoesNotExist.Error())
+	if !ah.SessionRepo.SessionExists(sessionID) {
+		SendErrorResponse(w, http.StatusUnauthorized, ErrSessionDoesNotExist.Error())
 		return
 	}
 
-	err = ah.SessionStorage.RemoveSession(sessionID)
+	err = ah.SessionRepo.RemoveSession(sessionID)
 	if err != nil {
-		responses.SendErrorResponse(w, http.StatusInternalServerError, ErrFailedToRemoveSession.Error())
+		SendErrorResponse(w, http.StatusInternalServerError, ErrFailedToRemoveSession.Error())
 		return
 	}
 
@@ -215,5 +222,5 @@ func (ah *AuthHandler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("X-Authenticated", "false")
 
-	responses.SendJSONResponse(w, http.StatusOK, map[string]string{"message": "Logged out successfully"})
+	SendJSONResponse(w, http.StatusOK, map[string]string{"message": "Logged out successfully"})
 }

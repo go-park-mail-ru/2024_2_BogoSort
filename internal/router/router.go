@@ -1,43 +1,21 @@
-package handlers
+package router
 
 import (
 	"log"
 	"net/http"
 
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/services"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/storage"
+	advertsHandler "github.com/go-park-mail-ru/2024_2_BogoSort/internal/pkg/delivery/adverts"
+	authHandler "github.com/go-park-mail-ru/2024_2_BogoSort/internal/pkg/delivery/auth"
+
 	"github.com/gorilla/mux"
 )
-
-type AdvertsHandler struct {
-	List         *storage.AdvertsList
-	ImageService *services.ImageService
-}
-
-type AuthHandler struct {
-	UserStorage    *storage.UserStorage
-	SessionStorage *storage.SessionStorage
-}
 
 func NewRouter() *mux.Router {
 	router := mux.NewRouter()
 	router.Use(recoveryMiddleware)
 
-	userStorage := storage.NewUserStorage()
-	advertsList := storage.NewAdvertsList()
-	imageService := services.NewImageService()
-	sessionStorage := storage.NewSessionStorage()
-	storage.FillAdverts(advertsList, imageService)
-
-	advertsHandler := &AdvertsHandler{
-		List:         advertsList,
-		ImageService: imageService,
-	}
-
-	authHandler := &AuthHandler{
-		UserStorage:    userStorage,
-		SessionStorage: sessionStorage,
-	}
+	advertsHandler := advertsHandler.NewAdvertsHandler()
+	authHandler := authHandler.NewAuthHandler()
 
 	router.Use(authMiddleware(authHandler))
 
@@ -67,7 +45,7 @@ func recoveryMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func (h *AuthHandler) isAuthenticated(r *http.Request) bool {
+func isAuthenticated(r *http.Request, authHandler *authHandler.AuthHandler) bool {
 	cookie, err := r.Cookie("session_id")
 	if err != nil || cookie == nil {
 		log.Println("No session cookie found")
@@ -75,16 +53,16 @@ func (h *AuthHandler) isAuthenticated(r *http.Request) bool {
 		return false
 	}
 
-	exists := h.SessionStorage.SessionExists(cookie.Value)
+	exists := authHandler.SessionRepo.SessionExists(cookie.Value)
 	log.Printf("Session exists: %v for session_id: %s", exists, cookie.Value)
 
 	return exists
 }
 
-func authMiddleware(authHandler *AuthHandler) mux.MiddlewareFunc {
+func authMiddleware(authHandler *authHandler.AuthHandler) mux.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if authHandler.isAuthenticated(r) {
+			if isAuthenticated(r, authHandler) {
 				w.Header().Set("X-Authenticated", "true")
 			} else {
 				w.Header().Set("X-Authenticated", "false")
