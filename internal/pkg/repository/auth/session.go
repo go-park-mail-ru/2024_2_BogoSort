@@ -1,10 +1,10 @@
-package repository
+package auth
 
 import (
 	"errors"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/domain"
 	"sync"
 
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/pkg/domain"
 	"github.com/google/uuid"
 )
 

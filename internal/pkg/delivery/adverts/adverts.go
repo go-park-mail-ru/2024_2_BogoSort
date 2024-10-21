@@ -1,14 +1,14 @@
-package delivery
+package adverts
 
 import (
 	"encoding/json"
 	"errors"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/domain"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/pkg/repository/adverts"
 	"log"
 	"net/http"
 	"strconv"
 
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/pkg/adverts/repository"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/pkg/domain"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/pkg/services"
 
 	"github.com/gorilla/mux"
@@ -29,7 +29,7 @@ type AdvertsHandler struct {
 }
 
 func NewAdvertsHandler() *AdvertsHandler {
-	repo := repository.NewAdvertRepository()
+	repo := adverts.NewAdvertRepository()
 	imageService := services.NewImageService()
 
 	return &AdvertsHandler{

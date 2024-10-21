@@ -1,11 +1,11 @@
-package repository
+package user
 
 import (
 	"errors"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/domain"
 	"log"
 	"sync"
 
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/pkg/domain"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/pkg/utils"
 )
 

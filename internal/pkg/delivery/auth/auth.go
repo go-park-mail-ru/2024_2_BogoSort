@@ -1,16 +1,15 @@
-package delivery
+package auth
 
 import (
 	"encoding/json"
 	"errors"
+	domain2 "github.com/go-park-mail-ru/2024_2_BogoSort/internal/domain"
+	sessionRepo "github.com/go-park-mail-ru/2024_2_BogoSort/internal/pkg/repository/auth"
+	userRepo "github.com/go-park-mail-ru/2024_2_BogoSort/internal/pkg/repository/user"
 	"net/http"
 	"time"
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/config"
-	sessionRepo "github.com/go-park-mail-ru/2024_2_BogoSort/internal/pkg/auth/repository"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/pkg/domain"
-	userRepo "github.com/go-park-mail-ru/2024_2_BogoSort/internal/pkg/user/repository"
-
 	"github.com/go-park-mail-ru/2024_2_BogoSort/pkg/utils"
 	"github.com/go-playground/validator/v10"
 )
@@ -32,8 +31,8 @@ var (
 )
 
 type AuthHandler struct {
-	UserRepo    domain.UserRepository
-	SessionRepo domain.SessionRepository
+	UserRepo    domain2.UserRepository
+	SessionRepo domain2.SessionRepository
 }
 
 func NewAuthHandler() *AuthHandler {
@@ -66,7 +65,7 @@ func (ah *AuthHandler) SignupHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var credentials domain.AuthData
+	var credentials domain2.AuthData
 	if err := json.NewDecoder(r.Body).Decode(&credentials); err != nil {
 		SendErrorResponse(w, http.StatusBadRequest, ErrInvalidRequestBody.Error())
 		return
@@ -135,7 +134,7 @@ func (ah *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var credentials domain.LoginCredentials
+	var credentials domain2.LoginCredentials
 	if err := json.NewDecoder(r.Body).Decode(&credentials); err != nil {
 		SendErrorResponse(w, http.StatusBadRequest, ErrInvalidRequestBody.Error())
 		return

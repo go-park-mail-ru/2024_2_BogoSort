@@ -1,11 +1,11 @@
-package repository
+package adverts
 
 import (
 	"errors"
 	"fmt"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/domain"
 	"sync"
 
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/pkg/domain"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/pkg/services"
 )
 

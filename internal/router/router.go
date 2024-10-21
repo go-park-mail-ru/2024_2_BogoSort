@@ -4,8 +4,9 @@ import (
 	"log"
 	"net/http"
 
-	advertsHandler "github.com/go-park-mail-ru/2024_2_BogoSort/internal/pkg/adverts/delivery"
-	authHandler "github.com/go-park-mail-ru/2024_2_BogoSort/internal/pkg/auth/delivery"
+	advertsHandler "github.com/go-park-mail-ru/2024_2_BogoSort/internal/pkg/delivery/adverts"
+	authHandler "github.com/go-park-mail-ru/2024_2_BogoSort/internal/pkg/delivery/auth"
+
 	"github.com/gorilla/mux"
 )
 
