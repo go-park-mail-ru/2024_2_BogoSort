@@ -4,5 +4,12 @@ server:
   read_timeout: 10s
   write_timeout: 10s
 
+db:
+  db_user: postgres
+  db_password: postgres
+  db_host: localhost
+  db_port: 5432
+  db_name: postgres
+
 session:
   expiration_time: 12h

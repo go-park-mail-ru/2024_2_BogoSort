@@ -1,10 +1,12 @@
 package user
 
 import (
+	"database/sql"
 	"errors"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/domain"
 	"log"
 	"sync"
+
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/domain"
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/pkg/utils"
 )
@@ -17,45 +19,54 @@ var (
 )
 
 type userRepository struct {
-	users    map[string]*domain.User
+	db       *sql.DB
 	sessions map[string]string
 	mu       sync.Mutex
 }
 
 func NewUserRepository() domain.UserRepository {
 	return &userRepository{
-		users: map[string]*domain.User{
-			"test@test.com": {
-				ID:           1,
-				Email:        "test@test.com",
-				PasswordHash: utils.HashPassword("password"),
-			},
-		},
-		mu: sync.Mutex{},
+		db:       db,
+		sessions: make(map[string]string),
+		mu:       sync.Mutex{},
 	}
 }
 
-func (s *userRepository) CreateUser(email, password string) (*domain.User, error) {
+func (u *userRepository) CreateUser(email, password string) (*domain.User, error) {
 	hash := utils.HashPassword(password)
 
 	if hash == "" {
 		return nil, ErrHashPassword
 	}
 
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	u.mu.Lock()
+	defer u.mu.Unlock()
 
-	if _, exists := s.users[email]; exists {
+	var exist bool
+	err := u.db.QueryRow("SELECT EXISTS(SELECT 1 FROM users WHERE email = $1)", email).Scan(&exist)
+	if err != nil {
+		return nil, err
+	}
+
+	if exist {
 		return nil, ErrUserAlreadyExists
 	}
 
+	var id int
+	err = u.db.QueryRow(
+		"INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id",
+		email, hash,
+	).Scan(&id)
+
+	if err != nil {
+		return nil, err
+	}
+
 	newUser := &domain.User{
-		ID:           uint(len(s.users) + 1),
+		ID:           uint(id),
 		Email:        email,
 		PasswordHash: hash,
 	}
-
-	s.users[email] = newUser
 
 	log.Printf("User created: %v", email)
 
