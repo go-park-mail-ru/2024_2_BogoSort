@@ -229,7 +229,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "auth"
+                    "session"
                 ],
                 "summary": "Login a user",
                 "parameters": [
@@ -281,7 +281,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "auth"
+                    "session"
                 ],
                 "summary": "Logout a user",
                 "responses": {
@@ -325,7 +325,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "auth"
+                    "session"
                 ],
                 "summary": "Signup a new user",
                 "parameters": [

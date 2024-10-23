@@ -14,6 +14,8 @@ require (
 
 require github.com/google/uuid v1.6.0
 
+require github.com/jmoiron/sqlx v1.4.0
+
 require (
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect

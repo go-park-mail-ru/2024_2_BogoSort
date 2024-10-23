@@ -1,8 +1,0 @@
-server:
-  port: 8080
-  host: localhost
-  read_timeout: 10s
-  write_timeout: 10s
-
-session:
-  expiration_time: 12h
