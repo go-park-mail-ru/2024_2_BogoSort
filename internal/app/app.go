@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery"
 	"log"
 	"net/http"
 	"os"
@@ -9,7 +10,6 @@ import (
 	"syscall"
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/config"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/router"
 	"github.com/pkg/errors"
 	"github.com/rs/cors"
 )
@@ -18,16 +18,12 @@ type Server struct {
 	server *http.Server
 }
 
-func NewServer() *Server {
-	return &Server{}
-}
-
 func (server *Server) Run() error {
-	if err := config.Init(); err != nil {
+	if err := config.ServerInit(); err != nil {
 		return err
 	}
 
-	router := router.NewRouter()
+	router := delivery.NewRouter()
 
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins:   []string{"https://two024-2-bogo-sort.onrender.com"},

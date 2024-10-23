@@ -219,7 +219,7 @@ paths:
             $ref: '#/definitions/responses.ErrResponse'
       summary: Login a user
       tags:
-      - auth
+      - session
   /logout:
     post:
       consumes:
@@ -248,7 +248,7 @@ paths:
             $ref: '#/definitions/responses.ErrResponse'
       summary: Logout a user
       tags:
-      - auth
+      - session
   /signup:
     post:
       consumes:
@@ -282,5 +282,5 @@ paths:
             $ref: '#/definitions/responses.ErrResponse'
       summary: Signup a new user
       tags:
-      - auth
+      - session
 swagger: "2.0"

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"time"
 
@@ -8,24 +9,25 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+type PostgresDatabase struct {
+	IP   string `yaml:"ip"   default:"postgres"`
+	Port int    `yaml:"port" default:"5432"`
+	User string `yaml:"-" default:"postgres"`
+	Pass string `yaml:"-" default:"postgres"`
+}
+
 type Config struct {
 	Server struct {
-		Port            int           `yaml:"port"`
-		Host            string        `yaml:"host"`
-		ReadTimeout     time.Duration `yaml:"read_timeout"`
-		WriteTimeout    time.Duration `yaml:"write_timeout"`
-		ShutdownTimeout time.Duration `yaml:"shutdown_timeout"`
+		Port            int           `yaml:"port" default:"8080"`
+		Host            string        `yaml:"host" default:"localhost"`
+		ReadTimeout     time.Duration `yaml:"read_timeout" default:"10s"`
+		WriteTimeout    time.Duration `yaml:"write_timeout" default:"10s"`
+		ShutdownTimeout time.Duration `yaml:"shutdown_timeout" default:"10s"`
 	} `yaml:"server"`
 	Session struct {
-		ExpirationTime time.Duration `yaml:"expiration_time"`
+		ExpirationTime time.Duration `yaml:"expiration_time" default:"12h"`
 	} `yaml:"session"`
-	DB struct {
-		DBUser     string `yaml:"db_user"`
-		DBPassword string `yaml:"db_password"`
-		DBHost     string `yaml:"db_host"`
-		DBPort     int    `yaml:"db_port"`
-		DBName     string `yaml:"db_name"`
-	} `yaml:"db"`
+	Postgres PostgresDatabase `yaml:"postgres"`
 }
 
 var cfg Config
@@ -47,20 +49,6 @@ func ServerInit() error {
 	return nil
 }
 
-func DBInit() (*Config, error) {
-	cfg := &Config{
-		DB: struct {
-			DBUser     string `yaml:"db_user"`
-			DBPassword string `yaml:"db_password"`
-			DBHost     string `yaml:"db_host"`
-			DBPort     int    `yaml:"db_port"`
-			DBName     string `yaml:"db_name"`
-		}{},
-	}
-
-	return cfg, nil
-}
-
 func InitFromEnv() {
 	expirationTime, _ := time.ParseDuration(os.Getenv("SESSION_EXPIRATION_TIME"))
 	cfg.Session.ExpirationTime = expirationTime
@@ -74,6 +62,12 @@ func GetServerAddress() string {
 	}
 
 	return ":" + port
+}
+
+func (cfg *PostgresDatabase) GetConnectURL() string {
+	return fmt.Sprintf(
+		"postgres://%s:%s@%s:%d/emporium?sslmode=disable",
+		cfg.User, cfg.Pass, cfg.IP, cfg.Port)
 }
 
 func GetReadTimeout() time.Duration {
