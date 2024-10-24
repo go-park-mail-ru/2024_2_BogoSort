@@ -1,10 +1,10 @@
 package postgres
 
-import (
+/*import (
 	"database/sql"
 	"errors"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repo"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
 	"github.com/jmoiron/sqlx"
 	"log"
 
@@ -32,7 +32,7 @@ type DBUser struct {
 	Rating         int
 }
 
-func NewUserRepository(db *sqlx.DB) repo.User {
+func NewUserRepository(db *sqlx.DB) repository.User {
 	return &UsersDB{
 		DB: db,
 	}
@@ -135,4 +135,4 @@ func (s *userRepository) GetUserBySession(sessionID string) (string, error) {
 	}
 
 	return email, nil
-}
+}*/

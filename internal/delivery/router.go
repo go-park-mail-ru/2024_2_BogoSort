@@ -3,7 +3,7 @@ package delivery
 import (
 	"github.com/go-park-mail-ru/2024_2_BogoSort/config"
 	http3 "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repo/postgres"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository/postgres"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/pkg/connector"
 	"log"
 	"net/http"

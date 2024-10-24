@@ -5,7 +5,7 @@ import (
 	"errors"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery"
 	domain2 "github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
-	postgres2 "github.com/go-park-mail-ru/2024_2_BogoSort/internal/repo/postgres"
+	postgres2 "github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository/postgres"
 	"net/http"
 	"time"
 
