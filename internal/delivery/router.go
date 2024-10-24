@@ -3,10 +3,11 @@ package delivery
 import (
 	"github.com/go-park-mail-ru/2024_2_BogoSort/config"
 	http3 "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repo/postgres"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/pkg/connector"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository/postgres"
 	"log"
 	"net/http"
+	"go.uber.org/zap"
 
 	"github.com/gorilla/mux"
 )
@@ -16,27 +17,25 @@ func NewRouter() *mux.Router {
 	router.Use(recoveryMiddleware)
 
 	var cfg config.Config
-	psql, err := connector.GetPostgresConnector(cfg.Postgres.GetConnectURL())
 
+
+	dbPool, err := connector.GetPostgresConnector(cfg.Postgres.GetConnectURL())
 	if err != nil {
-		return err
+		zap.L().Error("unable to connect to database", zap.Error(err))
+		return nil
 	}
+	defer dbPool.Close()
 
-	userRepo := postgres.NewUserRepository(psql)
-
-	advertsHandler := http3.NewAdvertsHandler()
-	authHandler := advertsHandler.NewAuthHandler()
+	advertsRepo := postgres.NewAdvertRepository(dbPool)
+	advertsUseCase := usecase.NewAdvertUseCase(advertsRepo)
+	advertsHandler := http3.NewAdvertEndpoints(advertsUseCase)
+	authHandler := http3.NewAuthHandler()
 
 	router.Use(authMiddleware(authHandler))
 
 	router.HandleFunc("/api/v1/signup", authHandler.SignupHandler).Methods("POST")
 	router.HandleFunc("/api/v1/login", authHandler.LoginHandler).Methods("POST")
 	router.HandleFunc("/api/v1/logout", authHandler.LogoutHandler).Methods("POST")
-	router.HandleFunc("/api/v1/adverts", advertsHandler.GetAdvertsHandler).Methods("GET")
-	router.HandleFunc("/api/v1/adverts/{id}", advertsHandler.GetAdvertByIDHandler).Methods("GET")
-	router.HandleFunc("/api/v1/adverts", advertsHandler.AddAdvertHandler).Methods("POST")
-	router.HandleFunc("/api/v1/adverts/{id}", advertsHandler.UpdateAdvertHandler).Methods("PUT")
-	router.HandleFunc("/api/v1/adverts/{id}", advertsHandler.DeleteAdvertHandler).Methods("DELETE")
 
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
