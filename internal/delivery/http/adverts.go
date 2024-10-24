@@ -1,16 +1,13 @@
 package http
 
 import (
-	"encoding/json"
 	"errors"
-	"log"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/utils"
+	"go.uber.org/zap"
 	"net/http"
 	"strconv"
 
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/services"
-
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase"
 	"github.com/gorilla/mux"
 )
 
@@ -23,22 +20,26 @@ var (
 	ErrFailedToDeleteAdvert = errors.New("failed to delete advert")
 )
 
-type AdvertsHandler struct {
-	AdvertsRepo  entity.AdvertRepository
-	ImageService *services.ImageService
+type AdvertEndpoints struct {
+	AdvertsUseCase usecase.AdvertUseCase
+	StaticUseCase  usecase.StaticUseCase
 }
 
-func NewAdvertsHandler() *AdvertsHandler {
-	repo := adverts.NewAdvertRepository()
-	imageService := services.NewImageService()
-
-	return &AdvertsHandler{
-		AdvertsRepo:  repo,
-		ImageService: imageService,
+func NewAdvertEndpoints(advertsUseCase usecase.AdvertUseCase) *AdvertEndpoints {
+	return &AdvertEndpoints{
+		AdvertsUseCase: advertsUseCase,
 	}
 }
 
-// GetAdvertsHandler godoc
+func (h *AdvertEndpoints) ConfigureRoutes(router *mux.Router) {
+	router.HandleFunc("/api/v1/adverts", h.GetAdverts).Methods("GET")
+	/*	router.HandleFunc("/api/v1/adverts/{id}", h.GetAdvertByIDHandler).Methods("GET")
+		router.HandleFunc("/api/v1/adverts", h.AddAdvertHandler).Methods("POST")
+		router.HandleFunc("/api/v1/adverts/{id}", h.UpdateAdvertHandler).Methods("PUT")
+		router.HandleFunc("/api/v1/adverts/{id}", h.DeleteAdvertHandler).Methods("DELETE")*/
+}
+
+// GetAdverts godoc
 // @Summary Get all adverts
 // @Description Get a list of all adverts
 // @Tags adverts
@@ -46,28 +47,32 @@ func NewAdvertsHandler() *AdvertsHandler {
 // @Success 200 {array} storage.Advert "List of adverts"
 // @Failure 500 {object} responses.ErrResponse "Failed to get adverts"
 // @Router /api/v1/adverts [get]
-func (authHandler *AdvertsHandler) GetAdvertsHandler(writer http.ResponseWriter, _ *http.Request) {
-	adverts, err := authHandler.AdvertsRepo.GetAllAdverts()
-	if err != nil {
-		delivery.SendErrorResponse(writer, http.StatusInternalServerError, ErrFailedToGetAdverts.Error())
+func (h *AdvertEndpoints) GetAdverts(writer http.ResponseWriter, r *http.Request) {
+	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
+	if err != nil || limit <= 0 {
+		zap.L().Error("invalid limit", zap.Error(err))
+		utils.SendErrorResponse(writer, http.StatusBadRequest, "Invalid limit")
 		return
 	}
 
-	for index := range adverts {
-		imageURL, err := authHandler.ImageService.GetImageURL(adverts[index].ID)
-		if err != nil {
-			log.Println(err)
-
-			continue
-		}
-
-		adverts[index].ImageURL = imageURL
+	offset, err := strconv.Atoi(r.URL.Query().Get("offset"))
+	if err != nil || offset < 0 {
+		zap.L().Error("invalid offset", zap.Error(err))
+		utils.SendErrorResponse(writer, http.StatusBadRequest, "Invalid offset")
+		return
 	}
 
-	delivery.SendJSONResponse(writer, http.StatusOK, adverts)
+	adverts, err := h.AdvertsUseCase.GetAdverts(limit, offset)
+	if err != nil {
+		zap.L().Error("failed to get adverts", zap.Error(err))
+		utils.SendErrorResponse(writer, http.StatusInternalServerError, ErrFailedToGetAdverts.Error())
+		return
+	}
+
+	utils.SendJSONResponse(writer, http.StatusOK, adverts)
 }
 
-// GetAdvertByIDHandler godoc
+/*// GetAdvertByIDHandler godoc
 // @Summary Get an advert by ID
 // @Description Get a single advert by its ID
 // @Tags adverts
@@ -204,3 +209,4 @@ func (authHandler *AdvertsHandler) DeleteAdvertHandler(writer http.ResponseWrite
 
 	delivery.SendJSONResponse(writer, http.StatusNoContent, nil)
 }
+*/

@@ -1,9 +1,10 @@
 package delivery
 
-/*import (
+import (
 	"github.com/go-park-mail-ru/2024_2_BogoSort/config"
 	http3 "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/pkg/connector"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository/postgres"
 	"log"
 	"net/http"
 	"go.uber.org/zap"
@@ -25,9 +26,9 @@ func NewRouter() *mux.Router {
 	}
 	defer dbPool.Close()
 
-	userRepo := postgres.NewUserRepository(dbPool)
-
-	advertsHandler := http3.NewAdvertsHandler()
+	advertsRepo := postgres.NewAdvertRepository(dbPool)
+	advertsUseCase := usecase.NewAdvertUseCase(advertsRepo)
+	advertsHandler := http3.NewAdvertEndpoints(advertsUseCase)
 	authHandler := http3.NewAuthHandler()
 
 	router.Use(authMiddleware(authHandler))
@@ -35,11 +36,6 @@ func NewRouter() *mux.Router {
 	router.HandleFunc("/api/v1/signup", authHandler.SignupHandler).Methods("POST")
 	router.HandleFunc("/api/v1/login", authHandler.LoginHandler).Methods("POST")
 	router.HandleFunc("/api/v1/logout", authHandler.LogoutHandler).Methods("POST")
-	router.HandleFunc("/api/v1/adverts", advertsHandler.GetAdvertsHandler).Methods("GET")
-	router.HandleFunc("/api/v1/adverts/{id}", advertsHandler.GetAdvertByIDHandler).Methods("GET")
-	router.HandleFunc("/api/v1/adverts", advertsHandler.AddAdvertHandler).Methods("POST")
-	router.HandleFunc("/api/v1/adverts/{id}", advertsHandler.UpdateAdvertHandler).Methods("PUT")
-	router.HandleFunc("/api/v1/adverts/{id}", advertsHandler.DeleteAdvertHandler).Methods("DELETE")
 
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
@@ -84,4 +80,4 @@ func authMiddleware(authHandler *http3.AuthHandler) mux.MiddlewareFunc {
 			next.ServeHTTP(w, r)
 		})
 	}
-}*/
+}
