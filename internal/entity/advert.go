@@ -1,38 +1,23 @@
 package entity
 
-import (
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/services"
-	"sync"
-)
+import "github.com/google/uuid"
 
 type Advert struct {
-	ID       uint   `json:"id"`
-	Title    string `json:"title"`
-	ImageURL string `json:"image_url"`
-	Price    uint   `json:"price"`
-	Location string `json:"location"`
+	ID          uuid.UUID    `db:"id"`
+	SellerId    uuid.UUID    `db:"seller_id"`
+	CategoryId  uuid.UUID    `db:"category_id"`
+	Title       string       `db:"title"`
+	Description string       `db:"description"`
+	Price       uint         `db:"price"`
+	ImageURL    string       `db:"image_url"`
+	Status      AdvertStatus `db:"status"`
+	HasDelivery bool         `db:"has_delivery"`
+	Location    string       `db:"location"`
 }
 
-type AdvertsList struct {
-	Adverts  []*Advert
-	AdvCount uint
-	Mu       sync.Mutex
-}
+type AdvertStatus string
 
-type AdvertRepository interface {
-	CreateAdvert(advert *Advert) error
-	GetAllAdverts() ([]*Advert, error)
-	GetAdvertById(id uint) (*Advert, error)
-	UpdateAdvert(advert *Advert) error
-	DeleteAdvert(id uint) error
-	NewAdvertsList() *AdvertsList
-	FillAdverts(ads *AdvertsList, imageService *services.ImageService)
-}
-
-type AdvertUseCase interface {
-	CreateAdvert(advert *Advert) error
-	GetAllAdverts() ([]*Advert, error)
-	GetAdvertById(id uint) (*Advert, error)
-	UpdateAdvert(advert *Advert) error
-	DeleteAdvert(id uint) error
-}
+const (
+	AdvertStatusActive   AdvertStatus = "active"
+	AdvertStatusInactive              = "inactive"
+)

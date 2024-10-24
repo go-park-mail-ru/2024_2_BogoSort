@@ -3,12 +3,13 @@ package http
 import (
 	"encoding/json"
 	"errors"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/services"
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/services"
 
 	"github.com/gorilla/mux"
 )

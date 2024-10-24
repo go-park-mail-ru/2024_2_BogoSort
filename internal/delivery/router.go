@@ -1,12 +1,12 @@
 package delivery
 
-import (
+/*import (
 	"github.com/go-park-mail-ru/2024_2_BogoSort/config"
 	http3 "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository/postgres"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/pkg/connector"
 	"log"
 	"net/http"
+	"go.uber.org/zap"
 
 	"github.com/gorilla/mux"
 )
@@ -16,16 +16,19 @@ func NewRouter() *mux.Router {
 	router.Use(recoveryMiddleware)
 
 	var cfg config.Config
-	psql, err := connector.GetPostgresConnector(cfg.Postgres.GetConnectURL())
 
+
+	dbPool, err := connector.GetPostgresConnector(cfg.Postgres.GetConnectURL())
 	if err != nil {
-		return err
+		zap.L().Error("unable to connect to database", zap.Error(err))
+		return nil
 	}
+	defer dbPool.Close()
 
-	userRepo := postgres.NewUserRepository(psql)
+	userRepo := postgres.NewUserRepository(dbPool)
 
 	advertsHandler := http3.NewAdvertsHandler()
-	authHandler := advertsHandler.NewAuthHandler()
+	authHandler := http3.NewAuthHandler()
 
 	router.Use(authMiddleware(authHandler))
 
@@ -81,4 +84,4 @@ func authMiddleware(authHandler *http3.AuthHandler) mux.MiddlewareFunc {
 			next.ServeHTTP(w, r)
 		})
 	}
-}
+}*/

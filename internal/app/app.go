@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -12,6 +11,7 @@ import (
 	"github.com/go-park-mail-ru/2024_2_BogoSort/config"
 	"github.com/pkg/errors"
 	"github.com/rs/cors"
+	"go.uber.org/zap"
 )
 
 type Server struct {
@@ -19,7 +19,11 @@ type Server struct {
 }
 
 func (server *Server) Run() error {
+	zap.ReplaceGlobals(zap.Must(zap.NewProduction()))
+	defer zap.L().Sync()
+
 	if err := config.ServerInit(); err != nil {
+		zap.L().Error("config init error", zap.Error(err))
 		return err
 	}
 
@@ -32,7 +36,7 @@ func (server *Server) Run() error {
 		AllowCredentials: true,
 	}).Handler(router)
 
-	log.Printf("Server started on %s", config.GetServerAddress())
+	zap.L().Info("server started", zap.String("address", config.GetServerAddress()))
 
 	server.server = &http.Server{
 		Addr:         config.GetServerAddress(),
@@ -46,21 +50,21 @@ func (server *Server) Run() error {
 
 	err := server.server.ListenAndServe()
 	if !errors.Is(err, http.ErrServerClosed) {
-		log.Fatalf("server failed: %v", err)
+		zap.L().Error("server failed", zap.Error(err))
+		return errors.Wrap(err, "server failed")
 	}
 
 	<-stop
-	log.Println("shutting down server...")
+	zap.L().Info("shutting down server...")
 
 	ctx, cancel := context.WithTimeout(context.Background(), config.GetShutdownTimeout())
 	defer cancel()
 
 	if err := server.Shutdown(ctx); err != nil {
-		log.Printf("server forced to shutdown: %v", err)
-		os.Exit(1)
+		zap.L().Error("server forced to shutdown", zap.Error(err))
 	}
 
-	log.Println("server exiting")
+	zap.L().Info("server exiting")
 
 	return nil
 }
