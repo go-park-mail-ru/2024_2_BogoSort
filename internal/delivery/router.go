@@ -1,12 +1,15 @@
 package delivery
 
 import (
-	"github.com/go-park-mail-ru/2024_2_BogoSort/config"
-	http3 "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository/postgres"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/pkg/connector"
+	"context"
 	"log"
 	"net/http"
+
+	"github.com/go-park-mail-ru/2024_2_BogoSort/config"
+	delivery "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository/postgres"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase/service"
+	"github.com/jackc/pgx/v5"
 
 	"github.com/gorilla/mux"
 )
@@ -16,27 +19,18 @@ func NewRouter() *mux.Router {
 	router.Use(recoveryMiddleware)
 
 	var cfg config.Config
-	psql, err := connector.GetPostgresConnector(cfg.Postgres.GetConnectURL())
-
+	conn, err := pgx.Connect(context.Background(), cfg.Postgres.GetConnectURL())
 	if err != nil {
-		return err
+		return nil
 	}
 
-	userRepo := postgres.NewUserRepository(psql)
+	userRepo := postgres.NewUserRepository(conn)
+	userService := service.NewUserService(userRepo)
+	userHandler := delivery.NewUserHandler(userService)
 
-	advertsHandler := http3.NewAdvertsHandler()
-	authHandler := advertsHandler.NewAuthHandler()
-
-	router.Use(authMiddleware(authHandler))
-
-	router.HandleFunc("/api/v1/signup", authHandler.SignupHandler).Methods("POST")
-	router.HandleFunc("/api/v1/login", authHandler.LoginHandler).Methods("POST")
-	router.HandleFunc("/api/v1/logout", authHandler.LogoutHandler).Methods("POST")
-	router.HandleFunc("/api/v1/adverts", advertsHandler.GetAdvertsHandler).Methods("GET")
-	router.HandleFunc("/api/v1/adverts/{id}", advertsHandler.GetAdvertByIDHandler).Methods("GET")
-	router.HandleFunc("/api/v1/adverts", advertsHandler.AddAdvertHandler).Methods("POST")
-	router.HandleFunc("/api/v1/adverts/{id}", advertsHandler.UpdateAdvertHandler).Methods("PUT")
-	router.HandleFunc("/api/v1/adverts/{id}", advertsHandler.DeleteAdvertHandler).Methods("DELETE")
+	router.HandleFunc("/api/v1/user", userHandler.GetUser).Methods("GET")
+	router.HandleFunc("/api/v1/user", userHandler.DeleteUser).Methods("DELETE")
+	router.HandleFunc("/api/v1/signup", userHandler.Signup).Methods("POST")
 
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
@@ -55,30 +49,30 @@ func recoveryMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func isAuthenticated(r *http.Request, authHandler *http3.AuthHandler) bool {
-	cookie, err := r.Cookie("session_id")
-	if err != nil || cookie == nil {
-		log.Println("No session cookie found")
+// func isAuthenticated(r *http.Request, authHandler *http3.AuthHandler) bool {
+// 	cookie, err := r.Cookie("session_id")
+// 	if err != nil || cookie == nil {
+// 		log.Println("No session cookie found")
 
-		return false
-	}
+// 		return false
+// 	}
 
-	exists := authHandler.SessionRepo.SessionExists(cookie.Value)
-	log.Printf("Session exists: %v for session_id: %s", exists, cookie.Value)
+// 	exists := authHandler.SessionRepo.SessionExists(cookie.Value)
+// 	log.Printf("Session exists: %v for session_id: %s", exists, cookie.Value)
 
-	return exists
-}
+// 	return exists
+// }
 
-func authMiddleware(authHandler *http3.AuthHandler) mux.MiddlewareFunc {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if isAuthenticated(r, authHandler) {
-				w.Header().Set("X-Authenticated", "true")
-			} else {
-				w.Header().Set("X-Authenticated", "false")
-			}
+// func authMiddleware(authHandler *http3.AuthHandler) mux.MiddlewareFunc {
+// 	return func(next http.Handler) http.Handler {
+// 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+// 			if isAuthenticated(r, authHandler) {
+// 				w.Header().Set("X-Authenticated", "true")
+// 			} else {
+// 				w.Header().Set("X-Authenticated", "false")
+// 			}
 
-			next.ServeHTTP(w, r)
-		})
-	}
-}
+// 			next.ServeHTTP(w, r)
+// 		})
+// 	}
+// }
