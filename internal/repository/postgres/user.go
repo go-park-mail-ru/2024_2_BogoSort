@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -8,7 +9,7 @@ import (
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
-	"github.com/jackc/pgx"
+	"github.com/jackc/pgx/v5"
 )
 
 type UsersDB struct {
@@ -16,7 +17,7 @@ type UsersDB struct {
 }
 
 type DBUser struct {
-	ID           uint
+	ID           string
 	Email        string
 	PasswordHash []byte
 	Username     sql.NullString
@@ -54,8 +55,11 @@ func (us *UsersDB) GetUserByEmail(email string) (*entity.User, error) {
 		WHERE email = $1
 	`
 
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	var dbUser DBUser
-	err := us.DB.QueryRow(query, email).Scan(
+	err := us.DB.QueryRow(ctx, query, email).Scan(
 		&dbUser.ID,
 		&dbUser.Email,
 		&dbUser.PasswordHash,
@@ -78,15 +82,18 @@ func (us *UsersDB) GetUserByEmail(email string) (*entity.User, error) {
 	return &user, nil
 }
 
-func (us *UsersDB) GetUserById(id int) (*entity.User, error) {
+func (us *UsersDB) GetUserById(id string) (*entity.User, error) {
 	query := `
 		SELECT id, email, password_hash, username, phone, avatar_id, status, created_at, updated_at
 		FROM users
 		WHERE id = $1
 	`
 
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	var dbUser DBUser
-	err := us.DB.QueryRow(query, id).Scan(
+	err := us.DB.QueryRow(ctx, query, id).Scan(
 		&dbUser.ID,
 		&dbUser.Email,
 		&dbUser.PasswordHash,
@@ -106,14 +113,17 @@ func (us *UsersDB) GetUserById(id int) (*entity.User, error) {
 	return &user, nil
 }
 
-func (us *UsersDB) AddUser(email, password string) (*entity.User, error) {
+func (us *UsersDB) AddUser(email, password string) (string, error) {
 	query := `
 		INSERT INTO users (email, password_hash) VALUES ($1, $2)
 		RETURNING id, email, password_hash, username, phone, avatar_id, status, created_at, updated_at
 	`
 
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	var dbUser DBUser
-	err := us.DB.QueryRow(query, email, password).Scan(
+	err := us.DB.QueryRow(ctx, query, email, password).Scan(
 		&dbUser.ID,
 		&dbUser.Email,
 		&dbUser.PasswordHash,
@@ -126,11 +136,10 @@ func (us *UsersDB) AddUser(email, password string) (*entity.User, error) {
 	)
 
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	user := dbUser.GetEntity()
-	return &user, nil
+	return dbUser.ID, nil
 }
 
 func (us *UsersDB) UpdateUser(user *entity.User) error {
@@ -138,6 +147,21 @@ func (us *UsersDB) UpdateUser(user *entity.User) error {
 		UPDATE users SET username = $1, phone = $2, avatar_id = $3, status = $4, updated_at = $5 WHERE id = $6
 	`
 
-	_, err := us.DB.Exec(query, user.Username, user.Phone, user.AvatarId, user.Status, user.UpdatedAt, user.ID)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	_, err := us.DB.Exec(ctx, query, user.Username, user.Phone, user.AvatarId, user.Status, user.UpdatedAt, user.ID)
+	return err
+}
+
+func (us *UsersDB) DeleteUser(userID string) error {
+	query := `
+		DELETE FROM users WHERE id = $1
+	`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	_, err := us.DB.Exec(ctx, query, userID)
 	return err
 }

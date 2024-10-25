@@ -2,18 +2,21 @@ package repository
 
 import (
 	"errors"
+
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 )
 
 type User interface {
 	// AddUser добавляет пользователя в базу
-	AddUser(email, password string) (*entity.User, error)
+	AddUser(email, password string) (string, error)
 	// GetUserByEmail возвращает пользователя по его емейлу
 	GetUserByEmail(email string) (*entity.User, error)
 	// GetUserById возвращает пользователя по его id
-	GetUserById(id int) (*entity.User, error)
+	GetUserById(id string) (*entity.User, error)
 	// UpdateUser обновляет данные пользователя
 	UpdateUser(user *entity.User) error
+	// DeleteUser удаляет пользователя
+	DeleteUser(userID string) error
 }
 
 var (
