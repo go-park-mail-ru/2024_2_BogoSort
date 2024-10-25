@@ -66,7 +66,7 @@ func GetServerAddress() string {
 
 func (cfg *PostgresDatabase) GetConnectURL() string {
 	return fmt.Sprintf(
-		"postgres://%s:%s@%s:%d/emporium?sslmode=disable",
+		"postgres://%s:%s@%s:%d/emporiumDB?sslmode=disable",
 		cfg.User, cfg.Pass, cfg.IP, cfg.Port)
 }
 
