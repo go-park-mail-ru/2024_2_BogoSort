@@ -1,9 +1,12 @@
 package service
 
 import (
+	"errors"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase"
+	"github.com/google/uuid"
 )
 
 type UserService struct {
@@ -11,7 +14,7 @@ type UserService struct {
 }
 
 // ChangePassword implements usecase.User.
-func (u *UserService) ChangePassword(userID string, password *dto.UpdatePassword) error {
+func (u *UserService) ChangePassword(userID uuid.UUID, password *dto.UpdatePassword) error {
 	panic("unimplemented")
 }
 
@@ -21,7 +24,7 @@ func (u *UserService) GetUserByEmail(email string) (*dto.User, error) {
 }
 
 // GetUserById implements usecase.User.
-func (u *UserService) GetUserById(userID string) (*dto.User, error) {
+func (u *UserService) GetUserById(userID uuid.UUID) (*dto.User, error) {
 	panic("unimplemented")
 }
 
@@ -31,13 +34,21 @@ func NewUserService(userRepo repository.User) *UserService {
 	}
 }
 
-func (u *UserService) Signup(user *dto.Signup) (string, error) {
-	newUser, err := u.userRepo.AddUser(user.Email, user.Password)
-	if err != nil {
-		return "", err
+func (u *UserService) Signup(signupInfo *dto.Signup) (uuid.UUID, error) {
+	if err := entity.ValidateEmail(signupInfo.Email); err != nil {
+		return uuid.Nil, usecase.UserIncorrectDataError{Err: err}
+	}
+	if err := entity.ValidatePassword(signupInfo.Password); err != nil {
+		return uuid.Nil, usecase.UserIncorrectDataError{Err: err}
 	}
 
-	return newUser, nil
+	salt, hash, err := entity.HashPassword(signupInfo.Password)
+	if err != nil {
+		return uuid.Nil, entity.UsecaseWrap(errors.New("ошибка при хешировании пароля"), err)
+	}
+
+	user, err := repository.User.AddUser(signupInfo.Email, hash, salt)
+
 }
 
 func (u *UserService) Login(user *dto.Login) error {
@@ -60,7 +71,7 @@ func (u *UserService) UpdateInfo(user *dto.User) error {
 	return nil
 }
 
-func (u *UserService) DeleteUser(userID string) error {
+func (u *UserService) DeleteUser(userID uuid.UUID) error {
 	err := u.userRepo.DeleteUser(userID)
 	if err != nil {
 		return err
@@ -69,7 +80,7 @@ func (u *UserService) DeleteUser(userID string) error {
 	return nil
 }
 
-func (u *UserService) GetUser(userID string) (*dto.User, error) {
+func (u *UserService) GetUser(userID uuid.UUID) (*dto.User, error) {
 	entityUser, err := u.userRepo.GetUserById(userID)
 	if err != nil {
 		return nil, err
