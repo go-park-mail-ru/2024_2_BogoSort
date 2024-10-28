@@ -1,10 +1,10 @@
 # github.com/KyleBanks/depth v1.2.1
 ## explicit
 github.com/KyleBanks/depth
-# github.com/cespare/xxhash/v2 v2.2.0
+# github.com/cespare/xxhash/v2 v2.3.0
 ## explicit; go 1.11
 github.com/cespare/xxhash/v2
-# github.com/davecgh/go-spew v1.1.1
+# github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 ## explicit
 github.com/davecgh/go-spew/spew
 # github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f
@@ -23,6 +23,9 @@ github.com/go-openapi/spec
 # github.com/go-openapi/swag v0.23.0
 ## explicit; go 1.20
 github.com/go-openapi/swag
+# github.com/go-park-mail-ru/2024_1_Cyberkotletki v0.0.0-20240531004743-d3f6797b2080
+## explicit; go 1.22.0
+github.com/go-park-mail-ru/2024_1_Cyberkotletki/pkg/random
 # github.com/google/uuid v1.6.0
 ## explicit
 github.com/google/uuid
@@ -67,7 +70,7 @@ github.com/mailru/easyjson/jwriter
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors
-# github.com/pmezard/go-difflib v1.0.0
+# github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2
 ## explicit
 github.com/pmezard/go-difflib/difflib
 # github.com/redis/go-redis/v9 v9.7.0
@@ -92,12 +95,17 @@ github.com/stretchr/testify/assert
 github.com/swaggo/swag
 # golang.org/x/crypto v0.28.0
 ## explicit; go 1.20
+golang.org/x/crypto/argon2
 golang.org/x/crypto/bcrypt
+golang.org/x/crypto/blake2b
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/pbkdf2
 # golang.org/x/sync v0.8.0
 ## explicit; go 1.18
 golang.org/x/sync/semaphore
+# golang.org/x/sys v0.26.0
+## explicit; go 1.18
+golang.org/x/sys/cpu
 # golang.org/x/text v0.19.0
 ## explicit; go 1.18
 golang.org/x/text/cases
