@@ -10,10 +10,11 @@ import (
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type UsersDB struct {
-	DB *pgx.Conn
+	DB *pgxpool.Pool
 }
 
 type DBUser struct {
@@ -28,7 +29,7 @@ type DBUser struct {
 	UpdatedAt    time.Time
 }
 
-func NewUserRepository(db *pgx.Conn) repository.User {
+func NewUserRepository(db *pgxpool.Pool) repository.User {
 	return &UsersDB{
 		DB: db,
 	}

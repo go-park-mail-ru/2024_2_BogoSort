@@ -9,7 +9,7 @@ import (
 	delivery "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository/postgres"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase/service"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/gorilla/mux"
 )
@@ -19,12 +19,12 @@ func NewRouter() *mux.Router {
 	router.Use(recoveryMiddleware)
 
 	var cfg config.Config
-	conn, err := pgx.Connect(context.Background(), cfg.Postgres.GetConnectURL())
+	pool, err := pgxpool.New(context.Background(), cfg.Postgres.GetConnectURL())
 	if err != nil {
 		return nil
 	}
 
-	userRepo := postgres.NewUserRepository(conn)
+	userRepo := postgres.NewUserRepository(pool)
 	userService := service.NewUserService(userRepo)
 	userHandler := delivery.NewUserHandler(userService)
 
