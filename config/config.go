@@ -16,6 +16,12 @@ type PostgresDatabase struct {
 	Pass string `yaml:"-" default:"postgres"`
 }
 
+type RedisDatabase struct {
+	Addr     string `yaml:"addr" default:"redis:6379"`
+	Password string `yaml:"-"`
+	DB       int    `yaml:"db"   default:"0"`
+}
+
 type Config struct {
 	Server struct {
 		Port            int           `yaml:"port" default:"8080"`
@@ -28,6 +34,7 @@ type Config struct {
 		ExpirationTime time.Duration `yaml:"expiration_time" default:"12h"`
 	} `yaml:"session"`
 	Postgres PostgresDatabase `yaml:"postgres"`
+	Redis    RedisDatabase    `yaml:"redis"`
 }
 
 var cfg Config
@@ -64,10 +71,14 @@ func GetServerAddress() string {
 	return ":" + port
 }
 
-func (cfg *PostgresDatabase) GetConnectURL() string {
+func (cfg *PostgresDatabase) GetPostgresConnectURL() string {
 	return fmt.Sprintf(
 		"postgres://%s:%s@%s:%d/emporiumDB?sslmode=disable",
 		cfg.User, cfg.Pass, cfg.IP, cfg.Port)
+}
+
+func (cfg *RedisDatabase) GetRedisAddress() string {
+	return cfg.Addr
 }
 
 func GetReadTimeout() time.Duration {
