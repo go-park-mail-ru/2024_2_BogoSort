@@ -1,0 +1,15 @@
+server:
+  port: 8080
+  host: localhost
+  read_timeout: 10s
+  write_timeout: 10s
+
+session:
+  expiration_time: 12h
+
+postgres:
+  user: postgres
+  password: postgres
+  db: emporiumdb
+  ip: localhost
+  port: 5432

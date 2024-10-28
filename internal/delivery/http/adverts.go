@@ -22,21 +22,22 @@ var (
 
 type AdvertEndpoints struct {
 	AdvertsUseCase usecase.AdvertUseCase
-	StaticUseCase  usecase.StaticUseCase
+	logger       *zap.Logger
 }
 
-func NewAdvertEndpoints(advertsUseCase usecase.AdvertUseCase) *AdvertEndpoints {
+func NewAdvertEndpoints(advertsUseCase usecase.AdvertUseCase, logger *zap.Logger) *AdvertEndpoints {
 	return &AdvertEndpoints{
 		AdvertsUseCase: advertsUseCase,
+		logger:         logger,
 	}
 }
 
 func (h *AdvertEndpoints) ConfigureRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/adverts", h.GetAdverts).Methods("GET")
-	/*	router.HandleFunc("/api/v1/adverts/{id}", h.GetAdvertByIDHandler).Methods("GET")
-		router.HandleFunc("/api/v1/adverts", h.AddAdvertHandler).Methods("POST")
-		router.HandleFunc("/api/v1/adverts/{id}", h.UpdateAdvertHandler).Methods("PUT")
-		router.HandleFunc("/api/v1/adverts/{id}", h.DeleteAdvertHandler).Methods("DELETE")*/
+	// router.HandleFunc("/api/v1/adverts/{id}", h.GetAdvertByIDHandler).Methods("GET")
+	// router.HandleFunc("/api/v1/adverts", h.AddAdvertHandler).Methods("POST")
+	// router.HandleFunc("/api/v1/adverts/{id}", h.UpdateAdvertHandler).Methods("PUT")
+	// router.HandleFunc("/api/v1/adverts/{id}", h.DeleteAdvertHandler).Methods("DELETE")
 }
 
 // GetAdverts godoc
@@ -50,21 +51,21 @@ func (h *AdvertEndpoints) ConfigureRoutes(router *mux.Router) {
 func (h *AdvertEndpoints) GetAdverts(writer http.ResponseWriter, r *http.Request) {
 	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
 	if err != nil || limit <= 0 {
-		zap.L().Error("invalid limit", zap.Error(err))
+		h.logger.Error("invalid limit", zap.Error(err))
 		utils.SendErrorResponse(writer, http.StatusBadRequest, "Invalid limit")
 		return
 	}
 
 	offset, err := strconv.Atoi(r.URL.Query().Get("offset"))
 	if err != nil || offset < 0 {
-		zap.L().Error("invalid offset", zap.Error(err))
+		h.logger.Error("invalid offset", zap.Error(err))
 		utils.SendErrorResponse(writer, http.StatusBadRequest, "Invalid offset")
 		return
 	}
 
 	adverts, err := h.AdvertsUseCase.GetAdverts(limit, offset)
 	if err != nil {
-		zap.L().Error("failed to get adverts", zap.Error(err))
+		h.logger.Error("failed to get adverts", zap.Error(err))
 		utils.SendErrorResponse(writer, http.StatusInternalServerError, ErrFailedToGetAdverts.Error())
 		return
 	}

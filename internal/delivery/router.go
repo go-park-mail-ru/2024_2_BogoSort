@@ -2,44 +2,45 @@ package delivery
 
 import (
 	"github.com/go-park-mail-ru/2024_2_BogoSort/config"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository/postgres"
+	service "github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase/services"
 	http3 "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/pkg/connector"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository/postgres"
+	"github.com/gorilla/mux"
+	"go.uber.org/zap"
 	"log"
 	"net/http"
-	"go.uber.org/zap"
-
-	"github.com/gorilla/mux"
 )
 
-func NewRouter() *mux.Router {
-	router := mux.NewRouter()
-	router.Use(recoveryMiddleware)
+func NewRouter(cfg config.Config) *mux.Router {
+    router := mux.NewRouter()
+    router.Use(recoveryMiddleware)
 
-	var cfg config.Config
+    dbPool, err := connector.GetPostgresConnector(cfg.GetConnectURL())
+    if err != nil {
+        zap.L().Error("unable to connect to database", zap.Error(err))
+        return nil
+    }
 
+    advertsRepo, err := postgres.NewAdvertRepository(dbPool, zap.L())
+    if err != nil {
+        zap.L().Error("unable to create advert repository", zap.Error(err))
+        return nil
+    }
 
-	dbPool, err := connector.GetPostgresConnector(cfg.Postgres.GetConnectURL())
-	if err != nil {
-		zap.L().Error("unable to connect to database", zap.Error(err))
-		return nil
-	}
-	defer dbPool.Close()
+    advertsUseCase, err := service.NewAdvertService(advertsRepo, zap.L())
+    if err != nil {
+        zap.L().Error("unable to create advert use case", zap.Error(err))
+        return nil
+    }
 
-	advertsRepo := postgres.NewAdvertRepository(dbPool)
-	advertsUseCase := usecase.NewAdvertUseCase(advertsRepo)
-	advertsHandler := http3.NewAdvertEndpoints(advertsUseCase)
-	authHandler := http3.NewAuthHandler()
+    advertsHandler := http3.NewAdvertEndpoints(advertsUseCase, zap.L())
 
-	router.Use(authMiddleware(authHandler))
+    advertsHandler.ConfigureRoutes(router)
 
-	router.HandleFunc("/api/v1/signup", authHandler.SignupHandler).Methods("POST")
-	router.HandleFunc("/api/v1/login", authHandler.LoginHandler).Methods("POST")
-	router.HandleFunc("/api/v1/logout", authHandler.LogoutHandler).Methods("POST")
+    router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
-	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
-
-	return router
+    return router
 }
 
 func recoveryMiddleware(next http.Handler) http.Handler {
@@ -54,7 +55,7 @@ func recoveryMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func isAuthenticated(r *http.Request, authHandler *http3.AuthHandler) bool {
+/*func isAuthenticated(r *http.Request, authHandler *http3.AuthHandler) bool {
 	cookie, err := r.Cookie("session_id")
 	if err != nil || cookie == nil {
 		log.Println("No session cookie found")
@@ -80,4 +81,4 @@ func authMiddleware(authHandler *http3.AuthHandler) mux.MiddlewareFunc {
 			next.ServeHTTP(w, r)
 		})
 	}
-}
+}*/

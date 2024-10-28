@@ -22,12 +22,11 @@ func (server *Server) Run() error {
 	zap.ReplaceGlobals(zap.Must(zap.NewProduction()))
 	defer zap.L().Sync()
 
-	if err := config.ServerInit(); err != nil {
-		zap.L().Error("config init error", zap.Error(err))
-		return err
+	cfg, err := config.Init()
+	if err != nil {
+		return errors.Wrap(err, "failed to init config")
 	}
-
-	router := delivery.NewRouter()
+	router := delivery.NewRouter(cfg)
 
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins:   []string{"https://two024-2-bogo-sort.onrender.com"},
@@ -48,7 +47,7 @@ func (server *Server) Run() error {
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
-	err := server.server.ListenAndServe()
+	err = server.server.ListenAndServe()
 	if !errors.Is(err, http.ErrServerClosed) {
 		zap.L().Error("server failed", zap.Error(err))
 		return errors.Wrap(err, "server failed")

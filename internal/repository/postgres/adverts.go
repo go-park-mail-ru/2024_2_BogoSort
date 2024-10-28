@@ -1,127 +1,357 @@
 package postgres
 
-// import (
-// 	"errors"
-// 	"fmt"
-// 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
-// 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/services"
-// 	"sync"
-// )
+import (
+	"context"
+	"database/sql"
+	"errors"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"go.uber.org/zap"
+	"time"
+)
 
-// var ErrAdvertNotFound = errors.New("advert not found")
+type AdvertDB struct {
+	DB     *pgxpool.Pool
+	logger *zap.Logger
+}
 
-// type advertRepository struct {
-// 	adverts  []*entity.Advert
-// 	advCount uint
-// 	mu       sync.Mutex
-// }
+func NewAdvertRepository(db *pgxpool.Pool, logger *zap.Logger) (repository.AdvertRepository, error) {
+	if err := db.Ping(context.Background()); err != nil {
+		return nil, err
+	}
+	return &AdvertDB{
+		DB:     db,
+		logger: logger,
+	}, nil
+}
 
-// func NewAdvertRepository() entity.AdvertRepository {
-// 	return &advertRepository{
-// 		adverts:  make([]*entity.Advert, 0),
-// 		advCount: 0,
-// 		mu:       sync.Mutex{},
-// 	}
-// }
+func (r *AdvertDB) AddAdvert(a *entity.Advert) (*entity.Advert, error) {
+	query := `
+		INSERT INTO advert (title, description, price, location, has_delivery, category_id, seller_id, image_id, status) 
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
+		RETURNING id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status`
 
-// func (l *advertRepository) CreateAdvert(a *entity.Advert) error {
-// 	l.mu.Lock()
-// 	defer l.mu.Unlock()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
 
-// 	l.advCount++
+	var dbAdvert entity.Advert
 
-// 	a.ID = l.advCount
-// 	l.adverts = append(l.adverts, a)
-// 	return nil
-// }
+	err := r.DB.QueryRow(ctx, query,
+		a.Title,
+		a.Description,
+		a.Price,
+		a.Location,
+		a.HasDelivery,
+		a.CategoryId,
+		a.SellerId,
+		a.ImageURL,
+		a.Status).Scan(
+		&dbAdvert.ID,
+		&dbAdvert.Title,
+		&dbAdvert.Description,
+		&dbAdvert.Price,
+		&dbAdvert.Location,
+		&dbAdvert.HasDelivery,
+		&dbAdvert.CategoryId,
+		&dbAdvert.SellerId,
+		&dbAdvert.ImageURL,
+		&dbAdvert.Status,
+	)
 
-// func (l *advertRepository) UpdateAdvert(a *entity.Advert) error {
-// 	l.mu.Lock()
-// 	defer l.mu.Unlock()
+	if err != nil {
+		r.logger.Error("error adding advert", zap.Error(err))
+		return nil, entity.PSQLQueryErr("AddAdvert", err)
+	}
 
-// 	for i, adv := range l.adverts {
-// 		if adv.ID == a.ID {
-// 			l.adverts[i] = a
-// 			return nil
-// 		}
-// 	}
+	r.logger.Info("advert added", zap.Any("advert", dbAdvert))
 
-// 	return ErrAdvertNotFound
-// }
+	return &dbAdvert, nil
+}
 
-// func (l *advertRepository) DeleteAdvert(id uint) error {
-// 	l.mu.Lock()
-// 	defer l.mu.Unlock()
+func (r *AdvertDB) GetAdverts(limit, offset int) ([]*entity.Advert, error) {
+	query := `
+		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status
+		FROM advert
+		ORDER BY created_at DESC
+		LIMIT $1 OFFSET $2`
 
-// 	for i, adv := range l.adverts {
-// 		if adv.ID == id {
-// 			l.adverts = append(l.adverts[:i], l.adverts[i+1:]...)
-// 			return nil
-// 		}
-// 	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
 
-// 	return ErrAdvertNotFound
-// }
+	var adverts []*entity.Advert
 
-// func (l *advertRepository) GetAllAdverts() ([]*entity.Advert, error) {
-// 	l.mu.Lock()
-// 	defer l.mu.Unlock()
+	rows, err := r.DB.Query(ctx, query, limit, offset)
+	if err != nil {
+		r.logger.Error("failed to execute query", zap.Error(err))
+		return nil, entity.PSQLQueryErr("GetAdverts", err)
+	}
+	defer rows.Close()
 
-// 	result := make([]*entity.Advert, len(l.adverts))
-// 	copy(result, l.adverts)
+	for rows.Next() {
+		var advert entity.Advert
+		if err := rows.Scan(&advert.ID,
+			&advert.Title,
+			&advert.Description,
+			&advert.Price,
+			&advert.Location,
+			&advert.HasDelivery,
+			&advert.CategoryId,
+			&advert.SellerId,
+			&advert.ImageURL,
+			&advert.Status,
+		); err != nil {
+			r.logger.Error("failed to scan row", zap.Error(err))
+			return nil, entity.PSQLQueryErr("GetAdverts", err)
+		}
+		adverts = append(adverts, &advert)
+	}
 
-// 	return result, nil
-// }
+	if err := rows.Err(); err != nil {
+		r.logger.Error("error iterating over rows", zap.Error(err))
+		return nil, entity.PSQLQueryErr("GetAdverts", err)
+	}
 
-// func (l *advertRepository) GetAdvertById(id uint) (*entity.Advert, error) {
-// 	l.mu.Lock()
-// 	defer l.mu.Unlock()
+	return adverts, nil
+}
 
-// 	for _, advert := range l.adverts {
-// 		if advert.ID == id {
-// 			return advert, nil
-// 		}
-// 	}
+func (r *AdvertDB) GetAdvertsByUserId(userId uuid.UUID) ([]*entity.Advert, error) {
+	query := `
+		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status
+		FROM advert
+		WHERE seller_id = $1
+		ORDER BY created_at DESC`
 
-// 	return nil, ErrAdvertNotFound
-// }
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
 
-// func (l *advertRepository) NewAdvertsList() *entity.AdvertsList {
-// 	return &entity.AdvertsList{
-// 		Adverts:  make([]*entity.Advert, 0),
-// 		AdvCount: 0,
-// 		Mu:       sync.Mutex{},
-// 	}
-// }
+	var adverts []*entity.Advert
 
-// func (l *advertRepository) FillAdverts(ads *entity.AdvertsList, imageService *services.ImageService) {
-// 	ads.Mu.Lock()
-// 	defer ads.Mu.Unlock()
+	rows, err := r.DB.Query(ctx, query, userId)
+	if err != nil {
+		r.logger.Error("failed to execute query", zap.Error(err), zap.String("user_id", userId.String()))
+		return nil, entity.PSQLQueryErr("GetAdvertsByUserId", err)
+	}
+	defer rows.Close()
 
-// 	locations := []string{"Москва", "Санкт-Петербург", "Новосибирск", "Екатеринбург", "Казань"}
-// 	titles := []string{
-// 		"Продам велосипед", "Аренда квартиры", "Продам ноутбук", "Продам автомобиль", "Продам мебель",
-// 		"Продам телефон", "Продам дом", "Аренда гаража", "Продам планшет", "Продам телевизор",
-// 	}
+	for rows.Next() {
+		var advert entity.Advert
+		if err := rows.Scan(
+			&advert.ID,
+			&advert.Title,
+			&advert.Description,
+			&advert.Price,
+			&advert.Location,
+			&advert.HasDelivery,
+			&advert.CategoryId,
+			&advert.SellerId,
+			&advert.ImageURL,
+			&advert.Status,
+		); err != nil {
+			r.logger.Error("failed to scan row", zap.Error(err), zap.String("user_id", userId.String()))
+			return nil, entity.PSQLQueryErr("GetAdvertsByUserId", err)
+		}
+		adverts = append(adverts, &advert)
+	}
 
-// 	const testAdvCount, testPrice = 30, 1000
+	if err := rows.Err(); err != nil {
+		r.logger.Error("error iterating over rows", zap.Error(err), zap.String("user_id", userId.String()))
+		return nil, entity.PSQLQueryErr("GetAdvertsByUserId", err)
+	}
 
-// 	for i := 1; i <= testAdvCount; i++ {
-// 		imageURL := fmt.Sprintf("/static/images/image%d.jpg", i)
-// 		id := uint(i)
-// 		price := uint(testPrice + (i-1)*testPrice/10)
+	r.logger.Info("successfully retrieved adverts by user ID", zap.String("user_id", userId.String()), zap.Int("count", len(adverts)))
+	return adverts, nil
+}
 
-// 		advert := &entity.Advert{
-// 			ID:       id,
-// 			Title:    titles[(i-1)%len(titles)],
-// 			ImageURL: imageURL,
-// 			Price:    price,
-// 			Location: locations[(i-1)%len(locations)],
-// 		}
+func (r *AdvertDB) GetSavedAdvertsByUserId(userId uuid.UUID) ([]*entity.Advert, error) {
+	query := `
+		SELECT a.id, a.title, a.description, a.price, a.location, a.has_delivery, a.category_id, a.seller_id, a.image_id, a.status
+		FROM advert a
+		INNER JOIN saved_advert sa ON sa.advert_id = a.id
+		WHERE sa.user_id = $1
+		ORDER BY a.created_at DESC`
 
-// 		ads.Adverts = append(ads.Adverts, advert)
-// 		imageService.SetImageURL(id, imageURL)
-// 	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
 
-// 	ads.AdvCount = uint(len(ads.Adverts))
-// }
+	var adverts []*entity.Advert
+
+	rows, err := r.DB.Query(ctx, query, userId)
+	if err != nil {
+		r.logger.Error("failed to execute query", zap.Error(err), zap.String("user_id", userId.String()))
+		return nil, entity.PSQLQueryErr("GetSavedAdvertsByUserId", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var advert entity.Advert
+		if err := rows.Scan(
+			&advert.ID,
+			&advert.Title,
+			&advert.Description,
+			&advert.Price,
+			&advert.Location,
+			&advert.HasDelivery,
+			&advert.CategoryId,
+			&advert.SellerId,
+			&advert.ImageURL,
+			&advert.Status,
+		); err != nil {
+			r.logger.Error("failed to scan row", zap.Error(err), zap.String("user_id", userId.String()))
+			return nil, entity.PSQLQueryErr("GetSavedAdvertsByUserId", err)
+		}
+		adverts = append(adverts, &advert)
+	}
+
+	if err := rows.Err(); err != nil {
+		r.logger.Error("error iterating over rows", zap.Error(err), zap.String("user_id", userId.String()))
+		return nil, entity.PSQLQueryErr("GetSavedAdvertsByUserId", err)
+	}
+
+	r.logger.Info("successfully retrieved saved adverts by user ID", zap.String("user_id", userId.String()), zap.Int("count", len(adverts)))
+	return adverts, nil
+}
+
+func (r *AdvertDB) GetAdvertsByCartId(cartId uuid.UUID) ([]*entity.Advert, error) {
+	query := `
+		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status
+		FROM advert
+		WHERE id IN (SELECT advert_id FROM cart WHERE cart_id = $1)
+		ORDER BY created_at DESC`
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	var adverts []*entity.Advert
+
+	rows, err := r.DB.Query(ctx, query, cartId)
+	if err != nil {
+		r.logger.Error("failed to execute query", zap.Error(err), zap.String("user_id", cartId.String()))
+		return nil, entity.PSQLQueryErr("GetSavedAdvertsByUserId", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var advert entity.Advert
+		if err := rows.Scan(
+			&advert.ID,
+			&advert.Title,
+			&advert.Description,
+			&advert.Price,
+			&advert.Location,
+			&advert.HasDelivery,
+			&advert.CategoryId,
+			&advert.SellerId,
+			&advert.ImageURL,
+			&advert.Status,
+		); err != nil {
+			r.logger.Error("failed to scan row", zap.Error(err), zap.String("cart_id", cartId.String()))
+			return nil, entity.PSQLQueryErr("GetSavedAdvertsByUserId", err)
+		}
+		adverts = append(adverts, &advert)
+	}
+
+	if err := rows.Err(); err != nil {
+		r.logger.Error("error iterating over rows", zap.Error(err), zap.String("user_id", cartId.String()))
+		return nil, entity.PSQLQueryErr("GetSavedAdvertsByUserId", err)
+	}
+
+	r.logger.Info("successfully retrieved saved adverts by user ID", zap.String("user_id", cartId.String()), zap.Int("count", len(adverts)))
+	return adverts, nil
+}
+
+func (r *AdvertDB) GetAdvertById(advertId uuid.UUID) (*entity.Advert, error) {
+	query := `
+		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status
+		FROM advert
+		WHERE id = $1`
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	var advert entity.Advert
+
+	err := r.DB.QueryRow(ctx, query, advertId).Scan(
+		&advert.ID,
+		&advert.Title,
+		&advert.Description,
+		&advert.Price,
+		&advert.Location,
+		&advert.HasDelivery,
+		&advert.CategoryId,
+		&advert.SellerId,
+		&advert.ImageURL,
+		&advert.Status,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			r.logger.Error("advert not found", zap.Error(err), zap.String("advert_id", advertId.String()))
+			return nil, entity.PSQLWrap(repository.ErrAdvertNotFound)
+		}
+		r.logger.Error("failed to query advert by id", zap.Error(err), zap.String("advert_id", advertId.String()))
+		return nil, entity.PSQLQueryErr("GetAdvertById", err)
+	}
+
+	r.logger.Info("successfully retrieved advert by id", zap.String("advert_id", advertId.String()))
+	return &advert, nil
+}
+
+func (r *AdvertDB) UpdateAdvert(advert *entity.Advert) error {
+	query := `
+		UPDATE advert
+		SET title = $1, description = $2, price = $3, location = $4, has_delivery = $5,
+			category_id = $6, seller_id = $7, image_id = $8, status = $9, updated_at = NOW()
+		WHERE id = $10`
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	result, err := r.DB.Exec(ctx, query,
+		advert.Title,
+		advert.Description,
+		advert.Price,
+		advert.Location,
+		advert.HasDelivery,
+		advert.CategoryId,
+		advert.SellerId,
+		advert.ImageURL,
+		advert.Status,
+		advert.ID,
+	)
+	if err != nil {
+		r.logger.Error("failed to update advert", zap.Error(err), zap.String("advert_id", advert.ID.String()))
+		return entity.PSQLQueryErr("UpdateAdvert", err)
+	}
+
+	rowsAffected := result.RowsAffected()
+	if rowsAffected == 0 {
+		r.logger.Error("advert not found", zap.String("advert_id", advert.ID.String()))
+		return entity.PSQLWrap(repository.ErrAdvertNotFound)
+	}
+
+	r.logger.Info("successfully updated advert", zap.String("advert_id", advert.ID.String()))
+	return nil
+}
+
+func (r *AdvertDB) DeleteAdvertById(advertId uuid.UUID) error {
+	query := `DELETE FROM advert WHERE id = $1`
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	result, err := r.DB.Exec(ctx, query, advertId)
+	if err != nil {
+		r.logger.Error("failed to delete advert", zap.Error(err), zap.String("advert_id", advertId.String()))
+		return entity.PSQLQueryErr("DeleteAdvertById", err)
+	}
+
+	rowsAffected := result.RowsAffected()
+	if rowsAffected == 0 {
+		r.logger.Error("advert not found", zap.String("advert_id", advertId.String()))
+		return entity.PSQLWrap(repository.ErrAdvertNotFound)
+	}
+
+	r.logger.Info("successfully deleted advert", zap.String("advert_id", advertId.String()))
+	return nil
+}
