@@ -52,8 +52,11 @@ func (h *AdvertEndpoints) ConfigureRoutes(router *mux.Router) {
 // @Description Get a list of all adverts
 // @Tags adverts
 // @Produce json
-// @Success 200 {array} storage.Advert "List of adverts"
-// @Failure 500 {object} responses.ErrResponse "Failed to get adverts"
+// @Param limit query int false "Limit the number of results"
+// @Param offset query int false "Offset for pagination"
+// @Success 200 {array} dto.Advert "List of adverts"
+// @Failure 400 {object} utils.ErrResponse "Invalid limit or offset"
+// @Failure 500 {object} utils.ErrResponse "Failed to get adverts"
 // @Router /api/v1/adverts [get]
 func (h *AdvertEndpoints) GetAdverts(writer http.ResponseWriter, r *http.Request) {
 	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
@@ -87,8 +90,8 @@ func (h *AdvertEndpoints) GetAdverts(writer http.ResponseWriter, r *http.Request
 // @Produce json
 // @Param userId path string true "User ID"
 // @Success 200 {array} dto.Advert "List of adverts"
-// @Failure 400 {object} responses.ErrResponse "Invalid user ID"
-// @Failure 500 {object} responses.ErrResponse "Failed to get adverts by user ID"
+// @Failure 400 {object} utils.ErrResponse "Invalid user ID"
+// @Failure 500 {object} utils.ErrResponse "Failed to get adverts by user ID"
 // @Router /api/v1/adverts/user/{userId} [get]
 func (h *AdvertEndpoints) GetAdvertsByUserId(writer http.ResponseWriter, r *http.Request) {
 	userIdStr := mux.Vars(r)["userId"]
@@ -116,8 +119,8 @@ func (h *AdvertEndpoints) GetAdvertsByUserId(writer http.ResponseWriter, r *http
 // @Produce json
 // @Param userId path string true "User ID"
 // @Success 200 {array} dto.Advert "List of saved adverts"
-// @Failure 400 {object} responses.ErrResponse "Invalid user ID"
-// @Failure 500 {object} responses.ErrResponse "Failed to get saved adverts by user ID"
+// @Failure 400 {object} utils.ErrResponse "Invalid user ID"
+// @Failure 500 {object} utils.ErrResponse "Failed to get saved adverts by user ID"
 // @Router /api/v1/adverts/user/{userId}/saved [get]
 func (h *AdvertEndpoints) GetSavedAdvertsByUserId(writer http.ResponseWriter, r *http.Request) {
 	userIdStr := mux.Vars(r)["userId"]
@@ -145,8 +148,8 @@ func (h *AdvertEndpoints) GetSavedAdvertsByUserId(writer http.ResponseWriter, r 
 // @Produce json
 // @Param cartId path string true "Cart ID"
 // @Success 200 {array} dto.Advert "List of adverts in cart"
-// @Failure 400 {object} responses.ErrResponse "Invalid cart ID"
-// @Failure 500 {object} responses.ErrResponse "Failed to get adverts by cart ID"
+// @Failure 400 {object} utils.ErrResponse "Invalid cart ID"
+// @Failure 500 {object} utils.ErrResponse "Failed to get adverts by cart ID"
 // @Router /api/v1/adverts/cart/{cartId} [get]
 func (h *AdvertEndpoints) GetAdvertsByCartId(writer http.ResponseWriter, r *http.Request) {
 	cartIdStr := mux.Vars(r)["cartId"]
@@ -174,9 +177,9 @@ func (h *AdvertEndpoints) GetAdvertsByCartId(writer http.ResponseWriter, r *http
 // @Produce json
 // @Param advertId path string true "Advert ID"
 // @Success 200 {object} dto.Advert "Advert details"
-// @Failure 400 {object} responses.ErrResponse "Invalid advert ID"
-// @Failure 404 {object} responses.ErrResponse "Advert not found"
-// @Failure 500 {object} responses.ErrResponse "Failed to get advert by ID"
+// @Failure 400 {object} utils.ErrResponse "Invalid advert ID"
+// @Failure 404 {object} utils.ErrResponse "Advert not found"
+// @Failure 500 {object} utils.ErrResponse "Failed to get advert by ID"
 // @Router /api/v1/adverts/{advertId} [get]
 func (h *AdvertEndpoints) GetAdvertById(writer http.ResponseWriter, r *http.Request) {
 	advertIdStr := mux.Vars(r)["advertId"]
@@ -209,8 +212,8 @@ func (h *AdvertEndpoints) GetAdvertById(writer http.ResponseWriter, r *http.Requ
 // @Produce json
 // @Param advert body dto.Advert true "Advert data"
 // @Success 201 {object} dto.Advert "Advert created"
-// @Failure 400 {object} responses.ErrResponse "Invalid advert data"
-// @Failure 500 {object} responses.ErrResponse "Failed to add advert"
+// @Failure 400 {object} utils.ErrResponse "Invalid advert data"
+// @Failure 500 {object} utils.ErrResponse "Failed to add advert"
 // @Router /api/v1/adverts [post]
 func (h *AdvertEndpoints) AddAdvert(writer http.ResponseWriter, r *http.Request) {
 	var advert dto.Advert
@@ -235,12 +238,14 @@ func (h *AdvertEndpoints) AddAdvert(writer http.ResponseWriter, r *http.Request)
 // @Description Update an advert's information
 // @Tags adverts
 // @Accept json
+// @Produce json
+// @Param advertId path string true "Advert ID"
 // @Param advert body dto.Advert true "Updated advert data"
 // @Success 200 "Advert updated successfully"
-// @Failure 400 {object} responses.ErrResponse "Invalid advert data"
-// @Failure 404 {object} responses.ErrResponse "Advert not found"
-// @Failure 500 {object} responses.ErrResponse "Failed to update advert"
-// @Router /api/v1/adverts [put]
+// @Failure 400 {object} utils.ErrResponse "Invalid advert data"
+// @Failure 404 {object} utils.ErrResponse "Advert not found"
+// @Failure 500 {object} utils.ErrResponse "Failed to update advert"
+// @Router /api/v1/adverts/{advertId} [put]
 func (h *AdvertEndpoints) UpdateAdvert(writer http.ResponseWriter, r *http.Request) {
 	var advert dto.Advert
 	if err := json.NewDecoder(r.Body).Decode(&advert); err != nil {
@@ -268,9 +273,9 @@ func (h *AdvertEndpoints) UpdateAdvert(writer http.ResponseWriter, r *http.Reque
 // @Tags adverts
 // @Param advertId path string true "Advert ID"
 // @Success 204 "Advert deleted"
-// @Failure 400 {object} responses.ErrResponse "Invalid advert ID"
-// @Failure 404 {object} responses.ErrResponse "Advert not found"
-// @Failure 500 {object} responses.ErrResponse "Failed to delete advert"
+// @Failure 400 {object} utils.ErrResponse "Invalid advert ID"
+// @Failure 404 {object} utils.ErrResponse "Advert not found"
+// @Failure 500 {object} utils.ErrResponse "Failed to delete advert"
 // @Router /api/v1/adverts/{advertId} [delete]
 func (h *AdvertEndpoints) DeleteAdvertById(writer http.ResponseWriter, r *http.Request) {
 	advertIdStr := mux.Vars(r)["advertId"]
@@ -291,7 +296,7 @@ func (h *AdvertEndpoints) DeleteAdvertById(writer http.ResponseWriter, r *http.R
 		return
 	}
 
-	utils.SendJSONResponse(writer, http.StatusNoContent, "Advert deleted")
+	utils.SendJSONResponse(writer, http.StatusOK, "Advert deleted")
 }
 
 // UpdateAdvertStatus godoc
@@ -301,8 +306,9 @@ func (h *AdvertEndpoints) DeleteAdvertById(writer http.ResponseWriter, r *http.R
 // @Param advertId path string true "Advert ID"
 // @Param status body string true "New status"
 // @Success 200 "Advert status updated"		
-// @Failure 400 {object} responses.ErrResponse "Invalid advert ID or status"
-// @Failure 500 {object} responses.ErrResponse "Failed to update advert status"
+// @Failure 400 {object} utils.ErrResponse "Invalid advert ID or status"
+// @Failure 404 {object} utils.ErrResponse "Advert not found"
+// @Failure 500 {object} utils.ErrResponse "Failed to update advert status"
 // @Router /api/v1/adverts/{advertId}/status [put]
 func (h *AdvertEndpoints) UpdateAdvertStatus(writer http.ResponseWriter, r *http.Request) {
 	advertIdStr := mux.Vars(r)["advertId"]
@@ -313,7 +319,14 @@ func (h *AdvertEndpoints) UpdateAdvertStatus(writer http.ResponseWriter, r *http
 		return
 	}
 
-	if err := h.AdvertsUseCase.UpdateAdvertStatus(advertId, r.FormValue("status")); err != nil {
+	status := r.FormValue("status")
+	if status != string(dto.AdvertStatusActive) && status != string(dto.AdvertStatusInactive) {
+		h.logger.Error("invalid advert status", zap.String("status", status))
+		utils.SendErrorResponse(writer, http.StatusBadRequest, "Invalid advert status")
+		return
+	}
+
+	if err := h.AdvertsUseCase.UpdateAdvertStatus(advertId, status); err != nil {
 		if errors.Is(err, ErrAdvertNotFound) {
 			utils.SendErrorResponse(writer, http.StatusNotFound, "Advert not found")
 		} else {

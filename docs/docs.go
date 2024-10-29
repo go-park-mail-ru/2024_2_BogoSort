@@ -25,26 +25,46 @@ const docTemplate = `{
                     "adverts"
                 ],
                 "summary": "Get all adverts",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Limit the number of results",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset for pagination",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "List of adverts",
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/storage.Advert"
+                                "$ref": "#/definitions/dto.Advert"
                             }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid limit or offset",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
                         }
                     },
                     "500": {
                         "description": "Failed to get adverts",
                         "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
+                            "$ref": "#/definitions/utils.ErrResponse"
                         }
                     }
                 }
             },
             "post": {
-                "description": "Add a new advert to the list",
+                "description": "Create a new advert",
                 "consumes": [
                     "application/json"
                 ],
@@ -62,29 +82,167 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/storage.Advert"
+                            "$ref": "#/definitions/dto.Advert"
                         }
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "Advert added successfully",
+                    "201": {
+                        "description": "Advert created",
                         "schema": {
-                            "$ref": "#/definitions/storage.Advert"
+                            "$ref": "#/definitions/dto.Advert"
                         }
                     },
                     "400": {
+                        "description": "Invalid advert data",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
                         "description": "Failed to add advert",
                         "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
+                            "$ref": "#/definitions/utils.ErrResponse"
                         }
                     }
                 }
             }
         },
-        "/api/v1/adverts/{id}": {
+        "/api/v1/adverts/cart/{cartId}": {
             "get": {
-                "description": "Get a single advert by its ID",
+                "description": "Get a list of adverts in the specified cart",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "adverts"
+                ],
+                "summary": "Get adverts by cart ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Cart ID",
+                        "name": "cartId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of adverts in cart",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.Advert"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid cart ID",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to get adverts by cart ID",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/adverts/user/{userId}": {
+            "get": {
+                "description": "Get a list of adverts by user ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "adverts"
+                ],
+                "summary": "Get adverts by user ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "userId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of adverts",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.Advert"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid user ID",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to get adverts by user ID",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/adverts/user/{userId}/saved": {
+            "get": {
+                "description": "Get a list of saved adverts by user ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "adverts"
+                ],
+                "summary": "Get saved adverts by user ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "userId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of saved adverts",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.Advert"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid user ID",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to get saved adverts by user ID",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/adverts/{advertId}": {
+            "get": {
+                "description": "Get an advert by its ID",
                 "produces": [
                     "application/json"
                 ],
@@ -94,9 +252,9 @@ const docTemplate = `{
                 "summary": "Get an advert by ID",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Advert ID",
-                        "name": "id",
+                        "name": "advertId",
                         "in": "path",
                         "required": true
                     }
@@ -105,31 +263,31 @@ const docTemplate = `{
                     "200": {
                         "description": "Advert details",
                         "schema": {
-                            "$ref": "#/definitions/storage.Advert"
+                            "$ref": "#/definitions/dto.Advert"
                         }
                     },
                     "400": {
-                        "description": "Invalid ID",
+                        "description": "Invalid advert ID",
                         "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
+                            "$ref": "#/definitions/utils.ErrResponse"
                         }
                     },
                     "404": {
                         "description": "Advert not found",
                         "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
+                            "$ref": "#/definitions/utils.ErrResponse"
                         }
                     },
                     "500": {
-                        "description": "Failed to get advert",
+                        "description": "Failed to get advert by ID",
                         "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
+                            "$ref": "#/definitions/utils.ErrResponse"
                         }
                     }
                 }
             },
             "put": {
-                "description": "Update an existing advert by its ID",
+                "description": "Update an advert's information",
                 "consumes": [
                     "application/json"
                 ],
@@ -139,48 +297,45 @@ const docTemplate = `{
                 "tags": [
                     "adverts"
                 ],
-                "summary": "Update an advert",
+                "summary": "Update an existing advert",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Advert ID",
-                        "name": "id",
+                        "name": "advertId",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "Advert data",
+                        "description": "Updated advert data",
                         "name": "advert",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/storage.Advert"
+                            "$ref": "#/definitions/dto.Advert"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Advert updated successfully",
-                        "schema": {
-                            "$ref": "#/definitions/storage.Advert"
-                        }
+                        "description": "Advert updated successfully"
                     },
                     "400": {
-                        "description": "Invalid ID or data",
+                        "description": "Invalid advert data",
                         "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
+                            "$ref": "#/definitions/utils.ErrResponse"
                         }
                     },
                     "404": {
                         "description": "Advert not found",
                         "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
+                            "$ref": "#/definitions/utils.ErrResponse"
                         }
                     },
                     "500": {
                         "description": "Failed to update advert",
                         "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
+                            "$ref": "#/definitions/utils.ErrResponse"
                         }
                     }
                 }
@@ -190,178 +345,86 @@ const docTemplate = `{
                 "tags": [
                     "adverts"
                 ],
-                "summary": "Delete an advert",
+                "summary": "Delete an advert by ID",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Advert ID",
-                        "name": "id",
+                        "name": "advertId",
                         "in": "path",
                         "required": true
                     }
                 ],
                 "responses": {
                     "204": {
-                        "description": "Advert deleted successfully"
+                        "description": "Advert deleted"
                     },
                     "400": {
-                        "description": "Invalid ID",
+                        "description": "Invalid advert ID",
                         "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Advert not found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
                         }
                     },
                     "500": {
                         "description": "Failed to delete advert",
                         "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
+                            "$ref": "#/definitions/utils.ErrResponse"
                         }
                     }
                 }
             }
         },
-        "/login": {
-            "post": {
-                "description": "Login a user with email and password",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
+        "/api/v1/adverts/{advertId}/status": {
+            "put": {
+                "description": "Update advert status by ID",
                 "tags": [
-                    "session"
+                    "adverts"
                 ],
-                "summary": "Login a user",
+                "summary": "Update advert status",
                 "parameters": [
                     {
-                        "description": "User credentials",
-                        "name": "credentials",
+                        "type": "string",
+                        "description": "Advert ID",
+                        "name": "advertId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "New status",
+                        "name": "status",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handlers.LoginCredentials"
+                            "type": "string"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/responses.AuthResponse"
-                        },
-                        "headers": {
-                            "X-Authenticated": {
-                                "type": "string",
-                                "description": "true"
-                            }
-                        }
+                        "description": "Advert status updated"
                     },
                     "400": {
-                        "description": "Invalid request body or data",
+                        "description": "Invalid advert ID or status",
                         "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
+                            "$ref": "#/definitions/utils.ErrResponse"
                         }
                     },
-                    "405": {
-                        "description": "Method not allowed",
+                    "404": {
+                        "description": "Advert not found",
                         "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/logout": {
-            "post": {
-                "description": "Logout a user by invalidating the session",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "session"
-                ],
-                "summary": "Logout a user",
-                "responses": {
-                    "200": {
-                        "description": "Logged out successfully",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        },
-                        "headers": {
-                            "X-Authenticated": {
-                                "type": "string",
-                                "description": "false"
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "No active session or session does not exist",
-                        "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
-                        }
-                    },
-                    "405": {
-                        "description": "Method not allowed",
-                        "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/signup": {
-            "post": {
-                "description": "Signup a new user with email and password",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "session"
-                ],
-                "summary": "Signup a new user",
-                "parameters": [
-                    {
-                        "description": "User credentials",
-                        "name": "credentials",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handlers.AuthData"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/responses.AuthResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "User already exists",
-                        "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
-                        }
-                    },
-                    "405": {
-                        "description": "Method not allowed",
-                        "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
+                            "$ref": "#/definitions/utils.ErrResponse"
                         }
                     },
                     "500": {
-                        "description": "Failed to create user",
+                        "description": "Failed to update advert status",
                         "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
+                            "$ref": "#/definitions/utils.ErrResponse"
                         }
                     }
                 }
@@ -369,63 +432,20 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "handlers.AuthData": {
+        "dto.Advert": {
             "type": "object",
-            "required": [
-                "email",
-                "password"
-            ],
             "properties": {
-                "email": {
+                "category_id": {
                     "type": "string"
                 },
-                "password": {
-                    "type": "string"
-                }
-            }
-        },
-        "handlers.LoginCredentials": {
-            "type": "object",
-            "required": [
-                "email",
-                "password"
-            ],
-            "properties": {
-                "email": {
+                "description": {
                     "type": "string"
                 },
-                "password": {
-                    "type": "string"
-                }
-            }
-        },
-        "responses.AuthResponse": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
+                "has_delivery": {
+                    "type": "boolean"
                 },
-                "session_id": {
-                    "type": "string"
-                }
-            }
-        },
-        "responses.ErrResponse": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "integer"
-                },
-                "status": {
-                    "type": "string"
-                }
-            }
-        },
-        "storage.Advert": {
-            "type": "object",
-            "properties": {
                 "id": {
-                    "type": "integer"
+                    "type": "string"
                 },
                 "image_url": {
                     "type": "string"
@@ -436,7 +456,33 @@ const docTemplate = `{
                 "price": {
                     "type": "integer"
                 },
+                "seller_id": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/dto.AdvertStatus"
+                },
                 "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.AdvertStatus": {
+            "type": "string",
+            "enum": [
+                "active"
+            ],
+            "x-enum-varnames": [
+                "AdvertStatusActive"
+            ]
+        },
+        "utils.ErrResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "status": {
                     "type": "string"
                 }
             }

@@ -1,59 +1,57 @@
 definitions:
-  handlers.AuthData:
+  dto.Advert:
     properties:
-      email:
+      category_id:
         type: string
-      password:
+      description:
         type: string
-    required:
-    - email
-    - password
-    type: object
-  handlers.LoginCredentials:
-    properties:
-      email:
-        type: string
-      password:
-        type: string
-    required:
-    - email
-    - password
-    type: object
-  responses.AuthResponse:
-    properties:
-      email:
-        type: string
-      session_id:
-        type: string
-    type: object
-  responses.ErrResponse:
-    properties:
-      code:
-        type: integer
-      status:
-        type: string
-    type: object
-  storage.Advert:
-    properties:
+      has_delivery:
+        type: boolean
       id:
-        type: integer
+        type: string
       image_url:
         type: string
       location:
         type: string
       price:
         type: integer
+      seller_id:
+        type: string
+      status:
+        $ref: '#/definitions/dto.AdvertStatus'
       title:
         type: string
     type: object
+  dto.AdvertStatus:
+    enum:
+    - active
+    type: string
+    x-enum-varnames:
+    - AdvertStatusActive
+  utils.ErrResponse:
+    properties:
+      code:
+        type: integer
+      status:
+        type: string
+    type: object
 info:
-  version: "1.0.3"
-  title: "emporium api"
   contact: {}
+  title: "BogoSort API"
+  version: "1.0"
 paths:
   /api/v1/adverts:
     get:
       description: Get a list of all adverts
+      parameters:
+      - description: Limit the number of results
+        in: query
+        name: limit
+        type: integer
+      - description: Offset for pagination
+        in: query
+        name: offset
+        type: integer
       produces:
       - application/json
       responses:
@@ -61,226 +59,259 @@ paths:
           description: List of adverts
           schema:
             items:
-              $ref: '#/definitions/storage.Advert'
+              $ref: '#/definitions/dto.Advert'
             type: array
+        "400":
+          description: Invalid limit or offset
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
         "500":
           description: Failed to get adverts
           schema:
-            $ref: '#/definitions/responses.ErrResponse'
+            $ref: '#/definitions/utils.ErrResponse'
       summary: Get all adverts
       tags:
       - adverts
     post:
       consumes:
       - application/json
-      description: Add a new advert to the list
+      description: Create a new advert
       parameters:
       - description: Advert data
         in: body
         name: advert
         required: true
         schema:
-          $ref: '#/definitions/storage.Advert'
+          $ref: '#/definitions/dto.Advert'
       produces:
       - application/json
       responses:
-        "200":
-          description: Advert added successfully
+        "201":
+          description: Advert created
           schema:
-            $ref: '#/definitions/storage.Advert'
+            $ref: '#/definitions/dto.Advert'
         "400":
+          description: Invalid advert data
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
           description: Failed to add advert
           schema:
-            $ref: '#/definitions/responses.ErrResponse'
+            $ref: '#/definitions/utils.ErrResponse'
       summary: Add a new advert
       tags:
       - adverts
-  /api/v1/adverts/{id}:
+  /api/v1/adverts/{advertId}:
     delete:
       description: Delete an advert by its ID
       parameters:
       - description: Advert ID
         in: path
-        name: id
+        name: advertId
         required: true
-        type: integer
+        type: string
       responses:
         "204":
-          description: Advert deleted successfully
+          description: Advert deleted
         "400":
-          description: Invalid ID
+          description: Invalid advert ID
           schema:
-            $ref: '#/definitions/responses.ErrResponse'
+            $ref: '#/definitions/utils.ErrResponse'
+        "404":
+          description: Advert not found
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
         "500":
           description: Failed to delete advert
           schema:
-            $ref: '#/definitions/responses.ErrResponse'
-      summary: Delete an advert
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Delete an advert by ID
       tags:
       - adverts
     get:
-      description: Get a single advert by its ID
+      description: Get an advert by its ID
       parameters:
       - description: Advert ID
         in: path
-        name: id
+        name: advertId
         required: true
-        type: integer
+        type: string
       produces:
       - application/json
       responses:
         "200":
           description: Advert details
           schema:
-            $ref: '#/definitions/storage.Advert'
+            $ref: '#/definitions/dto.Advert'
         "400":
-          description: Invalid ID
+          description: Invalid advert ID
           schema:
-            $ref: '#/definitions/responses.ErrResponse'
+            $ref: '#/definitions/utils.ErrResponse'
         "404":
           description: Advert not found
           schema:
-            $ref: '#/definitions/responses.ErrResponse'
+            $ref: '#/definitions/utils.ErrResponse'
         "500":
-          description: Failed to get advert
+          description: Failed to get advert by ID
           schema:
-            $ref: '#/definitions/responses.ErrResponse'
+            $ref: '#/definitions/utils.ErrResponse'
       summary: Get an advert by ID
       tags:
       - adverts
     put:
       consumes:
       - application/json
-      description: Update an existing advert by its ID
+      description: Update an advert's information
       parameters:
       - description: Advert ID
         in: path
-        name: id
+        name: advertId
         required: true
-        type: integer
-      - description: Advert data
+        type: string
+      - description: Updated advert data
         in: body
         name: advert
         required: true
         schema:
-          $ref: '#/definitions/storage.Advert'
+          $ref: '#/definitions/dto.Advert'
       produces:
       - application/json
       responses:
         "200":
           description: Advert updated successfully
-          schema:
-            $ref: '#/definitions/storage.Advert'
         "400":
-          description: Invalid ID or data
+          description: Invalid advert data
           schema:
-            $ref: '#/definitions/responses.ErrResponse'
+            $ref: '#/definitions/utils.ErrResponse'
         "404":
           description: Advert not found
           schema:
-            $ref: '#/definitions/responses.ErrResponse'
+            $ref: '#/definitions/utils.ErrResponse'
         "500":
           description: Failed to update advert
           schema:
-            $ref: '#/definitions/responses.ErrResponse'
-      summary: Update an advert
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Update an existing advert
       tags:
       - adverts
-  /login:
-    post:
-      consumes:
-      - application/json
-      description: Login a user with email and password
+  /api/v1/adverts/{advertId}/status:
+    put:
+      description: Update advert status by ID
       parameters:
-      - description: User credentials
+      - description: Advert ID
+        in: path
+        name: advertId
+        required: true
+        type: string
+      - description: New status
         in: body
-        name: credentials
+        name: status
         required: true
         schema:
-          $ref: '#/definitions/handlers.LoginCredentials'
-      produces:
-      - application/json
+          type: string
       responses:
         "200":
-          description: OK
-          headers:
-            X-Authenticated:
-              description: "true"
-              type: string
-          schema:
-            $ref: '#/definitions/responses.AuthResponse'
+          description: Advert status updated
         "400":
-          description: Invalid request body or data
+          description: Invalid advert ID or status
           schema:
-            $ref: '#/definitions/responses.ErrResponse'
-        "405":
-          description: Method not allowed
+            $ref: '#/definitions/utils.ErrResponse'
+        "404":
+          description: Advert not found
           schema:
-            $ref: '#/definitions/responses.ErrResponse'
-      summary: Login a user
-      tags:
-      - session
-  /logout:
-    post:
-      consumes:
-      - application/json
-      description: Logout a user by invalidating the session
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Logged out successfully
-          headers:
-            X-Authenticated:
-              description: "false"
-              type: string
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "401":
-          description: No active session or session does not exist
-          schema:
-            $ref: '#/definitions/responses.ErrResponse'
-        "405":
-          description: Method not allowed
-          schema:
-            $ref: '#/definitions/responses.ErrResponse'
-      summary: Logout a user
-      tags:
-      - session
-  /signup:
-    post:
-      consumes:
-      - application/json
-      description: Signup a new user with email and password
-      parameters:
-      - description: User credentials
-        in: body
-        name: credentials
-        required: true
-        schema:
-          $ref: '#/definitions/handlers.AuthData'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/responses.AuthResponse'
-        "400":
-          description: User already exists
-          schema:
-            $ref: '#/definitions/responses.ErrResponse'
-        "405":
-          description: Method not allowed
-          schema:
-            $ref: '#/definitions/responses.ErrResponse'
+            $ref: '#/definitions/utils.ErrResponse'
         "500":
-          description: Failed to create user
+          description: Failed to update advert status
           schema:
-            $ref: '#/definitions/responses.ErrResponse'
-      summary: Signup a new user
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Update advert status
       tags:
-      - session
+      - adverts
+  /api/v1/adverts/cart/{cartId}:
+    get:
+      description: Get a list of adverts in the specified cart
+      parameters:
+      - description: Cart ID
+        in: path
+        name: cartId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of adverts in cart
+          schema:
+            items:
+              $ref: '#/definitions/dto.Advert'
+            type: array
+        "400":
+          description: Invalid cart ID
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Failed to get adverts by cart ID
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Get adverts by cart ID
+      tags:
+      - adverts
+  /api/v1/adverts/user/{userId}:
+    get:
+      description: Get a list of adverts by user ID
+      parameters:
+      - description: User ID
+        in: path
+        name: userId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of adverts
+          schema:
+            items:
+              $ref: '#/definitions/dto.Advert'
+            type: array
+        "400":
+          description: Invalid user ID
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Failed to get adverts by user ID
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Get adverts by user ID
+      tags:
+      - adverts
+  /api/v1/adverts/user/{userId}/saved:
+    get:
+      description: Get a list of saved adverts by user ID
+      parameters:
+      - description: User ID
+        in: path
+        name: userId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of saved adverts
+          schema:
+            items:
+              $ref: '#/definitions/dto.Advert'
+            type: array
+        "400":
+          description: Invalid user ID
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Failed to get saved adverts by user ID
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Get saved adverts by user ID
+      tags:
+      - adverts
 swagger: "2.0"

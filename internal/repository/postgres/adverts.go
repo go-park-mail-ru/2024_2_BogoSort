@@ -217,7 +217,7 @@ func (r *AdvertDB) GetAdvertsByCartId(cartId uuid.UUID) ([]*entity.Advert, error
 	query := `
 		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status
 		FROM advert
-		WHERE id IN (SELECT advert_id FROM cart WHERE cart_id = $1)
+		WHERE id IN (SELECT advert_id FROM cart_advert WHERE cart_id = $1)
 		ORDER BY created_at DESC`
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
@@ -304,7 +304,7 @@ func (r *AdvertDB) UpdateAdvert(advert *entity.Advert) error {
 			category_id = $6, seller_id = $7, image_id = $8, status = $9, updated_at = NOW()
 		WHERE id = $10`
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	result, err := r.DB.Exec(ctx, query,
@@ -324,13 +324,13 @@ func (r *AdvertDB) UpdateAdvert(advert *entity.Advert) error {
 		return entity.PSQLQueryErr("UpdateAdvert", err)
 	}
 
-	rowsAffected := result.RowsAffected()
+	rowsAffected:= result.RowsAffected()
 	if rowsAffected == 0 {
 		r.logger.Error("advert not found", zap.String("advert_id", advert.ID.String()))
 		return entity.PSQLWrap(repository.ErrAdvertNotFound)
 	}
 
-	r.logger.Info("successfully updated advert", zap.String("advert_id", advert.ID.String()))
+	r.logger.Info("successfully updated advert", zap.String("advert_id", advert.ID.String()), zap.Int64("rows_affected", rowsAffected))
 	return nil
 }
 
