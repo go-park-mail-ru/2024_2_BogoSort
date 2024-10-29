@@ -15,7 +15,6 @@ require github.com/google/uuid v1.6.0
 
 require (
 	github.com/go-park-mail-ru/2024_1_Cyberkotletki v0.0.0-20240531004743-d3f6797b2080
-	github.com/jmoiron/sqlx v1.4.0
 	github.com/redis/go-redis/v9 v9.7.0
 )
 
