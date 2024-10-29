@@ -39,6 +39,12 @@ type AdvertRepository interface {
 	// Возможные ошибки:
 	// ErrAdvertNotFound - объявление не найдено
 	DeleteAdvertById(advertId uuid.UUID) error
+
+	// UpdateAdvertStatus обновляет статус объявления
+	// Возможные ошибки:
+	// ErrAdvertBadRequest - некорректные данные для создания объявления
+	// ErrAdvertNotFound - объявление не найдено
+	UpdateAdvertStatus(advertId uuid.UUID, status string) error
 }
 
 var (

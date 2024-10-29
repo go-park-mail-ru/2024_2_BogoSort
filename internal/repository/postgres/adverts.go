@@ -355,3 +355,28 @@ func (r *AdvertDB) DeleteAdvertById(advertId uuid.UUID) error {
 	r.logger.Info("successfully deleted advert", zap.String("advert_id", advertId.String()))
 	return nil
 }
+
+func (r *AdvertDB) UpdateAdvertStatus(advertId uuid.UUID, status string) error {
+	query := `
+		UPDATE advert
+		SET status = $1, updated_at = NOW()
+		WHERE id = $2`
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	result, err := r.DB.Exec(ctx, query, status, advertId)
+	if err != nil {
+		r.logger.Error("failed to update advert status", zap.Error(err), zap.String("advert_id", advertId.String()))
+		return entity.PSQLQueryErr("UpdateAdvertStatus", err)
+	}
+
+	rowsAffected := result.RowsAffected()
+	if rowsAffected == 0 {
+		r.logger.Error("advert not found", zap.String("advert_id", advertId.String()))
+		return entity.PSQLWrap(repository.ErrAdvertNotFound)
+	}
+
+	r.logger.Info("successfully updated advert status", zap.String("advert_id", advertId.String()))
+	return nil
+}

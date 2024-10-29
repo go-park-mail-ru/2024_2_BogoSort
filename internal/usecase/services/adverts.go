@@ -157,3 +157,13 @@ func (s *AdvertService) DeleteAdvertById(advertId uuid.UUID) error {
     }
     return nil
 }
+
+func (s *AdvertService) UpdateAdvertStatus(advertId uuid.UUID, status string) error {
+    if err := s.AdvertRepo.UpdateAdvertStatus(advertId, status); err != nil {
+        if errors.Is(err, repository.ErrAdvertNotFound) {
+            return ErrAdvertNotFound
+        }
+        return err
+    }
+    return nil
+}

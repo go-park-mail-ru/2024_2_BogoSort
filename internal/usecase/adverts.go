@@ -30,9 +30,15 @@ type AdvertUseCase interface {
 
 	// UpdateAdvert обновляет объявление
 	// Возможные ошибки:
-	// ErrAdvertBadRequest - некорректные данные для создания объявления
+	// ErrAdvertBadRequest - некорректные данные для обновления объявления
 	// ErrAdvertNotFound - объявление не найдено
 	UpdateAdvert(advert *dto.Advert) error
+
+	// UpdateAdvertStatus обновляет статус объявления
+	// Возможные ошибки:
+	// ErrAdvertBadRequest - некорректные данные для обновления статуса объявления
+	// ErrAdvertNotFound - объявление не найдено
+	UpdateAdvertStatus(advertId uuid.UUID, status string) error
 
 	// DeleteAdvertById удаляет объявление по Id
 	// Возможные ошибки:
