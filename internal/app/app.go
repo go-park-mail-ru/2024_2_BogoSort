@@ -2,12 +2,13 @@ package app
 
 import (
 	"context"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery"
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/config"
 	"github.com/pkg/errors"
@@ -19,11 +20,11 @@ type Server struct {
 }
 
 func (server *Server) Run() error {
-	if err := config.ServerInit(); err != nil {
-		return err
+	cfg, err := config.Init()
+	if err != nil {
+		return errors.Wrap(err, "failed to init config")
 	}
-
-	router := delivery.NewRouter()
+	router := delivery.NewRouter(cfg)
 
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins:   []string{"https://two024-2-bogo-sort.onrender.com"},
@@ -44,7 +45,7 @@ func (server *Server) Run() error {
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
-	err := server.server.ListenAndServe()
+	err = server.server.ListenAndServe()
 	if !errors.Is(err, http.ErrServerClosed) {
 		log.Fatalf("server failed: %v", err)
 	}

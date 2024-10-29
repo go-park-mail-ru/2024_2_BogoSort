@@ -1,36 +1,46 @@
 package delivery
 
 import (
-	"context"
 	"log"
 	"net/http"
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/config"
-	delivery "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http"
+	http3 "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/utils"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository/postgres"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository/redis"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase/service"
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/pkg/connector"
 
 	"github.com/gorilla/mux"
 )
 
-func NewRouter() *mux.Router {
+func NewRouter(cfg config.Config) *mux.Router {
 	router := mux.NewRouter()
 	router.Use(recoveryMiddleware)
 
-	var cfg config.Config
-	pool, err := pgxpool.New(context.Background(), cfg.Postgres.GetConnectURL())
+	dbPool, err := connector.GetPostgresConnector(cfg.GetConnectURL())
+	if err != nil {
+		return nil
+	}
+	rdb, err := connector.GetRedisConnector(cfg.Redis.Addr, cfg.Redis.Password, cfg.Redis.DB)
 	if err != nil {
 		return nil
 	}
 
-	userRepo := postgres.NewUserRepository(pool)
-	userService := service.NewUserService(userRepo)
-	userHandler := delivery.NewUserHandler(userService)
+	userRepo := postgres.NewUserRepository(dbPool)
+	userUC := service.NewUserService(userRepo)
 
-	router.HandleFunc("/api/v1/user", userHandler.GetUser).Methods("GET")
-	router.HandleFunc("/api/v1/user", userHandler.DeleteUser).Methods("DELETE")
-	router.HandleFunc("/api/v1/signup", userHandler.Signup).Methods("POST")
+	sessionRepo := redis.NewSessionRepository(rdb, int(cfg.Session.ExpirationTime.Seconds()))
+	sessionUC := service.NewAuthService(sessionRepo)
+
+	sessionManager := utils.NewSessionManager(sessionUC, int(cfg.Session.ExpirationTime.Seconds()), cfg.Session.SecureCookie)
+
+	authHandler := http3.NewAuthEndpoints(sessionUC, sessionManager)
+	userHandler := http3.NewUserEndpoints(userUC, sessionUC, sessionManager)
+
+	authHandler.Configure(router)
+	userHandler.Configure(router)
 
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
