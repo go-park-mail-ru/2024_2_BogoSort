@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
@@ -11,21 +12,6 @@ import (
 
 type UserService struct {
 	userRepo repository.User
-}
-
-// ChangePassword implements usecase.User.
-func (u *UserService) ChangePassword(userID uuid.UUID, password *dto.UpdatePassword) error {
-	panic("unimplemented")
-}
-
-// GetUserByEmail implements usecase.User.
-func (u *UserService) GetUserByEmail(email string) (*dto.User, error) {
-	panic("unimplemented")
-}
-
-// GetUserById implements usecase.User.
-func (u *UserService) GetUserById(userID uuid.UUID) (*dto.User, error) {
-	panic("unimplemented")
 }
 
 func NewUserService(userRepo repository.User) *UserService {
@@ -47,12 +33,28 @@ func (u *UserService) Signup(signupInfo *dto.Signup) (uuid.UUID, error) {
 		return uuid.Nil, entity.UsecaseWrap(errors.New("ошибка при хешировании пароля"), err)
 	}
 
-	user, err := repository.User.AddUser(signupInfo.Email, hash, salt)
+	userID, err := u.userRepo.AddUser(signupInfo.Email, hash, salt)
+	if err != nil {
+		return uuid.Nil, err
+	}
 
+	return userID, nil
 }
 
-func (u *UserService) Login(user *dto.Login) error {
-	panic("not implemented")
+func (u *UserService) Login(loginInfo *dto.Login) (uuid.UUID, error) {
+	if err := entity.ValidateEmail(loginInfo.Email); err != nil {
+		return uuid.Nil, usecase.UserIncorrectDataError{Err: err}
+	}
+	if err := entity.ValidatePassword(loginInfo.Password); err != nil {
+		return uuid.Nil, usecase.UserIncorrectDataError{Err: err}
+	}
+
+	user, err := u.userRepo.GetUserByEmail(loginInfo.Email)
+	if err != nil {
+		return uuid.Nil, usecase.ErrUserNotFound
+	}
+
+	return user.ID, nil
 }
 
 func (u *UserService) UpdateInfo(user *dto.User) error {
@@ -93,4 +95,29 @@ func (u *UserService) GetUser(userID uuid.UUID) (*dto.User, error) {
 		AvatarId: entityUser.AvatarId,
 		Status:   int(entityUser.Status),
 	}, nil
+}
+
+func (u *UserService) ChangePassword(userID uuid.UUID, password *dto.UpdatePassword) error {
+	// Start Generation Here
+	if len(password.NewPassword) < 6 {
+		return errors.New("пароль слишком короткий")
+	}
+
+	salt, hash, err := entity.HashPassword(password.NewPassword)
+	if err != nil {
+		return err
+	}
+
+	entityUser := &entity.User{
+		ID:           userID,
+		PasswordHash: hash,
+		PasswordSalt: salt,
+	}
+
+	err = u.userRepo.UpdateUser(entityUser)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
