@@ -4,10 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"time"
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
@@ -63,6 +63,7 @@ func (us *UsersDB) GetUserByEmail(email string) (*entity.User, error) {
 		&dbUser.ID,
 		&dbUser.Email,
 		&dbUser.PasswordHash,
+		&dbUser.PasswordSalt,
 		&dbUser.Username,
 		&dbUser.Phone,
 		&dbUser.AvatarId,
@@ -71,9 +72,9 @@ func (us *UsersDB) GetUserByEmail(email string) (*entity.User, error) {
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, fmt.Errorf("пользователь с email %s не найден", email)
+			return nil, repository.ErrUserNotFound
 		}
-		return nil, err
+		return nil, entity.PSQLWrap(errors.New("ошибка при получении пользователя по email"), err)
 	}
 
 	user := dbUser.GetEntity()
@@ -102,8 +103,11 @@ func (us *UsersDB) GetUserById(id uuid.UUID) (*entity.User, error) {
 		&dbUser.Status,
 	)
 
-	if err != nil {
-		return nil, err
+	switch {
+	case errors.Is(err, pgx.ErrNoRows):
+		return nil, repository.ErrUserNotFound
+	case err != nil:
+		return nil, entity.PSQLWrap(errors.New("ошибка при получении пользователя по id"), err)
 	}
 
 	user := dbUser.GetEntity()
@@ -131,8 +135,11 @@ func (us *UsersDB) AddUser(email string, hash, salt []byte) (uuid.UUID, error) {
 		&dbUser.Status,
 	)
 
-	if err != nil {
-		return uuid.Nil, err
+	switch {
+	case errors.Is(err, pgx.ErrNoRows):
+		return uuid.Nil, repository.ErrUserAlreadyExists
+	case err != nil:
+		return uuid.Nil, entity.PSQLWrap(errors.New("ошибка при добавлении пользователя"), err)
 	}
 
 	return dbUser.ID, nil
@@ -147,7 +154,7 @@ func (us *UsersDB) UpdateUser(user *entity.User) error {
 	defer cancel()
 
 	_, err := us.DB.Exec(ctx, query, user.Username, user.Phone, user.AvatarId, user.Status)
-	return err
+	return entity.PSQLWrap(errors.New("ошибка при обновлении пользователя"), err)
 }
 
 func (us *UsersDB) DeleteUser(userID uuid.UUID) error {
@@ -159,5 +166,5 @@ func (us *UsersDB) DeleteUser(userID uuid.UUID) error {
 	defer cancel()
 
 	_, err := us.DB.Exec(ctx, query, userID)
-	return err
+	return entity.PSQLWrap(errors.New("ошибка при удалении пользователя"), err)
 }
