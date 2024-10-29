@@ -13,7 +13,7 @@ Relation user:
 ```
 Relation seller:
 
-{id} -> user_id, description, created_at, updated_at
+{id, user_id} -> description, created_at, updated_at
 
 ```
 
@@ -22,7 +22,7 @@ Relation seller:
 ```
 Relation subscription:
 
-{id} -> user_id, seller_id, created_at, updated_at
+{id, user_id, seller_id} -> created_at, updated_at
 
 ```
 
@@ -45,7 +45,7 @@ Relation saved_advert:
 ```
 
 ### Таблица корзины
-Таблица, связывающая корзину с пользователем
+Таблица, создающая корзину для пользователя
 ```
 Relation cart:
 
