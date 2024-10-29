@@ -3,11 +3,13 @@ server:
   host: localhost
   read_timeout: 10s
   write_timeout: 10s
-  shutdown_timeout: 10s
+
+session:
+  expiration_time: 12h
 
 postgres:
-  ip: postgres
-  port: 5432
   user: postgres
-  pass: postgres
-  
+  password: postgres
+  db: emporiumdb
+  ip: localhost
+  port: 5432

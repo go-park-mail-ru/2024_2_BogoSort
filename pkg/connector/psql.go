@@ -1,15 +1,20 @@
 package connector
 
-import "github.com/jmoiron/sqlx"
+import (
+	"context"
 
-func GetPostgresConnector(dsn string) (*sqlx.DB, error) {
-	db, err := sqlx.Open("postgres", dsn)
+	"github.com/jackc/pgx/v5/pgxpool"
+)
+
+func GetPostgresConnector(dsn string) (*pgxpool.Pool, error) {
+	var dbPool, err = pgxpool.New(context.Background(), dsn)
 	if err != nil {
 		return nil, err
 	}
-	if err = db.Ping(); err != nil {
+
+	if err = dbPool.Ping(context.Background()); err != nil {
 		return nil, err
 	}
-	db.SetMaxOpenConns(0)
-	return db, nil
+
+	return dbPool, nil
 }
