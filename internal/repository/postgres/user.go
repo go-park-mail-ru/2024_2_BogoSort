@@ -50,7 +50,7 @@ func (us *DBUser) GetEntity() entity.User {
 
 func (us *UsersDB) GetUserByEmail(email string) (*entity.User, error) {
 	query := `
-		SELECT id, email, password_hash, password_salt, username, phone, avatar_id, status, created_at, updated_at
+		SELECT id, email, password_hash, password_salt, username, phone, avatar_id, status
 		FROM users
 		WHERE email = $1
 	`
@@ -82,7 +82,7 @@ func (us *UsersDB) GetUserByEmail(email string) (*entity.User, error) {
 
 func (us *UsersDB) GetUserById(id uuid.UUID) (*entity.User, error) {
 	query := `
-		SELECT id, email, password_hash, password_salt, username, phone, avatar_id, status, created_at, updated_at
+		SELECT id, email, password_hash, password_salt, username, phone, avatar_id, status
 		FROM users
 		WHERE id = $1
 	`
@@ -110,10 +110,10 @@ func (us *UsersDB) GetUserById(id uuid.UUID) (*entity.User, error) {
 	return &user, nil
 }
 
-func (us *UsersDB) AddUser(email, hash, salt string) (uuid.UUID, error) {
+func (us *UsersDB) AddUser(email string, hash, salt []byte) (uuid.UUID, error) {
 	query := `
 		INSERT INTO users (email, password_hash, password_salt) VALUES ($1, $2)
-		RETURNING id, email, password_hash, password_salt, username, phone, avatar_id, status, created_at, updated_at
+		RETURNING id, email, password_hash, password_salt, username, phone, avatar_id, status
 	`
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

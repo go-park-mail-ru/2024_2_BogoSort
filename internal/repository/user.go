@@ -9,7 +9,7 @@ import (
 
 type User interface {
 	// AddUser добавляет пользователя в базу
-	AddUser(email, hash, salt string) (uuid.UUID, error)
+	AddUser(email string, hash, salt []byte) (uuid.UUID, error)
 	// GetUserByEmail возвращает пользователя по его емейлу
 	GetUserByEmail(email string) (*entity.User, error)
 	// GetUserById возвращает пользователя по его id
@@ -21,8 +21,9 @@ type User interface {
 }
 
 var (
-	ErrUserNotFound      = errors.New("user not found")
-	ErrInvalidPassword   = errors.New("invalid password")
-	ErrHashPassword      = errors.New("failed to hash password")
-	ErrUserAlreadyExists = errors.New("user already exists")
+	ErrUserNotFound      = errors.New("пользователь не найден")
+	ErrInvalidPassword   = errors.New("неверный пароль")
+	ErrHashPassword      = errors.New("ошибка при хэшировании пароля")
+	ErrUserAlreadyExists = errors.New("пользователь уже существует")
+	ErrUserIncorrectData = errors.New("некорректные данные")
 )
