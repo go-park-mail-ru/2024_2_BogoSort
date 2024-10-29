@@ -1,16 +1,18 @@
 package repository
 
-import "errors"
+import (
+	"errors"
+
+	"github.com/google/uuid"
+)
 
 type Session interface {
 	// CreateSession создает сессию для пользователя
-	CreateSession(userID string) error
+	CreateSession(userID uuid.UUID) (string, error)
 	// GetSession возвращает id пользователя по sessionID
-	GetSession(sessionID string) (string, error)
+	GetSession(sessionID string) (uuid.UUID, error)
 	// DeleteSession удаляет сессию
 	DeleteSession(sessionID string) error
-	// CheckSession проверяет сессию
-	CheckSession(sessionID string) (string, error)
 }
 
 var (
@@ -18,4 +20,5 @@ var (
 	ErrSessionCreationFailed = errors.New("не получилось создать сессию")
 	ErrSessionCheckFailed    = errors.New("не получилось проверить сессию")
 	ErrSessionDeleteFailed   = errors.New("не удалось удалить сессию")
+	ErrIncorrectID           = errors.New("некорректный id")
 )

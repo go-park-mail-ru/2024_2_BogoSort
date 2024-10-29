@@ -3,11 +3,12 @@ package redis
 import (
 	"context"
 	"errors"
+	"time"
+
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
-	"time"
 )
 
 const userSessionPlaceholder = "user_sessions:"
@@ -18,14 +19,14 @@ type SessionDB struct {
 	ctx              context.Context
 }
 
-func newSessionRepository(rdb *redis.Client, sessionAliveTime int) *SessionDB {
+func NewSessionRepository(rdb *redis.Client, sessionAliveTime int) *SessionDB {
 	return &SessionDB{
 		rdb:              rdb,
 		sessionAliveTime: sessionAliveTime,
 		ctx:              context.Background(),
 	}
 }
-func (sdb *SessionDB) CreateSession(userID string) (string, error) {
+func (sdb *SessionDB) CreateSession(userID uuid.UUID) (string, error) {
 	sessionID := uuid.NewString()
 
 	for {
@@ -41,7 +42,7 @@ func (sdb *SessionDB) CreateSession(userID string) (string, error) {
 		return "", entity.RedisWrap(repository.ErrSessionCreationFailed, err)
 	}
 
-	err = sdb.rdb.SAdd(sdb.ctx, userSessionPlaceholder+userID, sessionID).Err()
+	err = sdb.rdb.SAdd(sdb.ctx, userSessionPlaceholder+userID.String(), sessionID).Err()
 	if err != nil {
 		return "", entity.RedisWrap(repository.ErrSessionCreationFailed, err)
 	}
@@ -49,16 +50,20 @@ func (sdb *SessionDB) CreateSession(userID string) (string, error) {
 	return sessionID, nil
 }
 
-func (sdb *SessionDB) GetSession(sessionID string) (string, error) {
+func (sdb *SessionDB) GetSession(sessionID string) (uuid.UUID, error) {
 	userID, err := sdb.rdb.Get(sdb.ctx, sessionID).Result()
 	if errors.Is(err, redis.Nil) {
-		return "", entity.RedisWrap(repository.ErrSessionNotFound, err)
+		return uuid.Nil, entity.RedisWrap(repository.ErrSessionNotFound, err)
 	}
 	if err != nil {
-		return "", entity.RedisWrap(repository.ErrSessionCheckFailed, err)
+		return uuid.Nil, entity.RedisWrap(repository.ErrSessionCheckFailed, err)
 	}
 
-	return userID, nil
+	id, err := uuid.Parse(userID)
+	if err != nil {
+		return uuid.Nil, entity.RedisWrap(repository.ErrIncorrectID, err)
+	}
+	return id, nil
 }
 
 func (sdb *SessionDB) DeleteSession(sessionID string) error {
