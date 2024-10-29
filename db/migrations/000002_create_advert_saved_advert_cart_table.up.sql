@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS category (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Таблица для хранения статическихфайлов
+-- Таблица для хранения статических файлов
 CREATE TABLE IF NOT EXISTS static (
      id UUID PRIMARY KEY DEFAULT uuid_generate_v4() NOT NULL,
     name TEXT 
