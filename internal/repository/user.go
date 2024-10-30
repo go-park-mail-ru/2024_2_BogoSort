@@ -2,6 +2,7 @@ package repository
 
 import (
 	"errors"
+
 	"github.com/google/uuid"
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
@@ -21,9 +22,9 @@ type User interface {
 }
 
 var (
-	ErrUserNotFound      = errors.New("пользователь не найден")
-	ErrInvalidPassword   = errors.New("неверный пароль")
-	ErrHashPassword      = errors.New("ошибка при хэшировании пароля")
-	ErrUserAlreadyExists = errors.New("пользователь уже существует")
-	ErrUserIncorrectData = errors.New("некорректные данные")
+	ErrUserNotFound      = errors.New("user not found")
+	ErrInvalidPassword   = errors.New("invalid password")
+	ErrHashPassword      = errors.New("error hashing password")
+	ErrUserAlreadyExists = errors.New("user already exists")
+	ErrUserIncorrectData = errors.New("incorrect data")
 )

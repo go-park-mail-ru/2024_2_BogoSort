@@ -16,9 +16,9 @@ type Session interface {
 }
 
 var (
-	ErrSessionNotFound       = errors.New("пользователь с такой сессией не найден")
-	ErrSessionCreationFailed = errors.New("не получилось создать сессию")
-	ErrSessionCheckFailed    = errors.New("не получилось проверить сессию")
-	ErrSessionDeleteFailed   = errors.New("не удалось удалить сессию")
-	ErrIncorrectID           = errors.New("некорректный id")
+	ErrSessionNotFound       = errors.New("user with such session not found")
+	ErrSessionCreationFailed = errors.New("failed to create session")
+	ErrSessionCheckFailed    = errors.New("failed to check session")
+	ErrSessionDeleteFailed   = errors.New("failed to delete session")
+	ErrIncorrectID           = errors.New("incorrect id")
 )
