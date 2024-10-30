@@ -126,9 +126,13 @@ func (s *AdvertService) GetAdvertById(advertId uuid.UUID) (*dto.Advert, error) {
 }
 
 func (s *AdvertService) AddAdvert(advert *dto.Advert) (*dto.Advert, error) {
-	// if err := entity.ValidateAdvert(advert.Title, advert.Description, advert.Price); err != nil {
-	// 	return nil, ErrAdvertBadRequest
-	// }
+	if err := entity.ValidateAdvert(advert.Title, 
+        advert.Description, 
+        advert.Location, 
+        string(advert.Status), 
+        int(advert.Price)); err != nil {
+		return nil, ErrAdvertBadRequest
+	}
 
 	entityAdvert, err := s.AdvertRepo.AddAdvert(&entity.Advert{
 		SellerId:    advert.SellerId,
@@ -151,9 +155,13 @@ func (s *AdvertService) AddAdvert(advert *dto.Advert) (*dto.Advert, error) {
 }
 
 func (s *AdvertService) UpdateAdvert(advert *dto.Advert) error {
-	// if err := entity.ValidateAdvert(advert.Title, advert.Description, advert.Price); err != nil {
-	// 	return ErrAdvertBadRequest
-	// }
+	if err := entity.ValidateAdvert(advert.Title, 
+        advert.Description, 
+        advert.Location, 
+        string(advert.Status), 
+        int(advert.Price)); err != nil {
+		return ErrAdvertBadRequest
+	}
 
 	err := s.AdvertRepo.UpdateAdvert(&entity.Advert{
 		ID:          advert.ID,

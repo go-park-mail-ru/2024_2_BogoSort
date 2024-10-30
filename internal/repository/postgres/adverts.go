@@ -17,6 +17,52 @@ type AdvertDB struct {
 	logger *zap.Logger
 }
 
+const (
+	insertAdvertQuery = `
+		INSERT INTO advert (title, description, price, location, has_delivery, category_id, seller_id, image_id, status) 
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
+		RETURNING id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status`
+
+	selectAdvertsQuery = `
+		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status
+		FROM advert
+		LIMIT $1 OFFSET $2`
+
+	selectAdvertsByUserIdQuery = `
+		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status
+		FROM advert
+		WHERE seller_id = $1`
+
+	selectSavedAdvertsByUserIdQuery = `
+		SELECT a.id, a.title, a.description, a.price, a.location, a.has_delivery, a.category_id, a.seller_id, a.image_id, a.status
+		FROM advert a
+		INNER JOIN saved_advert sa ON sa.advert_id = a.id
+		WHERE sa.user_id = $1`
+
+	selectAdvertsByCartIdQuery = `
+		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status
+		FROM advert
+		WHERE id IN (SELECT advert_id FROM cart_advert WHERE cart_id = $1)`
+
+	selectAdvertByIdQuery = `
+		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status
+		FROM advert
+		WHERE id = $1`
+
+	updateAdvertQuery = `
+		UPDATE advert
+		SET title = $1, description = $2, price = $3, location = $4, has_delivery = $5,
+				category_id = $6, seller_id = $7, image_id = $8, status = $9, updated_at = NOW()
+		WHERE id = $10`
+
+	deleteAdvertByIdQuery = `DELETE FROM advert WHERE id = $1`
+
+	updateAdvertStatusQuery = `
+		UPDATE advert
+		SET status = $1, updated_at = NOW()
+		WHERE id = $2`
+)
+
 type AdvertRepoModel struct {
     ID          uuid.UUID
     SellerId    uuid.UUID
@@ -41,17 +87,12 @@ func NewAdvertRepository(db *pgxpool.Pool, logger *zap.Logger) (repository.Adver
 }
 
 func (r *AdvertDB) AddAdvert(a *entity.Advert) (*entity.Advert, error) {
-	query := `
-		INSERT INTO advert (title, description, price, location, has_delivery, category_id, seller_id, image_id, status) 
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
-		RETURNING id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status`
-
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
 	var dbAdvert AdvertRepoModel
 
-	err := r.DB.QueryRow(ctx, query,
+	err := r.DB.QueryRow(ctx, insertAdvertQuery,
 		a.Title,
 		a.Description,
 		a.Price,
@@ -95,17 +136,12 @@ func (r *AdvertDB) AddAdvert(a *entity.Advert) (*entity.Advert, error) {
 }
 
 func (r *AdvertDB) GetAdverts(limit, offset int) ([]*entity.Advert, error) {
-	query := `
-		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status
-		FROM advert
-		LIMIT $1 OFFSET $2`
-
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
 	var adverts []*entity.Advert
 
-	rows, err := r.DB.Query(ctx, query, limit, offset)
+	rows, err := r.DB.Query(ctx, selectAdvertsQuery, limit, offset)
 	if err != nil {
 		r.logger.Error("failed to execute query", zap.Error(err))
 		return nil, entity.PSQLQueryErr("GetAdverts", err)
@@ -151,17 +187,12 @@ func (r *AdvertDB) GetAdverts(limit, offset int) ([]*entity.Advert, error) {
 }
 
 func (r *AdvertDB) GetAdvertsByUserId(userId uuid.UUID) ([]*entity.Advert, error) {
-	query := `
-		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status
-		FROM advert
-		WHERE seller_id = $1`
-
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
 	var adverts []*entity.Advert
 
-	rows, err := r.DB.Query(ctx, query, userId)
+	rows, err := r.DB.Query(ctx, selectAdvertsByUserIdQuery, userId)
 	if err != nil {
 		r.logger.Error("failed to execute query", zap.Error(err), zap.String("user_id", userId.String()))
 		return nil, entity.PSQLQueryErr("GetAdvertsByUserId", err)
@@ -209,18 +240,12 @@ func (r *AdvertDB) GetAdvertsByUserId(userId uuid.UUID) ([]*entity.Advert, error
 }
 
 func (r *AdvertDB) GetSavedAdvertsByUserId(userId uuid.UUID) ([]*entity.Advert, error) {
-	query := `
-		SELECT a.id, a.title, a.description, a.price, a.location, a.has_delivery, a.category_id, a.seller_id, a.image_id, a.status
-		FROM advert a
-		INNER JOIN saved_advert sa ON sa.advert_id = a.id
-		WHERE sa.user_id = $1`
-
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
 	var adverts []*entity.Advert
 
-	rows, err := r.DB.Query(ctx, query, userId)
+	rows, err := r.DB.Query(ctx, selectSavedAdvertsByUserIdQuery, userId)
 	if err != nil {
 		r.logger.Error("failed to execute query", zap.Error(err), zap.String("user_id", userId.String()))
 		return nil, entity.PSQLQueryErr("GetSavedAdvertsByUserId", err)
@@ -268,17 +293,12 @@ func (r *AdvertDB) GetSavedAdvertsByUserId(userId uuid.UUID) ([]*entity.Advert, 
 }
 
 func (r *AdvertDB) GetAdvertsByCartId(cartId uuid.UUID) ([]*entity.Advert, error) {
-	query := `
-		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status
-		FROM advert
-		WHERE id IN (SELECT advert_id FROM cart_advert WHERE cart_id = $1)`
-
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
 	var adverts []*entity.Advert
 
-	rows, err := r.DB.Query(ctx, query, cartId)
+	rows, err := r.DB.Query(ctx, selectAdvertsByCartIdQuery, cartId)
 	if err != nil {
 		r.logger.Error("failed to execute query", zap.Error(err), zap.String("user_id", cartId.String()))
 		return nil, entity.PSQLQueryErr("GetSavedAdvertsByUserId", err)
@@ -326,17 +346,12 @@ func (r *AdvertDB) GetAdvertsByCartId(cartId uuid.UUID) ([]*entity.Advert, error
 }
 
 func (r *AdvertDB) GetAdvertById(advertId uuid.UUID) (*entity.Advert, error) {
-	query := `
-		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status
-		FROM advert
-		WHERE id = $1`
-
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
 	var dbAdvert AdvertRepoModel
 
-	err := r.DB.QueryRow(ctx, query, advertId).Scan(
+	err := r.DB.QueryRow(ctx, selectAdvertByIdQuery, advertId).Scan(
 		&dbAdvert.ID,
 		&dbAdvert.Title,
 		&dbAdvert.Description,
@@ -373,16 +388,10 @@ func (r *AdvertDB) GetAdvertById(advertId uuid.UUID) (*entity.Advert, error) {
 }
 
 func (r *AdvertDB) UpdateAdvert(advert *entity.Advert) error {
-	query := `
-		UPDATE advert
-		SET title = $1, description = $2, price = $3, location = $4, has_delivery = $5,
-			category_id = $6, seller_id = $7, image_id = $8, status = $9, updated_at = NOW()
-		WHERE id = $10`
-
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	result, err := r.DB.Exec(ctx, query,
+	result, err := r.DB.Exec(ctx, updateAdvertQuery,
 		advert.Title,
 		advert.Description,
 		advert.Price,
@@ -410,12 +419,10 @@ func (r *AdvertDB) UpdateAdvert(advert *entity.Advert) error {
 }
 
 func (r *AdvertDB) DeleteAdvertById(advertId uuid.UUID) error {
-	query := `DELETE FROM advert WHERE id = $1`
-
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	result, err := r.DB.Exec(ctx, query, advertId)
+	result, err := r.DB.Exec(ctx, deleteAdvertByIdQuery, advertId)
 	if err != nil {
 		r.logger.Error("failed to delete advert", zap.Error(err), zap.String("advert_id", advertId.String()))
 		return entity.PSQLQueryErr("DeleteAdvertById", err)
@@ -432,15 +439,10 @@ func (r *AdvertDB) DeleteAdvertById(advertId uuid.UUID) error {
 }
 
 func (r *AdvertDB) UpdateAdvertStatus(advertId uuid.UUID, status string) error {
-	query := `
-		UPDATE advert
-		SET status = $1, updated_at = NOW()
-		WHERE id = $2`
-
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	result, err := r.DB.Exec(ctx, query, status, advertId)
+	result, err := r.DB.Exec(ctx, updateAdvertStatusQuery, status, advertId)
 	if err != nil {
 		r.logger.Error("failed to update advert status", zap.Error(err), zap.String("advert_id", advertId.String()))
 		return entity.PSQLQueryErr("UpdateAdvertStatus", err)

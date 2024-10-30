@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	sq "github.com/Masterminds/squirrel"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
 	"github.com/google/uuid"
@@ -13,6 +12,20 @@ import (
 	"go.uber.org/zap"
 	"os"
 	"path/filepath"
+)
+
+const (
+	getStaticQuery = `
+		SELECT path, name
+		FROM static
+		WHERE id = $1
+	`
+
+	uploadStaticQuery = `
+		INSERT INTO static (path, name)
+		VALUES ($1, $2)
+		RETURNING id
+	`
 )
 
 type StaticDB struct {
@@ -30,19 +43,14 @@ func NewStaticRepository(dbpool *pgxpool.Pool, basicPath string, maxSize int, lo
 		DB:        dbpool,
 		basicPath: basicPath,
 		maxSize:   maxSize,
+		logger:    logger,
 	}, nil
 }
 
 func (s StaticDB) GetStatic(staticID uuid.UUID) (string, error) {
-	query, args, _ := sq.
-		Select("path", "name").
-		From("static").
-		Where(sq.Eq{"id": staticID}).
-		PlaceholderFormat(sq.Dollar).ToSql()
-
 	var path, name string
 
-	err := s.DB.QueryRow(context.Background(), query, args...).Scan(&path, &name)
+	err := s.DB.QueryRow(context.Background(), getStaticQuery, staticID).Scan(&path, &name)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			s.logger.Error("postgres: static not found", zap.String("static_id", staticID.String()))
@@ -51,6 +59,8 @@ func (s StaticDB) GetStatic(staticID uuid.UUID) (string, error) {
 		s.logger.Error("postgres: error getting static", zap.String("static_id", staticID.String()), zap.Error(err))
 		return "", entity.PSQLWrap(err, errors.New("ошибка при выполнении sql-запроса GetStatic"))
 	}
+
+	s.logger.Info("postgres: static retrieved successfully", zap.String("static_id", staticID.String()), zap.String("path", path), zap.String("name", name))
 
 	return fmt.Sprintf("%s/%s", path, name), nil
 }
@@ -95,19 +105,13 @@ func (s StaticDB) UploadStatic(path, filename string, data []byte) (uuid.UUID, e
 		)
 	}
 
-	query, args, _ := sq.
-		Insert("static").
-		Columns("path", "name").
-		Values(path, filename).
-		Suffix("RETURNING id").
-		PlaceholderFormat(sq.Dollar).ToSql()
-
 	var id uuid.UUID
-	if err = s.DB.QueryRow(context.Background(), query, args...).Scan(&id); err != nil {
+	if err = s.DB.QueryRow(context.Background(), uploadStaticQuery, path, filename).Scan(&id); err != nil {
 		s.logger.Error("error uploading static", zap.String("path", fmt.Sprintf("%s/%s/%s", s.basicPath, path, filename)), zap.Error(err))
 		return uuid.UUID{}, entity.PSQLWrap(err, errors.New("ошибка при выполнении sql-запроса UploadStatic"))
 	}
 
 	s.logger.Info("successfully uploaded static", zap.String("id", id.String()), zap.String("path", fmt.Sprintf("%s/%s/%s", s.basicPath, path, filename)))
+	
 	return id, nil
 }

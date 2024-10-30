@@ -43,7 +43,7 @@ func (s *StaticService) UploadAvatar(data []byte) (uuid.UUID, error) {
 	if contentType != "image/jpeg" && contentType != "image/png" {
 		s.logger.Error("file is not an image", zap.String("content_type", contentType))
 		return uuid.Nil, entity.UsecaseWrap(
-			errors.New("файл не является изображением"),
+			errors.New("file is not an image"),
 		)
 	}
 
@@ -51,7 +51,7 @@ func (s *StaticService) UploadAvatar(data []byte) (uuid.UUID, error) {
 	if err != nil {
 		s.logger.Error("error decoding image", zap.Error(err))
 		return uuid.Nil, entity.UsecaseWrap(
-			errors.New("файл не является изображением"),
+			errors.New("file is not an image"),
 		)
 	}
 
@@ -59,7 +59,7 @@ func (s *StaticService) UploadAvatar(data []byte) (uuid.UUID, error) {
 	if img.Bounds().Dx() < minImageWidth || img.Bounds().Dy() < minImageHeight {
 		s.logger.Error("image size is less than required", zap.Int("width", img.Bounds().Dx()), zap.Int("height", img.Bounds().Dy()))
 		return uuid.Nil, entity.UsecaseWrap(
-			errors.New(fmt.Sprintf("размеры изображения меньше %d x %d", minImageWidth, minImageHeight)),
+			errors.New(fmt.Sprintf("image dimensions are less than %d x %d", minImageWidth, minImageHeight)),
 		)
 	}
 
@@ -84,7 +84,7 @@ func (s *StaticService) UploadAvatar(data []byte) (uuid.UUID, error) {
 	if err != nil {
 		s.logger.Error("error encoding image", zap.Error(err))
 		return uuid.Nil, entity.UsecaseWrap(
-			errors.New("ошибка при обработке изображения"),
+			errors.New("error processing image"),
 		)
 	}
 
