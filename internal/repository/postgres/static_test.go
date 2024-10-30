@@ -26,13 +26,12 @@ func setupMockDB(t *testing.T) (pgxmock.PgxPoolIface, *postgres2.PgxMockAdapter)
 }
 
 func TestStaticDB_GetStatic_Success(t *testing.T) {
-	// Создаем временную папку для теста в стандартном временном каталоге
 	tempDir := filepath.Join(os.TempDir(), "test_temp_dir")
 	err := os.MkdirAll(tempDir, os.ModePerm)
 	if err != nil {
 		t.Fatalf("failed to create temp directory: %v", err)
 	}
-	defer os.RemoveAll(tempDir) // Удаляем папку после завершения теста
+	defer os.RemoveAll(tempDir) 
 
 	mockPool, adapter := setupMockDB(t)
 	defer mockPool.Close()
@@ -41,7 +40,7 @@ func TestStaticDB_GetStatic_Success(t *testing.T) {
 	repo := StaticDB{
 		DB:        adapter,
 		Logger:    logger,
-		BasicPath: tempDir, // Используем временную папку
+		BasicPath: tempDir,
 		MaxSize:   10 * 1024 * 1024,
 		Ctx:       context.Background(),
 		Timeout:   time.Second * 5,
@@ -67,13 +66,12 @@ func TestStaticDB_GetStatic_Success(t *testing.T) {
 }
 
 func TestStaticDB_GetStatic_NotFound(t *testing.T) {
-	// Создаем временную папку для теста в стандартном временном каталоге
 	tempDir := filepath.Join(os.TempDir(), "test_temp_dir")
 	err := os.MkdirAll(tempDir, os.ModePerm)
 	if err != nil {
 		t.Fatalf("failed to create temp directory: %v", err)
 	}
-	defer os.RemoveAll(tempDir) // Удаляем папку после завершения теста
+	defer os.RemoveAll(tempDir)
 
 	mockPool, adapter := setupMockDB(t)
 	defer mockPool.Close()
@@ -82,7 +80,7 @@ func TestStaticDB_GetStatic_NotFound(t *testing.T) {
 	repo := StaticDB{
 		DB:        adapter,
 		Logger:    logger,
-		BasicPath: tempDir, // Используем временную папку
+		BasicPath: tempDir,
 		MaxSize:   10 * 1024 * 1024,
 		Ctx:       context.Background(),
 		Timeout:   time.Second * 5,
@@ -102,13 +100,12 @@ func TestStaticDB_GetStatic_NotFound(t *testing.T) {
 }
 
 func TestStaticDB_UploadStatic_Success(t *testing.T) {
-	// Создаем временную папку для теста в стандартном временном каталоге
 	tempDir := filepath.Join(os.TempDir(), "test_temp_dir")
 	err := os.MkdirAll(tempDir, os.ModePerm)
 	if err != nil {
 		t.Fatalf("failed to create temp directory: %v", err)
 	}
-	defer os.RemoveAll(tempDir) // Удаляем папку после завершения теста
+	defer os.RemoveAll(tempDir)
 
 	mockPool, adapter := setupMockDB(t)
 	defer mockPool.Close()
@@ -117,7 +114,7 @@ func TestStaticDB_UploadStatic_Success(t *testing.T) {
 	repo := StaticDB{
 		DB:        adapter,
 		Logger:    logger,
-		BasicPath: tempDir, // Используем временную папку
+		BasicPath: tempDir,
 		MaxSize:   10 * 1024 * 1024,
 		Ctx:       context.Background(),
 		Timeout:   time.Second * 5,
@@ -141,13 +138,12 @@ func TestStaticDB_UploadStatic_Success(t *testing.T) {
 }
 
 func TestStaticDB_UploadStatic_FileTooLarge(t *testing.T) {
-	// Создаем временную папку для теста в стандартном временном каталоге
 	tempDir := filepath.Join(os.TempDir(), "test_temp_dir")
 	err := os.MkdirAll(tempDir, os.ModePerm)
 	if err != nil {
 		t.Fatalf("failed to create temp directory: %v", err)
 	}
-	defer os.RemoveAll(tempDir) // Удаляем папку после завершения теста
+	defer os.RemoveAll(tempDir)
 
 	mockPool, adapter := setupMockDB(t)
 	defer mockPool.Close()
@@ -156,7 +152,7 @@ func TestStaticDB_UploadStatic_FileTooLarge(t *testing.T) {
 	repo := StaticDB{
 		DB:        adapter,
 		Logger:    logger,
-		BasicPath: tempDir, // Используем временную папку
+		BasicPath: tempDir,
 		MaxSize:   10,
 		Ctx:       context.Background(),
 		Timeout:   time.Second * 5,
@@ -174,13 +170,12 @@ func TestStaticDB_UploadStatic_FileTooLarge(t *testing.T) {
 }
 
 func TestStaticDB_UploadStatic_SQL_Error(t *testing.T) {
-	// Создаем временную папку для теста в стандартном временном каталоге
 	tempDir := filepath.Join(os.TempDir(), "test_temp_dir")
 	err := os.MkdirAll(tempDir, os.ModePerm)
 	if err != nil {
 		t.Fatalf("failed to create temp directory: %v", err)
 	}
-	defer os.RemoveAll(tempDir) // Удаляем папку после завершения теста
+	defer os.RemoveAll(tempDir)
 
 	mockPool, adapter := setupMockDB(t)
 	defer mockPool.Close()
@@ -189,7 +184,7 @@ func TestStaticDB_UploadStatic_SQL_Error(t *testing.T) {
 	repo := StaticDB{
 		DB:        adapter,
 		Logger:    logger,
-		BasicPath: tempDir, // Используем временную папку
+		BasicPath: tempDir,
 		MaxSize:   10 * 1024 * 1024,
 		Ctx:       context.Background(),
 		Timeout:   time.Second * 5,
