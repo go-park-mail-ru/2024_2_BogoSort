@@ -29,6 +29,8 @@ func (u UserIncorrectDataError) Error() string {
 }
 
 var (
-	ErrUserNotFound      = errors.New("user not found")
-	ErrUserAlreadyExists = errors.New("user already exists")
+	ErrUserNotFound                = errors.New("user not found")
+	ErrUserAlreadyExists           = errors.New("user already exists")
+	ErrInvalidCredentials          = errors.New("invalid credentials")
+	ErrOldAndNewPasswordAreTheSame = errors.New("old and new password are the same")
 )

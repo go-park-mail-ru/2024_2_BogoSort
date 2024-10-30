@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"errors"
+
 	"github.com/google/uuid"
 )
 
@@ -13,5 +14,5 @@ type Auth interface {
 }
 
 var (
-	ErrSessionNotFound = errors.New("сессия не найдена")
+	ErrSessionNotFound = errors.New("session not found")
 )
