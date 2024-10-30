@@ -37,8 +37,6 @@ definitions:
     type: object
 info:
   contact: {}
-  title: "BogoSort API"
-  version: "1.0"
 paths:
   /api/v1/adverts:
     get:
@@ -256,6 +254,35 @@ paths:
       summary: Get adverts by cart ID
       tags:
       - adverts
+  /api/v1/adverts/category/{categoryId}:
+    get:
+      description: Get a list of adverts by category ID
+      parameters:
+      - description: Category ID
+        in: path
+        name: categoryId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of adverts by category ID
+          schema:
+            items:
+              $ref: '#/definitions/dto.Advert'
+            type: array
+        "400":
+          description: Invalid category ID
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Failed to get adverts by category ID
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Get adverts by category ID
+      tags:
+      - adverts
   /api/v1/adverts/user/{userId}:
     get:
       description: Get a list of adverts by user ID
@@ -314,4 +341,35 @@ paths:
       summary: Get saved adverts by user ID
       tags:
       - adverts
+  /api/v1/static/{staticId}:
+    get:
+      description: Get a static file by its ID
+      parameters:
+      - description: Static file ID
+        in: path
+        name: staticId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: URL of the static file
+          schema:
+            type: string
+        "400":
+          description: Invalid static ID
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "404":
+          description: Static file not found
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Failed to get static file
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Get static file by ID
+      tags:
+      - static
 swagger: "2.0"

@@ -141,6 +141,50 @@
                 }
             }
         },
+        "/api/v1/adverts/category/{categoryId}": {
+            "get": {
+                "description": "Get a list of adverts by category ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "adverts"
+                ],
+                "summary": "Get adverts by category ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Category ID",
+                        "name": "categoryId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of adverts by category ID",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.Advert"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid category ID",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to get adverts by category ID",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/adverts/user/{userId}": {
             "get": {
                 "description": "Get a list of adverts by user ID",
@@ -412,6 +456,53 @@
                     },
                     "500": {
                         "description": "Failed to update advert status",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/static/{staticId}": {
+            "get": {
+                "description": "Get a static file by its ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "static"
+                ],
+                "summary": "Get static file by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Static file ID",
+                        "name": "staticId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "URL of the static file",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid static ID",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Static file not found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to get static file",
                         "schema": {
                             "$ref": "#/definitions/utils.ErrResponse"
                         }
