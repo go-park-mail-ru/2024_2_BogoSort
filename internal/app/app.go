@@ -13,6 +13,7 @@ import (
 	"github.com/go-park-mail-ru/2024_2_BogoSort/config"
 	"github.com/pkg/errors"
 	"github.com/rs/cors"
+	"go.uber.org/zap"
 )
 
 type Server struct {
@@ -20,6 +21,9 @@ type Server struct {
 }
 
 func (server *Server) Run() error {
+	zap.ReplaceGlobals(zap.Must(zap.NewProduction()))
+	defer zap.L().Sync()
+
 	cfg, err := config.Init()
 	if err != nil {
 		return errors.Wrap(err, "failed to init config")
@@ -33,7 +37,7 @@ func (server *Server) Run() error {
 		AllowCredentials: true,
 	}).Handler(router)
 
-	log.Printf("Server started on %s", config.GetServerAddress())
+	zap.L().Info("Server started on " + config.GetServerAddress())
 
 	server.server = &http.Server{
 		Addr:         config.GetServerAddress(),
