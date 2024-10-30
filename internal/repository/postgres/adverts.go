@@ -61,6 +61,11 @@ const (
 		UPDATE advert
 		SET status = $1, updated_at = NOW()
 		WHERE id = $2`
+
+	selectAdvertsByCategoryIdQuery = `
+		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status
+		FROM advert
+		WHERE category_id = $1`
 )
 
 type AdvertRepoModel struct {
@@ -183,6 +188,58 @@ func (r *AdvertDB) GetAdverts(limit, offset int) ([]*entity.Advert, error) {
 		return nil, entity.PSQLQueryErr("GetAdverts", err)
 	}
 
+	return adverts, nil
+}
+
+func (r *AdvertDB) GetAdvertsByCategoryId(categoryId uuid.UUID) ([]*entity.Advert, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	var adverts []*entity.Advert
+
+	rows, err := r.DB.Query(ctx, selectAdvertsByCategoryIdQuery, categoryId)
+	if err != nil {
+		r.logger.Error("failed to execute query", zap.Error(err), zap.String("category_id", categoryId.String()))
+		return nil, entity.PSQLQueryErr("GetAdvertsByCategoryId", err)
+	}
+
+	for rows.Next() {
+		var dbAdvert AdvertRepoModel
+		if err := rows.Scan(
+			&dbAdvert.ID,
+			&dbAdvert.Title,
+			&dbAdvert.Description,
+			&dbAdvert.Price,
+			&dbAdvert.Location,
+			&dbAdvert.HasDelivery,
+			&dbAdvert.CategoryId,
+			&dbAdvert.SellerId,
+			&dbAdvert.ImageURL,
+			&dbAdvert.Status,
+		); err != nil {
+			r.logger.Error("failed to scan row", zap.Error(err), zap.String("category_id", categoryId.String()))
+			return nil, entity.PSQLQueryErr("GetAdvertsByCategoryId", err)
+		}
+		adverts = append(adverts, &entity.Advert{
+			ID:          dbAdvert.ID,
+			Title:       dbAdvert.Title,
+			Description: dbAdvert.Description,
+			Price:       dbAdvert.Price,
+			Location:    dbAdvert.Location,
+			HasDelivery: dbAdvert.HasDelivery,
+			CategoryId:  dbAdvert.CategoryId,
+			SellerId:    dbAdvert.SellerId,
+			ImageURL:    dbAdvert.ImageURL,
+			Status:      entity.AdvertStatus(dbAdvert.Status),
+		})
+	}
+
+	if err := rows.Err(); err != nil {
+		r.logger.Error("error iterating over rows", zap.Error(err), zap.String("category_id", categoryId.String()))
+		return nil, entity.PSQLQueryErr("GetAdvertsByCategoryId", err)
+	}
+
+	r.logger.Info("successfully retrieved adverts by category ID", zap.String("category_id", categoryId.String()), zap.Int("count", len(adverts)))
 	return adverts, nil
 }
 

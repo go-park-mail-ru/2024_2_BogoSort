@@ -19,6 +19,9 @@ type AdvertRepository interface {
 	// GetAdvertsByCartId возвращает массив объявлений, которые находятся в корзине
 	GetAdvertsByCartId(cartId uuid.UUID) ([]*entity.Advert, error)
 
+	// GetAdvertsByCategoryId возвращает массив объявлений по categoryId
+	GetAdvertsByCategoryId(categoryId uuid.UUID) ([]*entity.Advert, error)
+
 	// GetAdvertById возвращает объявление по его идентификатору
 	// Если объявление не найдено, возвращает ErrAdvertNotFound
 	GetAdvertById(advertId uuid.UUID) (*entity.Advert, error)
