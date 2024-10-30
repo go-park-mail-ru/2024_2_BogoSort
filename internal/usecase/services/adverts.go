@@ -1,30 +1,30 @@
 package service
 
 import (
+	"errors"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
-	"go.uber.org/zap"
-	"errors"
 	"github.com/google/uuid"
+	"go.uber.org/zap"
 	"strings"
 )
 
 var (
-    ErrAdvertNotFound     = errors.New("advert not found")
-    ErrAdvertBadRequest   = errors.New("bad request: invalid advert data")
-    ErrAdvertAlreadyExists = errors.New("advert already exists")
+	ErrAdvertNotFound      = errors.New("advert not found")
+	ErrAdvertBadRequest    = errors.New("bad request: invalid advert data")
+	ErrAdvertAlreadyExists = errors.New("advert already exists")
 )
 
 type AdvertService struct {
-	AdvertRepo   repository.AdvertRepository
-	StaticRepo   repository.StaticRepository
-	logger       *zap.Logger
+	AdvertRepo repository.AdvertRepository
+	StaticRepo repository.StaticRepository
+	logger     *zap.Logger
 }
 
-func NewAdvertService(advertRepo repository.AdvertRepository, 
-    staticRepo repository.StaticRepository, 
-    logger *zap.Logger) (*AdvertService, error) {
+func NewAdvertService(advertRepo repository.AdvertRepository,
+	staticRepo repository.StaticRepository,
+	logger *zap.Logger) (*AdvertService, error) {
 	return &AdvertService{
 		AdvertRepo: advertRepo,
 		StaticRepo: staticRepo,
@@ -35,21 +35,17 @@ func NewAdvertService(advertRepo repository.AdvertRepository,
 func (s *AdvertService) advertEntityToDTO(advert *entity.Advert) (*dto.Advert, error) {
 	var posterURL string
 
-	s.logger.Info("usecase: advert converted to DTO", zap.String("image_url", advert.ImageURL.UUID.String()))
 	if !advert.ImageURL.Valid {
 		s.logger.Error("advert image URL is not valid", zap.String("advert_id", advert.ID.String()))
 		posterURL = ""
 	} else {
 		var err error
-		s.logger.Info("usecase: getting static", zap.String("image_url", advert.ImageURL.UUID.String()))
 		posterURL, err = s.StaticRepo.GetStatic(advert.ImageURL.UUID)
 		if err != nil {
 			s.logger.Error("failed to get static", zap.Error(err), zap.String("advert_id", advert.ID.String()))
 			posterURL = ""
 		}
 	}
-
-	s.logger.Info("usecase: poster URL", zap.String("poster_url", posterURL))
 
 	advertDTO := dto.Advert{
 		ID:          advert.ID,
@@ -172,7 +168,7 @@ func (s *AdvertService) UpdateAdvert(advert *dto.Advert) error {
 		Location:    advert.Location,
 	})
 	if err != nil {
-        s.logger.Error("failed to update advert", zap.Error(err), zap.String("advert_id", advert.ID.String()))
+		s.logger.Error("failed to update advert", zap.Error(err), zap.String("advert_id", advert.ID.String()))
 		return ErrAdvertBadRequest
 	}
 
