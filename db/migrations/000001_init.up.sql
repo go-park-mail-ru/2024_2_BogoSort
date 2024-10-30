@@ -7,8 +7,8 @@ CREATE TABLE IF NOT EXISTS "user" (
         CONSTRAINT username_length CHECK (LENGTH(username) <= 50),
     email TEXT NOT NULL 
         CONSTRAINT email_unique UNIQUE,
-    password_hash TEXT NOT NULL,
-    password_salt TEXT NOT NULL,
+    password_hash bytea NOT NULL,
+    password_salt bytea NOT NULL,
     phone_number TEXT 
         CONSTRAINT phone_number_length CHECK (LENGTH(phone_number) <= 20),
     image_id TEXT 
