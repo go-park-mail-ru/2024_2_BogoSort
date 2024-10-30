@@ -44,4 +44,7 @@ type AdvertUseCase interface {
 	// Возможные ошибки:
 	// ErrAdvertNotFound - объявление не найдено
 	DeleteAdvertById(advertId uuid.UUID) error
+
+	// GetAdvertsByCategoryId возвращает массив объявлений по categoryId
+	GetAdvertsByCategoryId(categoryId uuid.UUID) ([]*dto.Advert, error)
 }

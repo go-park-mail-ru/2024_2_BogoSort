@@ -80,6 +80,7 @@ func (s *AdvertService) advertEntitiesToDTO(adverts []*entity.Advert) ([]*dto.Ad
 func (s *AdvertService) GetAdverts(limit, offset int) ([]*dto.Advert, error) {
 	adverts, err := s.AdvertRepo.GetAdverts(limit, offset)
 	if err != nil {
+		s.logger.Error("failed to get adverts", zap.Error(err), zap.Int("limit", limit), zap.Int("offset", offset))
 		return nil, err
 	}
 	return s.advertEntitiesToDTO(adverts)
@@ -88,6 +89,7 @@ func (s *AdvertService) GetAdverts(limit, offset int) ([]*dto.Advert, error) {
 func (s *AdvertService) GetAdvertsByUserId(userId uuid.UUID) ([]*dto.Advert, error) {
 	adverts, err := s.AdvertRepo.GetAdvertsByUserId(userId)
 	if err != nil {
+		s.logger.Error("failed to get adverts by user id", zap.Error(err), zap.String("user_id", userId.String()))
 		return nil, err
 	}
 	return s.advertEntitiesToDTO(adverts)
@@ -96,6 +98,7 @@ func (s *AdvertService) GetAdvertsByUserId(userId uuid.UUID) ([]*dto.Advert, err
 func (s *AdvertService) GetSavedAdvertsByUserId(userId uuid.UUID) ([]*dto.Advert, error) {
 	savedAdverts, err := s.AdvertRepo.GetSavedAdvertsByUserId(userId)
 	if err != nil {
+		s.logger.Error("failed to get saved adverts by user id", zap.Error(err), zap.String("user_id", userId.String()))
 		return nil, err
 	}
 	return s.advertEntitiesToDTO(savedAdverts)
@@ -104,6 +107,7 @@ func (s *AdvertService) GetSavedAdvertsByUserId(userId uuid.UUID) ([]*dto.Advert
 func (s *AdvertService) GetAdvertsByCartId(cartId uuid.UUID) ([]*dto.Advert, error) {
 	adverts, err := s.AdvertRepo.GetAdvertsByCartId(cartId)
 	if err != nil {
+		s.logger.Error("failed to get adverts by cart id", zap.Error(err), zap.String("cart_id", cartId.String()))
 		return nil, err
 	}
 	return s.advertEntitiesToDTO(adverts)
@@ -210,4 +214,14 @@ func (s *AdvertService) UpdateAdvertStatus(advertId uuid.UUID, status string) er
 
 	s.logger.Info("advert status updated successfully", zap.String("advert_id", advertId.String()))
 	return nil
+}
+
+func (s *AdvertService) GetAdvertsByCategoryId(categoryId uuid.UUID) ([]*dto.Advert, error) {
+	adverts, err := s.AdvertRepo.GetAdvertsByCategoryId(categoryId)
+	if err != nil {
+		s.logger.Error("failed to get adverts by category id", zap.Error(err), zap.String("category_id", categoryId.String()))
+		return nil, err
+	}
+
+	return s.advertEntitiesToDTO(adverts)
 }
