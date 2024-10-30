@@ -3,12 +3,13 @@ package entity
 import (
 	"bytes"
 	"errors"
-	"github.com/go-park-mail-ru/2024_1_Cyberkotletki/pkg/random"
-	"github.com/google/uuid"
-	"golang.org/x/crypto/argon2"
 	"regexp"
 	_ "time"
 	"unicode/utf8"
+
+	"github.com/go-park-mail-ru/2024_1_Cyberkotletki/pkg/random"
+	"github.com/google/uuid"
+	"golang.org/x/crypto/argon2"
 )
 
 const (
@@ -25,18 +26,18 @@ type User struct {
 	Username     string    `db:"username"`
 	Phone        string    `db:"phone"`
 	AvatarId     string    `db:"avatar_id"`
-	Status       uint      `db:"status"`
+	Status       string    `db:"status" default:"active"`
 }
 
 func ValidatePassword(password string) error {
 	switch {
 	case utf8.RuneCountInString(password) < 8:
-		return errors.New("пароль должен содержать не менее 8 символов")
+		return errors.New("password must contain at least 8 characters")
 	case utf8.RuneCountInString(password) > 32:
-		return errors.New("пароль должен содержать не более 32 символов")
+		return errors.New("password cannot be longer than 32 characters")
 	case !regexp.MustCompile(`^[!@#$%^&*()_+\-=.,\w]+$`).MatchString(password):
-		return errors.New("пароль может состоять из латинских букв, цифр и " +
-			"специальных символов !@#$%^&*()_+\\-=")
+		return errors.New("password can consist of latin letters, numbers and " +
+			"special characters !@#$%^&*()_+\\-=")
 	default:
 		return nil
 	}
@@ -46,10 +47,10 @@ func ValidateEmail(email string) error {
 	re := regexp.MustCompile("^([a-z0-9!#$%&'*+\\\\/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+\\\\/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)$") // nolint: lll
 
 	if !re.MatchString(email) {
-		return errors.New("невалидная почта")
+		return errors.New("invalid email")
 	}
 	if len(email) > 256 {
-		return errors.New("почта не может быть длиннее 256 символов")
+		return errors.New("email cannot be longer than 256 characters")
 	}
 	return nil
 }
@@ -57,7 +58,7 @@ func ValidateEmail(email string) error {
 func HashPassword(password string) (salt []byte, hash []byte, err error) {
 	salt, err = random.Bytes(8)
 	if err != nil {
-		return nil, nil, errors.New("произошла непредвиденная ошибка")
+		return nil, nil, errors.New("unexpected error")
 	}
 	hash = argon2.IDKey(
 		[]byte(password),
@@ -86,7 +87,7 @@ func (u *User) CheckPassword(password string) bool {
 
 func ValidateName(name string) error {
 	if utf8.RuneCountInString(name) > 30 {
-		return errors.New("имя не может быть длиннее 30 символов")
+		return errors.New("name cannot be longer than 30 characters")
 	}
 	return nil
 }

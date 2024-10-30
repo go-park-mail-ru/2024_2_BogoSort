@@ -8,5 +8,5 @@ type User struct {
 	Username string    `json:"username"`
 	Phone    string    `json:"phone"`
 	AvatarId string    `json:"avatar_id"`
-	Status   int       `json:"status"`
+	Status   string    `json:"status" default:"active"`
 }
