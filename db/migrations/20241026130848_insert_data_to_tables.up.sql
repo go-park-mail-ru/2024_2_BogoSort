@@ -1,4 +1,3 @@
--- Убедитесь, что расширение uuid-ossp включено
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Заполнение таблицы "user"

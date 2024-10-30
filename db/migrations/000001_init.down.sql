@@ -1,0 +1,26 @@
+-- Откат миграции 000001_init.up.sql
+
+-- Удаление триггеров для автоматического обновления поля updated_at
+DROP TRIGGER IF EXISTS update_subscription_updated_at ON subscription;
+DROP TRIGGER IF EXISTS update_seller_updated_at ON seller;
+DROP TRIGGER IF EXISTS update_user_updated_at ON "user";
+DROP TRIGGER IF EXISTS update_advert_updated_at ON advert;
+DROP TRIGGER IF EXISTS update_category_updated_at ON category;
+
+-- Удаление функции обновления updated_at
+DROP FUNCTION IF EXISTS update_updated_at_column();
+
+-- Удаление таблиц в обратном порядке зависимости
+DROP TABLE IF EXISTS purchase CASCADE;
+DROP TABLE IF EXISTS cart_advert CASCADE;
+DROP TABLE IF EXISTS cart CASCADE;
+DROP TABLE IF EXISTS saved_advert CASCADE;
+DROP TABLE IF EXISTS advert CASCADE;
+DROP TABLE IF EXISTS static CASCADE;
+DROP TABLE IF EXISTS category CASCADE;
+DROP TABLE IF EXISTS subscription CASCADE;
+DROP TABLE IF EXISTS seller CASCADE;
+DROP TABLE IF EXISTS "user" CASCADE;
+
+-- Удаление расширения, если больше нигде не используется
+DROP EXTENSION IF EXISTS "uuid-ossp" CASCADE;
