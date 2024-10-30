@@ -10,7 +10,7 @@ DROP TRIGGER IF EXISTS update_category_updated_at ON category;
 -- Удаление функции обновления updated_at
 DROP FUNCTION IF EXISTS update_updated_at_column();
 
--- Удаление таблиц в обратном порядке зависимости
+-- Удаление таблиц в обратном порядке
 DROP TABLE IF EXISTS purchase CASCADE;
 DROP TABLE IF EXISTS cart_advert CASCADE;
 DROP TABLE IF EXISTS cart CASCADE;
@@ -22,5 +22,4 @@ DROP TABLE IF EXISTS subscription CASCADE;
 DROP TABLE IF EXISTS seller CASCADE;
 DROP TABLE IF EXISTS "user" CASCADE;
 
--- Удаление расширения, если больше нигде не используется
 DROP EXTENSION IF EXISTS "uuid-ossp" CASCADE;
