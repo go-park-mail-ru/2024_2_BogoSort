@@ -185,21 +185,28 @@ func (h *AdvertEndpoints) GetAdvertById(writer http.ResponseWriter, r *http.Requ
 	advertIdStr := mux.Vars(r)["advertId"]
 	advertId, err := uuid.Parse(advertIdStr)
 	if err != nil {
-		h.logger.Error("invalid advert ID", zap.Error(err))
+		h.logger.Error("http: invalid advert ID", zap.Error(err))
 		utils.SendErrorResponse(writer, http.StatusBadRequest, "Invalid advert ID")
 		return
 	}
 
+	h.logger.Info("http: getting advert by ID", zap.String("advert_id", advertId.String()))
+
 	advert, err := h.AdvertsUseCase.GetAdvertById(advertId)
+
+	h.logger.Info("http: getting advert by ID after usecase", zap.String("advert_id", advertId.String()))
 	if err != nil {
 		if errors.Is(err, ErrAdvertNotFound) {
+			h.logger.Error("http: advert not found", zap.String("advert_id", advertId.String()))
 			utils.SendErrorResponse(writer, http.StatusNotFound, "Advert not found")
 		} else {
-			h.logger.Error("failed to get advert by ID", zap.Error(err))
+			h.logger.Error("http: failed to get advert by ID", zap.Error(err))
 			utils.SendErrorResponse(writer, http.StatusInternalServerError, "Failed to get advert by ID")
 		}
 		return
 	}
+
+	h.logger.Info("http: advert retrieved successfully", zap.String("advert_id", advertId.String()))
 
 	utils.SendJSONResponse(writer, http.StatusOK, advert)
 }

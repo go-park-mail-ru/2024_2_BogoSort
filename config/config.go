@@ -27,6 +27,10 @@ type Config struct {
 		Pass string `yaml:"password" default:"postgres"`
 		DB   string `yaml:"db" default:"emporiumdb"`
 	} `yaml:"postgres"`
+	Static struct {
+		Path string `yaml:"path" default:"static/"`
+		MaxSize int `yaml:"max_size" default:"1048576"`
+	} `yaml:"static"`
 }
 
 var cfg Config

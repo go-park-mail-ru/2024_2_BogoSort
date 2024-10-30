@@ -2,12 +2,12 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgx/v5"
 	"go.uber.org/zap"
 	"time"
 )
@@ -15,6 +15,19 @@ import (
 type AdvertDB struct {
 	DB     *pgxpool.Pool
 	logger *zap.Logger
+}
+
+type AdvertRepoModel struct {
+    ID          uuid.UUID
+    SellerId    uuid.UUID
+    CategoryId  uuid.UUID
+    Title       string
+    Description string
+    Price       uint
+    ImageURL    uuid.NullUUID
+    Status      string
+    HasDelivery bool
+    Location    string
 }
 
 func NewAdvertRepository(db *pgxpool.Pool, logger *zap.Logger) (repository.AdvertRepository, error) {
@@ -36,7 +49,7 @@ func (r *AdvertDB) AddAdvert(a *entity.Advert) (*entity.Advert, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	var dbAdvert entity.Advert
+	var dbAdvert AdvertRepoModel
 
 	err := r.DB.QueryRow(ctx, query,
 		a.Title,
@@ -67,14 +80,24 @@ func (r *AdvertDB) AddAdvert(a *entity.Advert) (*entity.Advert, error) {
 
 	r.logger.Info("advert added", zap.Any("advert", dbAdvert))
 
-	return &dbAdvert, nil
+	return &entity.Advert{
+		ID:          dbAdvert.ID,
+		Title:       dbAdvert.Title,
+		Description: dbAdvert.Description,
+		Price:       dbAdvert.Price,
+		Location:    dbAdvert.Location,
+		HasDelivery: dbAdvert.HasDelivery,
+		CategoryId:  dbAdvert.CategoryId,
+		SellerId:    dbAdvert.SellerId,
+		ImageURL:    dbAdvert.ImageURL,
+		Status:      entity.AdvertStatus(dbAdvert.Status),
+	}, nil
 }
 
 func (r *AdvertDB) GetAdverts(limit, offset int) ([]*entity.Advert, error) {
 	query := `
 		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status
 		FROM advert
-		ORDER BY created_at DESC
 		LIMIT $1 OFFSET $2`
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
@@ -90,22 +113,33 @@ func (r *AdvertDB) GetAdverts(limit, offset int) ([]*entity.Advert, error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var advert entity.Advert
-		if err := rows.Scan(&advert.ID,
-			&advert.Title,
-			&advert.Description,
-			&advert.Price,
-			&advert.Location,
-			&advert.HasDelivery,
-			&advert.CategoryId,
-			&advert.SellerId,
-			&advert.ImageURL,
-			&advert.Status,
+		var dbAdvert AdvertRepoModel
+		if err := rows.Scan(&dbAdvert.ID,
+			&dbAdvert.Title,
+			&dbAdvert.Description,
+			&dbAdvert.Price,
+			&dbAdvert.Location,
+			&dbAdvert.HasDelivery,
+			&dbAdvert.CategoryId,
+			&dbAdvert.SellerId,
+			&dbAdvert.ImageURL,
+			&dbAdvert.Status,
 		); err != nil {
 			r.logger.Error("failed to scan row", zap.Error(err))
 			return nil, entity.PSQLQueryErr("GetAdverts", err)
 		}
-		adverts = append(adverts, &advert)
+		adverts = append(adverts, &entity.Advert{
+			ID:          dbAdvert.ID,
+			Title:       dbAdvert.Title,
+			Description: dbAdvert.Description,
+			Price:       dbAdvert.Price,
+			Location:    dbAdvert.Location,
+			HasDelivery: dbAdvert.HasDelivery,
+			CategoryId:  dbAdvert.CategoryId,
+			SellerId:    dbAdvert.SellerId,
+			ImageURL:    dbAdvert.ImageURL,
+			Status:      entity.AdvertStatus(dbAdvert.Status),
+		})
 	}
 
 	if err := rows.Err(); err != nil {
@@ -120,8 +154,7 @@ func (r *AdvertDB) GetAdvertsByUserId(userId uuid.UUID) ([]*entity.Advert, error
 	query := `
 		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status
 		FROM advert
-		WHERE seller_id = $1
-		ORDER BY created_at DESC`
+		WHERE seller_id = $1`
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
@@ -136,23 +169,34 @@ func (r *AdvertDB) GetAdvertsByUserId(userId uuid.UUID) ([]*entity.Advert, error
 	defer rows.Close()
 
 	for rows.Next() {
-		var advert entity.Advert
+		var dbAdvert AdvertRepoModel
 		if err := rows.Scan(
-			&advert.ID,
-			&advert.Title,
-			&advert.Description,
-			&advert.Price,
-			&advert.Location,
-			&advert.HasDelivery,
-			&advert.CategoryId,
-			&advert.SellerId,
-			&advert.ImageURL,
-			&advert.Status,
+			&dbAdvert.ID,
+			&dbAdvert.Title,
+			&dbAdvert.Description,
+			&dbAdvert.Price,
+			&dbAdvert.Location,
+			&dbAdvert.HasDelivery,
+			&dbAdvert.CategoryId,
+			&dbAdvert.SellerId,
+			&dbAdvert.ImageURL,
+			&dbAdvert.Status,
 		); err != nil {
 			r.logger.Error("failed to scan row", zap.Error(err), zap.String("user_id", userId.String()))
 			return nil, entity.PSQLQueryErr("GetAdvertsByUserId", err)
 		}
-		adverts = append(adverts, &advert)
+		adverts = append(adverts, &entity.Advert{
+			ID:          dbAdvert.ID,
+			Title:       dbAdvert.Title,
+			Description: dbAdvert.Description,
+			Price:       dbAdvert.Price,
+			Location:    dbAdvert.Location,
+			HasDelivery: dbAdvert.HasDelivery,
+			CategoryId:  dbAdvert.CategoryId,
+			SellerId:    dbAdvert.SellerId,
+			ImageURL:    dbAdvert.ImageURL,
+			Status:      entity.AdvertStatus(dbAdvert.Status),
+		})
 	}
 
 	if err := rows.Err(); err != nil {
@@ -169,8 +213,7 @@ func (r *AdvertDB) GetSavedAdvertsByUserId(userId uuid.UUID) ([]*entity.Advert, 
 		SELECT a.id, a.title, a.description, a.price, a.location, a.has_delivery, a.category_id, a.seller_id, a.image_id, a.status
 		FROM advert a
 		INNER JOIN saved_advert sa ON sa.advert_id = a.id
-		WHERE sa.user_id = $1
-		ORDER BY a.created_at DESC`
+		WHERE sa.user_id = $1`
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
@@ -185,23 +228,34 @@ func (r *AdvertDB) GetSavedAdvertsByUserId(userId uuid.UUID) ([]*entity.Advert, 
 	defer rows.Close()
 
 	for rows.Next() {
-		var advert entity.Advert
+		var dbAdvert AdvertRepoModel
 		if err := rows.Scan(
-			&advert.ID,
-			&advert.Title,
-			&advert.Description,
-			&advert.Price,
-			&advert.Location,
-			&advert.HasDelivery,
-			&advert.CategoryId,
-			&advert.SellerId,
-			&advert.ImageURL,
-			&advert.Status,
+			&dbAdvert.ID,
+			&dbAdvert.Title,
+			&dbAdvert.Description,
+			&dbAdvert.Price,
+			&dbAdvert.Location,
+			&dbAdvert.HasDelivery,
+			&dbAdvert.CategoryId,
+			&dbAdvert.SellerId,
+			&dbAdvert.ImageURL,
+			&dbAdvert.Status,
 		); err != nil {
 			r.logger.Error("failed to scan row", zap.Error(err), zap.String("user_id", userId.String()))
 			return nil, entity.PSQLQueryErr("GetSavedAdvertsByUserId", err)
 		}
-		adverts = append(adverts, &advert)
+		adverts = append(adverts, &entity.Advert{
+			ID:          dbAdvert.ID,
+			Title:       dbAdvert.Title,
+			Description: dbAdvert.Description,
+			Price:       dbAdvert.Price,
+			Location:    dbAdvert.Location,
+			HasDelivery: dbAdvert.HasDelivery,
+			CategoryId:  dbAdvert.CategoryId,
+			SellerId:    dbAdvert.SellerId,
+			ImageURL:    dbAdvert.ImageURL,
+			Status:      entity.AdvertStatus(dbAdvert.Status),
+		})
 	}
 
 	if err := rows.Err(); err != nil {
@@ -217,8 +271,7 @@ func (r *AdvertDB) GetAdvertsByCartId(cartId uuid.UUID) ([]*entity.Advert, error
 	query := `
 		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status
 		FROM advert
-		WHERE id IN (SELECT advert_id FROM cart_advert WHERE cart_id = $1)
-		ORDER BY created_at DESC`
+		WHERE id IN (SELECT advert_id FROM cart_advert WHERE cart_id = $1)`
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
@@ -233,23 +286,34 @@ func (r *AdvertDB) GetAdvertsByCartId(cartId uuid.UUID) ([]*entity.Advert, error
 	defer rows.Close()
 
 	for rows.Next() {
-		var advert entity.Advert
+		var dbAdvert AdvertRepoModel
 		if err := rows.Scan(
-			&advert.ID,
-			&advert.Title,
-			&advert.Description,
-			&advert.Price,
-			&advert.Location,
-			&advert.HasDelivery,
-			&advert.CategoryId,
-			&advert.SellerId,
-			&advert.ImageURL,
-			&advert.Status,
+			&dbAdvert.ID,
+			&dbAdvert.Title,
+			&dbAdvert.Description,
+			&dbAdvert.Price,
+			&dbAdvert.Location,
+			&dbAdvert.HasDelivery,
+			&dbAdvert.CategoryId,
+			&dbAdvert.SellerId,
+			&dbAdvert.ImageURL,
+			&dbAdvert.Status,
 		); err != nil {
 			r.logger.Error("failed to scan row", zap.Error(err), zap.String("cart_id", cartId.String()))
 			return nil, entity.PSQLQueryErr("GetSavedAdvertsByUserId", err)
 		}
-		adverts = append(adverts, &advert)
+		adverts = append(adverts, &entity.Advert{
+			ID:          dbAdvert.ID,
+			Title:       dbAdvert.Title,
+			Description: dbAdvert.Description,
+			Price:       dbAdvert.Price,
+			Location:    dbAdvert.Location,
+			HasDelivery: dbAdvert.HasDelivery,
+			CategoryId:  dbAdvert.CategoryId,
+			SellerId:    dbAdvert.SellerId,
+			ImageURL:    dbAdvert.ImageURL,
+			Status:      entity.AdvertStatus(dbAdvert.Status),
+		})
 	}
 
 	if err := rows.Err(); err != nil {
@@ -270,22 +334,22 @@ func (r *AdvertDB) GetAdvertById(advertId uuid.UUID) (*entity.Advert, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	var advert entity.Advert
+	var dbAdvert AdvertRepoModel
 
 	err := r.DB.QueryRow(ctx, query, advertId).Scan(
-		&advert.ID,
-		&advert.Title,
-		&advert.Description,
-		&advert.Price,
-		&advert.Location,
-		&advert.HasDelivery,
-		&advert.CategoryId,
-		&advert.SellerId,
-		&advert.ImageURL,
-		&advert.Status,
+		&dbAdvert.ID,
+		&dbAdvert.Title,
+		&dbAdvert.Description,
+		&dbAdvert.Price,
+		&dbAdvert.Location,
+		&dbAdvert.HasDelivery,
+		&dbAdvert.CategoryId,
+		&dbAdvert.SellerId,
+		&dbAdvert.ImageURL,
+		&dbAdvert.Status,
 	)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		if errors.Is(err, pgx.ErrNoRows) {
 			r.logger.Error("advert not found", zap.Error(err), zap.String("advert_id", advertId.String()))
 			return nil, entity.PSQLWrap(repository.ErrAdvertNotFound)
 		}
@@ -294,7 +358,18 @@ func (r *AdvertDB) GetAdvertById(advertId uuid.UUID) (*entity.Advert, error) {
 	}
 
 	r.logger.Info("successfully retrieved advert by id", zap.String("advert_id", advertId.String()))
-	return &advert, nil
+	return &entity.Advert{
+		ID:          dbAdvert.ID,
+		Title:       dbAdvert.Title,
+		Description: dbAdvert.Description,
+		Price:       dbAdvert.Price,
+		Location:    dbAdvert.Location,
+		HasDelivery: dbAdvert.HasDelivery,
+		CategoryId:  dbAdvert.CategoryId,
+		SellerId:    dbAdvert.SellerId,
+		ImageURL:    dbAdvert.ImageURL,
+		Status:      entity.AdvertStatus(dbAdvert.Status),
+	}, nil
 }
 
 func (r *AdvertDB) UpdateAdvert(advert *entity.Advert) error {

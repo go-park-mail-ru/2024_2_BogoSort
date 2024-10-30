@@ -28,7 +28,13 @@ func NewRouter(cfg config.Config) *mux.Router {
         return nil
     }
 
-    advertsUseCase, err := service.NewAdvertService(advertsRepo, zap.L())
+    staticRepo, err := postgres.NewStaticRepository(dbPool, cfg.Static.Path, cfg.Static.MaxSize, zap.L())
+    if err != nil {
+        zap.L().Error("unable to create static repository", zap.Error(err))
+        return nil
+    }
+
+    advertsUseCase, err := service.NewAdvertService(advertsRepo, staticRepo, zap.L())
     if err != nil {
         zap.L().Error("unable to create advert use case", zap.Error(err))
         return nil

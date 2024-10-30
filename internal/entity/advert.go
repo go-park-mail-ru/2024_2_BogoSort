@@ -1,7 +1,6 @@
 package entity
 
 import (
-	"database/sql"
 	"github.com/google/uuid"
 )
 
@@ -12,7 +11,7 @@ type Advert struct {
 	Title       string       `db:"title"`
 	Description string       `db:"description"`
 	Price       uint         `db:"price"`
-	ImageURL    sql.NullString `db:"image_url"`
+	ImageURL    uuid.NullUUID `db:"image_url"`
 	Status      AdvertStatus `db:"status"`
 	HasDelivery bool         `db:"has_delivery"`
 	Location    string       `db:"location"`

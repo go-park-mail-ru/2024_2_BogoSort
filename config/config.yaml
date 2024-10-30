@@ -13,3 +13,7 @@ postgres:
   db: emporiumdb
   ip: localhost
   port: 5432
+
+static:
+  path: static/
+  max_size: 1048576

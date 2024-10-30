@@ -24,6 +24,7 @@ func UsecaseWrap(errs ...error) error {
 var (
 	ErrRedis    = errors.New("redis error")
 	ErrPSQL     = errors.New("postgres error")
+	ErrUseCase  = errors.New("usecase error")
 	ErrInternal = errors.New("internal server error")
 )
 

@@ -9,7 +9,7 @@ type Advert struct {
 	Title       string       `json:"title"`
 	Description string       `json:"description"`
 	Price       uint         `json:"price"`
-	ImageURL    string       `json:"image_url"`
+	ImageURL    string `json:"image_url"`
 	Status      AdvertStatus `json:"status"`
 	HasDelivery bool         `json:"has_delivery"`
 	Location    string       `json:"location"`
