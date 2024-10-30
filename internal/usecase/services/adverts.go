@@ -36,7 +36,6 @@ func (s *AdvertService) advertEntityToDTO(advert *entity.Advert) (*dto.Advert, e
 	var posterURL string
 
 	if !advert.ImageURL.Valid {
-		s.logger.Error("advert image URL is not valid", zap.String("advert_id", advert.ID.String()))
 		posterURL = ""
 	} else {
 		var err error
@@ -60,8 +59,7 @@ func (s *AdvertService) advertEntityToDTO(advert *entity.Advert) (*dto.Advert, e
 		Location:    advert.Location,
 	}
 
-	s.logger.Info("usecase: advert converted to DTO111", zap.String("advert_id", advert.ID.String()))
-
+	s.logger.Info("usecase: advert converted to DTO", zap.String("advert_id", advert.ID.String()))
 	return &advertDTO, nil
 }
 
@@ -118,7 +116,6 @@ func (s *AdvertService) GetAdvertById(advertId uuid.UUID) (*dto.Advert, error) {
 
 	if err != nil {
 		if errors.Is(err, repository.ErrAdvertNotFound) {
-			s.logger.Error("advert not found", zap.String("advert_id", advertId.String()))
 			return nil, ErrAdvertNotFound
 		}
 		s.logger.Error("failed to get advert by id", zap.Error(err), zap.String("advert_id", advertId.String()))
@@ -154,7 +151,6 @@ func (s *AdvertService) AddAdvert(advert *dto.Advert) (*dto.Advert, error) {
 		return nil, ErrAdvertBadRequest
 	}
 
-	s.logger.Info("advert created successfully", zap.String("advert_id", entityAdvert.ID.String()))
 	return s.advertEntityToDTO(entityAdvert)
 }
 
@@ -184,7 +180,6 @@ func (s *AdvertService) UpdateAdvert(advert *dto.Advert) error {
 		return ErrAdvertBadRequest
 	}
 
-	s.logger.Info("advert updated successfully", zap.String("advert_id", advert.ID.String()))
 	return nil
 }
 
@@ -198,7 +193,6 @@ func (s *AdvertService) DeleteAdvertById(advertId uuid.UUID) error {
 		return err
 	}
 
-	s.logger.Info("advert deleted successfully", zap.String("advert_id", advertId.String()))
 	return nil
 }
 
@@ -212,7 +206,6 @@ func (s *AdvertService) UpdateAdvertStatus(advertId uuid.UUID, status string) er
 		return err
 	}
 
-	s.logger.Info("advert status updated successfully", zap.String("advert_id", advertId.String()))
 	return nil
 }
 

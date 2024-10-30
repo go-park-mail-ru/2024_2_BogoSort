@@ -45,6 +45,7 @@ func (h *AdvertEndpoints) ConfigureRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/adverts/{advertId}", h.UpdateAdvert).Methods("PUT")
 	router.HandleFunc("/api/v1/adverts/{advertId}", h.DeleteAdvertById).Methods("DELETE")
 	router.HandleFunc("/api/v1/adverts/{advertId}/status", h.UpdateAdvertStatus).Methods("PUT")
+	router.HandleFunc("/api/v1/adverts/category/{categoryId}", h.GetAdvertsByCategoryId).Methods("GET")
 }
 
 // GetAdverts godoc	
@@ -80,6 +81,7 @@ func (h *AdvertEndpoints) GetAdverts(writer http.ResponseWriter, r *http.Request
 		return
 	}
 
+	h.logger.Info("http: adverts retrieved successfully", zap.Int("count", len(adverts)))
 	utils.SendJSONResponse(writer, http.StatusOK, adverts)
 }
 
@@ -109,6 +111,7 @@ func (h *AdvertEndpoints) GetAdvertsByUserId(writer http.ResponseWriter, r *http
 		return
 	}
 
+	h.logger.Info("http: adverts retrieved successfully by user ID", zap.String("user_id", userId.String()), zap.Int("count", len(adverts)))
 	utils.SendJSONResponse(writer, http.StatusOK, adverts)
 }
 
@@ -138,6 +141,7 @@ func (h *AdvertEndpoints) GetSavedAdvertsByUserId(writer http.ResponseWriter, r 
 		return
 	}
 
+	h.logger.Info("http: saved adverts retrieved successfully by user ID", zap.String("user_id", userId.String()), zap.Int("count", len(adverts)))
 	utils.SendJSONResponse(writer, http.StatusOK, adverts)
 }
 
@@ -167,6 +171,7 @@ func (h *AdvertEndpoints) GetAdvertsByCartId(writer http.ResponseWriter, r *http
 		return
 	}
 
+	h.logger.Info("http: adverts retrieved successfully by cart ID", zap.String("cart_id", cartId.String()), zap.Int("count", len(adverts)))
 	utils.SendJSONResponse(writer, http.StatusOK, adverts)
 }
 
@@ -190,11 +195,8 @@ func (h *AdvertEndpoints) GetAdvertById(writer http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	h.logger.Info("http: getting advert by ID", zap.String("advert_id", advertId.String()))
-
 	advert, err := h.AdvertsUseCase.GetAdvertById(advertId)
 
-	h.logger.Info("http: getting advert by ID after usecase", zap.String("advert_id", advertId.String()))
 	if err != nil {
 		if errors.Is(err, ErrAdvertNotFound) {
 			h.logger.Error("http: advert not found", zap.String("advert_id", advertId.String()))
@@ -207,7 +209,6 @@ func (h *AdvertEndpoints) GetAdvertById(writer http.ResponseWriter, r *http.Requ
 	}
 
 	h.logger.Info("http: advert retrieved successfully", zap.String("advert_id", advertId.String()))
-
 	utils.SendJSONResponse(writer, http.StatusOK, advert)
 }
 
@@ -237,6 +238,7 @@ func (h *AdvertEndpoints) AddAdvert(writer http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	h.logger.Info("http: advert added successfully", zap.String("advert_id", newAdvert.ID.String()))
 	utils.SendJSONResponse(writer, http.StatusCreated, newAdvert)
 }
 
@@ -271,6 +273,7 @@ func (h *AdvertEndpoints) UpdateAdvert(writer http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	h.logger.Info("http: advert updated successfully", zap.String("advert_id", advert.ID.String()))
 	utils.SendJSONResponse(writer, http.StatusOK, "Advert updated successfully")
 }
 
@@ -303,6 +306,7 @@ func (h *AdvertEndpoints) DeleteAdvertById(writer http.ResponseWriter, r *http.R
 		return
 	}
 
+	h.logger.Info("http: advert deleted successfully", zap.String("advert_id", advertId.String()))
 	utils.SendJSONResponse(writer, http.StatusOK, "Advert deleted")
 }
 
@@ -343,5 +347,36 @@ func (h *AdvertEndpoints) UpdateAdvertStatus(writer http.ResponseWriter, r *http
 		return
 	}
 
+	h.logger.Info("http: advert status updated successfully", zap.String("advert_id", advertId.String()))
 	utils.SendJSONResponse(writer, http.StatusOK, "Advert status updated")
+}
+
+// GetAdvertsByCategoryId godoc
+// @Summary Get adverts by category ID
+// @Description Get a list of adverts by category ID
+// @Tags adverts
+// @Produce json
+// @Param categoryId path string true "Category ID"
+// @Success 200 {array} dto.Advert "List of adverts by category ID"
+// @Failure 400 {object} utils.ErrResponse "Invalid category ID"
+// @Failure 500 {object} utils.ErrResponse "Failed to get adverts by category ID"
+// @Router /api/v1/adverts/category/{categoryId} [get]
+func (h *AdvertEndpoints) GetAdvertsByCategoryId(writer http.ResponseWriter, r *http.Request) {
+	categoryIdStr := mux.Vars(r)["categoryId"]
+	categoryId, err := uuid.Parse(categoryIdStr)
+	if err != nil {
+		h.logger.Error("invalid category ID", zap.Error(err))
+		utils.SendErrorResponse(writer, http.StatusBadRequest, "Invalid category ID")
+		return
+	}
+
+	adverts, err := h.AdvertsUseCase.GetAdvertsByCategoryId(categoryId)
+	if err != nil {
+		h.logger.Error("failed to get adverts by category ID", zap.Error(err))
+		utils.SendErrorResponse(writer, http.StatusInternalServerError, "Failed to get adverts by category ID")
+		return
+	}
+
+	h.logger.Info("http: adverts retrieved successfully by category ID", zap.String("category_id", categoryId.String()), zap.Int("count", len(adverts)))
+	utils.SendJSONResponse(writer, http.StatusOK, adverts)
 }

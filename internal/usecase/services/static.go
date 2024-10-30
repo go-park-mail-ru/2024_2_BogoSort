@@ -94,7 +94,6 @@ func (s *StaticService) UploadAvatar(data []byte) (uuid.UUID, error) {
 		return uuid.Nil, err
 	}
 
-	s.logger.Info("successfully uploaded avatar", zap.String("id", id.String()))
 	return id, nil
 }
 
