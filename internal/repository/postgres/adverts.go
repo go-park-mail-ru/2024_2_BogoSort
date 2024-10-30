@@ -243,7 +243,6 @@ func (r *AdvertDB) GetAdvertsByCategoryId(categoryId uuid.UUID) ([]*entity.Adver
 		return nil, entity.PSQLQueryErr("GetAdvertsByCategoryId", err)
 	}
 
-	r.logger.Info("successfully retrieved adverts by category ID", zap.String("category_id", categoryId.String()), zap.Int("count", len(adverts)))
 	return adverts, nil
 }
 
@@ -296,7 +295,6 @@ func (r *AdvertDB) GetAdvertsByUserId(userId uuid.UUID) ([]*entity.Advert, error
 		return nil, entity.PSQLQueryErr("GetAdvertsByUserId", err)
 	}
 
-	r.logger.Info("successfully retrieved adverts by user ID", zap.String("user_id", userId.String()), zap.Int("count", len(adverts)))
 	return adverts, nil
 }
 
@@ -349,7 +347,6 @@ func (r *AdvertDB) GetSavedAdvertsByUserId(userId uuid.UUID) ([]*entity.Advert, 
 		return nil, entity.PSQLQueryErr("GetSavedAdvertsByUserId", err)
 	}
 
-	r.logger.Info("successfully retrieved saved adverts by user ID", zap.String("user_id", userId.String()), zap.Int("count", len(adverts)))
 	return adverts, nil
 }
 
@@ -402,7 +399,6 @@ func (r *AdvertDB) GetAdvertsByCartId(cartId uuid.UUID) ([]*entity.Advert, error
 		return nil, entity.PSQLQueryErr("GetSavedAdvertsByUserId", err)
 	}
 
-	r.logger.Info("successfully retrieved saved adverts by user ID", zap.String("user_id", cartId.String()), zap.Int("count", len(adverts)))
 	return adverts, nil
 }
 
@@ -433,7 +429,6 @@ func (r *AdvertDB) GetAdvertById(advertId uuid.UUID) (*entity.Advert, error) {
 		return nil, entity.PSQLQueryErr("GetAdvertById", err)
 	}
 
-	r.logger.Info("successfully retrieved advert by id", zap.String("advert_id", advertId.String()))
 	return &entity.Advert{
 		ID:          dbAdvert.ID,
 		Title:       dbAdvert.Title,
@@ -475,7 +470,6 @@ func (r *AdvertDB) UpdateAdvert(advert *entity.Advert) error {
 		return entity.PSQLWrap(repository.ErrAdvertNotFound)
 	}
 
-	r.logger.Info("successfully updated advert", zap.String("advert_id", advert.ID.String()), zap.Int64("rows_affected", rowsAffected))
 	return nil
 }
 
@@ -495,7 +489,6 @@ func (r *AdvertDB) DeleteAdvertById(advertId uuid.UUID) error {
 		return entity.PSQLWrap(repository.ErrAdvertNotFound)
 	}
 
-	r.logger.Info("successfully deleted advert", zap.String("advert_id", advertId.String()))
 	return nil
 }
 
@@ -515,6 +508,5 @@ func (r *AdvertDB) UpdateAdvertStatus(advertId uuid.UUID, status string) error {
 		return entity.PSQLWrap(repository.ErrAdvertNotFound)
 	}
 
-	r.logger.Info("successfully updated advert status", zap.String("advert_id", advertId.String()))
 	return nil
 }

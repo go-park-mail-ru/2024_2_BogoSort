@@ -116,7 +116,5 @@ func (s StaticDB) UploadStatic(path, filename string, data []byte) (uuid.UUID, e
 		return uuid.UUID{}, entity.PSQLWrap(err, errors.New("ошибка при выполнении sql-запроса UploadStatic"))
 	}
 
-	s.logger.Info("successfully uploaded static", zap.String("id", id.String()), zap.String("path", fmt.Sprintf("%s/%s/%s", s.basicPath, path, filename)))
-	
 	return id, nil
 }
