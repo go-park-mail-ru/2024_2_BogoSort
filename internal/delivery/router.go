@@ -11,11 +11,14 @@ import (
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository/redis"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase/service"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/pkg/connector"
-
 	"github.com/gorilla/mux"
+	"go.uber.org/zap"
 )
 
 func NewRouter(cfg config.Config) *mux.Router {
+	zap.ReplaceGlobals(zap.Must(zap.NewProduction()))
+	defer zap.L().Sync()
+
 	router := mux.NewRouter()
 	router.Use(recoveryMiddleware)
 
@@ -29,15 +32,15 @@ func NewRouter(cfg config.Config) *mux.Router {
 	}
 
 	userRepo := postgres.NewUserRepository(dbPool)
-	userUC := service.NewUserService(userRepo)
+	userUC := service.NewUserService(userRepo, zap.L())
 
-	sessionRepo := redis.NewSessionRepository(rdb, int(cfg.Session.ExpirationTime.Seconds()))
-	sessionUC := service.NewAuthService(sessionRepo)
+	sessionRepo := redis.NewSessionRepository(rdb, int(cfg.Session.ExpirationTime.Seconds()), zap.L())
+	sessionUC := service.NewAuthService(sessionRepo, zap.L())
 
-	sessionManager := utils.NewSessionManager(sessionUC, int(cfg.Session.ExpirationTime.Seconds()), cfg.Session.SecureCookie)
+	sessionManager := utils.NewSessionManager(sessionUC, int(cfg.Session.ExpirationTime.Seconds()), cfg.Session.SecureCookie, zap.L())
 
-	authHandler := http3.NewAuthEndpoints(sessionUC, sessionManager)
-	userHandler := http3.NewUserEndpoints(userUC, sessionUC, sessionManager)
+	authHandler := http3.NewAuthEndpoints(sessionUC, sessionManager, zap.L())
+	userHandler := http3.NewUserEndpoints(userUC, sessionUC, sessionManager, zap.L())
 
 	authHandler.Configure(router)
 	userHandler.Configure(router)
