@@ -10,6 +10,7 @@ import (
 	"go.uber.org/zap"
 	"log"
 	"net/http"
+	"context"
 )
 
 func NewRouter(cfg config.Config) *mux.Router {
@@ -22,13 +23,13 @@ func NewRouter(cfg config.Config) *mux.Router {
         return nil
     }
 
-    advertsRepo, err := postgres.NewAdvertRepository(dbPool, zap.L())
+    advertsRepo, err := postgres.NewAdvertRepository(dbPool, zap.L(), cfg.PGTimeout, context.Background())
     if err != nil {
         zap.L().Error("unable to create advert repository", zap.Error(err))
         return nil
     }
 
-    staticRepo, err := postgres.NewStaticRepository(dbPool, cfg.Static.Path, cfg.Static.MaxSize, zap.L())
+    staticRepo, err := postgres.NewStaticRepository(context.Background(), cfg.PGTimeout, dbPool, cfg.Static.Path, cfg.Static.MaxSize, zap.L())
     if err != nil {
         zap.L().Error("unable to create static repository", zap.Error(err))
         return nil

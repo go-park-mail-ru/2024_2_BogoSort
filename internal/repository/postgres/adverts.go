@@ -13,8 +13,10 @@ import (
 )
 
 type AdvertDB struct {
-	DB     *pgxpool.Pool
-	logger *zap.Logger
+	DB      *pgxpool.Pool
+	logger  *zap.Logger
+	timeout time.Duration
+	ctx     context.Context
 }
 
 const (
@@ -81,18 +83,20 @@ type AdvertRepoModel struct {
     Location    string
 }
 
-func NewAdvertRepository(db *pgxpool.Pool, logger *zap.Logger) (repository.AdvertRepository, error) {
-	if err := db.Ping(context.Background()); err != nil {
+func NewAdvertRepository(db *pgxpool.Pool, logger *zap.Logger, timeout time.Duration, ctx context.Context) (repository.AdvertRepository, error) {
+	if err := db.Ping(ctx); err != nil {
 		return nil, err
 	}
 	return &AdvertDB{
-		DB:     db,
-		logger: logger,
+		DB:      db,
+		logger:  logger,
+		timeout: timeout,
+		ctx:     ctx,
 	}, nil
 }
 
 func (r *AdvertDB) AddAdvert(a *entity.Advert) (*entity.Advert, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
 	defer cancel()
 
 	var dbAdvert AdvertRepoModel
@@ -141,7 +145,7 @@ func (r *AdvertDB) AddAdvert(a *entity.Advert) (*entity.Advert, error) {
 }
 
 func (r *AdvertDB) GetAdverts(limit, offset int) ([]*entity.Advert, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
 	defer cancel()
 
 	var adverts []*entity.Advert
@@ -192,7 +196,7 @@ func (r *AdvertDB) GetAdverts(limit, offset int) ([]*entity.Advert, error) {
 }
 
 func (r *AdvertDB) GetAdvertsByCategoryId(categoryId uuid.UUID) ([]*entity.Advert, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
 	defer cancel()
 
 	var adverts []*entity.Advert
@@ -244,7 +248,7 @@ func (r *AdvertDB) GetAdvertsByCategoryId(categoryId uuid.UUID) ([]*entity.Adver
 }
 
 func (r *AdvertDB) GetAdvertsByUserId(userId uuid.UUID) ([]*entity.Advert, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
 	defer cancel()
 
 	var adverts []*entity.Advert
@@ -297,7 +301,7 @@ func (r *AdvertDB) GetAdvertsByUserId(userId uuid.UUID) ([]*entity.Advert, error
 }
 
 func (r *AdvertDB) GetSavedAdvertsByUserId(userId uuid.UUID) ([]*entity.Advert, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
 	defer cancel()
 
 	var adverts []*entity.Advert
@@ -350,7 +354,7 @@ func (r *AdvertDB) GetSavedAdvertsByUserId(userId uuid.UUID) ([]*entity.Advert, 
 }
 
 func (r *AdvertDB) GetAdvertsByCartId(cartId uuid.UUID) ([]*entity.Advert, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
 	defer cancel()
 
 	var adverts []*entity.Advert
@@ -403,7 +407,7 @@ func (r *AdvertDB) GetAdvertsByCartId(cartId uuid.UUID) ([]*entity.Advert, error
 }
 
 func (r *AdvertDB) GetAdvertById(advertId uuid.UUID) (*entity.Advert, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
 	defer cancel()
 
 	var dbAdvert AdvertRepoModel
@@ -445,20 +449,20 @@ func (r *AdvertDB) GetAdvertById(advertId uuid.UUID) (*entity.Advert, error) {
 }
 
 func (r *AdvertDB) UpdateAdvert(advert *entity.Advert) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
 	defer cancel()
 
 	result, err := r.DB.Exec(ctx, updateAdvertQuery,
 		advert.Title,
 		advert.Description,
 		advert.Price,
-		advert.Location,
-		advert.HasDelivery,
-		advert.CategoryId,
-		advert.SellerId,
-		advert.ImageURL,
-		advert.Status,
-		advert.ID,
+			advert.Location,
+			advert.HasDelivery,
+			advert.CategoryId,
+			advert.SellerId,
+			advert.ImageURL,
+			advert.Status,
+			advert.ID,
 	)
 	if err != nil {
 		r.logger.Error("failed to update advert", zap.Error(err), zap.String("advert_id", advert.ID.String()))
@@ -476,7 +480,7 @@ func (r *AdvertDB) UpdateAdvert(advert *entity.Advert) error {
 }
 
 func (r *AdvertDB) DeleteAdvertById(advertId uuid.UUID) error {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
 	defer cancel()
 
 	result, err := r.DB.Exec(ctx, deleteAdvertByIdQuery, advertId)
@@ -496,7 +500,7 @@ func (r *AdvertDB) DeleteAdvertById(advertId uuid.UUID) error {
 }
 
 func (r *AdvertDB) UpdateAdvertStatus(advertId uuid.UUID, status string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
 	defer cancel()
 
 	result, err := r.DB.Exec(ctx, updateAdvertStatusQuery, status, advertId)

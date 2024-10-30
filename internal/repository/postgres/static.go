@@ -12,6 +12,7 @@ import (
 	"go.uber.org/zap"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 const (
@@ -33,10 +34,12 @@ type StaticDB struct {
 	logger    *zap.Logger
 	basicPath string
 	maxSize   int
+	ctx       context.Context
+	timeout   time.Duration
 }
 
-func NewStaticRepository(dbpool *pgxpool.Pool, basicPath string, maxSize int, logger *zap.Logger) (repository.StaticRepository, error) {
-	if err := dbpool.Ping(context.Background()); err != nil {
+func NewStaticRepository(ctx context.Context, timeout time.Duration, dbpool *pgxpool.Pool, basicPath string, maxSize int, logger *zap.Logger) (repository.StaticRepository, error) {
+	if err := dbpool.Ping(ctx); err != nil {
 		return nil, err
 	}
 	return &StaticDB{
@@ -44,6 +47,8 @@ func NewStaticRepository(dbpool *pgxpool.Pool, basicPath string, maxSize int, lo
 		basicPath: basicPath,
 		maxSize:   maxSize,
 		logger:    logger,
+		ctx:       ctx,
+		timeout:   timeout,
 	}, nil
 }
 

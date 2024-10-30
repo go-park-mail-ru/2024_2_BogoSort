@@ -17,19 +17,15 @@ type Config struct {
 		WriteTimeout    time.Duration `yaml:"write_timeout" default:"10s"`
 		ShutdownTimeout time.Duration `yaml:"shutdown_timeout" default:"10s"`
 	} `yaml:"server"`
-	Session struct {
-		ExpirationTime time.Duration `yaml:"expiration_time" default:"12h"`
-	} `yaml:"session"`
-	Postgres struct {
-		IP   string `yaml:"ip"   default:"postgres"`
-		Port int    `yaml:"port" default:"5432"`
-		User string `yaml:"user" default:"postgres"`
-		Pass string `yaml:"password" default:"postgres"`
-		DB   string `yaml:"db" default:"emporiumdb"`
-	} `yaml:"postgres"`
+	PGIP     string        `yaml:"pg_ip" default:"postgres"`
+	PGPort   int           `yaml:"pg_port" default:"5432"`
+	PGUser   string        `yaml:"pg_user" default:"postgres"`
+	PGPass   string        `yaml:"pg_password" default:"postgres"`
+	PGDB     string        `yaml:"pg_db" default:"emporiumdb"`
+	PGTimeout time.Duration `yaml:"pg_timeout" default:"5s"`
 	Static struct {
-		Path string `yaml:"path" default:"static/"`
-		MaxSize int `yaml:"max_size" default:"1048576"`
+		Path    string        `yaml:"path" default:"static/"`
+		MaxSize int           `yaml:"max_size" default:"1048576"`
 	} `yaml:"static"`
 }
 
@@ -55,18 +51,15 @@ func Init() (Config, error) {
 func InitFromEnv() Config {
     var cfg Config
 
-    cfg.Postgres.User = os.Getenv("POSTGRES_USER")
-    cfg.Postgres.Pass = os.Getenv("POSTGRES_PASSWORD")
-    cfg.Postgres.IP = os.Getenv("POSTGRES_HOST")
+    cfg.PGUser = os.Getenv("POSTGRES_USER")
+    cfg.PGPass = os.Getenv("POSTGRES_PASSWORD")
+    cfg.PGIP = os.Getenv("POSTGRES_HOST")
 
     port := os.Getenv("POSTGRES_PORT")
     if port == "" {
         port = "5432" 
     }
-    cfg.Postgres.Port, _ = strconv.Atoi(port)
-
-    expirationTime, _ := time.ParseDuration(os.Getenv("SESSION_EXPIRATION_TIME"))
-    cfg.Session.ExpirationTime = expirationTime
+    cfg.PGPort, _ = strconv.Atoi(port)
 
     return cfg
 }
@@ -84,7 +77,7 @@ func GetServerAddress() string {
 func (cfg *Config) GetConnectURL() string {
 	return fmt.Sprintf(
 		"postgres://%s:%s@%s:%d/%s?sslmode=disable",
-		cfg.Postgres.User, cfg.Postgres.Pass, cfg.Postgres.IP, cfg.Postgres.Port, cfg.Postgres.DB)
+		cfg.PGUser, cfg.PGPass, cfg.PGIP, cfg.PGPort, cfg.PGDB)
 }
 
 func GetReadTimeout() time.Duration {
@@ -97,8 +90,4 @@ func GetWriteTimeout() time.Duration {
 
 func GetShutdownTimeout() time.Duration {
 	return cfg.Server.ShutdownTimeout
-}
-
-func GetSessionExpirationTime() time.Duration {
-	return cfg.Session.ExpirationTime
 }
