@@ -50,8 +50,8 @@ func (us *DBUser) GetEntity() entity.User {
 
 func (us *UsersDB) GetUserByEmail(email string) (*entity.User, error) {
 	query := `
-		SELECT id, email, password_hash, password_salt, username, phone, avatar_id, status
-		FROM users
+		SELECT id, email, password_hash, password_salt, username, phone_number, image_id, status
+		FROM "user"
 		WHERE email = $1
 	`
 
@@ -83,8 +83,8 @@ func (us *UsersDB) GetUserByEmail(email string) (*entity.User, error) {
 
 func (us *UsersDB) GetUserById(id uuid.UUID) (*entity.User, error) {
 	query := `
-		SELECT id, email, password_hash, password_salt, username, phone, avatar_id, status
-		FROM users
+		SELECT id, email, password_hash, password_salt, username, phone_number, image_id, status
+		FROM "user"
 		WHERE id = $1
 	`
 
@@ -116,8 +116,8 @@ func (us *UsersDB) GetUserById(id uuid.UUID) (*entity.User, error) {
 
 func (us *UsersDB) AddUser(email string, hash, salt []byte) (uuid.UUID, error) {
 	query := `
-		INSERT INTO users (email, password_hash, password_salt) VALUES ($1, $2)
-		RETURNING id, email, password_hash, password_salt, username, phone, avatar_id, status
+		INSERT INTO "user" (email, password_hash, password_salt) VALUES ($1, $2, $3)
+		RETURNING id, email, password_hash, password_salt, username, phone_number, image_id, status
 	`
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -147,7 +147,7 @@ func (us *UsersDB) AddUser(email string, hash, salt []byte) (uuid.UUID, error) {
 
 func (us *UsersDB) UpdateUser(user *entity.User) error {
 	query := `
-		UPDATE users SET username = $1, phone = $2, avatar_id = $3, status = $4, WHERE id = $6
+		UPDATE user SET username = $1, phone_number = $2, image_id = $3, status = $4, WHERE id = $6
 	`
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -159,7 +159,7 @@ func (us *UsersDB) UpdateUser(user *entity.User) error {
 
 func (us *UsersDB) DeleteUser(userID uuid.UUID) error {
 	query := `
-		DELETE FROM users WHERE id = $1
+		DELETE FROM user WHERE id = $1
 	`
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
