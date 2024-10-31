@@ -26,18 +26,32 @@ github.com/go-openapi/swag
 # github.com/go-park-mail-ru/2024_1_Cyberkotletki v0.0.0-20240531004743-d3f6797b2080
 ## explicit; go 1.22.0
 github.com/go-park-mail-ru/2024_1_Cyberkotletki/pkg/random
+# github.com/golang/mock v1.6.0
+## explicit; go 1.11
 # github.com/google/uuid v1.6.0
 ## explicit
 github.com/google/uuid
 # github.com/gorilla/mux v1.8.1
 ## explicit; go 1.20
 github.com/gorilla/mux
+# github.com/jackc/chunkreader/v2 v2.0.1
+## explicit; go 1.12
+# github.com/jackc/pgconn v1.13.0
+## explicit; go 1.12
+# github.com/jackc/pgio v1.0.0
+## explicit; go 1.12
 # github.com/jackc/pgpassfile v1.0.0
 ## explicit; go 1.12
 github.com/jackc/pgpassfile
+# github.com/jackc/pgproto3/v2 v2.3.1
+## explicit; go 1.12
 # github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761
 ## explicit; go 1.14
 github.com/jackc/pgservicefile
+# github.com/jackc/pgtype v1.12.0
+## explicit; go 1.13
+# github.com/jackc/pgx/v4 v4.17.0
+## explicit; go 1.13
 # github.com/jackc/pgx/v5 v5.7.1
 ## explicit; go 1.21
 github.com/jackc/pgx/v5
@@ -51,6 +65,8 @@ github.com/jackc/pgx/v5/pgconn/internal/bgreader
 github.com/jackc/pgx/v5/pgproto3
 github.com/jackc/pgx/v5/pgtype
 github.com/jackc/pgx/v5/pgxpool
+# github.com/jackc/puddle v1.2.1
+## explicit; go 1.12
 # github.com/jackc/puddle/v2 v2.2.2
 ## explicit; go 1.19
 github.com/jackc/puddle/v2
@@ -63,6 +79,8 @@ github.com/josharian/intern
 github.com/mailru/easyjson/buffer
 github.com/mailru/easyjson/jlexer
 github.com/mailru/easyjson/jwriter
+# github.com/pashagolub/pgxmock v1.8.0
+## explicit; go 1.17
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors
