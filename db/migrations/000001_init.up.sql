@@ -119,7 +119,7 @@ CREATE TABLE IF NOT EXISTS purchase (
     cart_id UUID NOT NULL,
     status TEXT NOT NULL,
     adress TEXT
-        CONSTRAINT buyer_adress_length CHECK (LENGTH(buyer_adress) <= 150),
+        CONSTRAINT adress_length CHECK (LENGTH(adress) <= 150),
     payment_method TEXT
         CONSTRAINT payment_method_length CHECK (status IN ('cash', 'card')),
     delivery_method TEXT
