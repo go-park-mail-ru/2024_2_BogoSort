@@ -15,6 +15,29 @@ import (
 	"go.uber.org/zap"
 )
 
+const (
+	queryGetUserByEmail = `
+		SELECT id, email, password_hash, password_salt, username, phone_number, image_id, status
+		FROM "user"
+		WHERE email = $1
+	`
+	queryGetUserById = `
+		SELECT id, email, password_hash, password_salt, username, phone_number, image_id, status
+		FROM "user"
+		WHERE id = $1
+	`
+	queryAddUser = `
+		INSERT INTO "user" (email, password_hash, password_salt, status) VALUES ($1, $2, $3, 'active')
+		RETURNING id, email, password_hash, password_salt, username, phone_number, image_id, status
+	`
+	queryUpdateUser = `
+		UPDATE "user" SET username = $1, phone_number = $2, image_id = $3 WHERE id = $4
+	`
+	queryDeleteUser = `
+		DELETE FROM "user" WHERE id = $1
+	`
+)
+
 type UsersDB struct {
 	DB     *pgxpool.Pool
 	logger *zap.Logger
@@ -51,17 +74,12 @@ func (us *DBUser) GetEntity() entity.User {
 }
 
 func (us *UsersDB) GetUserByEmail(email string) (*entity.User, error) {
-	query := `
-		SELECT id, email, password_hash, password_salt, username, phone_number, image_id, status
-		FROM "user"
-		WHERE email = $1
-	`
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	var dbUser DBUser
-	err := us.DB.QueryRow(ctx, query, email).Scan(
+	err := us.DB.QueryRow(ctx, queryGetUserByEmail, email).Scan(
 		&dbUser.ID,
 		&dbUser.Email,
 		&dbUser.PasswordHash,
@@ -87,17 +105,11 @@ func (us *UsersDB) GetUserByEmail(email string) (*entity.User, error) {
 }
 
 func (us *UsersDB) GetUserById(id uuid.UUID) (*entity.User, error) {
-	query := `
-		SELECT id, email, password_hash, password_salt, username, phone_number, image_id, status
-		FROM "user"
-		WHERE id = $1
-	`
-
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	var dbUser DBUser
-	err := us.DB.QueryRow(ctx, query, id).Scan(
+	err := us.DB.QueryRow(ctx, queryGetUserById, id).Scan(
 		&dbUser.ID,
 		&dbUser.Email,
 		&dbUser.PasswordHash,
@@ -123,16 +135,11 @@ func (us *UsersDB) GetUserById(id uuid.UUID) (*entity.User, error) {
 }
 
 func (us *UsersDB) AddUser(email string, hash, salt []byte) (uuid.UUID, error) {
-	query := `
-		INSERT INTO "user" (email, password_hash, password_salt, status) VALUES ($1, $2, $3, 'active')
-		RETURNING id, email, password_hash, password_salt, username, phone_number, image_id, status
-	`
-
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	var dbUser DBUser
-	err := us.DB.QueryRow(ctx, query, email, hash, salt).Scan(
+	err := us.DB.QueryRow(ctx, queryAddUser, email, hash, salt).Scan(
 		&dbUser.ID,
 		&dbUser.Email,
 		&dbUser.PasswordHash,
@@ -156,14 +163,10 @@ func (us *UsersDB) AddUser(email string, hash, salt []byte) (uuid.UUID, error) {
 }
 
 func (us *UsersDB) UpdateUser(user *entity.User) error {
-	query := `
-		UPDATE "user" SET username = $1, phone_number = $2, image_id = $3 WHERE id = $4
-	`
-
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	_, err := us.DB.Exec(ctx, query, user.Username, user.Phone, user.AvatarId, user.ID)
+	_, err := us.DB.Exec(ctx, queryUpdateUser, user.Username, user.Phone, user.AvatarId, user.ID)
 	switch {
 	case errors.Is(err, pgx.ErrNoRows):
 		us.logger.Error("user not found", zap.String("id", user.ID.String()))
@@ -177,14 +180,10 @@ func (us *UsersDB) UpdateUser(user *entity.User) error {
 }
 
 func (us *UsersDB) DeleteUser(userID uuid.UUID) error {
-	query := `
-		DELETE FROM "user" WHERE id = $1
-	`
-
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	_, err := us.DB.Exec(ctx, query, userID)
+	_, err := us.DB.Exec(ctx, queryDeleteUser, userID)
 	switch {
 	case errors.Is(err, pgx.ErrNoRows):
 		us.logger.Error("user not found", zap.String("id", userID.String()))

@@ -27,6 +27,17 @@ func (a *AuthEndpoints) Configure(router *mux.Router) {
 	router.HandleFunc("/logout", a.Logout).Methods(http.MethodPost)
 }
 
+// Logout
+// @Summary Выход пользователя
+// @Description Позволяет пользователю выйти из системы, удаляя его сессию
+// @Tags Аутентификация
+// @Accept json
+// @Produce json
+// @Success 200 {string} string "Вы успешно вышли из системы"
+// @Failure 400 {object} utils.ErrResponse "Некорректный запрос или отсутствие cookie"
+// @Failure 401 {object} utils.ErrResponse "Несанкционированный доступ"
+// @Failure 500 {object} utils.ErrResponse "Внутренняя ошибка сервера"
+// @Router /logout [post]
 func (a *AuthEndpoints) Logout(w http.ResponseWriter, r *http.Request) {
 	userID, err := a.sessionManager.GetUserID(r)
 	if err != nil {

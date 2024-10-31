@@ -49,6 +49,18 @@ func (u *UserEndpoints) Configure(router *mux.Router) {
 	router.HandleFunc("/me", u.GetMe).Methods(http.MethodGet)
 }
 
+// Signup
+// @Summary Регистрация нового пользователя
+// @Description Создает нового пользователя в системе
+// @Tags Пользователи
+// @Accept json
+// @Produce json
+// @Param signup body dto.Signup true "Данные для регистрации"
+// @Success 200 {string} string "SessionID"
+// @Failure 400 {object} utils.ErrResponse "Некорректный запрос или пользователь уже существует"
+// @Failure 401 {object} utils.ErrResponse "Несанкционированный запрос"
+// @Failure 500 {object} utils.ErrResponse "Внутренняя ошибка сервера"
+// @Router /signup [post]
 func (u *UserEndpoints) Signup(w http.ResponseWriter, r *http.Request) {
 	var credentials dto.Signup
 	if err := json.NewDecoder(r.Body).Decode(&credentials); err != nil {
@@ -85,6 +97,19 @@ func (u *UserEndpoints) Signup(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Login
+// @Summary Вход пользователя
+// @Description Позволяет пользователю войти в систему
+// @Tags Пользователи
+// @Accept json
+// @Produce json
+// @Param login body dto.Login true "Данные для входа"
+// @Success 200 {string} string "SessionID"
+// @Failure 400 {object} utils.ErrResponse "Некорректный запрос"
+// @Failure 401 {object} utils.ErrResponse "Неверные учетные данные или несанкционированный доступ"
+// @Failure 404 {object} utils.ErrResponse "Пользователь не найден"
+// @Failure 500 {object} utils.ErrResponse "Внутренняя ошибка сервера"
+// @Router /login [post]
 func (u *UserEndpoints) Login(w http.ResponseWriter, r *http.Request) {
 	var credentials dto.Login
 	if err := json.NewDecoder(r.Body).Decode(&credentials); err != nil {
@@ -97,7 +122,7 @@ func (u *UserEndpoints) Login(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case errors.Is(err, usecase.ErrUserNotFound):
 		u.logger.Error("user not found", zap.String("email", credentials.Email))
-		utils.SendErrorResponse(w, http.StatusBadRequest, ErrUserNotFound.Error())
+		utils.SendErrorResponse(w, http.StatusNotFound, ErrUserNotFound.Error())
 	case errors.Is(err, usecase.ErrInvalidCredentials):
 		u.logger.Error("invalid credentials", zap.String("email", credentials.Email))
 		utils.SendErrorResponse(w, http.StatusUnauthorized, ErrInvalidCredentials.Error())
@@ -119,6 +144,19 @@ func (u *UserEndpoints) Login(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// ChangePassword
+// @Summary Изменение пароля пользователя
+// @Description Позволяет пользователю изменить свой пароль
+// @Tags Пользователи
+// @Accept json
+// @Produce json
+// @Param password body dto.UpdatePassword true "Данные для изменения пароля"
+// @Success 200 {string} string "Пароль изменен успешно"
+// @Failure 400 {object} utils.ErrResponse "Некорректные данные"
+// @Failure 401 {object} utils.ErrResponse "Несанкционированный доступ"
+// @Failure 404 {object} utils.ErrResponse "Пользователь не найден"
+// @Failure 500 {object} utils.ErrResponse "Внутренняя ошибка сервера"
+// @Router /password [post]
 func (u *UserEndpoints) ChangePassword(w http.ResponseWriter, r *http.Request) {
 	var updatePassword dto.UpdatePassword
 	if err := json.NewDecoder(r.Body).Decode(&updatePassword); err != nil {
@@ -138,7 +176,7 @@ func (u *UserEndpoints) ChangePassword(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case errors.Is(err, usecase.ErrUserNotFound):
 		u.logger.Error("user not found", zap.String("userID", userID.String()))
-		utils.SendErrorResponse(w, http.StatusBadRequest, ErrUserNotFound.Error())
+		utils.SendErrorResponse(w, http.StatusNotFound, ErrUserNotFound.Error())
 	case errors.Is(err, usecase.ErrInvalidCredentials):
 		u.logger.Error("invalid credentials", zap.String("userID", userID.String()))
 		utils.SendErrorResponse(w, http.StatusUnauthorized, ErrInvalidCredentials.Error())
@@ -157,6 +195,19 @@ func (u *UserEndpoints) ChangePassword(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// UpdateProfile
+// @Summary Обновление профиля пользователя
+// @Description Позволяет пользователю обновить информацию своего профиля
+// @Tags Пользователи
+// @Accept json
+// @Produce json
+// @Param profile body dto.User true "Данные профиля"
+// @Success 200 {string} string "Профиль обновлен успешно"
+// @Failure 400 {object} utils.ErrResponse "Некорректные данные"
+// @Failure 401 {object} utils.ErrResponse "Несанкционированный доступ"
+// @Failure 404 {object} utils.ErrResponse "Пользователь не найден"
+// @Failure 500 {object} utils.ErrResponse "Внутренняя ошибка сервера"
+// @Router /profile [put]
 func (u *UserEndpoints) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	var user dto.User
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
@@ -176,7 +227,7 @@ func (u *UserEndpoints) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case errors.Is(err, usecase.ErrUserNotFound):
 		u.logger.Error("user not found", zap.String("userID", userID.String()))
-		utils.SendErrorResponse(w, http.StatusBadRequest, ErrUserNotFound.Error())
+		utils.SendErrorResponse(w, http.StatusNotFound, ErrUserNotFound.Error())
 	case errors.Is(err, usecase.ErrInvalidCredentials):
 		u.logger.Error("invalid credentials", zap.String("userID", userID.String()))
 		utils.SendErrorResponse(w, http.StatusUnauthorized, ErrInvalidCredentials.Error())
@@ -192,6 +243,17 @@ func (u *UserEndpoints) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// GetProfile
+// @Summary Получение профиля пользователя
+// @Description Возвращает информацию о пользователе по его ID
+// @Tags Пользователи
+// @Accept json
+// @Produce json
+// @Param user_id path string true "ID пользователя"
+// @Success 200 {object} dto.User "Профиль пользователя"
+// @Failure 404 {object} utils.ErrResponse "Пользователь не найден"
+// @Failure 500 {object} utils.ErrResponse "Внутренняя ошибка сервера"
+// @Router /profile/{user_id} [get]
 func (u *UserEndpoints) GetProfile(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	userID, err := uuid.Parse(vars["user_id"])
@@ -204,7 +266,7 @@ func (u *UserEndpoints) GetProfile(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case errors.Is(err, usecase.ErrUserNotFound):
 		u.logger.Error("user not found", zap.String("userID", userID.String()))
-		utils.SendErrorResponse(w, http.StatusBadRequest, ErrUserNotFound.Error())
+		utils.SendErrorResponse(w, http.StatusNotFound, ErrUserNotFound.Error())
 	case err != nil:
 		u.logger.Error("error getting user", zap.String("userID", userID.String()), zap.Error(err))
 		utils.SendErrorResponse(w, http.StatusInternalServerError, err.Error())
@@ -213,6 +275,16 @@ func (u *UserEndpoints) GetProfile(w http.ResponseWriter, r *http.Request) {
 	utils.SendJSONResponse(w, http.StatusOK, user)
 }
 
+// GetMe
+// @Summary Получение информации о текущем пользователе
+// @Description Возвращает информацию о пользователе, текущий пользователь которого аутентифицирован
+// @Tags Пользователи
+// @Accept json
+// @Produce json
+// @Success 200 {object} dto.User "Информация о пользователе"
+// @Failure 401 {object} utils.ErrResponse "Несанкционированный доступ"
+// @Failure 500 {object} utils.ErrResponse "Внутренняя ошибка сервера"
+// @Router /me [get]
 func (u *UserEndpoints) GetMe(w http.ResponseWriter, r *http.Request) {
 	userID, err := u.sessionManager.GetUserID(r)
 	if err != nil {
