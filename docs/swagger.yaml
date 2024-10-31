@@ -1,286 +1,279 @@
 definitions:
-  handlers.AuthData:
+  dto.Login:
     properties:
       email:
         type: string
       password:
         type: string
-    required:
-    - email
-    - password
     type: object
-  handlers.LoginCredentials:
+  dto.Signup:
     properties:
       email:
         type: string
       password:
         type: string
-    required:
-    - email
-    - password
     type: object
-  responses.AuthResponse:
+  dto.UpdatePassword:
     properties:
+      new_password:
+        type: string
+      old_password:
+        type: string
+    type: object
+  dto.User:
+    properties:
+      avatar_id:
+        type: string
       email:
         type: string
-      session_id:
+      id:
+        type: string
+      phone:
+        type: string
+      status:
+        default: active
+        type: string
+      username:
         type: string
     type: object
-  responses.ErrResponse:
+  utils.ErrResponse:
     properties:
       code:
         type: integer
       status:
         type: string
     type: object
-  storage.Advert:
-    properties:
-      id:
-        type: integer
-      image_url:
-        type: string
-      location:
-        type: string
-      price:
-        type: integer
-      title:
-        type: string
-    type: object
 info:
-  version: "1.0.3"
-  title: "emporium api"
   contact: {}
+  title: API
+  version: 1.0.0
 paths:
-  /api/v1/adverts:
-    get:
-      description: Get a list of all adverts
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: List of adverts
-          schema:
-            items:
-              $ref: '#/definitions/storage.Advert'
-            type: array
-        "500":
-          description: Failed to get adverts
-          schema:
-            $ref: '#/definitions/responses.ErrResponse'
-      summary: Get all adverts
-      tags:
-      - adverts
-    post:
-      consumes:
-      - application/json
-      description: Add a new advert to the list
-      parameters:
-      - description: Advert data
-        in: body
-        name: advert
-        required: true
-        schema:
-          $ref: '#/definitions/storage.Advert'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Advert added successfully
-          schema:
-            $ref: '#/definitions/storage.Advert'
-        "400":
-          description: Failed to add advert
-          schema:
-            $ref: '#/definitions/responses.ErrResponse'
-      summary: Add a new advert
-      tags:
-      - adverts
-  /api/v1/adverts/{id}:
-    delete:
-      description: Delete an advert by its ID
-      parameters:
-      - description: Advert ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      responses:
-        "204":
-          description: Advert deleted successfully
-        "400":
-          description: Invalid ID
-          schema:
-            $ref: '#/definitions/responses.ErrResponse'
-        "500":
-          description: Failed to delete advert
-          schema:
-            $ref: '#/definitions/responses.ErrResponse'
-      summary: Delete an advert
-      tags:
-      - adverts
-    get:
-      description: Get a single advert by its ID
-      parameters:
-      - description: Advert ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Advert details
-          schema:
-            $ref: '#/definitions/storage.Advert'
-        "400":
-          description: Invalid ID
-          schema:
-            $ref: '#/definitions/responses.ErrResponse'
-        "404":
-          description: Advert not found
-          schema:
-            $ref: '#/definitions/responses.ErrResponse'
-        "500":
-          description: Failed to get advert
-          schema:
-            $ref: '#/definitions/responses.ErrResponse'
-      summary: Get an advert by ID
-      tags:
-      - adverts
-    put:
-      consumes:
-      - application/json
-      description: Update an existing advert by its ID
-      parameters:
-      - description: Advert ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      - description: Advert data
-        in: body
-        name: advert
-        required: true
-        schema:
-          $ref: '#/definitions/storage.Advert'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Advert updated successfully
-          schema:
-            $ref: '#/definitions/storage.Advert'
-        "400":
-          description: Invalid ID or data
-          schema:
-            $ref: '#/definitions/responses.ErrResponse'
-        "404":
-          description: Advert not found
-          schema:
-            $ref: '#/definitions/responses.ErrResponse'
-        "500":
-          description: Failed to update advert
-          schema:
-            $ref: '#/definitions/responses.ErrResponse'
-      summary: Update an advert
-      tags:
-      - adverts
   /login:
     post:
       consumes:
       - application/json
-      description: Login a user with email and password
+      description: Позволяет пользователю войти в систему
       parameters:
-      - description: User credentials
+      - description: Данные для входа
         in: body
-        name: credentials
+        name: login
         required: true
         schema:
-          $ref: '#/definitions/handlers.LoginCredentials'
+          $ref: '#/definitions/dto.Login'
       produces:
       - application/json
       responses:
         "200":
-          description: OK
-          headers:
-            X-Authenticated:
-              description: "true"
-              type: string
+          description: SessionID
           schema:
-            $ref: '#/definitions/responses.AuthResponse'
+            type: string
         "400":
-          description: Invalid request body or data
+          description: Некорректный запрос
           schema:
-            $ref: '#/definitions/responses.ErrResponse'
-        "405":
-          description: Method not allowed
+            $ref: '#/definitions/utils.ErrResponse'
+        "401":
+          description: Неверные учетные данные или несанкционированный доступ
           schema:
-            $ref: '#/definitions/responses.ErrResponse'
-      summary: Login a user
+            $ref: '#/definitions/utils.ErrResponse'
+        "404":
+          description: Пользователь не найден
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Вход пользователя
       tags:
-      - session
+      - Пользователи
   /logout:
     post:
       consumes:
       - application/json
-      description: Logout a user by invalidating the session
+      description: Позволяет пользователю выйти из системы, удаляя его сессию
       produces:
       - application/json
       responses:
         "200":
-          description: Logged out successfully
-          headers:
-            X-Authenticated:
-              description: "false"
-              type: string
+          description: Вы успешно вышли из системы
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            type: string
+        "400":
+          description: Некорректный запрос или отсутствие cookie
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
         "401":
-          description: No active session or session does not exist
+          description: Несанкционированный доступ
           schema:
-            $ref: '#/definitions/responses.ErrResponse'
-        "405":
-          description: Method not allowed
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Внутренняя ошибка сервера
           schema:
-            $ref: '#/definitions/responses.ErrResponse'
-      summary: Logout a user
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Выход пользователя
       tags:
-      - session
+      - Аутентификация
+  /me:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает информацию о пользователе, текущий пользователь которого
+        аутентифицирован
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Информация о пользователе
+          schema:
+            $ref: '#/definitions/dto.User'
+        "401":
+          description: Несанкционированный доступ
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Получение информации о текущем пользователе
+      tags:
+      - Пользователи
+  /password:
+    post:
+      consumes:
+      - application/json
+      description: Позволяет пользователю изменить свой пароль
+      parameters:
+      - description: Данные для изменения пароля
+        in: body
+        name: password
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdatePassword'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Пароль изменен успешно
+          schema:
+            type: string
+        "400":
+          description: Некорректные данные
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "401":
+          description: Несанкционированный доступ
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "404":
+          description: Пользователь не найден
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Изменение пароля пользователя
+      tags:
+      - Пользователи
+  /profile:
+    put:
+      consumes:
+      - application/json
+      description: Позволяет пользователю обновить информацию своего профиля
+      parameters:
+      - description: Данные профиля
+        in: body
+        name: profile
+        required: true
+        schema:
+          $ref: '#/definitions/dto.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Профиль обновлен успешно
+          schema:
+            type: string
+        "400":
+          description: Некорректные данные
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "401":
+          description: Несанкционированный доступ
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "404":
+          description: Пользователь не найден
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Обновление профиля пользователя
+      tags:
+      - Пользователи
+  /profile/{user_id}:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает информацию о пользователе по его ID
+      parameters:
+      - description: ID пользователя
+        in: path
+        name: user_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Профиль пользователя
+          schema:
+            $ref: '#/definitions/dto.User'
+        "404":
+          description: Пользователь не найден
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Получение профиля пользователя
+      tags:
+      - Пользователи
   /signup:
     post:
       consumes:
       - application/json
-      description: Signup a new user with email and password
+      description: Создает нового пользователя в системе
       parameters:
-      - description: User credentials
+      - description: Данные для регистрации
         in: body
-        name: credentials
+        name: signup
         required: true
         schema:
-          $ref: '#/definitions/handlers.AuthData'
+          $ref: '#/definitions/dto.Signup'
       produces:
       - application/json
       responses:
-        "201":
-          description: Created
+        "200":
+          description: SessionID
           schema:
-            $ref: '#/definitions/responses.AuthResponse'
+            type: string
         "400":
-          description: User already exists
+          description: Некорректный запрос или пользователь уже существует
           schema:
-            $ref: '#/definitions/responses.ErrResponse'
-        "405":
-          description: Method not allowed
+            $ref: '#/definitions/utils.ErrResponse'
+        "401":
+          description: Несанкционированный запрос
           schema:
-            $ref: '#/definitions/responses.ErrResponse'
+            $ref: '#/definitions/utils.ErrResponse'
         "500":
-          description: Failed to create user
+          description: Внутренняя ошибка сервера
           schema:
-            $ref: '#/definitions/responses.ErrResponse'
-      summary: Signup a new user
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Регистрация нового пользователя
       tags:
-      - session
+      - Пользователи
 swagger: "2.0"

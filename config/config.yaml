@@ -1,0 +1,20 @@
+server:
+  port: 8080
+  host: "localhost"
+  read_timeout: 10s
+  write_timeout: 10s
+  shutdown_timeout: 10s
+
+session:
+  expiration_time: 12h
+  secure_cookie: false
+
+pg_ip: "localhost"
+pg_port: 5432
+pg_user: "postgres"
+pg_password: "postgres"
+pg_db: "emporiumdb"
+
+rd_addr: "localhost:6379"
+rd_password: ""
+rd_db: 0

@@ -1,46 +1,57 @@
 package delivery
 
 import (
-	"github.com/go-park-mail-ru/2024_2_BogoSort/config"
-	http3 "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repo/postgres"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/pkg/connector"
 	"log"
 	"net/http"
 
+	"github.com/go-park-mail-ru/2024_2_BogoSort/config"
+	http3 "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/utils"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository/postgres"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository/redis"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase/service"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/pkg/connector"
 	"github.com/gorilla/mux"
+	"go.uber.org/zap"
+
+	"github.com/pkg/errors"
 )
 
-func NewRouter() *mux.Router {
+func NewRouter(cfg config.Config) (*mux.Router, error) {
+	zap.ReplaceGlobals(zap.Must(zap.NewProduction()))
+	defer zap.L().Sync()
+
 	router := mux.NewRouter()
 	router.Use(recoveryMiddleware)
 
-	var cfg config.Config
-	psql, err := connector.GetPostgresConnector(cfg.Postgres.GetConnectURL())
-
+	dbPool, err := connector.GetPostgresConnector(cfg.GetConnectURL())
 	if err != nil {
-		return err
+		zap.L().Error("Failed to connect to Postgres", zap.Error(err))
+		return nil, errors.Wrap(err, "failed to connect to Postgres")
+	}
+	rdb, err := connector.GetRedisConnector(cfg.RdAddr, cfg.RdPass, cfg.RdDB)
+	if err != nil {
+		zap.L().Error("Failed to connect to Redis", zap.Error(err))
+		return nil, errors.Wrap(err, "failed to connect to Redis")
 	}
 
-	userRepo := postgres.NewUserRepository(psql)
+	userRepo := postgres.NewUserRepository(dbPool, zap.L())
+	userUC := service.NewUserService(userRepo, zap.L())
 
-	advertsHandler := http3.NewAdvertsHandler()
-	authHandler := advertsHandler.NewAuthHandler()
+	sessionRepo := redis.NewSessionRepository(rdb, int(cfg.Session.ExpirationTime.Seconds()), zap.L())
+	sessionUC := service.NewAuthService(sessionRepo, zap.L())
 
-	router.Use(authMiddleware(authHandler))
+	sessionManager := utils.NewSessionManager(sessionUC, int(cfg.Session.ExpirationTime.Seconds()), cfg.Session.SecureCookie, zap.L())
 
-	router.HandleFunc("/api/v1/signup", authHandler.SignupHandler).Methods("POST")
-	router.HandleFunc("/api/v1/login", authHandler.LoginHandler).Methods("POST")
-	router.HandleFunc("/api/v1/logout", authHandler.LogoutHandler).Methods("POST")
-	router.HandleFunc("/api/v1/adverts", advertsHandler.GetAdvertsHandler).Methods("GET")
-	router.HandleFunc("/api/v1/adverts/{id}", advertsHandler.GetAdvertByIDHandler).Methods("GET")
-	router.HandleFunc("/api/v1/adverts", advertsHandler.AddAdvertHandler).Methods("POST")
-	router.HandleFunc("/api/v1/adverts/{id}", advertsHandler.UpdateAdvertHandler).Methods("PUT")
-	router.HandleFunc("/api/v1/adverts/{id}", advertsHandler.DeleteAdvertHandler).Methods("DELETE")
+	authHandler := http3.NewAuthEndpoints(sessionUC, sessionManager, zap.L())
+	userHandler := http3.NewUserEndpoints(userUC, sessionUC, sessionManager, zap.L())
+
+	authHandler.Configure(router)
+	userHandler.Configure(router)
 
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
-	return router
+	return router, nil
 }
 
 func recoveryMiddleware(next http.Handler) http.Handler {
@@ -53,32 +64,4 @@ func recoveryMiddleware(next http.Handler) http.Handler {
 		}()
 		next.ServeHTTP(w, r)
 	})
-}
-
-func isAuthenticated(r *http.Request, authHandler *http3.AuthHandler) bool {
-	cookie, err := r.Cookie("session_id")
-	if err != nil || cookie == nil {
-		log.Println("No session cookie found")
-
-		return false
-	}
-
-	exists := authHandler.SessionRepo.SessionExists(cookie.Value)
-	log.Printf("Session exists: %v for session_id: %s", exists, cookie.Value)
-
-	return exists
-}
-
-func authMiddleware(authHandler *http3.AuthHandler) mux.MiddlewareFunc {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if isAuthenticated(r, authHandler) {
-				w.Header().Set("X-Authenticated", "true")
-			} else {
-				w.Header().Set("X-Authenticated", "false")
-			}
-
-			next.ServeHTTP(w, r)
-		})
-	}
 }

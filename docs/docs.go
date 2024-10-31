@@ -15,213 +15,9 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/api/v1/adverts": {
-            "get": {
-                "description": "Get a list of all adverts",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "adverts"
-                ],
-                "summary": "Get all adverts",
-                "responses": {
-                    "200": {
-                        "description": "List of adverts",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/storage.Advert"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Failed to get adverts",
-                        "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "description": "Add a new advert to the list",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "adverts"
-                ],
-                "summary": "Add a new advert",
-                "parameters": [
-                    {
-                        "description": "Advert data",
-                        "name": "advert",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/storage.Advert"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Advert added successfully",
-                        "schema": {
-                            "$ref": "#/definitions/storage.Advert"
-                        }
-                    },
-                    "400": {
-                        "description": "Failed to add advert",
-                        "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/adverts/{id}": {
-            "get": {
-                "description": "Get a single advert by its ID",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "adverts"
-                ],
-                "summary": "Get an advert by ID",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Advert ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Advert details",
-                        "schema": {
-                            "$ref": "#/definitions/storage.Advert"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid ID",
-                        "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Advert not found",
-                        "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Failed to get advert",
-                        "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
-                        }
-                    }
-                }
-            },
-            "put": {
-                "description": "Update an existing advert by its ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "adverts"
-                ],
-                "summary": "Update an advert",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Advert ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Advert data",
-                        "name": "advert",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/storage.Advert"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Advert updated successfully",
-                        "schema": {
-                            "$ref": "#/definitions/storage.Advert"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid ID or data",
-                        "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Advert not found",
-                        "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Failed to update advert",
-                        "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "description": "Delete an advert by its ID",
-                "tags": [
-                    "adverts"
-                ],
-                "summary": "Delete an advert",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Advert ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": "Advert deleted successfully"
-                    },
-                    "400": {
-                        "description": "Invalid ID",
-                        "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Failed to delete advert",
-                        "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/login": {
             "post": {
-                "description": "Login a user with email and password",
+                "description": "Позволяет пользователю войти в систему",
                 "consumes": [
                     "application/json"
                 ],
@@ -229,43 +25,49 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "session"
+                    "Пользователи"
                 ],
-                "summary": "Login a user",
+                "summary": "Вход пользователя",
                 "parameters": [
                     {
-                        "description": "User credentials",
-                        "name": "credentials",
+                        "description": "Данные для входа",
+                        "name": "login",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handlers.LoginCredentials"
+                            "$ref": "#/definitions/dto.Login"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "SessionID",
                         "schema": {
-                            "$ref": "#/definitions/responses.AuthResponse"
-                        },
-                        "headers": {
-                            "X-Authenticated": {
-                                "type": "string",
-                                "description": "true"
-                            }
+                            "type": "string"
                         }
                     },
                     "400": {
-                        "description": "Invalid request body or data",
+                        "description": "Некорректный запрос",
                         "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
+                            "$ref": "#/definitions/utils.ErrResponse"
                         }
                     },
-                    "405": {
-                        "description": "Method not allowed",
+                    "401": {
+                        "description": "Неверные учетные данные или несанкционированный доступ",
                         "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Пользователь не найден",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
                         }
                     }
                 }
@@ -273,7 +75,7 @@ const docTemplate = `{
         },
         "/logout": {
             "post": {
-                "description": "Logout a user by invalidating the session",
+                "description": "Позволяет пользователю выйти из системы, удаляя его сессию",
                 "consumes": [
                     "application/json"
                 ],
@@ -281,35 +83,227 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "session"
+                    "Аутентификация"
                 ],
-                "summary": "Logout a user",
+                "summary": "Выход пользователя",
                 "responses": {
                     "200": {
-                        "description": "Logged out successfully",
+                        "description": "Вы успешно вышли из системы",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        },
-                        "headers": {
-                            "X-Authenticated": {
-                                "type": "string",
-                                "description": "false"
-                            }
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректный запрос или отсутствие cookie",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
                         }
                     },
                     "401": {
-                        "description": "No active session or session does not exist",
+                        "description": "Несанкционированный доступ",
                         "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
+                            "$ref": "#/definitions/utils.ErrResponse"
                         }
                     },
-                    "405": {
-                        "description": "Method not allowed",
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
                         "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/me": {
+            "get": {
+                "description": "Возвращает информацию о пользователе, текущий пользователь которого аутентифицирован",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Пользователи"
+                ],
+                "summary": "Получение информации о текущем пользователе",
+                "responses": {
+                    "200": {
+                        "description": "Информация о пользователе",
+                        "schema": {
+                            "$ref": "#/definitions/dto.User"
+                        }
+                    },
+                    "401": {
+                        "description": "Несанкционированный доступ",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/password": {
+            "post": {
+                "description": "Позволяет пользователю изменить свой пароль",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Пользователи"
+                ],
+                "summary": "Изменение пароля пользователя",
+                "parameters": [
+                    {
+                        "description": "Данные для изменения пароля",
+                        "name": "password",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UpdatePassword"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Пароль изменен успешно",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректные данные",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Несанкционированный доступ",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Пользователь не найден",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/profile": {
+            "put": {
+                "description": "Позволяет пользователю обновить информацию своего профиля",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Пользователи"
+                ],
+                "summary": "Обновление профиля пользователя",
+                "parameters": [
+                    {
+                        "description": "Данные профиля",
+                        "name": "profile",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.User"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Профиль обновлен успешно",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректные данные",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Несанкционированный доступ",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Пользователь не найден",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/profile/{user_id}": {
+            "get": {
+                "description": "Возвращает информацию о пользователе по его ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Пользователи"
+                ],
+                "summary": "Получение профиля пользователя",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID пользователя",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Профиль пользователя",
+                        "schema": {
+                            "$ref": "#/definitions/dto.User"
+                        }
+                    },
+                    "404": {
+                        "description": "Пользователь не найден",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
                         }
                     }
                 }
@@ -317,7 +311,7 @@ const docTemplate = `{
         },
         "/signup": {
             "post": {
-                "description": "Signup a new user with email and password",
+                "description": "Создает нового пользователя в системе",
                 "consumes": [
                     "application/json"
                 ],
@@ -325,43 +319,43 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "session"
+                    "Пользователи"
                 ],
-                "summary": "Signup a new user",
+                "summary": "Регистрация нового пользователя",
                 "parameters": [
                     {
-                        "description": "User credentials",
-                        "name": "credentials",
+                        "description": "Данные для регистрации",
+                        "name": "signup",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handlers.AuthData"
+                            "$ref": "#/definitions/dto.Signup"
                         }
                     }
                 ],
                 "responses": {
-                    "201": {
-                        "description": "Created",
+                    "200": {
+                        "description": "SessionID",
                         "schema": {
-                            "$ref": "#/definitions/responses.AuthResponse"
+                            "type": "string"
                         }
                     },
                     "400": {
-                        "description": "User already exists",
+                        "description": "Некорректный запрос или пользователь уже существует",
                         "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
+                            "$ref": "#/definitions/utils.ErrResponse"
                         }
                     },
-                    "405": {
-                        "description": "Method not allowed",
+                    "401": {
+                        "description": "Несанкционированный запрос",
                         "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
+                            "$ref": "#/definitions/utils.ErrResponse"
                         }
                     },
                     "500": {
-                        "description": "Failed to create user",
+                        "description": "Внутренняя ошибка сервера",
                         "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
+                            "$ref": "#/definitions/utils.ErrResponse"
                         }
                     }
                 }
@@ -369,12 +363,8 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "handlers.AuthData": {
+        "dto.Login": {
             "type": "object",
-            "required": [
-                "email",
-                "password"
-            ],
             "properties": {
                 "email": {
                     "type": "string"
@@ -384,12 +374,8 @@ const docTemplate = `{
                 }
             }
         },
-        "handlers.LoginCredentials": {
+        "dto.Signup": {
             "type": "object",
-            "required": [
-                "email",
-                "password"
-            ],
             "properties": {
                 "email": {
                     "type": "string"
@@ -399,44 +385,48 @@ const docTemplate = `{
                 }
             }
         },
-        "responses.AuthResponse": {
+        "dto.UpdatePassword": {
             "type": "object",
             "properties": {
-                "email": {
+                "new_password": {
                     "type": "string"
                 },
-                "session_id": {
+                "old_password": {
                     "type": "string"
                 }
             }
         },
-        "responses.ErrResponse": {
+        "dto.User": {
+            "type": "object",
+            "properties": {
+                "avatar_id": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string",
+                    "default": "active"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "utils.ErrResponse": {
             "type": "object",
             "properties": {
                 "code": {
                     "type": "integer"
                 },
                 "status": {
-                    "type": "string"
-                }
-            }
-        },
-        "storage.Advert": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "integer"
-                },
-                "image_url": {
-                    "type": "string"
-                },
-                "location": {
-                    "type": "string"
-                },
-                "price": {
-                    "type": "integer"
-                },
-                "title": {
                     "type": "string"
                 }
             }
