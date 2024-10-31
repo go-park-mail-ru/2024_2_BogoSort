@@ -1,11 +1,11 @@
 -- Откат миграции 000001_init.up.sql
 
 -- Удаление триггеров для автоматического обновления поля updated_at
-DROP TRIGGER IF EXISTS update_subscription_updated_at ON subscription;
 DROP TRIGGER IF EXISTS update_seller_updated_at ON seller;
 DROP TRIGGER IF EXISTS update_user_updated_at ON "user";
 DROP TRIGGER IF EXISTS update_advert_updated_at ON advert;
-DROP TRIGGER IF EXISTS update_category_updated_at ON category;
+DROP TRIGGER IF EXISTS update_cart_updated_at ON cart;
+DROP TRIGGER IF EXISTS update_purchase_updated_at ON purchase;  
 
 -- Удаление функции обновления updated_at
 DROP FUNCTION IF EXISTS update_updated_at_column();

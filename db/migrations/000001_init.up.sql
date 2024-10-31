@@ -11,8 +11,8 @@ CREATE TABLE IF NOT EXISTS "user" (
     password_salt bytea NOT NULL,
     phone_number TEXT 
         CONSTRAINT phone_number_length CHECK (LENGTH(phone_number) <= 20),
-    image_id TEXT 
-        CONSTRAINT image_id_length CHECK (LENGTH(image_id) <= 255),
+    image_id UUID 
+        CONSTRAINT image_id_fk REFERENCES static(id) ON DELETE SET NULL,
     status TEXT 
         CONSTRAINT status_allowed_values CHECK (status IN ('active', 'inactive', 'banned')),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -37,8 +37,6 @@ CREATE TABLE IF NOT EXISTS subscription (
         CONSTRAINT subscription_user_fk REFERENCES "user"(id) ON DELETE CASCADE,
     seller_id UUID NOT NULL 
         CONSTRAINT subscription_seller_fk REFERENCES seller(id) ON DELETE CASCADE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT subscription_unique UNIQUE (user_id, seller_id)
 );
 
@@ -48,7 +46,6 @@ CREATE TABLE IF NOT EXISTS category (
     title TEXT 
         CONSTRAINT category_title_length CHECK (LENGTH(title) <= 100) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Таблица для хранения статических файлов
@@ -91,7 +88,8 @@ CREATE TABLE IF NOT EXISTS saved_advert (
     advert_id UUID NOT NULL,
     FOREIGN KEY (user_id) REFERENCES "user"(id) ON DELETE CASCADE,
     FOREIGN KEY (advert_id) REFERENCES advert(id) ON DELETE CASCADE,
-    CONSTRAINT saved_advert_unique UNIQUE (user_id, advert_id)
+    CONSTRAINT saved_advert_unique UNIQUE (user_id, advert_id),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 );
 
 -- Таблица корзины
@@ -99,6 +97,8 @@ CREATE TABLE IF NOT EXISTS cart (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4() NOT NULL,
     user_id UUID NOT NULL, 
     advert_id UUID NOT NULL, 
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES "user"(id) ON DELETE CASCADE,
     FOREIGN KEY (advert_id) REFERENCES advert(id) ON DELETE CASCADE
 );
@@ -117,9 +117,11 @@ CREATE TABLE IF NOT EXISTS cart_advert (
 CREATE TABLE IF NOT EXISTS purchase (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4() NOT NULL,
     cart_id UUID NOT NULL,
-    status TEXT NOT NULL 
-        CONSTRAINT status_length CHECK (LENGTH(status) <= 255) NOT NULL,
-    FOREIGN KEY (cart_id) REFERENCES cart(id) ON DELETE CASCADE
+    status TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT status_length CHECK (LENGTH(status) <= 255) NOT NULL,
+    FOREIGN KEY (cart_id) REFERENCES cart(id) ON DELETE CASCADE,
 );
 
 -- Функция для автоматического обновления поля updated_at
@@ -132,10 +134,6 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Триггеры для автоматического обновления поля updated_at
-CREATE TRIGGER update_category_updated_at
-BEFORE UPDATE ON category
-FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
 CREATE TRIGGER update_advert_updated_at
 BEFORE UPDATE ON advert
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -148,6 +146,10 @@ CREATE TRIGGER update_seller_updated_at
 BEFORE UPDATE ON seller
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_subscription_updated_at
-BEFORE UPDATE ON subscription
+CREATE TRIGGER update_cart_updated_at
+BEFORE UPDATE ON cart
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_purchase_updated_at
+BEFORE UPDATE ON purchase
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
