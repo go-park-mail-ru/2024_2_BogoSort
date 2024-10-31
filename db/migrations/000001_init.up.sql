@@ -1,6 +1,11 @@
 -- Создание расширения для генерации UUID, если оно еще не существует
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+CREATE TYPE user_status AS ENUM ('active', 'inactive', 'banned');
+CREATE TYPE payment_method AS ENUM ('cash', 'card');
+CREATE TYPE delivery_method AS ENUM ('pickup', 'delivery');
+CREATE TYPE purchase_status AS ENUM ('pending', 'in_progress', 'completed', 'cancelled');
+
 -- Таблица для хранения статических файлов
 CREATE TABLE IF NOT EXISTS static (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4() NOT NULL,
@@ -24,8 +29,7 @@ CREATE TABLE IF NOT EXISTS "user" (
         CONSTRAINT phone_number_length CHECK (LENGTH(phone_number) <= 20),
     image_id UUID
         CONSTRAINT image_id_fk REFERENCES static(id) ON DELETE SET NULL,
-    status TEXT
-        CONSTRAINT status_allowed_values CHECK (status IN ('active', 'inactive', 'banned')),
+    status user_status DEFAULT 'active',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -99,8 +103,7 @@ CREATE TABLE IF NOT EXISTS cart (
     user_id UUID NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES "user"(id) ON DELETE CASCADE,
-    FOREIGN KEY (advert_id) REFERENCES advert(id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES "user"(id) ON DELETE CASCADE
 );
 
 -- Таблица для связи между корзиной и объявлениями
@@ -117,17 +120,13 @@ CREATE TABLE IF NOT EXISTS cart_advert (
 CREATE TABLE IF NOT EXISTS purchase (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4() NOT NULL,
     cart_id UUID NOT NULL,
-    status TEXT
-        CONSTRAINT status_length CHECK (status IN ('pending', 'in_progress', 'completed', 'cancelled')),
+    status purchase_status DEFAULT 'pending',
     adress TEXT
         CONSTRAINT adress_length CHECK (LENGTH(adress) <= 150),
-    payment_method TEXT
-        CONSTRAINT payment_method_length CHECK (status IN ('cash', 'card')),
-    delivery_method TEXT
-        CONSTRAINT delivery_method_length CHECK (status IN ('pickup', 'delivery')),
+    payment_method payment_method DEFAULT 'cash',
+    delivery_method delivery_method DEFAULT 'pickup',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT status_length CHECK (LENGTH(status) <= 255),
     FOREIGN KEY (cart_id) REFERENCES cart(id) ON DELETE CASCADE
 );
 
