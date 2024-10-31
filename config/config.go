@@ -10,20 +10,6 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-type Postgres struct {
-	IP   string `yaml:"ip"   default:"postgres"`
-	Port int    `yaml:"port" default:"5432"`
-	User string `yaml:"user" default:"postgres"`
-	Pass string `yaml:"password" default:"postgres"`
-	DB   string `yaml:"db" default:"emporiumdb"`
-}
-
-type Redis struct {
-	Addr     string `yaml:"addr" default:"redis:6379"`
-	Password string `yaml:"-"`
-	DB       int    `yaml:"db"   default:"0"`
-}
-
 type Config struct {
 	Server struct {
 		Port            int           `yaml:"port" default:"8080"`
@@ -36,8 +22,14 @@ type Config struct {
 		ExpirationTime time.Duration `yaml:"expiration_time" default:"12h"`
 		SecureCookie   bool          `yaml:"secure_cookie" default:"false"`
 	} `yaml:"session"`
-	Postgres Postgres `yaml:"postgres"`
-	Redis    Redis    `yaml:"redis"`
+	PGIP   string `yaml:"pg_ip"   default:"postgres"`
+	PGPort int    `yaml:"pg_port" default:"5432"`
+	PGUser string `yaml:"pg_user" default:"postgres"`
+	PGPass string `yaml:"pg_password" default:"postgres"`
+	PGDB   string `yaml:"pg_db" default:"emporiumdb"`
+	RdAddr string `yaml:"rd_addr" default:"redis:6379"`
+	RdPass string `yaml:"rd_password" default:""`
+	RdDB   int    `yaml:"rd_db" default:"0"`
 }
 
 var cfg Config
@@ -62,15 +54,15 @@ func Init() (Config, error) {
 func InitFromEnv() Config {
 	var cfg Config
 
-	cfg.Postgres.User = os.Getenv("POSTGRES_USER")
-	cfg.Postgres.Pass = os.Getenv("POSTGRES_PASSWORD")
-	cfg.Postgres.IP = os.Getenv("POSTGRES_HOST")
+	cfg.PGUser = os.Getenv("POSTGRES_USER")
+	cfg.PGPass = os.Getenv("POSTGRES_PASSWORD")
+	cfg.PGIP = os.Getenv("POSTGRES_HOST")
 
 	port := os.Getenv("POSTGRES_PORT")
 	if port == "" {
 		port = "5432"
 	}
-	cfg.Postgres.Port, _ = strconv.Atoi(port)
+	cfg.PGPort, _ = strconv.Atoi(port)
 
 	expirationTime, _ := time.ParseDuration(os.Getenv("SESSION_EXPIRATION_TIME"))
 	cfg.Session.ExpirationTime = expirationTime
@@ -91,7 +83,7 @@ func GetServerAddress() string {
 func (cfg *Config) GetConnectURL() string {
 	return fmt.Sprintf(
 		"postgres://%s:%s@%s:%d/%s?sslmode=disable",
-		cfg.Postgres.User, cfg.Postgres.Pass, cfg.Postgres.IP, cfg.Postgres.Port, cfg.Postgres.DB)
+		cfg.PGUser, cfg.PGPass, cfg.PGIP, cfg.PGPort, cfg.PGDB)
 }
 
 func GetReadTimeout() time.Duration {

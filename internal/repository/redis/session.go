@@ -30,79 +30,79 @@ func NewSessionRepository(rdb *redis.Client, sessionAliveTime int, logger *zap.L
 	}
 }
 
-func (sdb *SessionDB) CreateSession(userID uuid.UUID) (string, error) {
+func (s *SessionDB) CreateSession(userID uuid.UUID) (string, error) {
 	sessionID := uuid.NewString()
 
 	for {
-		_, err := sdb.rdb.Get(sdb.ctx, sessionID).Result()
+		_, err := s.rdb.Get(s.ctx, sessionID).Result()
 		if errors.Is(err, redis.Nil) {
 			break
 		}
 		sessionID = uuid.NewString()
 	}
 
-	err := sdb.rdb.Set(sdb.ctx, sessionID, userID.String(), time.Duration(sdb.sessionAliveTime)*time.Second).Err()
+	err := s.rdb.Set(s.ctx, sessionID, userID.String(), time.Duration(s.sessionAliveTime)*time.Second).Err()
 	if err != nil {
-		sdb.logger.Error("error creating session", zap.String("sessionID", sessionID), zap.String("userID", userID.String()), zap.Error(err))
+		s.logger.Error("error creating session", zap.String("sessionID", sessionID), zap.String("userID", userID.String()), zap.Error(err))
 		return "", entity.RedisWrap(repository.ErrSessionCreationFailed, err)
 	}
 
-	err = sdb.rdb.SAdd(sdb.ctx, userSessionPlaceholder+userID.String(), sessionID).Err()
+	err = s.rdb.SAdd(s.ctx, userSessionPlaceholder+userID.String(), sessionID).Err()
 	if err != nil {
-		sdb.logger.Error("error adding session to user", zap.String("sessionID", sessionID), zap.String("userID", userID.String()), zap.Error(err))
+		s.logger.Error("error adding session to user", zap.String("sessionID", sessionID), zap.String("userID", userID.String()), zap.Error(err))
 		return "", entity.RedisWrap(repository.ErrSessionCreationFailed, err)
 	}
-	sdb.logger.Info("session created", zap.String("sessionID", sessionID), zap.String("userID", userID.String()))
+	s.logger.Info("session created", zap.String("sessionID", sessionID), zap.String("userID", userID.String()))
 	return sessionID, nil
 }
 
-func (sdb *SessionDB) GetSession(sessionID string) (uuid.UUID, error) {
-	userID, err := sdb.rdb.Get(sdb.ctx, sessionID).Result()
+func (s *SessionDB) GetSession(sessionID string) (uuid.UUID, error) {
+	userID, err := s.rdb.Get(s.ctx, sessionID).Result()
 	if errors.Is(err, redis.Nil) {
-		sdb.logger.Error("session not found", zap.String("sessionID", sessionID))
+		s.logger.Error("session not found", zap.String("sessionID", sessionID))
 		return uuid.Nil, entity.RedisWrap(repository.ErrSessionNotFound, err)
 	}
 	if err != nil {
-		sdb.logger.Error("error getting session", zap.String("sessionID", sessionID), zap.Error(err))
+		s.logger.Error("error getting session", zap.String("sessionID", sessionID), zap.Error(err))
 		return uuid.Nil, entity.RedisWrap(repository.ErrSessionCheckFailed, err)
 	}
 
 	id, err := uuid.Parse(userID)
 	if err != nil {
-		sdb.logger.Error("error parsing userID", zap.String("userID", userID), zap.Error(err))
+		s.logger.Error("error parsing userID", zap.String("userID", userID), zap.Error(err))
 		return uuid.Nil, entity.RedisWrap(repository.ErrIncorrectID, err)
 	}
-	sdb.logger.Info("session found", zap.String("sessionID", sessionID), zap.String("userID", id.String()))
+	s.logger.Info("session found", zap.String("sessionID", sessionID), zap.String("userID", id.String()))
 	return id, nil
 }
 
-func (sdb *SessionDB) DeleteSession(sessionID string) error {
-	userID, err := sdb.rdb.Get(sdb.ctx, sessionID).Result()
+func (s *SessionDB) DeleteSession(sessionID string) error {
+	userID, err := s.rdb.Get(s.ctx, sessionID).Result()
 	if errors.Is(err, redis.Nil) {
-		sdb.logger.Info("session not found", zap.String("sessionID", sessionID))
+		s.logger.Info("session not found", zap.String("sessionID", sessionID))
 		return nil
 	}
 	if err != nil {
-		sdb.logger.Error("error getting session", zap.String("sessionID", sessionID), zap.Error(err))
+		s.logger.Error("error getting session", zap.String("sessionID", sessionID), zap.Error(err))
 		return entity.RedisWrap(repository.ErrSessionDeleteFailed, err)
 	}
 
-	err = sdb.rdb.Del(sdb.ctx, sessionID).Err()
+	err = s.rdb.Del(s.ctx, sessionID).Err()
 	if err != nil {
-		sdb.logger.Error("error deleting session", zap.String("sessionID", sessionID), zap.Error(err))
+		s.logger.Error("error deleting session", zap.String("sessionID", sessionID), zap.Error(err))
 		return entity.RedisWrap(repository.ErrSessionDeleteFailed, err)
 	}
 
 	if userID == "" {
-		sdb.logger.Error("userID is empty", zap.String("sessionID", sessionID))
+		s.logger.Error("userID is empty", zap.String("sessionID", sessionID))
 		return entity.RedisWrap(repository.ErrSessionDeleteFailed, errors.New("userID is empty"))
 	}
 
-	err = sdb.rdb.SRem(sdb.ctx, userSessionPlaceholder+userID, sessionID).Err()
+	err = s.rdb.SRem(s.ctx, userSessionPlaceholder+userID, sessionID).Err()
 	if err != nil {
-		sdb.logger.Error("error deleting session from user", zap.String("sessionID", sessionID), zap.String("userID", userID), zap.Error(err))
+		s.logger.Error("error deleting session from user", zap.String("sessionID", sessionID), zap.String("userID", userID), zap.Error(err))
 		return entity.RedisWrap(repository.ErrSessionDeleteFailed, err)
 	}
-	sdb.logger.Info("session deleted", zap.String("sessionID", sessionID), zap.String("userID", userID))
+	s.logger.Info("session deleted", zap.String("sessionID", sessionID), zap.String("userID", userID))
 	return nil
 }

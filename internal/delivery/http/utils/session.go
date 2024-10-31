@@ -26,13 +26,7 @@ func NewSessionManager(authUC usecase.Auth, sessionAliveTime int, secureCookie b
 }
 
 func (s *SessionManager) CreateSession(userID uuid.UUID) (string, error) {
-	session, err := s.sessionUC.CreateSession(userID)
-	if err != nil {
-		s.logger.Error("error creating session", zap.String("userID", userID.String()), zap.Error(err))
-		return "", err
-	}
-
-	return session, nil
+	return s.sessionUC.CreateSession(userID)
 }
 
 func (s *SessionManager) SetSession(value string, expires time.Time) (*http.Cookie, error) {
@@ -58,10 +52,5 @@ func (s *SessionManager) GetUserID(r *http.Request) (uuid.UUID, error) {
 }
 
 func (s *SessionManager) DeleteSession(sessionID string) error {
-	err := s.sessionUC.Logout(sessionID)
-	if err != nil {
-		s.logger.Error("error logging out", zap.String("sessionID", sessionID), zap.Error(err))
-		return err
-	}
-	return nil
+	return s.sessionUC.Logout(sessionID)
 }

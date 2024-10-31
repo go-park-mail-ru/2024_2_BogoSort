@@ -26,7 +26,7 @@ func NewRouter(cfg config.Config) *mux.Router {
 	if err != nil {
 		return nil
 	}
-	rdb, err := connector.GetRedisConnector(cfg.Redis.Addr, cfg.Redis.Password, cfg.Redis.DB)
+	rdb, err := connector.GetRedisConnector(cfg.RdAddr, cfg.RdPass, cfg.RdDB)
 	if err != nil {
 		return nil
 	}

@@ -49,6 +49,28 @@ func (u *UserEndpoints) Configure(router *mux.Router) {
 	router.HandleFunc("/me", u.GetMe).Methods(http.MethodGet)
 }
 
+func (u *UserEndpoints) handleError(w http.ResponseWriter, err error, context string, additionalInfo map[string]string) {
+	var errUserIncorrectData usecase.UserIncorrectDataError
+
+	switch {
+	case errors.Is(err, usecase.ErrUserNotFound):
+		u.sendError(w, http.StatusNotFound, ErrUserNotFound, context, additionalInfo)
+	case errors.Is(err, usecase.ErrInvalidCredentials):
+		u.sendError(w, http.StatusUnauthorized, ErrInvalidCredentials, context, additionalInfo)
+	case errors.As(err, &errUserIncorrectData):
+		u.sendError(w, http.StatusBadRequest, errUserIncorrectData, context, additionalInfo)
+	case errors.Is(err, usecase.ErrOldAndNewPasswordAreTheSame):
+		u.sendError(w, http.StatusBadRequest, ErrOldAndNewPasswordAreTheSame, context, additionalInfo)
+	case err != nil:
+		u.sendError(w, http.StatusInternalServerError, err, context, additionalInfo)
+	}
+}
+
+func (u *UserEndpoints) sendError(w http.ResponseWriter, statusCode int, err error, context string, additionalInfo map[string]string) {
+	u.logger.Error(err.Error(), zap.String("context", context), zap.Any("info", additionalInfo))
+	utils.SendErrorResponse(w, statusCode, err.Error())
+}
+
 // Signup
 // @Summary Регистрация нового пользователя
 // @Description Создает нового пользователя в системе
@@ -70,31 +92,20 @@ func (u *UserEndpoints) Signup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userID, err := u.userUC.Signup(&credentials)
-	var errUserIncorrectData usecase.UserIncorrectDataError
-
-	switch {
-	case errors.Is(err, usecase.ErrUserAlreadyExists):
-		u.logger.Error("user already exists", zap.String("email", credentials.Email))
-		utils.SendErrorResponse(w, http.StatusBadRequest, ErrUserAlreadyExists.Error())
-	case errors.Is(err, ErrUnauthorized):
-		u.logger.Error("unauthorized request", zap.Error(err))
-		utils.SendErrorResponse(w, http.StatusUnauthorized, ErrUnauthorized.Error())
-	case errors.As(err, &errUserIncorrectData):
-		u.logger.Error("user incorrect data", zap.Error(err))
-		utils.SendErrorResponse(w, http.StatusBadRequest, errUserIncorrectData.Error())
-	case err != nil:
-		u.logger.Error("error signing up", zap.Error(err))
-		utils.SendErrorResponse(w, http.StatusInternalServerError, err.Error())
-	default:
-		sessionID, err := u.sessionManager.CreateSession(userID)
-		if err != nil {
-			u.logger.Error("error creating session", zap.String("userID", userID.String()), zap.Error(err))
-			utils.SendErrorResponse(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-		u.logger.Info("session created", zap.String("sessionID", sessionID), zap.String("userID", userID.String()))
-		utils.SendJSONResponse(w, http.StatusOK, sessionID)
+	if err != nil {
+		u.handleError(w, err, "Signup", map[string]string{"email": credentials.Email})
+		return
 	}
+
+	sessionID, err := u.sessionManager.CreateSession(userID)
+	if err != nil {
+		u.logger.Error("error creating session", zap.String("userID", userID.String()), zap.Error(err))
+		utils.SendErrorResponse(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	u.logger.Info("session created", zap.String("sessionID", sessionID), zap.String("userID", userID.String()))
+	utils.SendJSONResponse(w, http.StatusOK, sessionID)
+
 }
 
 // Login
@@ -118,30 +129,20 @@ func (u *UserEndpoints) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	userID, err := u.userUC.Login(&credentials)
-	var errUserIncorrectData usecase.UserIncorrectDataError
-	switch {
-	case errors.Is(err, usecase.ErrUserNotFound):
-		u.logger.Error("user not found", zap.String("email", credentials.Email))
-		utils.SendErrorResponse(w, http.StatusNotFound, ErrUserNotFound.Error())
-	case errors.Is(err, usecase.ErrInvalidCredentials):
-		u.logger.Error("invalid credentials", zap.String("email", credentials.Email))
-		utils.SendErrorResponse(w, http.StatusUnauthorized, ErrInvalidCredentials.Error())
-	case errors.As(err, &errUserIncorrectData):
-		u.logger.Error("user incorrect data", zap.Error(err))
-		utils.SendErrorResponse(w, http.StatusBadRequest, errUserIncorrectData.Error())
-	case err != nil:
-		u.logger.Error("error logging in", zap.Error(err))
-		utils.SendErrorResponse(w, http.StatusInternalServerError, err.Error())
-	default:
-		sessionID, err := u.sessionManager.CreateSession(userID)
-		if err != nil {
-			u.logger.Error("error creating session", zap.String("userID", userID.String()), zap.Error(err))
-			utils.SendErrorResponse(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-		u.logger.Info("session created", zap.String("sessionID", sessionID), zap.String("userID", userID.String()))
-		utils.SendJSONResponse(w, http.StatusOK, sessionID)
+	if err != nil {
+		u.handleError(w, err, "Login", map[string]string{"email": credentials.Email})
+		return
 	}
+
+	sessionID, err := u.sessionManager.CreateSession(userID)
+	if err != nil {
+		u.logger.Error("error creating session", zap.String("userID", userID.String()), zap.Error(err))
+		utils.SendErrorResponse(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	u.logger.Info("session created", zap.String("sessionID", sessionID), zap.String("userID", userID.String()))
+	utils.SendJSONResponse(w, http.StatusOK, sessionID)
+
 }
 
 // ChangePassword
@@ -171,28 +172,13 @@ func (u *UserEndpoints) ChangePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	err = u.userUC.ChangePassword(userID, &updatePassword)
-	var errUserIncorrectData usecase.UserIncorrectDataError
-
-	switch {
-	case errors.Is(err, usecase.ErrUserNotFound):
-		u.logger.Error("user not found", zap.String("userID", userID.String()))
-		utils.SendErrorResponse(w, http.StatusNotFound, ErrUserNotFound.Error())
-	case errors.Is(err, usecase.ErrInvalidCredentials):
-		u.logger.Error("invalid credentials", zap.String("userID", userID.String()))
-		utils.SendErrorResponse(w, http.StatusUnauthorized, ErrInvalidCredentials.Error())
-	case errors.As(err, &errUserIncorrectData):
-		u.logger.Error("user incorrect data", zap.Error(err))
-		utils.SendErrorResponse(w, http.StatusBadRequest, errUserIncorrectData.Error())
-	case errors.Is(err, usecase.ErrOldAndNewPasswordAreTheSame):
-		u.logger.Error("old and new password are the same", zap.String("userID", userID.String()))
-		utils.SendErrorResponse(w, http.StatusBadRequest, ErrOldAndNewPasswordAreTheSame.Error())
-	case err != nil:
-		u.logger.Error("error changing password", zap.String("userID", userID.String()), zap.Error(err))
-		utils.SendErrorResponse(w, http.StatusInternalServerError, err.Error())
-	default:
-		u.logger.Info("password changed", zap.String("userID", userID.String()))
-		utils.SendJSONResponse(w, http.StatusOK, "Пароль изменен успешно")
+	if err != nil {
+		u.handleError(w, err, "ChangePassword", map[string]string{"userID": userID.String()})
+		return
 	}
+
+	u.logger.Info("password changed", zap.String("userID", userID.String()))
+	utils.SendJSONResponse(w, http.StatusOK, "Пароль изменен успешно")
 }
 
 // UpdateProfile
@@ -217,30 +203,18 @@ func (u *UserEndpoints) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	}
 	userID, err := u.sessionManager.GetUserID(r)
 	if err != nil {
-		u.logger.Error("unauthorized request", zap.Error(err))
-		utils.SendErrorResponse(w, http.StatusUnauthorized, err.Error())
+		u.handleError(w, err, "UpdateProfile", nil)
 		return
 	}
-	err = u.userUC.UpdateInfo(&user)
-	var errUserIncorrectData usecase.UserIncorrectDataError
 
-	switch {
-	case errors.Is(err, usecase.ErrUserNotFound):
-		u.logger.Error("user not found", zap.String("userID", userID.String()))
-		utils.SendErrorResponse(w, http.StatusNotFound, ErrUserNotFound.Error())
-	case errors.Is(err, usecase.ErrInvalidCredentials):
-		u.logger.Error("invalid credentials", zap.String("userID", userID.String()))
-		utils.SendErrorResponse(w, http.StatusUnauthorized, ErrInvalidCredentials.Error())
-	case errors.As(err, &errUserIncorrectData):
-		u.logger.Error("user incorrect data", zap.Error(err))
-		utils.SendErrorResponse(w, http.StatusBadRequest, errUserIncorrectData.Error())
-	case err != nil:
-		u.logger.Error("error updating profile", zap.String("userID", userID.String()), zap.Error(err))
-		utils.SendErrorResponse(w, http.StatusInternalServerError, err.Error())
-	default:
-		u.logger.Info("profile updated", zap.String("userID", userID.String()))
-		utils.SendJSONResponse(w, http.StatusOK, "Профиль обновлен успешно")
+	err = u.userUC.UpdateInfo(&user)
+	if err != nil {
+		u.handleError(w, err, "UpdateProfile", map[string]string{"userID": userID.String()})
+		return
 	}
+
+	u.logger.Info("profile updated", zap.String("userID", userID.String()))
+	utils.SendJSONResponse(w, http.StatusOK, "Профиль обновлен успешно")
 }
 
 // GetProfile
@@ -263,15 +237,12 @@ func (u *UserEndpoints) GetProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	user, err := u.userUC.GetUser(userID)
-	switch {
-	case errors.Is(err, usecase.ErrUserNotFound):
-		u.logger.Error("user not found", zap.String("userID", userID.String()))
-		utils.SendErrorResponse(w, http.StatusNotFound, ErrUserNotFound.Error())
-	case err != nil:
-		u.logger.Error("error getting user", zap.String("userID", userID.String()), zap.Error(err))
-		utils.SendErrorResponse(w, http.StatusInternalServerError, err.Error())
+	if err != nil {
+		u.handleError(w, err, "GetProfile", map[string]string{"userID": userID.String()})
 		return
 	}
+
+	u.logger.Info("user found", zap.String("userID", userID.String()))
 	utils.SendJSONResponse(w, http.StatusOK, user)
 }
 
@@ -294,10 +265,10 @@ func (u *UserEndpoints) GetMe(w http.ResponseWriter, r *http.Request) {
 	}
 	user, err := u.userUC.GetUser(userID)
 	if err != nil {
-		u.logger.Error("error getting user", zap.String("userID", userID.String()), zap.Error(err))
-		utils.SendErrorResponse(w, http.StatusInternalServerError, err.Error())
+		u.handleError(w, err, "GetMe", map[string]string{"userID": userID.String()})
 		return
 	}
+
 	u.logger.Info("user found", zap.String("userID", userID.String()))
 	utils.SendJSONResponse(w, http.StatusOK, user)
 }
