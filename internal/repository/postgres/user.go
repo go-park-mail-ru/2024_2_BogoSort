@@ -4,15 +4,15 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"time"
 
 	"github.com/google/uuid"
+
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"go.uber.org/zap"
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
-	"github.com/jackc/pgx/v5/pgxpool"
-	"go.uber.org/zap"
 )
 
 const (
@@ -21,18 +21,25 @@ const (
 		FROM "user"
 		WHERE email = $1
 	`
+
 	queryGetUserById = `
 		SELECT id, email, password_hash, password_salt, username, phone_number, image_id, status
 		FROM "user"
 		WHERE id = $1
 	`
+
 	queryAddUser = `
-		INSERT INTO "user" (email, password_hash, password_salt, status) VALUES ($1, $2, $3, 'active')
+		INSERT INTO "user" (email, password_hash, password_salt, status) 
+		VALUES ($1, $2, $3, 'active')
 		RETURNING id, email, password_hash, password_salt, username, phone_number, image_id, status
 	`
+
 	queryUpdateUser = `
-		UPDATE "user" SET username = $1, phone_number = $2, image_id = $3 WHERE id = $4
+		UPDATE "user" 
+		SET username = $1, phone_number = $2, image_id = $3 
+		WHERE id = $4
 	`
+
 	queryDeleteUser = `
 		DELETE FROM "user" WHERE id = $1
 	`
@@ -40,6 +47,7 @@ const (
 
 type UsersDB struct {
 	DB     *pgxpool.Pool
+	ctx    context.Context
 	logger *zap.Logger
 }
 
@@ -54,9 +62,10 @@ type DBUser struct {
 	Status       sql.NullString
 }
 
-func NewUserRepository(db *pgxpool.Pool, logger *zap.Logger) repository.User {
+func NewUserRepository(db *pgxpool.Pool, ctx context.Context, logger *zap.Logger) repository.User {
 	return &UsersDB{
 		DB:     db,
+		ctx:    ctx,
 		logger: logger,
 	}
 }
@@ -74,13 +83,44 @@ func (us *DBUser) GetEntity() entity.User {
 	}
 }
 
-func (us *UsersDB) GetUserByEmail(email string) (*entity.User, error) {
+func (us *UsersDB) BeginTransaction() (pgx.Tx, error) {
+	tx, err := us.DB.Begin(us.ctx)
+	if err != nil {
+		us.logger.Error("failed to begin transaction", zap.Error(err))
+		return nil, err
+	}
+	return tx, nil
+}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
+func (us *UsersDB) AddUser(tx pgx.Tx, email string, hash, salt []byte) (uuid.UUID, error) {
 	var dbUser DBUser
-	err := us.DB.QueryRow(ctx, queryGetUserByEmail, email).Scan(
+
+	err := tx.QueryRow(us.ctx, queryAddUser, email, hash, salt).Scan(
+		&dbUser.ID,
+		&dbUser.Email,
+		&dbUser.PasswordHash,
+		&dbUser.PasswordSalt,
+		&dbUser.Username,
+		&dbUser.Phone,
+		&dbUser.AvatarId,
+		&dbUser.Status,
+	)
+
+	switch {
+	case errors.Is(err, pgx.ErrNoRows):
+		us.logger.Error("user already exists", zap.String("email", email))
+		return uuid.Nil, repository.ErrUserAlreadyExists
+	case err != nil:
+		us.logger.Error("error adding user", zap.String("email", email), zap.Error(err))
+		return uuid.Nil, entity.PSQLWrap(errors.New("error adding user"), err)
+	}
+
+	return dbUser.ID, nil
+}
+
+func (us *UsersDB) GetUserByEmail(email string) (*entity.User, error) {
+	var dbUser DBUser
+	err := us.DB.QueryRow(us.ctx, queryGetUserByEmail, email).Scan(
 		&dbUser.ID,
 		&dbUser.Email,
 		&dbUser.PasswordHash,
@@ -105,11 +145,8 @@ func (us *UsersDB) GetUserByEmail(email string) (*entity.User, error) {
 }
 
 func (us *UsersDB) GetUserById(id uuid.UUID) (*entity.User, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
 	var dbUser DBUser
-	err := us.DB.QueryRow(ctx, queryGetUserById, id).Scan(
+	err := us.DB.QueryRow(us.ctx, queryGetUserById, id).Scan(
 		&dbUser.ID,
 		&dbUser.Email,
 		&dbUser.PasswordHash,
@@ -133,39 +170,8 @@ func (us *UsersDB) GetUserById(id uuid.UUID) (*entity.User, error) {
 	return &user, nil
 }
 
-func (us *UsersDB) AddUser(email string, hash, salt []byte) (uuid.UUID, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	var dbUser DBUser
-	err := us.DB.QueryRow(ctx, queryAddUser, email, hash, salt).Scan(
-		&dbUser.ID,
-		&dbUser.Email,
-		&dbUser.PasswordHash,
-		&dbUser.PasswordSalt,
-		&dbUser.Username,
-		&dbUser.Phone,
-		&dbUser.AvatarId,
-		&dbUser.Status,
-	)
-
-	switch {
-	case errors.Is(err, pgx.ErrNoRows):
-		us.logger.Error("user already exists", zap.String("email", email))
-		return uuid.Nil, repository.ErrUserAlreadyExists
-	case err != nil:
-		us.logger.Error("error adding user", zap.String("email", email), zap.Error(err))
-		return uuid.Nil, entity.PSQLWrap(errors.New("error adding user"), err)
-	}
-
-	return dbUser.ID, nil
-}
-
 func (us *UsersDB) UpdateUser(user *entity.User) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	_, err := us.DB.Exec(ctx, queryUpdateUser, user.Username, user.Phone, "95b58cea-2598-4100-81bc-3aa45a894a99", user.ID)
+	_, err := us.DB.Exec(us.ctx, queryUpdateUser, user.Username, user.Phone, "95b58cea-2598-4100-81bc-3aa45a894a99", user.ID)
 	switch {
 	case errors.Is(err, pgx.ErrNoRows):
 		us.logger.Error("user not found", zap.String("id", user.ID.String()))
@@ -179,10 +185,7 @@ func (us *UsersDB) UpdateUser(user *entity.User) error {
 }
 
 func (us *UsersDB) DeleteUser(userID uuid.UUID) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	_, err := us.DB.Exec(ctx, queryDeleteUser, userID)
+	_, err := us.DB.Exec(us.ctx, queryDeleteUser, userID)
 	switch {
 	case errors.Is(err, pgx.ErrNoRows):
 		us.logger.Error("user not found", zap.String("id", userID.String()))
