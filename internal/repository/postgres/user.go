@@ -50,13 +50,14 @@ type DBUser struct {
 	PasswordSalt []byte
 	Username     sql.NullString
 	Phone        sql.NullString
-	AvatarId     sql.NullString
+	AvatarId     uuid.UUID
 	Status       sql.NullString
 }
 
-func NewUserRepository(db *pgxpool.Pool) repository.User {
+func NewUserRepository(db *pgxpool.Pool, logger *zap.Logger) repository.User {
 	return &UsersDB{
-		DB: db,
+		DB:     db,
+		logger: logger,
 	}
 }
 
@@ -68,7 +69,7 @@ func (us *DBUser) GetEntity() entity.User {
 		PasswordSalt: us.PasswordSalt,
 		Username:     us.Username.String,
 		Phone:        us.Phone.String,
-		AvatarId:     us.AvatarId.String,
+		AvatarId:     us.AvatarId,
 		Status:       us.Status.String,
 	}
 }
@@ -100,7 +101,6 @@ func (us *UsersDB) GetUserByEmail(email string) (*entity.User, error) {
 	}
 
 	user := dbUser.GetEntity()
-	us.logger.Info("user found", zap.String("email", email), zap.Any("user", user))
 	return &user, nil
 }
 
@@ -130,7 +130,6 @@ func (us *UsersDB) GetUserById(id uuid.UUID) (*entity.User, error) {
 	}
 
 	user := dbUser.GetEntity()
-	us.logger.Info("user found", zap.String("id", id.String()), zap.Any("user", user))
 	return &user, nil
 }
 
@@ -166,7 +165,7 @@ func (us *UsersDB) UpdateUser(user *entity.User) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	_, err := us.DB.Exec(ctx, queryUpdateUser, user.Username, user.Phone, user.AvatarId, user.ID)
+	_, err := us.DB.Exec(ctx, queryUpdateUser, user.Username, user.Phone, "95b58cea-2598-4100-81bc-3aa45a894a99", user.ID)
 	switch {
 	case errors.Is(err, pgx.ErrNoRows):
 		us.logger.Error("user not found", zap.String("id", user.ID.String()))

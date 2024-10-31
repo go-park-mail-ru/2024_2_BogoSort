@@ -28,7 +28,11 @@ func (server *Server) Run() error {
 	if err != nil {
 		return errors.Wrap(err, "failed to init config")
 	}
-	router := delivery.NewRouter(cfg)
+
+	router, err := delivery.NewRouter(cfg)
+	if err != nil {
+		return errors.Wrap(err, "failed to initialize router")
+	}
 
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins:   []string{"https://two024-2-bogo-sort.onrender.com"},
@@ -49,10 +53,11 @@ func (server *Server) Run() error {
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
-	err = server.server.ListenAndServe()
-	if !errors.Is(err, http.ErrServerClosed) {
-		log.Fatalf("server failed: %v", err)
-	}
+	go func() {
+		if err := server.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("server failed: %v", err)
+		}
+	}()
 
 	<-stop
 	log.Println("shutting down server...")

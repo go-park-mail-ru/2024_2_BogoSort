@@ -82,6 +82,7 @@ func (u *UserService) Login(loginInfo *dto.Login) (uuid.UUID, error) {
 
 func (u *UserService) UpdateInfo(user *dto.User) error {
 	entityUser := &entity.User{
+		ID:       user.ID,
 		Email:    user.Email,
 		Username: user.Username,
 		Phone:    user.Phone,
@@ -110,6 +111,7 @@ func (u *UserService) GetUser(userID uuid.UUID) (*dto.User, error) {
 		return nil, u.handleRepoError(err, "GetUser")
 	}
 	return &dto.User{
+		ID:       entityUser.ID,
 		Email:    entityUser.Email,
 		Username: entityUser.Username,
 		Phone:    entityUser.Phone,

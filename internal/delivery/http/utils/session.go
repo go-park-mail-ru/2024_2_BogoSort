@@ -29,13 +29,16 @@ func (s *SessionManager) CreateSession(userID uuid.UUID) (string, error) {
 	return s.sessionUC.CreateSession(userID)
 }
 
-func (s *SessionManager) SetSession(value string, expires time.Time) (*http.Cookie, error) {
+func (s *SessionManager) SetSession(value string) (*http.Cookie, error) {
+	expires := time.Now().Add(time.Duration(s.sessionAliveTime) * time.Second)
 	cookie := &http.Cookie{
 		Name:     "session_id",
 		Value:    value,
 		Expires:  expires,
 		HttpOnly: true,
 		Secure:   s.secureCookie,
+		Path:     "/",
+		SameSite: http.SameSiteLaxMode,
 	}
 
 	return cookie, nil

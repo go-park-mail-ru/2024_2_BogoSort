@@ -13,9 +13,11 @@ import (
 	"github.com/go-park-mail-ru/2024_2_BogoSort/pkg/connector"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
+
+	"github.com/pkg/errors"
 )
 
-func NewRouter(cfg config.Config) *mux.Router {
+func NewRouter(cfg config.Config) (*mux.Router, error) {
 	zap.ReplaceGlobals(zap.Must(zap.NewProduction()))
 	defer zap.L().Sync()
 
@@ -24,14 +26,16 @@ func NewRouter(cfg config.Config) *mux.Router {
 
 	dbPool, err := connector.GetPostgresConnector(cfg.GetConnectURL())
 	if err != nil {
-		return nil
+		zap.L().Error("Failed to connect to Postgres", zap.Error(err))
+		return nil, errors.Wrap(err, "failed to connect to Postgres")
 	}
 	rdb, err := connector.GetRedisConnector(cfg.RdAddr, cfg.RdPass, cfg.RdDB)
 	if err != nil {
-		return nil
+		zap.L().Error("Failed to connect to Redis", zap.Error(err))
+		return nil, errors.Wrap(err, "failed to connect to Redis")
 	}
 
-	userRepo := postgres.NewUserRepository(dbPool)
+	userRepo := postgres.NewUserRepository(dbPool, zap.L())
 	userUC := service.NewUserService(userRepo, zap.L())
 
 	sessionRepo := redis.NewSessionRepository(rdb, int(cfg.Session.ExpirationTime.Seconds()), zap.L())
@@ -47,7 +51,7 @@ func NewRouter(cfg config.Config) *mux.Router {
 
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
-	return router
+	return router, nil
 }
 
 func recoveryMiddleware(next http.Handler) http.Handler {
@@ -61,31 +65,3 @@ func recoveryMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
-
-// func isAuthenticated(r *http.Request, authHandler *http3.AuthHandler) bool {
-// 	cookie, err := r.Cookie("session_id")
-// 	if err != nil || cookie == nil {
-// 		log.Println("No session cookie found")
-
-// 		return false
-// 	}
-
-// 	exists := authHandler.SessionRepo.SessionExists(cookie.Value)
-// 	log.Printf("Session exists: %v for session_id: %s", exists, cookie.Value)
-
-// 	return exists
-// }
-
-// func authMiddleware(authHandler *http3.AuthHandler) mux.MiddlewareFunc {
-// 	return func(next http.Handler) http.Handler {
-// 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-// 			if isAuthenticated(r, authHandler) {
-// 				w.Header().Set("X-Authenticated", "true")
-// 			} else {
-// 				w.Header().Set("X-Authenticated", "false")
-// 			}
-
-// 			next.ServeHTTP(w, r)
-// 		})
-// 	}
-// }

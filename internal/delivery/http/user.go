@@ -104,8 +104,17 @@ func (u *UserEndpoints) Signup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	u.logger.Info("session created", zap.String("sessionID", sessionID), zap.String("userID", userID.String()))
-	utils.SendJSONResponse(w, http.StatusOK, sessionID)
 
+	// Установка cookie
+	cookie, err := u.sessionManager.SetSession(sessionID)
+	if err != nil {
+		u.logger.Error("error setting session cookie", zap.Error(err))
+		utils.SendErrorResponse(w, http.StatusInternalServerError, "Failed to set session")
+		return
+	}
+	http.SetCookie(w, cookie)
+
+	utils.SendJSONResponse(w, http.StatusOK, "Signup successful")
 }
 
 // Login
@@ -141,8 +150,16 @@ func (u *UserEndpoints) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	u.logger.Info("session created", zap.String("sessionID", sessionID), zap.String("userID", userID.String()))
-	utils.SendJSONResponse(w, http.StatusOK, sessionID)
 
+	cookie, err := u.sessionManager.SetSession(sessionID)
+	if err != nil {
+		u.logger.Error("error setting session cookie", zap.Error(err))
+		utils.SendErrorResponse(w, http.StatusInternalServerError, "Failed to set session")
+		return
+	}
+	http.SetCookie(w, cookie)
+
+	utils.SendJSONResponse(w, http.StatusOK, sessionID)
 }
 
 // ChangePassword
