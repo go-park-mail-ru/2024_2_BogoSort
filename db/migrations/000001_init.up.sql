@@ -1,19 +1,30 @@
+-- Создание расширения для генерации UUID, если оно еще не существует
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- Таблица для хранения статических файлов
+CREATE TABLE IF NOT EXISTS static (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4() NOT NULL,
+    name TEXT
+        CONSTRAINT upload_name_length CHECK (LENGTH(name) <= 255) NOT NULL,
+    path TEXT
+        CONSTRAINT upload_path_length CHECK (LENGTH(path) <= 255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
 -- Таблица пользователей
 CREATE TABLE IF NOT EXISTS "user" (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    username TEXT 
+    username TEXT
         CONSTRAINT username_length CHECK (LENGTH(username) <= 50),
-    email TEXT NOT NULL 
+    email TEXT NOT NULL
         CONSTRAINT email_unique UNIQUE,
     password_hash bytea NOT NULL,
     password_salt bytea NOT NULL,
-    phone_number TEXT 
+    phone_number TEXT
         CONSTRAINT phone_number_length CHECK (LENGTH(phone_number) <= 20),
-    image_id UUID 
+    image_id UUID
         CONSTRAINT image_id_fk REFERENCES static(id) ON DELETE SET NULL,
-    status TEXT 
+    status TEXT
         CONSTRAINT status_allowed_values CHECK (status IN ('active', 'inactive', 'banned')),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -22,9 +33,9 @@ CREATE TABLE IF NOT EXISTS "user" (
 -- Таблица продавцов
 CREATE TABLE IF NOT EXISTS seller (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL 
+    user_id UUID NOT NULL
         CONSTRAINT seller_user_fk REFERENCES "user"(id) ON DELETE CASCADE,
-    description TEXT 
+    description TEXT
         CONSTRAINT description_length CHECK (LENGTH(description) <= 1000),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -33,9 +44,9 @@ CREATE TABLE IF NOT EXISTS seller (
 -- Таблица подписок
 CREATE TABLE IF NOT EXISTS subscription (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL 
+    user_id UUID NOT NULL
         CONSTRAINT subscription_user_fk REFERENCES "user"(id) ON DELETE CASCADE,
-    seller_id UUID NOT NULL 
+    seller_id UUID NOT NULL
         CONSTRAINT subscription_seller_fk REFERENCES seller(id) ON DELETE CASCADE,
     CONSTRAINT subscription_unique UNIQUE (user_id, seller_id)
 );
@@ -43,38 +54,28 @@ CREATE TABLE IF NOT EXISTS subscription (
 -- Таблица категорий
 CREATE TABLE IF NOT EXISTS category (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4() NOT NULL,
-    title TEXT 
+    title TEXT
         CONSTRAINT category_title_length CHECK (LENGTH(title) <= 100) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-);
-
--- Таблица для хранения статических файлов
-CREATE TABLE IF NOT EXISTS static (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4() NOT NULL,
-    name TEXT 
-        CONSTRAINT upload_name_length CHECK (LENGTH(name) <= 255) NOT NULL,
-    path TEXT 
-        CONSTRAINT upload_path_length CHECK (LENGTH(path) <= 255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Таблица объявлений
 CREATE TABLE IF NOT EXISTS advert (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4() NOT NULL,
-    title TEXT 
+    title TEXT
         CONSTRAINT advert_title_length CHECK (LENGTH(title) <= 255) NOT NULL,
-    description TEXT 
+    description TEXT
         CONSTRAINT advert_description_length CHECK (LENGTH(description) <= 3000) NOT NULL,
     price INTEGER NOT NULL,
     seller_id UUID NOT NULL,
-    image_id UUID, 
+    image_id UUID,
     category_id UUID,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    location TEXT 
+    location TEXT
         CONSTRAINT advert_location_length CHECK (LENGTH(location) <= 150) NOT NULL,
     has_delivery BOOLEAN NOT NULL,
-    status TEXT NOT NULL 
+    status TEXT NOT NULL
         CONSTRAINT status_length CHECK (LENGTH(status) <= 255) NOT NULL,
     FOREIGN KEY (seller_id) REFERENCES seller(id) ON DELETE CASCADE,
     FOREIGN KEY (image_id) REFERENCES static(id) ON DELETE SET NULL,
@@ -84,19 +85,19 @@ CREATE TABLE IF NOT EXISTS advert (
 -- Таблица сохраненных объявлений
 CREATE TABLE IF NOT EXISTS saved_advert (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4() NOT NULL,
-    user_id UUID NOT NULL, 
+    user_id UUID NOT NULL,
     advert_id UUID NOT NULL,
     FOREIGN KEY (user_id) REFERENCES "user"(id) ON DELETE CASCADE,
     FOREIGN KEY (advert_id) REFERENCES advert(id) ON DELETE CASCADE,
     CONSTRAINT saved_advert_unique UNIQUE (user_id, advert_id),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Таблица корзины
 CREATE TABLE IF NOT EXISTS cart (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4() NOT NULL,
-    user_id UUID NOT NULL, 
-    advert_id UUID NOT NULL, 
+    user_id UUID NOT NULL,
+    advert_id UUID NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES "user"(id) ON DELETE CASCADE,
@@ -106,8 +107,8 @@ CREATE TABLE IF NOT EXISTS cart (
 -- Таблица для связи между корзиной и объявлениями
 CREATE TABLE IF NOT EXISTS cart_advert (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4() NOT NULL,
-    cart_id UUID NOT NULL, 
-    advert_id UUID NOT NULL, 
+    cart_id UUID NOT NULL,
+    advert_id UUID NOT NULL,
     FOREIGN KEY (cart_id) REFERENCES cart(id) ON DELETE CASCADE,
     FOREIGN KEY (advert_id) REFERENCES advert(id) ON DELETE CASCADE,
     CONSTRAINT cart_advert_unique UNIQUE (cart_id, advert_id)
@@ -120,8 +121,8 @@ CREATE TABLE IF NOT EXISTS purchase (
     status TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT status_length CHECK (LENGTH(status) <= 255) NOT NULL,
-    FOREIGN KEY (cart_id) REFERENCES cart(id) ON DELETE CASCADE,
+    CONSTRAINT status_length CHECK (LENGTH(status) <= 255),
+    FOREIGN KEY (cart_id) REFERENCES cart(id) ON DELETE CASCADE
 );
 
 -- Функция для автоматического обновления поля updated_at
