@@ -196,21 +196,21 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/adverts/user/{userId}": {
+        "/api/v1/adverts/seller/{sellerId}": {
             "get": {
-                "description": "Get a list of adverts by user ID",
+                "description": "Get a list of adverts by seller ID",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "adverts"
                 ],
-                "summary": "Get adverts by user ID",
+                "summary": "Get adverts by seller ID",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "User ID",
-                        "name": "userId",
+                        "description": "Seller ID",
+                        "name": "sellerId",
                         "in": "path",
                         "required": true
                     }
@@ -226,13 +226,13 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Invalid user ID",
+                        "description": "Invalid seller ID",
                         "schema": {
                             "$ref": "#/definitions/utils.ErrResponse"
                         }
                     },
                     "500": {
-                        "description": "Failed to get adverts by user ID",
+                        "description": "Failed to get adverts by seller ID",
                         "schema": {
                             "$ref": "#/definitions/utils.ErrResponse"
                         }
@@ -417,6 +417,51 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Failed to delete advert",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/adverts/{advertId}/image": {
+            "put": {
+                "description": "Upload an image by ID",
+                "tags": [
+                    "adverts"
+                ],
+                "summary": "Upload an image",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Advert ID",
+                        "name": "advertId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Image file to upload",
+                        "name": "image",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Image uploaded",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid advert ID or file not attached",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to upload image",
                         "schema": {
                             "$ref": "#/definitions/utils.ErrResponse"
                         }

@@ -1,13 +1,14 @@
 package http
 
 import (
+	"encoding/json"
 	"errors"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/utils"
+	"github.com/google/uuid"
 	"go.uber.org/zap"
+	"io"
 	"net/http"
 	"strconv"
-	"github.com/google/uuid"
-	"encoding/json"
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase"
@@ -25,20 +26,23 @@ var (
 
 type AdvertEndpoints struct {
 	AdvertsUseCase usecase.AdvertUseCase
-	logger       *zap.Logger
+	StaticUseCase  usecase.StaticUseCase
+	logger         *zap.Logger
 }
 
-func NewAdvertEndpoints(advertsUseCase usecase.AdvertUseCase, logger *zap.Logger) *AdvertEndpoints {
+func NewAdvertEndpoints(advertsUseCase usecase.AdvertUseCase,
+	staticUseCase usecase.StaticUseCase,
+	logger *zap.Logger) *AdvertEndpoints {
 	return &AdvertEndpoints{
 		AdvertsUseCase: advertsUseCase,
+		StaticUseCase:  staticUseCase,
 		logger:         logger,
 	}
 }
 
 func (h *AdvertEndpoints) ConfigureRoutes(router *mux.Router) {
-	router.HandleFunc("/api/v1/adverts", h.GetAdverts).Methods("GET")
 	router.HandleFunc("/api/v1/adverts/{advertId}", h.GetAdvertById).Methods("GET")
-	router.HandleFunc("/api/v1/adverts/user/{userId}", h.GetAdvertsByUserId).Methods("GET")
+	router.HandleFunc("/api/v1/adverts/seller/{sellerId}", h.GetAdvertsBySellerId).Methods("GET")
 	router.HandleFunc("/api/v1/adverts/user/{userId}/saved", h.GetSavedAdvertsByUserId).Methods("GET")
 	router.HandleFunc("/api/v1/adverts/cart/{cartId}", h.GetAdvertsByCartId).Methods("GET")
 	router.HandleFunc("/api/v1/adverts", h.AddAdvert).Methods("POST")
@@ -46,9 +50,11 @@ func (h *AdvertEndpoints) ConfigureRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/adverts/{advertId}", h.DeleteAdvertById).Methods("DELETE")
 	router.HandleFunc("/api/v1/adverts/{advertId}/status", h.UpdateAdvertStatus).Methods("PUT")
 	router.HandleFunc("/api/v1/adverts/category/{categoryId}", h.GetAdvertsByCategoryId).Methods("GET")
+	router.HandleFunc("/api/v1/adverts/{advertId}/image", h.UploadImage).Methods("PUT")
+	router.HandleFunc("/api/v1/adverts", h.GetAdverts).Methods("GET")
 }
 
-// GetAdverts godoc	
+// GetAdverts godoc
 // @Summary Get all adverts
 // @Description Get a list of all adverts
 // @Tags adverts
@@ -81,37 +87,35 @@ func (h *AdvertEndpoints) GetAdverts(writer http.ResponseWriter, r *http.Request
 		return
 	}
 
-	h.logger.Info("http: adverts retrieved successfully", zap.Int("count", len(adverts)))
 	utils.SendJSONResponse(writer, http.StatusOK, adverts)
 }
 
-// GetAdvertsByUserId godoc
-// @Summary Get adverts by user ID
-// @Description Get a list of adverts by user ID
+// GetAdvertsBySellerId godoc
+// @Summary Get adverts by seller ID
+// @Description Get a list of adverts by seller ID
 // @Tags adverts
 // @Produce json
-// @Param userId path string true "User ID"
+// @Param sellerId path string true "Seller ID"
 // @Success 200 {array} dto.Advert "List of adverts"
-// @Failure 400 {object} utils.ErrResponse "Invalid user ID"
-// @Failure 500 {object} utils.ErrResponse "Failed to get adverts by user ID"
-// @Router /api/v1/adverts/user/{userId} [get]
-func (h *AdvertEndpoints) GetAdvertsByUserId(writer http.ResponseWriter, r *http.Request) {
-	userIdStr := mux.Vars(r)["userId"]
-	userId, err := uuid.Parse(userIdStr)
+// @Failure 400 {object} utils.ErrResponse "Invalid seller ID"
+// @Failure 500 {object} utils.ErrResponse "Failed to get adverts by seller ID"
+// @Router /api/v1/adverts/seller/{sellerId} [get]
+func (h *AdvertEndpoints) GetAdvertsBySellerId(writer http.ResponseWriter, r *http.Request) {
+	sellerIdStr := mux.Vars(r)["sellerId"]
+	sellerId, err := uuid.Parse(sellerIdStr)
 	if err != nil {
-		h.logger.Error("invalid user ID", zap.Error(err))
-		utils.SendErrorResponse(writer, http.StatusBadRequest, "Invalid user ID")
+		h.logger.Error("invalid seller ID", zap.Error(err))
+		utils.SendErrorResponse(writer, http.StatusBadRequest, "Invalid seller ID")
 		return
 	}
 
-	adverts, err := h.AdvertsUseCase.GetAdvertsByUserId(userId)
+	adverts, err := h.AdvertsUseCase.GetAdvertsBySellerId(sellerId)
 	if err != nil {
-		h.logger.Error("failed to get adverts by user ID", zap.Error(err))
-		utils.SendErrorResponse(writer, http.StatusInternalServerError, "Failed to get adverts by user ID")
+		h.logger.Error("failed to get adverts by seller ID", zap.Error(err))
+		utils.SendErrorResponse(writer, http.StatusInternalServerError, "Failed to get adverts by seller ID")
 		return
 	}
 
-	h.logger.Info("http: adverts retrieved successfully by user ID", zap.String("user_id", userId.String()), zap.Int("count", len(adverts)))
 	utils.SendJSONResponse(writer, http.StatusOK, adverts)
 }
 
@@ -141,7 +145,6 @@ func (h *AdvertEndpoints) GetSavedAdvertsByUserId(writer http.ResponseWriter, r 
 		return
 	}
 
-	h.logger.Info("http: saved adverts retrieved successfully by user ID", zap.String("user_id", userId.String()), zap.Int("count", len(adverts)))
 	utils.SendJSONResponse(writer, http.StatusOK, adverts)
 }
 
@@ -171,7 +174,6 @@ func (h *AdvertEndpoints) GetAdvertsByCartId(writer http.ResponseWriter, r *http
 		return
 	}
 
-	h.logger.Info("http: adverts retrieved successfully by cart ID", zap.String("cart_id", cartId.String()), zap.Int("count", len(adverts)))
 	utils.SendJSONResponse(writer, http.StatusOK, adverts)
 }
 
@@ -208,7 +210,6 @@ func (h *AdvertEndpoints) GetAdvertById(writer http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	h.logger.Info("http: advert retrieved successfully", zap.String("advert_id", advertId.String()))
 	utils.SendJSONResponse(writer, http.StatusOK, advert)
 }
 
@@ -238,7 +239,6 @@ func (h *AdvertEndpoints) AddAdvert(writer http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	h.logger.Info("http: advert added successfully", zap.String("advert_id", newAdvert.ID.String()))
 	utils.SendJSONResponse(writer, http.StatusCreated, newAdvert)
 }
 
@@ -273,7 +273,6 @@ func (h *AdvertEndpoints) UpdateAdvert(writer http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	h.logger.Info("http: advert updated successfully", zap.String("advert_id", advert.ID.String()))
 	utils.SendJSONResponse(writer, http.StatusOK, "Advert updated successfully")
 }
 
@@ -306,7 +305,6 @@ func (h *AdvertEndpoints) DeleteAdvertById(writer http.ResponseWriter, r *http.R
 		return
 	}
 
-	h.logger.Info("http: advert deleted successfully", zap.String("advert_id", advertId.String()))
 	utils.SendJSONResponse(writer, http.StatusOK, "Advert deleted")
 }
 
@@ -316,7 +314,7 @@ func (h *AdvertEndpoints) DeleteAdvertById(writer http.ResponseWriter, r *http.R
 // @Tags adverts
 // @Param advertId path string true "Advert ID"
 // @Param status body string true "New status"
-// @Success 200 "Advert status updated"		
+// @Success 200 "Advert status updated"
 // @Failure 400 {object} utils.ErrResponse "Invalid advert ID or status"
 // @Failure 404 {object} utils.ErrResponse "Advert not found"
 // @Failure 500 {object} utils.ErrResponse "Failed to update advert status"
@@ -347,7 +345,6 @@ func (h *AdvertEndpoints) UpdateAdvertStatus(writer http.ResponseWriter, r *http
 		return
 	}
 
-	h.logger.Info("http: advert status updated successfully", zap.String("advert_id", advertId.String()))
 	utils.SendJSONResponse(writer, http.StatusOK, "Advert status updated")
 }
 
@@ -377,6 +374,60 @@ func (h *AdvertEndpoints) GetAdvertsByCategoryId(writer http.ResponseWriter, r *
 		return
 	}
 
-	h.logger.Info("http: adverts retrieved successfully by category ID", zap.String("category_id", categoryId.String()), zap.Int("count", len(adverts)))
 	utils.SendJSONResponse(writer, http.StatusOK, adverts)
+}
+
+// UploadImage godoc
+// @Summary Upload an image
+// @Description Upload an image by ID
+// @Tags adverts
+// @Param advertId path string true "Advert ID"
+// @Param image formData file true "Image file to upload"
+// @Success 200 {string} string "Image uploaded"
+// @Failure 400 {object} utils.ErrResponse "Invalid advert ID or file not attached"
+// @Failure 500 {object} utils.ErrResponse "Failed to upload image"
+// @Router /api/v1/adverts/{advertId}/image [put]
+func (h *AdvertEndpoints) UploadImage(writer http.ResponseWriter, r *http.Request) {
+	advertIdStr := mux.Vars(r)["advertId"]
+	advertId, err := uuid.Parse(advertIdStr)
+	if err != nil {
+		h.logger.Error("invalid advert ID", zap.Error(err))
+		utils.SendErrorResponse(writer, http.StatusBadRequest, "Invalid advert ID")
+		return
+	}
+
+	fileHeader, _, err := r.FormFile("image")
+	if err != nil {
+		h.logger.Error("file not attached", zap.Error(err))
+		utils.SendErrorResponse(writer, http.StatusBadRequest, "File not attached")
+		return
+	}
+
+	data, err := io.ReadAll(fileHeader)
+	if err != nil {
+		h.logger.Error("failed to read file", zap.Error(err))
+		utils.SendErrorResponse(writer, http.StatusInternalServerError, "Failed to read file")
+		return
+	}
+
+	if err = fileHeader.Close(); err != nil {
+		h.logger.Error("failed to close file", zap.Error(err))
+		utils.SendErrorResponse(writer, http.StatusInternalServerError, "Failed to close file")
+		return
+	}
+
+	imageId, err := h.StaticUseCase.UploadFile(data)
+	if err != nil {
+		h.logger.Error("failed to upload image", zap.Error(err))
+		utils.SendErrorResponse(writer, http.StatusInternalServerError, "Failed to upload image")
+		return
+	}
+
+	if err := h.AdvertsUseCase.UploadImage(advertId, imageId); err != nil {
+		h.logger.Error("failed to upload image", zap.Error(err))
+		utils.SendErrorResponse(writer, http.StatusInternalServerError, "Failed to upload image")
+		return
+	}
+
+	utils.SendJSONResponse(writer, http.StatusOK, "Image uploaded")
 }

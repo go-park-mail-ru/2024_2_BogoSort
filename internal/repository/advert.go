@@ -10,8 +10,8 @@ type AdvertRepository interface {
 	// GetAdverts возвращает массив объявлений в соответствии с offset и limit
 	GetAdverts(limit, offset int) ([]*entity.Advert, error)
 
-	// GetAdvertsByUserId возвращает массив объявлений в соответствии с userId
-	GetAdvertsByUserId(userId uuid.UUID) ([]*entity.Advert, error)
+	// GetAdvertsBySellerId возвращает массив объявлений в соответствии с sellerId
+	GetAdvertsBySellerId(sellerId uuid.UUID) ([]*entity.Advert, error)
 
 	// GetSavedAdvertsByUserId возвращает массив сохраненных объявлений в соответствии userId
 	GetSavedAdvertsByUserId(userId uuid.UUID) ([]*entity.Advert, error)
@@ -48,6 +48,9 @@ type AdvertRepository interface {
 	// ErrAdvertBadRequest - некорректные данные для создания объявления
 	// ErrAdvertNotFound - объявление не найдено
 	UpdateAdvertStatus(advertId uuid.UUID, status string) error
+
+	// UploadImage загружает изображение в объявление
+	UploadImage(advertId uuid.UUID, imageId uuid.UUID) error
 }
 
 var (

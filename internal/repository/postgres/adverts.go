@@ -68,6 +68,11 @@ const (
 		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status
 		FROM advert
 		WHERE category_id = $1`
+
+	uploadImageQuery = `
+		UPDATE advert
+		SET image_id = $1
+		WHERE id = $2`
 )
 
 type AdvertRepoModel struct {
@@ -246,16 +251,16 @@ func (r *AdvertDB) GetAdvertsByCategoryId(categoryId uuid.UUID) ([]*entity.Adver
 	return adverts, nil
 }
 
-func (r *AdvertDB) GetAdvertsByUserId(userId uuid.UUID) ([]*entity.Advert, error) {
+func (r *AdvertDB) GetAdvertsBySellerId(sellerId uuid.UUID) ([]*entity.Advert, error) {
 	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
 	defer cancel()
 
 	var adverts []*entity.Advert
 
-	rows, err := r.DB.Query(ctx, selectAdvertsByUserIdQuery, userId)
+	rows, err := r.DB.Query(ctx, selectAdvertsByUserIdQuery, sellerId)
 	if err != nil {
-		r.logger.Error("failed to execute query", zap.Error(err), zap.String("user_id", userId.String()))
-		return nil, entity.PSQLQueryErr("GetAdvertsByUserId", err)
+		r.logger.Error("failed to execute query", zap.Error(err), zap.String("seller_id", sellerId.String()))
+		return nil, entity.PSQLQueryErr("GetAdvertsBySellerId", err)
 	}
 	defer rows.Close()
 
@@ -273,8 +278,8 @@ func (r *AdvertDB) GetAdvertsByUserId(userId uuid.UUID) ([]*entity.Advert, error
 			&dbAdvert.ImageURL,
 			&dbAdvert.Status,
 		); err != nil {
-			r.logger.Error("failed to scan row", zap.Error(err), zap.String("user_id", userId.String()))
-			return nil, entity.PSQLQueryErr("GetAdvertsByUserId", err)
+			r.logger.Error("failed to scan row", zap.Error(err), zap.String("seller_id", sellerId.String()))
+			return nil, entity.PSQLQueryErr("GetAdvertsBySellerId", err)
 		}
 		adverts = append(adverts, &entity.Advert{
 			ID:          dbAdvert.ID,
@@ -291,8 +296,8 @@ func (r *AdvertDB) GetAdvertsByUserId(userId uuid.UUID) ([]*entity.Advert, error
 	}
 
 	if err := rows.Err(); err != nil {
-		r.logger.Error("error iterating over rows", zap.Error(err), zap.String("user_id", userId.String()))
-		return nil, entity.PSQLQueryErr("GetAdvertsByUserId", err)
+		r.logger.Error("error iterating over rows", zap.Error(err), zap.String("seller_id", sellerId.String()))
+		return nil, entity.PSQLQueryErr("GetAdvertsBySellerId", err)
 	}
 
 	return adverts, nil
@@ -500,6 +505,25 @@ func (r *AdvertDB) UpdateAdvertStatus(advertId uuid.UUID, status string) error {
 	if err != nil {
 		r.logger.Error("failed to update advert status", zap.Error(err), zap.String("advert_id", advertId.String()))
 		return entity.PSQLQueryErr("UpdateAdvertStatus", err)
+	}
+
+	rowsAffected := result.RowsAffected()
+	if rowsAffected == 0 {
+		r.logger.Error("advert not found", zap.String("advert_id", advertId.String()))
+		return entity.PSQLWrap(repository.ErrAdvertNotFound)
+	}
+
+	return nil
+}
+
+func (r *AdvertDB) UploadImage(advertId uuid.UUID, imageId uuid.UUID) error {
+	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
+	defer cancel()
+
+	result, err := r.DB.Exec(ctx, uploadImageQuery, imageId, advertId)
+	if err != nil {
+		r.logger.Error("failed to upload image", zap.Error(err), zap.String("advert_id", advertId.String()))
+		return entity.PSQLQueryErr("UploadImage", err)
 	}
 
 	rowsAffected := result.RowsAffected()

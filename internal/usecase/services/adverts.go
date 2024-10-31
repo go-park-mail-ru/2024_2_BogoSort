@@ -24,12 +24,11 @@ type AdvertService struct {
 
 func NewAdvertService(advertRepo repository.AdvertRepository,
 	staticRepo repository.StaticRepository,
-	logger *zap.Logger) (*AdvertService, error) {
+	logger *zap.Logger) *AdvertService {
 	return &AdvertService{
 		AdvertRepo: advertRepo,
 		StaticRepo: staticRepo,
-		logger:     logger,
-	}, nil
+	}
 }
 
 func (s *AdvertService) advertEntityToDTO(advert *entity.Advert) (*dto.Advert, error) {
@@ -41,7 +40,6 @@ func (s *AdvertService) advertEntityToDTO(advert *entity.Advert) (*dto.Advert, e
 		var err error
 		posterURL, err = s.StaticRepo.GetStatic(advert.ImageURL.UUID)
 		if err != nil {
-			s.logger.Error("failed to get static", zap.Error(err), zap.String("advert_id", advert.ID.String()))
 			posterURL = ""
 		}
 	}
@@ -59,7 +57,6 @@ func (s *AdvertService) advertEntityToDTO(advert *entity.Advert) (*dto.Advert, e
 		Location:    advert.Location,
 	}
 
-	s.logger.Info("usecase: advert converted to DTO", zap.String("advert_id", advert.ID.String()))
 	return &advertDTO, nil
 }
 
@@ -78,16 +75,14 @@ func (s *AdvertService) advertEntitiesToDTO(adverts []*entity.Advert) ([]*dto.Ad
 func (s *AdvertService) GetAdverts(limit, offset int) ([]*dto.Advert, error) {
 	adverts, err := s.AdvertRepo.GetAdverts(limit, offset)
 	if err != nil {
-		s.logger.Error("failed to get adverts", zap.Error(err), zap.Int("limit", limit), zap.Int("offset", offset))
 		return nil, err
 	}
 	return s.advertEntitiesToDTO(adverts)
 }
 
-func (s *AdvertService) GetAdvertsByUserId(userId uuid.UUID) ([]*dto.Advert, error) {
-	adverts, err := s.AdvertRepo.GetAdvertsByUserId(userId)
+func (s *AdvertService) GetAdvertsBySellerId(sellerId uuid.UUID) ([]*dto.Advert, error) {
+	adverts, err := s.AdvertRepo.GetAdvertsBySellerId(sellerId)
 	if err != nil {
-		s.logger.Error("failed to get adverts by user id", zap.Error(err), zap.String("user_id", userId.String()))
 		return nil, err
 	}
 	return s.advertEntitiesToDTO(adverts)
@@ -96,7 +91,6 @@ func (s *AdvertService) GetAdvertsByUserId(userId uuid.UUID) ([]*dto.Advert, err
 func (s *AdvertService) GetSavedAdvertsByUserId(userId uuid.UUID) ([]*dto.Advert, error) {
 	savedAdverts, err := s.AdvertRepo.GetSavedAdvertsByUserId(userId)
 	if err != nil {
-		s.logger.Error("failed to get saved adverts by user id", zap.Error(err), zap.String("user_id", userId.String()))
 		return nil, err
 	}
 	return s.advertEntitiesToDTO(savedAdverts)
@@ -105,7 +99,6 @@ func (s *AdvertService) GetSavedAdvertsByUserId(userId uuid.UUID) ([]*dto.Advert
 func (s *AdvertService) GetAdvertsByCartId(cartId uuid.UUID) ([]*dto.Advert, error) {
 	adverts, err := s.AdvertRepo.GetAdvertsByCartId(cartId)
 	if err != nil {
-		s.logger.Error("failed to get adverts by cart id", zap.Error(err), zap.String("cart_id", cartId.String()))
 		return nil, err
 	}
 	return s.advertEntitiesToDTO(adverts)
@@ -118,11 +111,9 @@ func (s *AdvertService) GetAdvertById(advertId uuid.UUID) (*dto.Advert, error) {
 		if errors.Is(err, repository.ErrAdvertNotFound) {
 			return nil, ErrAdvertNotFound
 		}
-		s.logger.Error("failed to get advert by id", zap.Error(err), zap.String("advert_id", advertId.String()))
 		return nil, err
 	}
 
-	s.logger.Info("usecase: advert retrieved successfully", zap.String("advert_id", advertId.String()))
 	return s.advertEntityToDTO(advert)
 }
 
@@ -147,7 +138,6 @@ func (s *AdvertService) AddAdvert(advert *dto.Advert) (*dto.Advert, error) {
 		Location:    advert.Location,
 	})
 	if err != nil {
-		s.logger.Error("failed to create advert", zap.Error(err))
 		return nil, ErrAdvertBadRequest
 	}
 
@@ -176,7 +166,6 @@ func (s *AdvertService) UpdateAdvert(advert *dto.Advert) error {
 		Location:    advert.Location,
 	})
 	if err != nil {
-		s.logger.Error("failed to update advert", zap.Error(err), zap.String("advert_id", advert.ID.String()))
 		return ErrAdvertBadRequest
 	}
 
@@ -186,10 +175,8 @@ func (s *AdvertService) UpdateAdvert(advert *dto.Advert) error {
 func (s *AdvertService) DeleteAdvertById(advertId uuid.UUID) error {
 	if err := s.AdvertRepo.DeleteAdvertById(advertId); err != nil {
 		if errors.Is(err, repository.ErrAdvertNotFound) {
-			s.logger.Error("advert not found", zap.String("advert_id", advertId.String()))
 			return ErrAdvertNotFound
 		}
-		s.logger.Error("failed to delete advert", zap.Error(err), zap.String("advert_id", advertId.String()))
 		return err
 	}
 
@@ -199,10 +186,8 @@ func (s *AdvertService) DeleteAdvertById(advertId uuid.UUID) error {
 func (s *AdvertService) UpdateAdvertStatus(advertId uuid.UUID, status string) error {
 	if err := s.AdvertRepo.UpdateAdvertStatus(advertId, status); err != nil {
 		if errors.Is(err, repository.ErrAdvertNotFound) {
-			s.logger.Error("advert not found", zap.String("advert_id", advertId.String()))
 			return ErrAdvertNotFound
 		}
-		s.logger.Error("failed to update advert status", zap.Error(err), zap.String("advert_id", advertId.String()))
 		return err
 	}
 
@@ -212,9 +197,16 @@ func (s *AdvertService) UpdateAdvertStatus(advertId uuid.UUID, status string) er
 func (s *AdvertService) GetAdvertsByCategoryId(categoryId uuid.UUID) ([]*dto.Advert, error) {
 	adverts, err := s.AdvertRepo.GetAdvertsByCategoryId(categoryId)
 	if err != nil {
-		s.logger.Error("failed to get adverts by category id", zap.Error(err), zap.String("category_id", categoryId.String()))
 		return nil, err
 	}
 
 	return s.advertEntitiesToDTO(adverts)
+}
+
+func (s *AdvertService) UploadImage(advertId uuid.UUID, imageId uuid.UUID) error {
+	if err := s.AdvertRepo.UploadImage(advertId, imageId); err != nil {
+		return ErrAdvertBadRequest
+	}
+
+	return nil
 }

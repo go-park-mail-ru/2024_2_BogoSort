@@ -3,12 +3,12 @@ package http
 import (
 	"errors"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/utils"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase"
+	"github.com/google/uuid"
+	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 	"net/http"
 	"strconv"
-	"github.com/gorilla/mux"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase"
-	"github.com/google/uuid"
 )
 
 var (
@@ -18,11 +18,11 @@ var (
 )
 
 type StaticEndpoints struct {
-	StaticUseCase usecase.Static
+	StaticUseCase usecase.StaticUseCase
 	logger        *zap.Logger
 }
 
-func NewStaticEndpoints(staticUseCase usecase.Static, logger *zap.Logger) *StaticEndpoints {
+func NewStaticEndpoints(staticUseCase usecase.StaticUseCase, logger *zap.Logger) *StaticEndpoints {
 	return &StaticEndpoints{
 		StaticUseCase: staticUseCase,
 		logger:        logger,
@@ -57,8 +57,10 @@ func (h *StaticEndpoints) GetStaticById(writer http.ResponseWriter, r *http.Requ
 	if err != nil {
 		h.logger.Error("failed to get static file", zap.Error(err))
 		if errors.Is(err, ErrStaticFileNotFound) {
+			h.logger.Error("static file not found", zap.Error(err))
 			utils.SendErrorResponse(writer, http.StatusNotFound, ErrStaticFileNotFound.Error())
 		} else {
+			h.logger.Error("failed to get static file", zap.Error(err))
 			utils.SendErrorResponse(writer, http.StatusInternalServerError, ErrFailedToGetStatic.Error())
 		}
 		return

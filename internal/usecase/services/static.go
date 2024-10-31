@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -21,7 +20,7 @@ type StaticService struct {
 	staticRepo repository.StaticRepository
 }
 
-func NewStaticService(logger *zap.Logger, staticRepo repository.StaticRepository) usecase.Static {
+func NewStaticService(staticRepo repository.StaticRepository, logger *zap.Logger) *StaticService {
 	return &StaticService{
 		logger:     logger,
 		staticRepo: staticRepo,
@@ -37,7 +36,7 @@ func (s *StaticService) GetAvatar(staticID uuid.UUID) (string, error) {
 	return path, nil
 }
 
-func (s *StaticService) UploadAvatar(data []byte) (uuid.UUID, error) {
+func (s *StaticService) UploadFile(data []byte) (uuid.UUID, error) {
 	contentType := http.DetectContentType(data)
 
 	if contentType != "image/jpeg" && contentType != "image/png" {
@@ -88,7 +87,7 @@ func (s *StaticService) UploadAvatar(data []byte) (uuid.UUID, error) {
 		)
 	}
 
-	id, err := s.staticRepo.UploadStatic("im", uuid.New().String()+".jpg", out.Bytes())
+	id, err := s.staticRepo.UploadStatic("images", uuid.New().String()+".jpg", out.Bytes())
 	if err != nil {
 		s.logger.Error("error uploading static", zap.Error(err))
 		return uuid.Nil, err

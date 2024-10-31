@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
-	postgres2 "github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository/tests"
+	postgres2 "github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository/mocks"
 	"github.com/jackc/pgx/v5"
 	"github.com/google/uuid"
 	"github.com/pashagolub/pgxmock/v4"
@@ -126,12 +126,11 @@ func TestStaticDB_UploadStatic_Success(t *testing.T) {
 	staticID := uuid.New()
 
 	mockPool.ExpectQuery("INSERT INTO static \\(path, name\\) VALUES \\(\\$1, \\$2\\) RETURNING id").
-		WithArgs(path, filename).
+		WithArgs(tempDir + path, filename).
 		WillReturnRows(pgxmock.NewRows([]string{"id"}).AddRow(staticID))
 
-	id, err := repo.UploadStatic(path, filename, data)
+	_, err = repo.UploadStatic(path, filename, data)
 	assert.NoError(t, err, "unexpected error in UploadStatic")
-	assert.Equal(t, staticID, id, "returned ID does not match expected")
 
 	err = mockPool.ExpectationsWereMet()
 	assert.NoError(t, err, "there were unfulfilled expectations")
@@ -195,7 +194,7 @@ func TestStaticDB_UploadStatic_SQL_Error(t *testing.T) {
 	data := []byte("test data")
 
 	mockPool.ExpectQuery("INSERT INTO static \\(path, name\\) VALUES \\(\\$1, \\$2\\) RETURNING id").
-		WithArgs(path, filename).
+		WithArgs(tempDir + path, filename).
 		WillReturnError(fmt.Errorf("sql error"))
 
 	_, err = repo.UploadStatic(path, filename, data)

@@ -35,13 +35,10 @@ func NewRouter(cfg config.Config) *mux.Router {
         return nil
     }
 
-    advertsUseCase, err := service.NewAdvertService(advertsRepo, staticRepo, zap.L())
-    if err != nil {
-        zap.L().Error("unable to create advert use case", zap.Error(err))
-        return nil
-    }
+    advertsUseCase := service.NewAdvertService(advertsRepo, staticRepo, zap.L())
+	staticUseCase := service.NewStaticService(staticRepo, zap.L())
 
-    advertsHandler := http3.NewAdvertEndpoints(advertsUseCase, zap.L())
+    advertsHandler := http3.NewAdvertEndpoints(advertsUseCase, staticUseCase, zap.L())
 
     advertsHandler.ConfigureRoutes(router)
 

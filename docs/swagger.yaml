@@ -192,6 +192,36 @@ paths:
       summary: Update an existing advert
       tags:
       - adverts
+  /api/v1/adverts/{advertId}/image:
+    put:
+      description: Upload an image by ID
+      parameters:
+      - description: Advert ID
+        in: path
+        name: advertId
+        required: true
+        type: string
+      - description: Image file to upload
+        in: formData
+        name: image
+        required: true
+        type: file
+      responses:
+        "200":
+          description: Image uploaded
+          schema:
+            type: string
+        "400":
+          description: Invalid advert ID or file not attached
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Failed to upload image
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Upload an image
+      tags:
+      - adverts
   /api/v1/adverts/{advertId}/status:
     put:
       description: Update advert status by ID
@@ -283,13 +313,13 @@ paths:
       summary: Get adverts by category ID
       tags:
       - adverts
-  /api/v1/adverts/user/{userId}:
+  /api/v1/adverts/seller/{sellerId}:
     get:
-      description: Get a list of adverts by user ID
+      description: Get a list of adverts by seller ID
       parameters:
-      - description: User ID
+      - description: Seller ID
         in: path
-        name: userId
+        name: sellerId
         required: true
         type: string
       produces:
@@ -302,14 +332,14 @@ paths:
               $ref: '#/definitions/dto.Advert'
             type: array
         "400":
-          description: Invalid user ID
+          description: Invalid seller ID
           schema:
             $ref: '#/definitions/utils.ErrResponse'
         "500":
-          description: Failed to get adverts by user ID
+          description: Failed to get adverts by seller ID
           schema:
             $ref: '#/definitions/utils.ErrResponse'
-      summary: Get adverts by user ID
+      summary: Get adverts by seller ID
       tags:
       - adverts
   /api/v1/adverts/user/{userId}/saved:
