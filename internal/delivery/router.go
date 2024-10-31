@@ -1,6 +1,7 @@
 package delivery
 
 import (
+	"context"
 	"log"
 	"net/http"
 
@@ -35,9 +36,10 @@ func NewRouter(cfg config.Config) (*mux.Router, error) {
 		return nil, errors.Wrap(err, "failed to connect to Redis")
 	}
 
-	userRepo := postgres.NewUserRepository(dbPool, zap.L())
-	userUC := service.NewUserService(userRepo, zap.L())
-
+	ctx := context.Background()
+	userRepo := postgres.NewUserRepository(dbPool, ctx, zap.L())
+	sellerRepo := postgres.NewSellerRepository(dbPool, ctx, zap.L())
+	userUC := service.NewUserService(userRepo, sellerRepo, zap.L())
 	sessionRepo := redis.NewSessionRepository(rdb, int(cfg.Session.ExpirationTime.Seconds()), zap.L())
 	sessionUC := service.NewAuthService(sessionRepo, zap.L())
 
@@ -45,10 +47,11 @@ func NewRouter(cfg config.Config) (*mux.Router, error) {
 
 	authHandler := http3.NewAuthEndpoints(sessionUC, sessionManager, zap.L())
 	userHandler := http3.NewUserEndpoints(userUC, sessionUC, sessionManager, zap.L())
+	sellerHandler := http3.NewSellerEndpoints(sellerRepo, zap.L())
 
 	authHandler.Configure(router)
 	userHandler.Configure(router)
-
+	sellerHandler.Configure(router)
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
 	return router, nil

@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	ErrInvalidRequestBody          = errors.New("invalid request body")
+	ErrUserInvalidRequestBody      = errors.New("invalid request body")
 	ErrUserAlreadyExists           = errors.New("user already exists")
 	ErrUserNotFound                = errors.New("user not found")
 	ErrUserIncorrectData           = errors.New("user incorrect data")
