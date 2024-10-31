@@ -117,7 +117,8 @@ CREATE TABLE IF NOT EXISTS cart_advert (
 CREATE TABLE IF NOT EXISTS purchase (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4() NOT NULL,
     cart_id UUID NOT NULL,
-    status TEXT NOT NULL,
+    status TEXT
+        CONSTRAINT status_length CHECK (status IN ('pending', 'in_progress', 'completed', 'cancelled')),
     adress TEXT
         CONSTRAINT adress_length CHECK (LENGTH(adress) <= 150),
     payment_method TEXT
