@@ -7,13 +7,12 @@ server:
 session:
   expiration_time: 12h
 
-postgres:
-  user: postgres
-  password: postgres
-  db: emporiumdb
-  ip: localhost
-  port: 5432
-  timeout: 5s
+pg_ip: localhost
+pg_port: 5432
+pg_user: postgres
+pg_password: postgres
+pg_db: emporiumdb
+pg_timeout: 5s
 
 static:
   path: static/
