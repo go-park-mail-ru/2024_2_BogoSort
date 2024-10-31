@@ -118,6 +118,12 @@ CREATE TABLE IF NOT EXISTS purchase (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4() NOT NULL,
     cart_id UUID NOT NULL,
     status TEXT NOT NULL,
+    adress TEXT
+        CONSTRAINT buyer_adress_length CHECK (LENGTH(buyer_adress) <= 150),
+    payment_method TEXT
+        CONSTRAINT payment_method_length CHECK (status IN ('cash', 'card')),
+    delivery_method TEXT
+        CONSTRAINT delivery_method_length CHECK (status IN ('pickup', 'delivery')),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT status_length CHECK (LENGTH(status) <= 255),
