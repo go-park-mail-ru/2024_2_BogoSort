@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"errors"
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
@@ -12,14 +13,16 @@ import (
 )
 
 type UserService struct {
-	userRepo repository.User
-	logger   *zap.Logger
+	userRepo   repository.User
+	sellerRepo repository.Seller
+	logger     *zap.Logger
 }
 
-func NewUserService(userRepo repository.User, logger *zap.Logger) *UserService {
+func NewUserService(userRepo repository.User, sellerRepo repository.Seller, logger *zap.Logger) *UserService {
 	return &UserService{
-		userRepo: userRepo,
-		logger:   logger,
+		userRepo:   userRepo,
+		sellerRepo: sellerRepo,
+		logger:     logger,
 	}
 }
 
@@ -31,6 +34,12 @@ func (u *UserService) handleRepoError(err error, context string) error {
 	case errors.Is(err, repository.ErrUserNotFound):
 		u.logger.Error("user not found", zap.String("context", context))
 		return usecase.ErrUserNotFound
+	case errors.Is(err, repository.ErrSellerAlreadyExists):
+		u.logger.Error("seller already exists", zap.String("context", context))
+		return repository.ErrSellerAlreadyExists
+	case errors.Is(err, repository.ErrSellerNotFound):
+		u.logger.Error("seller not found", zap.String("context", context))
+		return repository.ErrSellerNotFound
 	case err != nil:
 		u.logger.Error("repository error", zap.String("context", context), zap.Error(err))
 		return entity.UsecaseWrap(errors.New("repository error"), err)
@@ -51,9 +60,30 @@ func (u *UserService) Signup(signupInfo *dto.Signup) (uuid.UUID, error) {
 		return uuid.Nil, entity.UsecaseWrap(errors.New("error hashing password"), err)
 	}
 
-	userID, err := u.userRepo.AddUser(signupInfo.Email, hash, salt)
+	ctx := context.Background()
+	tx, err := u.userRepo.BeginTransaction()
 	if err != nil {
-		return uuid.Nil, u.handleRepoError(err, "Signup")
+		u.logger.Error("failed to begin transaction", zap.Error(err))
+		return uuid.Nil, entity.UsecaseWrap(errors.New("failed to begin transaction"), err)
+	}
+	defer func() {
+		if err != nil {
+			tx.Rollback(ctx)
+		} else {
+			tx.Commit(ctx)
+		}
+	}()
+
+	userID, err := u.userRepo.AddUser(tx, signupInfo.Email, hash, salt)
+	if err != nil {
+		err = u.handleRepoError(err, "Signup")
+		return uuid.Nil, err
+	}
+
+	_, err = u.sellerRepo.AddSeller(tx, userID)
+	if err != nil {
+		err = u.handleRepoError(err, "Signup_CreateSeller")
+		return uuid.Nil, err
 	}
 
 	return userID, nil
