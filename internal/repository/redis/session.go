@@ -21,13 +21,16 @@ type SessionDB struct {
 	logger           *zap.Logger
 }
 
-func NewSessionRepository(rdb *redis.Client, sessionAliveTime int, logger *zap.Logger) *SessionDB {
+func NewSessionRepository(rdb *redis.Client, sessionAliveTime int, ctx context.Context, logger *zap.Logger) (*SessionDB, error) {
+	if err := rdb.Ping(ctx).Err(); err != nil {
+		return nil, err
+	}
 	return &SessionDB{
 		rdb:              rdb,
 		sessionAliveTime: sessionAliveTime,
-		ctx:              context.Background(),
-		logger:           zap.L(),
-	}
+		ctx:              ctx,
+		logger:           logger,
+	}, nil
 }
 
 func (s *SessionDB) CreateSession(userID uuid.UUID) (string, error) {

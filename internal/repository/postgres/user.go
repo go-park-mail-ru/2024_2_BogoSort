@@ -62,12 +62,15 @@ type DBUser struct {
 	Status       sql.NullString
 }
 
-func NewUserRepository(db *pgxpool.Pool, ctx context.Context, logger *zap.Logger) repository.User {
+func NewUserRepository(db *pgxpool.Pool, ctx context.Context, logger *zap.Logger) (repository.User, error) {
+	if err := db.Ping(ctx); err != nil {
+		return nil, err
+	}
 	return &UsersDB{
 		DB:     db,
 		ctx:    ctx,
 		logger: logger,
-	}
+	}, nil
 }
 
 func (us *DBUser) GetEntity() entity.User {
