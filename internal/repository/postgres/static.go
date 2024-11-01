@@ -1,4 +1,3 @@
-// staticdb.go
 package postgres
 
 import (
