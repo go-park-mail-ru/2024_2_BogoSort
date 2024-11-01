@@ -61,7 +61,7 @@ func (h *AdvertEndpoints) ConfigureRoutes(router *mux.Router) {
 // @Produce json
 // @Param limit query int false "Limit the number of results"
 // @Param offset query int false "Offset for pagination"
-// @Success 200 {array} dto.Advert "List of adverts"
+// @Success 200 {array} dto.AdvertResponse "List of adverts"
 // @Failure 400 {object} utils.ErrResponse "Invalid limit or offset"
 // @Failure 500 {object} utils.ErrResponse "Failed to retrieve adverts"
 // @Router /api/v1/adverts [get]
@@ -174,7 +174,7 @@ func (h *AdvertEndpoints) GetAdvertsByCartId(writer http.ResponseWriter, r *http
 // @Tags adverts
 // @Produce json
 // @Param advertId path string true "Advert ID"
-// @Success 200 {object} dto.Advert "Advert details"
+// @Success 200 {object} dto.AdvertResponse "Advert details"
 // @Failure 400 {object} utils.ErrResponse "Invalid advert ID"
 // @Failure 404 {object} utils.ErrResponse "Advert not found"
 // @Failure 500 {object} utils.ErrResponse "Failed to retrieve advert by ID"
@@ -235,7 +235,7 @@ func (h *AdvertEndpoints) AddAdvert(writer http.ResponseWriter, r *http.Request)
 // @Accept json
 // @Produce json
 // @Param advertId path string true "Advert ID"
-// @Param advert body dto.Advert true "Updated advert data"
+// @Param advert body dto.AdvertRequest true "Updated advert data"
 // @Success 200 "Advert updated successfully"
 // @Failure 400 {object} utils.ErrResponse "Invalid advert data"
 // @Failure 404 {object} utils.ErrResponse "Advert not found"
@@ -333,7 +333,7 @@ func (h *AdvertEndpoints) UpdateAdvertStatus(writer http.ResponseWriter, r *http
 // @Tags adverts
 // @Produce json
 // @Param categoryId path string true "Category ID"
-// @Success 200 {array} dto.Advert "List of adverts by category ID"
+// @Success 200 {array} dto.AdvertResponse "List of adverts by category ID"
 // @Failure 400 {object} utils.ErrResponse "Invalid category ID"
 // @Failure 500 {object} utils.ErrResponse "Failed to retrieve adverts by category ID"
 // @Router /api/v1/adverts/category/{categoryId} [get]
