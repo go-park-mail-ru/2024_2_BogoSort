@@ -25,15 +25,27 @@ definitions:
   dto.AdvertStatus:
     enum:
     - active
+    - inactive
     type: string
     x-enum-varnames:
     - AdvertStatusActive
+    - AdvertStatusInactive
   dto.Login:
     properties:
       email:
         type: string
       password:
         type: string
+    type: object
+  dto.PurchaseRequest:
+    properties:
+      cart_id:
+        type: string
+    type: object
+  dto.PurchaseResponse:
+    properties:
+      success:
+        type: boolean
     type: object
   dto.Signup:
     properties:
@@ -75,13 +87,9 @@ definitions:
     type: object
   entity.Seller:
     properties:
-      created_at:
-        type: string
       description:
         type: string
       id:
-        type: string
-      updated_at:
         type: string
       user_id:
         type: string
@@ -95,6 +103,8 @@ definitions:
     type: object
 info:
   contact: {}
+  title: "BogoSort API"
+  version: "1.0.0"
 paths:
   /api/v1/adverts:
     get:
@@ -481,6 +491,36 @@ paths:
       summary: Get static file by ID
       tags:
       - static
+  /api/v1/user/{user_id}/image:
+    put:
+      description: Upload an image associated with an advert by its ID
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: Image file to upload
+        in: formData
+        name: image
+        required: true
+        type: file
+      responses:
+        "200":
+          description: Image uploaded
+          schema:
+            type: string
+        "400":
+          description: Invalid user ID or file not attached
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Failed to upload image
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Upload an image for an advert
+      tags:
+      - adverts
   /login:
     post:
       consumes:
@@ -674,6 +714,40 @@ paths:
       summary: Get user profile
       tags:
       - Users
+  /purchase:
+    post:
+      consumes:
+      - application/json
+      description: Принимает ID корзины и выполняет процесс покупки
+      parameters:
+      - description: Данные покупки
+        in: body
+        name: purchase
+        required: true
+        schema:
+          $ref: '#/definitions/dto.PurchaseRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешная покупка
+          schema:
+            $ref: '#/definitions/dto.PurchaseResponse'
+        "400":
+          description: Неверные параметры запроса
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "404":
+          description: Корзина не найдена
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Совершает покупку по ID корзины
+      tags:
+      - Покупки
   /seller/{seller_id}:
     get:
       consumes:

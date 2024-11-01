@@ -598,6 +598,51 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/user/{user_id}/image": {
+            "put": {
+                "description": "Upload an image associated with an advert by its ID",
+                "tags": [
+                    "adverts"
+                ],
+                "summary": "Upload an image for an advert",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Image file to upload",
+                        "name": "image",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Image uploaded",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid user ID or file not attached",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to upload image",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/login": {
             "post": {
                 "description": "Allows a user to log into the system",
@@ -892,6 +937,58 @@ const docTemplate = `{
                 }
             }
         },
+        "/purchase": {
+            "post": {
+                "description": "Принимает ID корзины и выполняет процесс покупки",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Покупки"
+                ],
+                "summary": "Совершает покупку по ID корзины",
+                "parameters": [
+                    {
+                        "description": "Данные покупки",
+                        "name": "purchase",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.PurchaseRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Успешная покупка",
+                        "schema": {
+                            "$ref": "#/definitions/dto.PurchaseResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверные параметры запроса",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Корзина не найдена",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/seller/{seller_id}": {
             "get": {
                 "description": "Возвращает информацию о продавце по его ID",
@@ -1034,10 +1131,12 @@ const docTemplate = `{
         "dto.AdvertStatus": {
             "type": "string",
             "enum": [
-                "active"
+                "active",
+                "inactive"
             ],
             "x-enum-varnames": [
-                "AdvertStatusActive"
+                "AdvertStatusActive",
+                "AdvertStatusInactive"
             ]
         },
         "dto.Login": {
@@ -1048,6 +1147,22 @@ const docTemplate = `{
                 },
                 "password": {
                     "type": "string"
+                }
+            }
+        },
+        "dto.PurchaseRequest": {
+            "type": "object",
+            "properties": {
+                "cart_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.PurchaseResponse": {
+            "type": "object",
+            "properties": {
+                "success": {
+                    "type": "boolean"
                 }
             }
         },
@@ -1112,16 +1227,10 @@ const docTemplate = `{
         "entity.Seller": {
             "type": "object",
             "properties": {
-                "created_at": {
-                    "type": "string"
-                },
                 "description": {
                     "type": "string"
                 },
                 "id": {
-                    "type": "string"
-                },
-                "updated_at": {
                     "type": "string"
                 },
                 "user_id": {
