@@ -129,7 +129,5 @@ func (dbSeller *DBSeller) GetEntity() entity.Seller {
 		ID:          dbSeller.ID,
 		UserID:      dbSeller.UserID,
 		Description: dbSeller.Description.String,
-		CreatedAt:   dbSeller.CreatedAt,
-		UpdatedAt:   dbSeller.UpdatedAt,
 	}
 }
