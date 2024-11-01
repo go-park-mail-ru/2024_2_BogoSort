@@ -598,52 +598,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/user/{user_id}/image": {
-            "put": {
-                "description": "Upload an image associated with an advert by its ID",
-                "tags": [
-                    "adverts"
-                ],
-                "summary": "Upload an image for an advert",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "User ID",
-                        "name": "user_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "file",
-                        "description": "Image file to upload",
-                        "name": "image",
-                        "in": "formData",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Image uploaded",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid user ID or file not attached",
-                        "schema": {
-                            "$ref": "#/definitions/utils.ErrResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Failed to upload image",
-                        "schema": {
-                            "$ref": "#/definitions/utils.ErrResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/login": {
+        "/api/v1/login": {
             "post": {
                 "description": "Allows a user to log into the system",
                 "consumes": [
@@ -701,7 +656,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/logout": {
+        "/api/v1/logout": {
             "post": {
                 "description": "Allows the user to log out of the system by deleting their session",
                 "consumes": [
@@ -742,7 +697,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/me": {
+        "/api/v1/me": {
             "get": {
                 "description": "Returns information about the currently authenticated user",
                 "consumes": [
@@ -777,7 +732,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/password": {
+        "/api/v1/password": {
             "post": {
                 "description": "Allows a user to change their password",
                 "consumes": [
@@ -835,7 +790,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/profile": {
+        "/api/v1/profile": {
             "put": {
                 "description": "Allows a user to update their profile information",
                 "consumes": [
@@ -893,7 +848,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/profile/{user_id}": {
+        "/api/v1/profile/{user_id}": {
             "get": {
                 "description": "Returns user information by their ID",
                 "consumes": [
@@ -937,7 +892,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/purchase": {
+        "/api/v1/purchase": {
             "post": {
                 "description": "Принимает ID корзины и выполняет процесс покупки",
                 "consumes": [
@@ -989,7 +944,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/seller/{seller_id}": {
+        "/api/v1/seller/{seller_id}": {
             "get": {
                 "description": "Возвращает информацию о продавце по его ID",
                 "consumes": [
@@ -1039,7 +994,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/signup": {
+        "/api/v1/signup": {
             "post": {
                 "description": "Creates a new user in the system",
                 "consumes": [
@@ -1084,6 +1039,51 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/user/{user_id}/image": {
+            "put": {
+                "description": "Upload an image associated with an advert by its ID",
+                "tags": [
+                    "adverts"
+                ],
+                "summary": "Upload an image for an advert",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Image file to upload",
+                        "name": "image",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Image uploaded",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid user ID or file not attached",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to upload image",
                         "schema": {
                             "$ref": "#/definitions/utils.ErrResponse"
                         }

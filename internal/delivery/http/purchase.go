@@ -18,7 +18,7 @@ type PurchaseEndpoints struct {
 // @Failure 400 {object} utils.ErrResponse "Invalid request parameters"
 // @Failure 404 {object} utils.ErrResponse "Cart not found"
 // @Failure 500 {object} utils.ErrResponse "Internal server error"
-// @Router /purchase [post]
+// @Router /api/v1/purchase [post]
 func (h *PurchaseEndpoints) CreatePurchase(w http.ResponseWriter, r *http.Request) {
 
 }

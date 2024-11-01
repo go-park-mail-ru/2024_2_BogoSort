@@ -24,7 +24,7 @@ func NewAuthEndpoints(authUC usecase.Auth, sessionManager *utils.SessionManager,
 }
 
 func (a *AuthEndpoints) Configure(router *mux.Router) {
-	router.HandleFunc("/logout", a.Logout).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/logout", a.Logout).Methods(http.MethodPost)
 }
 
 func (a *AuthEndpoints) handleError(w http.ResponseWriter, err error, method string, data map[string]string) {
@@ -42,7 +42,7 @@ func (a *AuthEndpoints) handleError(w http.ResponseWriter, err error, method str
 // @Failure 400 {object} utils.ErrResponse "Invalid request or missing cookie"
 // @Failure 401 {object} utils.ErrResponse "Unauthorized access"
 // @Failure 500 {object} utils.ErrResponse "Internal server error"
-// @Router /logout [post]
+// @Router /api/v1/logout [post]
 func (a *AuthEndpoints) Logout(w http.ResponseWriter, r *http.Request) {
 	userID, err := a.sessionManager.GetUserID(r)
 	if err != nil {

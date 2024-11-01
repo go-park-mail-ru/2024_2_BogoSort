@@ -25,9 +25,9 @@ func NewCartEndpoints(cartUC usecase.Cart, logger *zap.Logger) *CartEndpoints {
 }
 
 func (h *CartEndpoints) Configure(router *mux.Router) {
-	router.HandleFunc("/api/v1/cart/{cart_id}", h.GetCartByID).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/cart/user/{user_id}", h.GetCartByUserID).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/cart/add", h.AddAdvertToCart).Methods(http.MethodPost)
+	router.HandleFunc("api/v1/cart/{cart_id}", h.GetCartByID).Methods(http.MethodGet)
+	router.HandleFunc("api/v1/cart/user/{user_id}", h.GetCartByUserID).Methods(http.MethodGet)
+	router.HandleFunc("api/v1/cart/add", h.AddAdvertToCart).Methods(http.MethodPost)
 }
 
 // GetCartByID Retrieves the cart by its ID
@@ -40,7 +40,7 @@ func (h *CartEndpoints) Configure(router *mux.Router) {
 // @Success 200 {object} dto.CartResponse "Successfully retrieved cart"
 // @Failure 400 {object} utils.ErrResponse "Invalid cart ID format"
 // @Failure 500 {object} utils.ErrResponse "Internal server error"
-// @Router /cart/{cart_id} [get]
+// @Router /api/v1/cart/{cart_id} [get]
 func (h *CartEndpoints) GetCartByID(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	cartIDStr, ok := vars["cart_id"]
@@ -113,7 +113,7 @@ func (h *CartEndpoints) GetCartByUserID(w http.ResponseWriter, r *http.Request) 
 // @Success 200 {object} map[string]string "Successfully added advert"
 // @Failure 400 {object} utils.ErrResponse "Invalid request data"
 // @Failure 500 {object} utils.ErrResponse "Internal server error"
-// @Router /cart/add [post]
+// @Router /api/v1/cart/add [post]
 func (h *CartEndpoints) AddAdvertToCart(w http.ResponseWriter, r *http.Request) {
 	var req dto.AddAdvertToUserCartRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

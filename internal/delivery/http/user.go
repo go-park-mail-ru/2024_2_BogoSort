@@ -86,7 +86,7 @@ func (u *UserEndpoints) sendError(w http.ResponseWriter, statusCode int, err err
 // @Failure 400 {object} utils.ErrResponse "Invalid request or user already exists"
 // @Failure 401 {object} utils.ErrResponse "Unauthorized request"
 // @Failure 500 {object} utils.ErrResponse "Internal server error"
-// @Router /signup [post]
+// @Router /api/v1/signup [post]
 func (u *UserEndpoints) Signup(w http.ResponseWriter, r *http.Request) {
 	var credentials dto.Signup
 	if err := json.NewDecoder(r.Body).Decode(&credentials); err != nil {
@@ -131,7 +131,7 @@ func (u *UserEndpoints) Signup(w http.ResponseWriter, r *http.Request) {
 // @Failure 401 {object} utils.ErrResponse "Invalid credentials or unauthorized access"
 // @Failure 404 {object} utils.ErrResponse "User not found"
 // @Failure 500 {object} utils.ErrResponse "Internal server error"
-// @Router /login [post]
+// @Router /api/v1/login [post]
 func (u *UserEndpoints) Login(w http.ResponseWriter, r *http.Request) {
 	var credentials dto.Login
 	if err := json.NewDecoder(r.Body).Decode(&credentials); err != nil {
@@ -173,7 +173,7 @@ func (u *UserEndpoints) Login(w http.ResponseWriter, r *http.Request) {
 // @Failure 401 {object} utils.ErrResponse "Unauthorized access"
 // @Failure 404 {object} utils.ErrResponse "User not found"
 // @Failure 500 {object} utils.ErrResponse "Internal server error"
-// @Router /password [post]
+// @Router /api/v1/password [post]
 func (u *UserEndpoints) ChangePassword(w http.ResponseWriter, r *http.Request) {
 	var updatePassword dto.UpdatePassword
 	if err := json.NewDecoder(r.Body).Decode(&updatePassword); err != nil {
@@ -207,7 +207,7 @@ func (u *UserEndpoints) ChangePassword(w http.ResponseWriter, r *http.Request) {
 // @Failure 401 {object} utils.ErrResponse "Unauthorized access"
 // @Failure 404 {object} utils.ErrResponse "User not found"
 // @Failure 500 {object} utils.ErrResponse "Internal server error"
-// @Router /profile [put]
+// @Router /api/v1/profile [put]
 func (u *UserEndpoints) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	var user dto.User
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
@@ -240,7 +240,7 @@ func (u *UserEndpoints) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} dto.User "User profile"
 // @Failure 404 {object} utils.ErrResponse "User not found"
 // @Failure 500 {object} utils.ErrResponse "Internal server error"
-// @Router /profile/{user_id} [get]
+// @Router /api/v1/profile/{user_id} [get]
 func (u *UserEndpoints) GetProfile(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	userID, err := uuid.Parse(vars["user_id"])
@@ -266,7 +266,7 @@ func (u *UserEndpoints) GetProfile(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} dto.User "User information"
 // @Failure 401 {object} utils.ErrResponse "Unauthorized access"
 // @Failure 500 {object} utils.ErrResponse "Internal server error"
-// @Router /me [get]
+// @Router /api/v1/me [get]
 func (u *UserEndpoints) GetMe(w http.ResponseWriter, r *http.Request) {
 	userID, err := u.sessionManager.GetUserID(r)
 	if err != nil {
