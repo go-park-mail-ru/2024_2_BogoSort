@@ -15,6 +15,7 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+<<<<<<< HEAD
         "/api/v1/adverts": {
             "get": {
                 "description": "Get a list of all adverts",
@@ -65,12 +66,18 @@ const docTemplate = `{
             },
             "post": {
                 "description": "Create a new advert",
+=======
+        "/login": {
+            "post": {
+                "description": "Позволяет пользователю войти в систему",
+>>>>>>> TP-09_data_base
                 "consumes": [
                     "application/json"
                 ],
                 "produces": [
                     "application/json"
                 ],
+<<<<<<< HEAD
                 "tags": [
                     "adverts"
                 ],
@@ -445,16 +452,36 @@ const docTemplate = `{
                         "name": "image",
                         "in": "formData",
                         "required": true
+=======
+                "tags": [
+                    "Пользователи"
+                ],
+                "summary": "Вход пользователя",
+                "parameters": [
+                    {
+                        "description": "Данные для входа",
+                        "name": "login",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.Login"
+                        }
+>>>>>>> TP-09_data_base
                     }
                 ],
                 "responses": {
                     "200": {
+<<<<<<< HEAD
                         "description": "Image uploaded",
+=======
+                        "description": "SessionID",
+>>>>>>> TP-09_data_base
                         "schema": {
                             "type": "string"
                         }
                     },
                     "400": {
+<<<<<<< HEAD
                         "description": "Invalid advert ID or file not attached",
                         "schema": {
                             "$ref": "#/definitions/utils.ErrResponse"
@@ -561,6 +588,317 @@ const docTemplate = `{
                         "description": "Failed to get static file",
                         "schema": {
                             "$ref": "#/definitions/utils.ErrResponse"
+=======
+                        "description": "Некорректный запрос",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Неверные учетные данные или несанкционированный доступ",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Пользователь не найден",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/logout": {
+            "post": {
+                "description": "Позволяет пользователю выйти из системы, удаляя его сессию",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Аутентификация"
+                ],
+                "summary": "Выход пользователя",
+                "responses": {
+                    "200": {
+                        "description": "Вы успешно вышли из системы",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректный запрос или отсутствие cookie",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Несанкционированный доступ",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/me": {
+            "get": {
+                "description": "Возвращает информацию о пользователе, текущий пользователь которого аутентифицирован",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Пользователи"
+                ],
+                "summary": "Получение информации о текущем пользователе",
+                "responses": {
+                    "200": {
+                        "description": "Информация о пользователе",
+                        "schema": {
+                            "$ref": "#/definitions/dto.User"
+                        }
+                    },
+                    "401": {
+                        "description": "Несанкционированный доступ",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/password": {
+            "post": {
+                "description": "Позволяет пользователю изменить свой пароль",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Пользователи"
+                ],
+                "summary": "Изменение пароля пользователя",
+                "parameters": [
+                    {
+                        "description": "Данные для изменения пароля",
+                        "name": "password",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UpdatePassword"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Пароль изменен успешно",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректные данные",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Несанкционированный доступ",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Пользователь не найден",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/profile": {
+            "put": {
+                "description": "Позволяет пользователю обновить информацию своего профиля",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Пользователи"
+                ],
+                "summary": "Обновление профиля пользователя",
+                "parameters": [
+                    {
+                        "description": "Данные профиля",
+                        "name": "profile",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.User"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Профиль обновлен успешно",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректные данные",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Несанкционированный доступ",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Пользователь не найден",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/profile/{user_id}": {
+            "get": {
+                "description": "Возвращает информацию о пользователе по его ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Пользователи"
+                ],
+                "summary": "Получение профиля пользователя",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID пользователя",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Профиль пользователя",
+                        "schema": {
+                            "$ref": "#/definitions/dto.User"
+                        }
+                    },
+                    "404": {
+                        "description": "Пользователь не найден",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/signup": {
+            "post": {
+                "description": "Создает нового пользователя в системе",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Пользователи"
+                ],
+                "summary": "Регистрация нового пользователя",
+                "parameters": [
+                    {
+                        "description": "Данные для регистрации",
+                        "name": "signup",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.Signup"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "SessionID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректный запрос или пользователь уже существует",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Несанкционированный запрос",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+>>>>>>> TP-09_data_base
                         }
                     }
                 }
@@ -568,12 +906,17 @@ const docTemplate = `{
         }
     },
     "definitions": {
+<<<<<<< HEAD
         "dto.Advert": {
+=======
+        "dto.Login": {
+>>>>>>> TP-09_data_base
             "type": "object",
             "properties": {
                 "category_id": {
                     "type": "string"
                 },
+<<<<<<< HEAD
                 "description": {
                     "type": "string"
                 },
@@ -599,10 +942,36 @@ const docTemplate = `{
                     "$ref": "#/definitions/dto.AdvertStatus"
                 },
                 "title": {
+=======
+                "password": {
                     "type": "string"
                 }
             }
         },
+        "dto.Signup": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.UpdatePassword": {
+            "type": "object",
+            "properties": {
+                "new_password": {
+                    "type": "string"
+                },
+                "old_password": {
+>>>>>>> TP-09_data_base
+                    "type": "string"
+                }
+            }
+        },
+<<<<<<< HEAD
         "dto.AdvertStatus": {
             "type": "string",
             "enum": [
@@ -611,6 +980,31 @@ const docTemplate = `{
             "x-enum-varnames": [
                 "AdvertStatusActive"
             ]
+=======
+        "dto.User": {
+            "type": "object",
+            "properties": {
+                "avatar_id": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string",
+                    "default": "active"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+>>>>>>> TP-09_data_base
         },
         "utils.ErrResponse": {
             "type": "object",

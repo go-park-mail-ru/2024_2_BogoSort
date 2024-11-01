@@ -1,10 +1,15 @@
 definitions:
+<<<<<<< HEAD
   dto.Advert:
+=======
+  dto.Login:
+>>>>>>> TP-09_data_base
     properties:
       category_id:
         type: string
       description:
         type: string
+<<<<<<< HEAD
       has_delivery:
         type: boolean
       id:
@@ -28,6 +33,39 @@ definitions:
     type: string
     x-enum-varnames:
     - AdvertStatusActive
+=======
+    type: object
+  dto.Signup:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  dto.UpdatePassword:
+    properties:
+      new_password:
+        type: string
+      old_password:
+        type: string
+    type: object
+  dto.User:
+    properties:
+      avatar_id:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      phone:
+        type: string
+      status:
+        default: active
+        type: string
+      username:
+        type: string
+    type: object
+>>>>>>> TP-09_data_base
   utils.ErrResponse:
     properties:
       code:
@@ -37,7 +75,10 @@ definitions:
     type: object
 info:
   contact: {}
+  title: API
+  version: 1.0.0
 paths:
+<<<<<<< HEAD
   /api/v1/adverts:
     get:
       description: Get a list of all adverts
@@ -402,4 +443,234 @@ paths:
       summary: Get static file by ID
       tags:
       - static
+=======
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Позволяет пользователю войти в систему
+      parameters:
+      - description: Данные для входа
+        in: body
+        name: login
+        required: true
+        schema:
+          $ref: '#/definitions/dto.Login'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: SessionID
+          schema:
+            type: string
+        "400":
+          description: Некорректный запрос
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "401":
+          description: Неверные учетные данные или несанкционированный доступ
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "404":
+          description: Пользователь не найден
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Вход пользователя
+      tags:
+      - Пользователи
+  /logout:
+    post:
+      consumes:
+      - application/json
+      description: Позволяет пользователю выйти из системы, удаляя его сессию
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Вы успешно вышли из системы
+          schema:
+            type: string
+        "400":
+          description: Некорректный запрос или отсутствие cookie
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "401":
+          description: Несанкционированный доступ
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Выход пользователя
+      tags:
+      - Аутентификация
+  /me:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает информацию о пользователе, текущий пользователь которого
+        аутентифицирован
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Информация о пользователе
+          schema:
+            $ref: '#/definitions/dto.User'
+        "401":
+          description: Несанкционированный доступ
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Получение информации о текущем пользователе
+      tags:
+      - Пользователи
+  /password:
+    post:
+      consumes:
+      - application/json
+      description: Позволяет пользователю изменить свой пароль
+      parameters:
+      - description: Данные для изменения пароля
+        in: body
+        name: password
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdatePassword'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Пароль изменен успешно
+          schema:
+            type: string
+        "400":
+          description: Некорректные данные
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "401":
+          description: Несанкционированный доступ
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "404":
+          description: Пользователь не найден
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Изменение пароля пользователя
+      tags:
+      - Пользователи
+  /profile:
+    put:
+      consumes:
+      - application/json
+      description: Позволяет пользователю обновить информацию своего профиля
+      parameters:
+      - description: Данные профиля
+        in: body
+        name: profile
+        required: true
+        schema:
+          $ref: '#/definitions/dto.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Профиль обновлен успешно
+          schema:
+            type: string
+        "400":
+          description: Некорректные данные
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "401":
+          description: Несанкционированный доступ
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "404":
+          description: Пользователь не найден
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Обновление профиля пользователя
+      tags:
+      - Пользователи
+  /profile/{user_id}:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает информацию о пользователе по его ID
+      parameters:
+      - description: ID пользователя
+        in: path
+        name: user_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Профиль пользователя
+          schema:
+            $ref: '#/definitions/dto.User'
+        "404":
+          description: Пользователь не найден
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Получение профиля пользователя
+      tags:
+      - Пользователи
+  /signup:
+    post:
+      consumes:
+      - application/json
+      description: Создает нового пользователя в системе
+      parameters:
+      - description: Данные для регистрации
+        in: body
+        name: signup
+        required: true
+        schema:
+          $ref: '#/definitions/dto.Signup'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: SessionID
+          schema:
+            type: string
+        "400":
+          description: Некорректный запрос или пользователь уже существует
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "401":
+          description: Несанкционированный запрос
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Регистрация нового пользователя
+      tags:
+      - Пользователи
+>>>>>>> TP-09_data_base
 swagger: "2.0"

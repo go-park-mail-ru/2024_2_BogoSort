@@ -130,7 +130,7 @@ func (r *AdvertDB) AddAdvert(a *entity.Advert) (*entity.Advert, error) {
 
 	if err != nil {
 		r.logger.Error("error adding advert", zap.Error(err))
-		return nil, entity.PSQLQueryErr("AddAdvert", err)
+		return nil, entity.PSQLWrap(err)
 	}
 
 	r.logger.Info("advert added", zap.Any("advert", dbAdvert))
@@ -158,7 +158,7 @@ func (r *AdvertDB) GetAdverts(limit, offset int) ([]*entity.Advert, error) {
 	rows, err := r.DB.Query(ctx, selectAdvertsQuery, limit, offset)
 	if err != nil {
 		r.logger.Error("failed to execute query", zap.Error(err))
-		return nil, entity.PSQLQueryErr("GetAdverts", err)
+		return nil, entity.PSQLWrap(err)
 	}
 	defer rows.Close()
 
@@ -176,7 +176,7 @@ func (r *AdvertDB) GetAdverts(limit, offset int) ([]*entity.Advert, error) {
 			&dbAdvert.Status,
 		); err != nil {
 			r.logger.Error("failed to scan row", zap.Error(err))
-			return nil, entity.PSQLQueryErr("GetAdverts", err)
+			return nil, entity.PSQLWrap(err)
 		}
 		adverts = append(adverts, &entity.Advert{
 			ID:          dbAdvert.ID,
@@ -194,7 +194,7 @@ func (r *AdvertDB) GetAdverts(limit, offset int) ([]*entity.Advert, error) {
 
 	if err := rows.Err(); err != nil {
 		r.logger.Error("error iterating over rows", zap.Error(err))
-		return nil, entity.PSQLQueryErr("GetAdverts", err)
+		return nil, entity.PSQLWrap(err)
 	}
 
 	return adverts, nil
@@ -209,7 +209,7 @@ func (r *AdvertDB) GetAdvertsByCategoryId(categoryId uuid.UUID) ([]*entity.Adver
 	rows, err := r.DB.Query(ctx, selectAdvertsByCategoryIdQuery, categoryId)
 	if err != nil {
 		r.logger.Error("failed to execute query", zap.Error(err), zap.String("category_id", categoryId.String()))
-		return nil, entity.PSQLQueryErr("GetAdvertsByCategoryId", err)
+		return nil, entity.PSQLWrap(err)
 	}
 
 	for rows.Next() {
@@ -227,7 +227,7 @@ func (r *AdvertDB) GetAdvertsByCategoryId(categoryId uuid.UUID) ([]*entity.Adver
 			&dbAdvert.Status,
 		); err != nil {
 			r.logger.Error("failed to scan row", zap.Error(err), zap.String("category_id", categoryId.String()))
-			return nil, entity.PSQLQueryErr("GetAdvertsByCategoryId", err)
+			return nil, entity.PSQLWrap(err)
 		}
 		adverts = append(adverts, &entity.Advert{
 			ID:          dbAdvert.ID,
@@ -245,7 +245,7 @@ func (r *AdvertDB) GetAdvertsByCategoryId(categoryId uuid.UUID) ([]*entity.Adver
 
 	if err := rows.Err(); err != nil {
 		r.logger.Error("error iterating over rows", zap.Error(err), zap.String("category_id", categoryId.String()))
-		return nil, entity.PSQLQueryErr("GetAdvertsByCategoryId", err)
+		return nil, entity.PSQLWrap(err)
 	}
 
 	return adverts, nil
@@ -260,7 +260,7 @@ func (r *AdvertDB) GetAdvertsBySellerId(sellerId uuid.UUID) ([]*entity.Advert, e
 	rows, err := r.DB.Query(ctx, selectAdvertsByUserIdQuery, sellerId)
 	if err != nil {
 		r.logger.Error("failed to execute query", zap.Error(err), zap.String("seller_id", sellerId.String()))
-		return nil, entity.PSQLQueryErr("GetAdvertsBySellerId", err)
+		return nil, entity.PSQLWrap(err)
 	}
 	defer rows.Close()
 
@@ -279,7 +279,7 @@ func (r *AdvertDB) GetAdvertsBySellerId(sellerId uuid.UUID) ([]*entity.Advert, e
 			&dbAdvert.Status,
 		); err != nil {
 			r.logger.Error("failed to scan row", zap.Error(err), zap.String("seller_id", sellerId.String()))
-			return nil, entity.PSQLQueryErr("GetAdvertsBySellerId", err)
+			return nil, entity.PSQLWrap(err)
 		}
 		adverts = append(adverts, &entity.Advert{
 			ID:          dbAdvert.ID,
@@ -297,7 +297,7 @@ func (r *AdvertDB) GetAdvertsBySellerId(sellerId uuid.UUID) ([]*entity.Advert, e
 
 	if err := rows.Err(); err != nil {
 		r.logger.Error("error iterating over rows", zap.Error(err), zap.String("seller_id", sellerId.String()))
-		return nil, entity.PSQLQueryErr("GetAdvertsBySellerId", err)
+		return nil, entity.PSQLWrap(err)
 	}
 
 	return adverts, nil
@@ -312,7 +312,7 @@ func (r *AdvertDB) GetSavedAdvertsByUserId(userId uuid.UUID) ([]*entity.Advert, 
 	rows, err := r.DB.Query(ctx, selectSavedAdvertsByUserIdQuery, userId)
 	if err != nil {
 		r.logger.Error("failed to execute query", zap.Error(err), zap.String("user_id", userId.String()))
-		return nil, entity.PSQLQueryErr("GetSavedAdvertsByUserId", err)
+		return nil, entity.PSQLWrap(err)
 	}
 	defer rows.Close()
 
@@ -331,7 +331,7 @@ func (r *AdvertDB) GetSavedAdvertsByUserId(userId uuid.UUID) ([]*entity.Advert, 
 			&dbAdvert.Status,
 		); err != nil {
 			r.logger.Error("failed to scan row", zap.Error(err), zap.String("user_id", userId.String()))
-			return nil, entity.PSQLQueryErr("GetSavedAdvertsByUserId", err)
+			return nil, entity.PSQLWrap(err)
 		}
 		adverts = append(adverts, &entity.Advert{
 			ID:          dbAdvert.ID,
@@ -349,7 +349,7 @@ func (r *AdvertDB) GetSavedAdvertsByUserId(userId uuid.UUID) ([]*entity.Advert, 
 
 	if err := rows.Err(); err != nil {
 		r.logger.Error("error iterating over rows", zap.Error(err), zap.String("user_id", userId.String()))
-		return nil, entity.PSQLQueryErr("GetSavedAdvertsByUserId", err)
+		return nil, entity.PSQLWrap(err)
 	}
 
 	return adverts, nil
@@ -364,7 +364,7 @@ func (r *AdvertDB) GetAdvertsByCartId(cartId uuid.UUID) ([]*entity.Advert, error
 	rows, err := r.DB.Query(ctx, selectAdvertsByCartIdQuery, cartId)
 	if err != nil {
 		r.logger.Error("failed to execute query", zap.Error(err), zap.String("user_id", cartId.String()))
-		return nil, entity.PSQLQueryErr("GetSavedAdvertsByUserId", err)
+		return nil, entity.PSQLWrap(err)
 	}
 	defer rows.Close()
 
@@ -383,7 +383,7 @@ func (r *AdvertDB) GetAdvertsByCartId(cartId uuid.UUID) ([]*entity.Advert, error
 			&dbAdvert.Status,
 		); err != nil {
 			r.logger.Error("failed to scan row", zap.Error(err), zap.String("cart_id", cartId.String()))
-			return nil, entity.PSQLQueryErr("GetSavedAdvertsByUserId", err)
+			return nil, entity.PSQLWrap(err)
 		}
 		adverts = append(adverts, &entity.Advert{
 			ID:          dbAdvert.ID,
@@ -401,7 +401,7 @@ func (r *AdvertDB) GetAdvertsByCartId(cartId uuid.UUID) ([]*entity.Advert, error
 
 	if err := rows.Err(); err != nil {
 		r.logger.Error("error iterating over rows", zap.Error(err), zap.String("user_id", cartId.String()))
-		return nil, entity.PSQLQueryErr("GetSavedAdvertsByUserId", err)
+		return nil, entity.PSQLWrap(err)
 	}
 
 	return adverts, nil
@@ -431,7 +431,7 @@ func (r *AdvertDB) GetAdvertById(advertId uuid.UUID) (*entity.Advert, error) {
 			return nil, entity.PSQLWrap(repository.ErrAdvertNotFound)
 		}
 		r.logger.Error("failed to query advert by id", zap.Error(err), zap.String("advert_id", advertId.String()))
-		return nil, entity.PSQLQueryErr("GetAdvertById", err)
+		return nil, entity.PSQLWrap(err)
 	}
 
 	return &entity.Advert{
@@ -466,7 +466,7 @@ func (r *AdvertDB) UpdateAdvert(advert *entity.Advert) error {
 	)
 	if err != nil {
 		r.logger.Error("failed to update advert", zap.Error(err), zap.String("advert_id", advert.ID.String()))
-		return entity.PSQLQueryErr("UpdateAdvert", err)
+		return entity.PSQLWrap(err)
 	}
 
 	rowsAffected:= result.RowsAffected()
@@ -485,7 +485,7 @@ func (r *AdvertDB) DeleteAdvertById(advertId uuid.UUID) error {
 	result, err := r.DB.Exec(ctx, deleteAdvertByIdQuery, advertId)
 	if err != nil {
 		r.logger.Error("failed to delete advert", zap.Error(err), zap.String("advert_id", advertId.String()))
-		return entity.PSQLQueryErr("DeleteAdvertById", err)
+		return entity.PSQLWrap(err)
 	}
 
 	rowsAffected := result.RowsAffected()
@@ -504,7 +504,7 @@ func (r *AdvertDB) UpdateAdvertStatus(advertId uuid.UUID, status string) error {
 	result, err := r.DB.Exec(ctx, updateAdvertStatusQuery, status, advertId)
 	if err != nil {
 		r.logger.Error("failed to update advert status", zap.Error(err), zap.String("advert_id", advertId.String()))
-		return entity.PSQLQueryErr("UpdateAdvertStatus", err)
+		return entity.PSQLWrap(err)
 	}
 
 	rowsAffected := result.RowsAffected()
@@ -523,7 +523,7 @@ func (r *AdvertDB) UploadImage(advertId uuid.UUID, imageId uuid.UUID) error {
 	result, err := r.DB.Exec(ctx, uploadImageQuery, imageId, advertId)
 	if err != nil {
 		r.logger.Error("failed to upload image", zap.Error(err), zap.String("advert_id", advertId.String()))
-		return entity.PSQLQueryErr("UploadImage", err)
+		return entity.PSQLWrap(err)
 	}
 
 	rowsAffected := result.RowsAffected()

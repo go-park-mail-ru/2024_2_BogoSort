@@ -42,7 +42,7 @@ func (c *CategoryDB) GetCategories() ([]*entity.Category, error) {
 	rows, err := c.DB.Query(ctx, getCategoryQuery) 
 	if err != nil {
 		c.logger.Error("failed to execute query", zap.Error(err))
-		return nil, entity.PSQLQueryErr("GetCategories", err)
+		return nil, entity.PSQLWrap(err)
 	}
 	defer rows.Close()
 
@@ -50,14 +50,14 @@ func (c *CategoryDB) GetCategories() ([]*entity.Category, error) {
 		var dbCategory entity.Category 
 		if err := rows.Scan(&dbCategory.ID, &dbCategory.Title); err != nil { 
 			c.logger.Error("failed to scan row", zap.Error(err))
-			return nil, entity.PSQLQueryErr("GetCategories", err)
+			return nil, entity.PSQLWrap(err)
 		}
 		categories = append(categories, &dbCategory)
 	}
 
 	if err := rows.Err(); err != nil {
 		c.logger.Error("error iterating over rows", zap.Error(err))
-		return nil, entity.PSQLQueryErr("GetCategories", err)
+		return nil, entity.PSQLWrap(err)
 	}
 
 	return categories, nil

@@ -65,8 +65,6 @@ func (s StaticDB) GetStatic(staticID uuid.UUID) (string, error) {
 		return "", entity.PSQLWrap(err, errors.New("ошибка при выполнении sql-запроса GetStatic"))
 	}
 
-	s.Logger.Info("postgres: static retrieved successfully", zap.String("static_id", staticID.String()), zap.String("path", path), zap.String("name", name))
-
 	return fmt.Sprintf("%s/%s", path, name), nil
 }
 

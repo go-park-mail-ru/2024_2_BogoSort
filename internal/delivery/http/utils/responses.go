@@ -5,11 +5,6 @@ import (
 	"net/http"
 )
 
-type AuthResponse struct {
-	Email     string `json:"email"`
-	SessionID string `json:"session_id"`
-}
-
 type ErrResponse struct {
 	Code   int    `json:"code"`
 	Status string `json:"status"`
