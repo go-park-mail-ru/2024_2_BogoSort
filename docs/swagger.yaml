@@ -122,6 +122,8 @@ definitions:
     type: object
 info:
   contact: {}
+  title: "API"
+  version: "1.0.0"
 paths:
   /api/v1/adverts:
     get:
@@ -508,37 +510,7 @@ paths:
       summary: Get file by ID
       tags:
       - static
-  /api/v1/user/{user_id}/image:
-    put:
-      description: Upload an image associated with an advert by its ID
-      parameters:
-      - description: User ID
-        in: path
-        name: user_id
-        required: true
-        type: string
-      - description: Image file to upload
-        in: formData
-        name: image
-        required: true
-        type: file
-      responses:
-        "200":
-          description: Image uploaded
-          schema:
-            type: string
-        "400":
-          description: Invalid user ID or file not attached
-          schema:
-            $ref: '#/definitions/utils.ErrResponse'
-        "500":
-          description: Failed to upload image
-          schema:
-            $ref: '#/definitions/utils.ErrResponse'
-      summary: Upload an image for an advert
-      tags:
-      - adverts
-  /login:
+  /api/v1/login:
     post:
       consumes:
       - application/json
@@ -576,7 +548,7 @@ paths:
       summary: User login
       tags:
       - Users
-  /logout:
+  /api/v1/logout:
     post:
       consumes:
       - application/json
@@ -603,7 +575,7 @@ paths:
       summary: User logout
       tags:
       - Authentication
-  /me:
+  /api/v1/me:
     get:
       consumes:
       - application/json
@@ -626,7 +598,7 @@ paths:
       summary: Get current user information
       tags:
       - Users
-  /password:
+  /api/v1/password:
     post:
       consumes:
       - application/json
@@ -664,7 +636,7 @@ paths:
       summary: Change user password
       tags:
       - Users
-  /profile:
+  /api/v1/profile:
     put:
       consumes:
       - application/json
@@ -702,7 +674,7 @@ paths:
       summary: Update user profile
       tags:
       - Users
-  /profile/{user_id}:
+  /api/v1/profile/{user_id}:
     get:
       consumes:
       - application/json
@@ -731,7 +703,7 @@ paths:
       summary: Get user profile
       tags:
       - Users
-  /purchase:
+  /api/v1/purchase:
     post:
       consumes:
       - application/json
@@ -765,7 +737,7 @@ paths:
       summary: Совершает покупку по ID корзины
       tags:
       - Покупки
-  /seller/{seller_id}:
+  /api/v1/seller/{seller_id}:
     get:
       consumes:
       - application/json
@@ -798,7 +770,7 @@ paths:
       summary: Получение продавца по ID
       tags:
       - Продавцы
-  /signup:
+  /api/v1/signup:
     post:
       consumes:
       - application/json
@@ -832,4 +804,34 @@ paths:
       summary: User registration
       tags:
       - Users
+  /api/v1/user/{user_id}/image:
+    put:
+      description: Upload an image associated with an advert by its ID
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: Image file to upload
+        in: formData
+        name: image
+        required: true
+        type: file
+      responses:
+        "200":
+          description: Image uploaded
+          schema:
+            type: string
+        "400":
+          description: Invalid user ID or file not attached
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Failed to upload image
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Upload an image for an advert
+      tags:
+      - adverts
 swagger: "2.0"
