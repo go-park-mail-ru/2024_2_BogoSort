@@ -45,7 +45,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dto.Advert"
+                                "$ref": "#/definitions/dto.AdvertResponse"
                             }
                         }
                     },
@@ -82,7 +82,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.Advert"
+                            "$ref": "#/definitions/dto.AdvertRequest"
                         }
                     }
                 ],
@@ -90,7 +90,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Advert created",
                         "schema": {
-                            "$ref": "#/definitions/dto.Advert"
+                            "$ref": "#/definitions/dto.AdvertResponse"
                         }
                     },
                     "400": {
@@ -133,7 +133,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dto.Advert"
+                                "$ref": "#/definitions/dto.AdvertResponse"
                             }
                         }
                     },
@@ -177,7 +177,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dto.Advert"
+                                "$ref": "#/definitions/dto.AdvertResponse"
                             }
                         }
                     },
@@ -221,7 +221,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dto.Advert"
+                                "$ref": "#/definitions/dto.AdvertResponse"
                             }
                         }
                     },
@@ -265,7 +265,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dto.Advert"
+                                "$ref": "#/definitions/dto.AdvertResponse"
                             }
                         }
                     },
@@ -307,7 +307,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Advert details",
                         "schema": {
-                            "$ref": "#/definitions/dto.Advert"
+                            "$ref": "#/definitions/dto.AdvertResponse"
                         }
                     },
                     "400": {
@@ -356,7 +356,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.Advert"
+                            "$ref": "#/definitions/dto.AdvertRequest"
                         }
                     }
                 ],
@@ -551,21 +551,21 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/static/{staticId}": {
+        "/api/v1/files/{fileId}": {
             "get": {
-                "description": "Get a static file by its ID",
+                "description": "Get a file by its ID",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "static"
                 ],
-                "summary": "Get static file by ID",
+                "summary": "Get file by ID",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Static file ID",
-                        "name": "staticId",
+                        "description": "File ID",
+                        "name": "fileId",
                         "in": "path",
                         "required": true
                     }
@@ -636,143 +636,6 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Failed to upload image",
-                        "schema": {
-                            "$ref": "#/definitions/utils.ErrResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/cart/add": {
-            "post": {
-                "description": "Adds a new advert to the cart associated with a user",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Cart"
-                ],
-                "summary": "Add advert to user's cart",
-                "parameters": [
-                    {
-                        "description": "Data to add advert to cart",
-                        "name": "purchase",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.AddAdvertToUserCartRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successfully added advert",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request data",
-                        "schema": {
-                            "$ref": "#/definitions/utils.ErrResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/utils.ErrResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/cart/user/{user_id}": {
-            "get": {
-                "description": "Retrieves detailed information about a cart associated with a specific user",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Cart"
-                ],
-                "summary": "Retrieve cart by User ID",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "User ID",
-                        "name": "user_id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successfully retrieved cart",
-                        "schema": {
-                            "$ref": "#/definitions/dto.CartResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid user ID format",
-                        "schema": {
-                            "$ref": "#/definitions/utils.ErrResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/utils.ErrResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/cart/{cart_id}": {
-            "get": {
-                "description": "Retrieves detailed information about a cart using its unique identifier",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Cart"
-                ],
-                "summary": "Retrieve cart by ID",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Cart ID",
-                        "name": "cart_id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successfully retrieved cart",
-                        "schema": {
-                            "$ref": "#/definitions/dto.CartResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid cart ID format",
-                        "schema": {
-                            "$ref": "#/definitions/utils.ErrResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/utils.ErrResponse"
                         }
@@ -1230,18 +1093,36 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "dto.AddAdvertToUserCartRequest": {
+        "dto.AdvertRequest": {
             "type": "object",
             "properties": {
-                "advert_id": {
+                "category_id": {
                     "type": "string"
                 },
-                "user_id": {
+                "description": {
+                    "type": "string"
+                },
+                "has_delivery": {
+                    "type": "boolean"
+                },
+                "location": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "integer"
+                },
+                "seller_id": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/dto.AdvertStatus"
+                },
+                "title": {
                     "type": "string"
                 }
             }
         },
-        "dto.Advert": {
+        "dto.AdvertResponse": {
             "type": "object",
             "properties": {
                 "category_id": {
@@ -1286,34 +1167,6 @@ const docTemplate = `{
                 "AdvertStatusActive",
                 "AdvertStatusInactive"
             ]
-        },
-        "dto.Cart": {
-            "type": "object",
-            "properties": {
-                "adverts": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/entity.Advert"
-                    }
-                },
-                "id": {
-                    "type": "string"
-                },
-                "status": {
-                    "$ref": "#/definitions/entity.CartStatus"
-                },
-                "user_id": {
-                    "type": "string"
-                }
-            }
-        },
-        "dto.CartResponse": {
-            "type": "object",
-            "properties": {
-                "cart": {
-                    "$ref": "#/definitions/dto.Cart"
-                }
-            }
         },
         "dto.Login": {
             "type": "object",
@@ -1388,61 +1241,6 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
-        },
-        "entity.Advert": {
-            "type": "object",
-            "properties": {
-                "categoryId": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "hasDelivery": {
-                    "type": "boolean"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "imageURL": {
-                    "type": "string"
-                },
-                "location": {
-                    "type": "string"
-                },
-                "price": {
-                    "type": "integer"
-                },
-                "sellerId": {
-                    "type": "string"
-                },
-                "status": {
-                    "$ref": "#/definitions/entity.AdvertStatus"
-                },
-                "title": {
-                    "type": "string"
-                }
-            }
-        },
-        "entity.AdvertStatus": {
-            "type": "string",
-            "enum": [
-                "active"
-            ],
-            "x-enum-varnames": [
-                "AdvertStatusActive"
-            ]
-        },
-        "entity.CartStatus": {
-            "type": "string",
-            "enum": [
-                "active",
-                "inactive"
-            ],
-            "x-enum-varnames": [
-                "CartStatusActive",
-                "CartStatusInactive"
-            ]
         },
         "entity.Category": {
             "type": "object",

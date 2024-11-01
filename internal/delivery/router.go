@@ -86,6 +86,7 @@ func NewRouter(cfg config.Config) (*mux.Router, error) {
 	sellerHandler := http3.NewSellerEndpoints(sellerRepo, zap.L())
 	cartHandler := http3.NewCartEndpoints(cartUC, zap.L())
 	categoryHandler := http3.NewCategoryEndpoints(categoryUseCase, zap.L())
+	staticHandler := http3.NewStaticEndpoints(staticUseCase, zap.L())
 
 	advertsHandler.ConfigureRoutes(router)
 	categoryHandler.ConfigureRoutes(router)
@@ -93,6 +94,8 @@ func NewRouter(cfg config.Config) (*mux.Router, error) {
 	userHandler.Configure(router)
 	sellerHandler.Configure(router)
 	cartHandler.Configure(router)
+	staticHandler.ConfigureRoutes(router)
+	
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
 	return router, nil

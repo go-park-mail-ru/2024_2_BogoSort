@@ -61,7 +61,7 @@ func (h *AdvertEndpoints) ConfigureRoutes(router *mux.Router) {
 // @Produce json
 // @Param limit query int false "Limit the number of results"
 // @Param offset query int false "Offset for pagination"
-// @Success 200 {array} dto.Advert "List of adverts"
+// @Success 200 {array} dto.AdvertResponse "List of adverts"
 // @Failure 400 {object} utils.ErrResponse "Invalid limit or offset"
 // @Failure 500 {object} utils.ErrResponse "Failed to retrieve adverts"
 // @Router /api/v1/adverts [get]
@@ -93,7 +93,7 @@ func (h *AdvertEndpoints) GetAdverts(writer http.ResponseWriter, r *http.Request
 // @Tags adverts
 // @Produce json
 // @Param sellerId path string true "Seller ID"
-// @Success 200 {array} dto.Advert "List of adverts"
+// @Success 200 {array} dto.AdvertResponse "List of adverts"
 // @Failure 400 {object} utils.ErrResponse "Invalid seller ID"
 // @Failure 500 {object} utils.ErrResponse "Failed to retrieve adverts by seller ID"
 // @Router /api/v1/adverts/seller/{sellerId} [get]
@@ -120,7 +120,7 @@ func (h *AdvertEndpoints) GetAdvertsBySellerId(writer http.ResponseWriter, r *ht
 // @Tags adverts
 // @Produce json
 // @Param userId path string true "User ID"
-// @Success 200 {array} dto.Advert "List of saved adverts"
+// @Success 200 {array} dto.AdvertResponse "List of saved adverts"
 // @Failure 400 {object} utils.ErrResponse "Invalid user ID"
 // @Failure 500 {object} utils.ErrResponse "Failed to retrieve saved adverts by user ID"
 // @Router /api/v1/adverts/user/{userId}/saved [get]
@@ -147,7 +147,7 @@ func (h *AdvertEndpoints) GetSavedAdvertsByUserId(writer http.ResponseWriter, r 
 // @Tags adverts
 // @Produce json
 // @Param cartId path string true "Cart ID"
-// @Success 200 {array} dto.Advert "List of adverts in cart"
+// @Success 200 {array} dto.AdvertResponse "List of adverts in cart"
 // @Failure 400 {object} utils.ErrResponse "Invalid cart ID"
 // @Failure 500 {object} utils.ErrResponse "Failed to retrieve adverts by cart ID"
 // @Router /api/v1/adverts/cart/{cartId} [get]
@@ -174,7 +174,7 @@ func (h *AdvertEndpoints) GetAdvertsByCartId(writer http.ResponseWriter, r *http
 // @Tags adverts
 // @Produce json
 // @Param advertId path string true "Advert ID"
-// @Success 200 {object} dto.Advert "Advert details"
+// @Success 200 {object} dto.AdvertResponse "Advert details"
 // @Failure 400 {object} utils.ErrResponse "Invalid advert ID"
 // @Failure 404 {object} utils.ErrResponse "Advert not found"
 // @Failure 500 {object} utils.ErrResponse "Failed to retrieve advert by ID"
@@ -207,13 +207,13 @@ func (h *AdvertEndpoints) GetAdvertById(writer http.ResponseWriter, r *http.Requ
 // @Tags adverts
 // @Accept json
 // @Produce json
-// @Param advert body dto.Advert true "Advert data"
-// @Success 201 {object} dto.Advert "Advert created"
+// @Param advert body dto.AdvertRequest true "Advert data"
+// @Success 201 {object} dto.AdvertResponse "Advert created"
 // @Failure 400 {object} utils.ErrResponse "Invalid advert data"
 // @Failure 500 {object} utils.ErrResponse "Failed to create advert"
 // @Router /api/v1/adverts [post]
 func (h *AdvertEndpoints) AddAdvert(writer http.ResponseWriter, r *http.Request) {
-	var advert dto.Advert
+	var advert dto.AdvertRequest
 	if err := json.NewDecoder(r.Body).Decode(&advert); err != nil {
 		h.sendError(writer, http.StatusBadRequest, err, "invalid advert data", nil)
 		return
@@ -235,14 +235,14 @@ func (h *AdvertEndpoints) AddAdvert(writer http.ResponseWriter, r *http.Request)
 // @Accept json
 // @Produce json
 // @Param advertId path string true "Advert ID"
-// @Param advert body dto.Advert true "Updated advert data"
+// @Param advert body dto.AdvertRequest true "Updated advert data"
 // @Success 200 "Advert updated successfully"
 // @Failure 400 {object} utils.ErrResponse "Invalid advert data"
 // @Failure 404 {object} utils.ErrResponse "Advert not found"
 // @Failure 500 {object} utils.ErrResponse "Failed to update advert"
 // @Router /api/v1/adverts/{advertId} [put]
 func (h *AdvertEndpoints) UpdateAdvert(writer http.ResponseWriter, r *http.Request) {
-	var advert dto.Advert
+	var advert dto.AdvertRequest
 	if err := json.NewDecoder(r.Body).Decode(&advert); err != nil {
 		h.sendError(writer, http.StatusBadRequest, err, "invalid advert data", nil)
 		return
@@ -333,7 +333,7 @@ func (h *AdvertEndpoints) UpdateAdvertStatus(writer http.ResponseWriter, r *http
 // @Tags adverts
 // @Produce json
 // @Param categoryId path string true "Category ID"
-// @Success 200 {array} dto.Advert "List of adverts by category ID"
+// @Success 200 {array} dto.AdvertResponse "List of adverts by category ID"
 // @Failure 400 {object} utils.ErrResponse "Invalid category ID"
 // @Failure 500 {object} utils.ErrResponse "Failed to retrieve adverts by category ID"
 // @Router /api/v1/adverts/category/{categoryId} [get]

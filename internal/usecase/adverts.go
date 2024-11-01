@@ -7,32 +7,32 @@ import (
 
 type AdvertUseCase interface {
 	// GetAdverts возвращает массив объявлений в соответствии с offset и limit
-	GetAdverts(limit, offset int) ([]*dto.Advert, error)
+	GetAdverts(limit, offset int) ([]*dto.AdvertResponse, error)
 
 	// GetAdvertsBySellerId возвращает массив объявлений в соответствии с sellerId
-	GetAdvertsBySellerId(sellerId uuid.UUID) ([]*dto.Advert, error)
+	GetAdvertsBySellerId(sellerId uuid.UUID) ([]*dto.AdvertResponse, error)
 
 	// GetSavedAdvertsByUserId возвращает массив сохраненных объявлений в соответствии userId
-	GetSavedAdvertsByUserId(userId uuid.UUID) ([]*dto.Advert, error)
+	GetSavedAdvertsByUserId(userId uuid.UUID) ([]*dto.AdvertResponse, error)
 
 	// GetAdvertsByCartId возвращает массив объявлений, которые находятся в корзине
-	GetAdvertsByCartId(cartId uuid.UUID) ([]*dto.Advert, error)
+	GetAdvertsByCartId(cartId uuid.UUID) ([]*dto.AdvertResponse, error)
 
 	// GetAdvertById возвращает объявление по его идентификатору
 	// Если объявление не найдено, возвращает ErrAdvertNotFound
-	GetAdvertById(advertId uuid.UUID) (*dto.Advert, error)
+	GetAdvertById(advertId uuid.UUID) (*dto.AdvertResponse, error)
 
 	// AddAdvert добавляет объявление
 	// Возможные ошибки:
 	// ErrAdvertBadRequest - некорректные данные для создания объявления
 	// ErrAdvertAlreadyExists - объявление уже существует
-	AddAdvert(advert *dto.Advert) (*dto.Advert, error)
+	AddAdvert(advert *dto.AdvertRequest) (*dto.AdvertResponse, error)
 
 	// UpdateAdvert обновляет объявление
 	// Возможные ошибки:
 	// ErrAdvertBadRequest - некорректные данные для обновления объявления
 	// ErrAdvertNotFound - объявление не найдено
-	UpdateAdvert(advert *dto.Advert) error
+	UpdateAdvert(advert *dto.AdvertRequest) error
 
 	// UpdateAdvertStatus обновляет статус объявления
 	// Возможные ошибки:
@@ -46,7 +46,7 @@ type AdvertUseCase interface {
 	DeleteAdvertById(advertId uuid.UUID) error
 
 	// GetAdvertsByCategoryId возвращает массив объявлений по categoryId
-	GetAdvertsByCategoryId(categoryId uuid.UUID) ([]*dto.Advert, error)
+	GetAdvertsByCategoryId(categoryId uuid.UUID) ([]*dto.AdvertResponse, error)
 
 	// UploadImage загружает изображение в объявление
 	UploadImage(advertId uuid.UUID, imageId uuid.UUID) error

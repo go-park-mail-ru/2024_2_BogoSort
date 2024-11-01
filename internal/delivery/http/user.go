@@ -50,6 +50,7 @@ func (u *UserEndpoints) Configure(router *mux.Router) {
 	router.HandleFunc("/profile/{user_id}", u.GetProfile).Methods(http.MethodGet)
 	router.HandleFunc("/profile", u.UpdateProfile).Methods(http.MethodPut)
 	router.HandleFunc("/me", u.GetMe).Methods(http.MethodGet)
+	router.HandleFunc("/{user_id}/image", u.UploadImage).Methods(http.MethodPut)
 }
 
 func (u *UserEndpoints) handleError(w http.ResponseWriter, err error, context string, additionalInfo map[string]string) {
