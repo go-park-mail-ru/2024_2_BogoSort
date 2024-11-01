@@ -37,10 +37,13 @@ func NewRouter(cfg config.Config) (*mux.Router, error) {
 	}
 
 	ctx := context.Background()
+	sessionRepo := redis.NewSessionRepository(rdb, int(cfg.Session.ExpirationTime.Seconds()), zap.L())
 	userRepo := postgres.NewUserRepository(dbPool, ctx, zap.L())
 	sellerRepo := postgres.NewSellerRepository(dbPool, ctx, zap.L())
+	cartRepo := postgres.NewCartRepository(dbPool, ctx, zap.L())
+
+	cartUC := service.NewCartService(cartRepo, zap.L())
 	userUC := service.NewUserService(userRepo, sellerRepo, zap.L())
-	sessionRepo := redis.NewSessionRepository(rdb, int(cfg.Session.ExpirationTime.Seconds()), zap.L())
 	sessionUC := service.NewAuthService(sessionRepo, zap.L())
 
 	sessionManager := utils.NewSessionManager(sessionUC, int(cfg.Session.ExpirationTime.Seconds()), cfg.Session.SecureCookie, zap.L())
@@ -48,22 +51,23 @@ func NewRouter(cfg config.Config) (*mux.Router, error) {
 	authHandler := http3.NewAuthEndpoints(sessionUC, sessionManager, zap.L())
 	userHandler := http3.NewUserEndpoints(userUC, sessionUC, sessionManager, zap.L())
 	sellerHandler := http3.NewSellerEndpoints(sellerRepo, zap.L())
+	cartHandler := http3.NewCartEndpoints(cartUC, zap.L())
 
 	authHandler.Configure(router)
 	userHandler.Configure(router)
 	sellerHandler.Configure(router)
 
 	advertsRepo, err := postgres.NewAdvertRepository(dbPool, zap.L(), context.Background(), cfg.PGTimeout)
-    if err != nil {
-        zap.L().Error("unable to create advert repository", zap.Error(err))
-        return nil, errors.Wrap(err, "unable to create advert repository")
-    }
+	if err != nil {
+		zap.L().Error("unable to create advert repository", zap.Error(err))
+		return nil, errors.Wrap(err, "unable to create advert repository")
+	}
 
-    staticRepo, err := postgres.NewStaticRepository(context.Background(), dbPool, cfg.Static.Path, cfg.Static.MaxSize, zap.L(), cfg.PGTimeout)
-    if err != nil {
-        zap.L().Error("unable to create static repository", zap.Error(err))
-        return nil, errors.Wrap(err, "unable to create static repository")
-    }
+	staticRepo, err := postgres.NewStaticRepository(context.Background(), dbPool, cfg.Static.Path, cfg.Static.MaxSize, zap.L(), cfg.PGTimeout)
+	if err != nil {
+		zap.L().Error("unable to create static repository", zap.Error(err))
+		return nil, errors.Wrap(err, "unable to create static repository")
+	}
 
 	categoryRepo, err := postgres.NewCategoryRepository(dbPool, zap.L(), context.Background(), cfg.PGTimeout)
 	if err != nil {
@@ -71,15 +75,15 @@ func NewRouter(cfg config.Config) (*mux.Router, error) {
 		return nil, errors.Wrap(err, "unable to create category repository")
 	}
 
-    advertsUseCase := service.NewAdvertService(advertsRepo, staticRepo, zap.L())
+	advertsUseCase := service.NewAdvertService(advertsRepo, staticRepo, zap.L())
 	staticUseCase := service.NewStaticService(staticRepo, zap.L())
 	categoryUseCase := service.NewCategoryService(categoryRepo, zap.L())
 
-    advertsHandler := http3.NewAdvertEndpoints(advertsUseCase, staticUseCase, zap.L())
+	advertsHandler := http3.NewAdvertEndpoints(advertsUseCase, staticUseCase, zap.L())
 
 	categoryHandler := http3.NewCategoryEndpoints(categoryUseCase, zap.L())
 
-    advertsHandler.ConfigureRoutes(router)
+	advertsHandler.ConfigureRoutes(router)
 	categoryHandler.ConfigureRoutes(router)
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
