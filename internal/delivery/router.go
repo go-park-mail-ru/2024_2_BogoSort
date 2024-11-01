@@ -37,10 +37,13 @@ func NewRouter(cfg config.Config) (*mux.Router, error) {
 	}
 
 	ctx := context.Background()
+	sessionRepo := redis.NewSessionRepository(rdb, int(cfg.Session.ExpirationTime.Seconds()), zap.L())
 	userRepo := postgres.NewUserRepository(dbPool, ctx, zap.L())
 	sellerRepo := postgres.NewSellerRepository(dbPool, ctx, zap.L())
+	cartRepo := postgres.NewCartRepository(dbPool, ctx, zap.L())
+
+	cartUC := service.NewCartService(cartRepo, zap.L())
 	userUC := service.NewUserService(userRepo, sellerRepo, zap.L())
-	sessionRepo := redis.NewSessionRepository(rdb, int(cfg.Session.ExpirationTime.Seconds()), zap.L())
 	sessionUC := service.NewAuthService(sessionRepo, zap.L())
 
 	sessionManager := utils.NewSessionManager(sessionUC, int(cfg.Session.ExpirationTime.Seconds()), cfg.Session.SecureCookie, zap.L())
@@ -48,10 +51,13 @@ func NewRouter(cfg config.Config) (*mux.Router, error) {
 	authHandler := http3.NewAuthEndpoints(sessionUC, sessionManager, zap.L())
 	userHandler := http3.NewUserEndpoints(userUC, sessionUC, sessionManager, zap.L())
 	sellerHandler := http3.NewSellerEndpoints(sellerRepo, zap.L())
+	cartHandler := http3.NewCartEndpoints(cartUC, zap.L())
 
 	authHandler.Configure(router)
 	userHandler.Configure(router)
 	sellerHandler.Configure(router)
+	cartHandler.Configure(router)
+
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
 	return router, nil

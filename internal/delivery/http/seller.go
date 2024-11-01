@@ -19,14 +19,14 @@ var (
 )
 
 type SellerEndpoints struct {
-	sellerUC repository.Seller
-	logger   *zap.Logger
+	sellerRepo repository.Seller
+	logger     *zap.Logger
 }
 
-func NewSellerEndpoints(sellerUC repository.Seller, logger *zap.Logger) *SellerEndpoints {
+func NewSellerEndpoints(sellerRepo repository.Seller, logger *zap.Logger) *SellerEndpoints {
 	return &SellerEndpoints{
-		sellerUC: sellerUC,
-		logger:   logger,
+		sellerRepo: sellerRepo,
+		logger:     logger,
 	}
 }
 
@@ -55,7 +55,7 @@ func (s *SellerEndpoints) GetSellerByID(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	seller, err := s.sellerUC.GetSellerByID(sellerID)
+	seller, err := s.sellerRepo.GetSellerByID(sellerID)
 	if err != nil {
 		s.handleError(w, err, "GetSellerByID")
 		return
