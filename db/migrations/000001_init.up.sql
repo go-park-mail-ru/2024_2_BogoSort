@@ -5,6 +5,7 @@ CREATE TYPE user_status AS ENUM ('active', 'inactive', 'banned');
 CREATE TYPE payment_method AS ENUM ('cash', 'card');
 CREATE TYPE delivery_method AS ENUM ('pickup', 'delivery');
 CREATE TYPE purchase_status AS ENUM ('pending', 'in_progress', 'completed', 'cancelled');
+CREATE TYPE cart_status AS ENUM ('active', 'inactive', 'deleted');
 
 -- Таблица для хранения статических файлов
 CREATE TABLE IF NOT EXISTS static (
@@ -101,6 +102,7 @@ CREATE TABLE IF NOT EXISTS saved_advert (
 CREATE TABLE IF NOT EXISTS cart (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4() NOT NULL,
     user_id UUID NOT NULL,
+    status cart_status DEFAULT 'active',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES "user"(id) ON DELETE CASCADE

@@ -5,7 +5,7 @@ DROP TYPE IF EXISTS user_status CASCADE;
 DROP TYPE IF EXISTS payment_method CASCADE;
 DROP TYPE IF EXISTS delivery_method CASCADE;
 DROP TYPE IF EXISTS purchase_status CASCADE;
-
+DROP TYPE IF EXISTS cart_status CASCADE;
 -- Удаление триггеров для автоматического обновления поля updated_at
 DROP TRIGGER IF EXISTS update_seller_updated_at ON seller;
 DROP TRIGGER IF EXISTS update_user_updated_at ON "user";
