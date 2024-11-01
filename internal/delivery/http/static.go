@@ -8,7 +8,6 @@ import (
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 	"net/http"
-	"strconv"
 )
 
 var (
@@ -30,29 +29,29 @@ func NewStaticEndpoints(staticUseCase usecase.StaticUseCase, logger *zap.Logger)
 }
 
 func (h *StaticEndpoints) ConfigureRoutes(router *mux.Router) {
-	router.HandleFunc("/api/v1/static/{staticId}", h.GetStaticById).Methods("GET")
+	router.HandleFunc("/api/v1/files/{fileId}", h.GetStaticById).Methods("GET")
 }
 
 // GetStaticById godoc
-// @Summary Get static file by ID
-// @Description Get a static file by its ID
+// @Summary Get file by ID
+// @Description Get a file by its ID
 // @Tags static
 // @Produce json
-// @Param staticId path string true "Static file ID"
+// @Param fileId path string true "File ID"
 // @Success 200 {string} string "URL of the static file"
 // @Failure 400 {object} utils.ErrResponse "Invalid static ID"
 // @Failure 404 {object} utils.ErrResponse "Static file not found"
 // @Failure 500 {object} utils.ErrResponse "Failed to get static file"
-// @Router /api/v1/static/{staticId} [get]
+// @Router /api/v1/files/{fileId} [get]
 func (h *StaticEndpoints) GetStaticById(writer http.ResponseWriter, r *http.Request) {
-	staticIdStr := mux.Vars(r)["staticId"]
-	staticId, err := strconv.Atoi(staticIdStr)
-	if err != nil || staticId <= 0 {
+	staticIdStr := mux.Vars(r)["fileId"]
+	staticId, err := uuid.Parse(staticIdStr)
+	if err != nil {
 		h.sendError(writer, http.StatusBadRequest, err, "invalid static ID", nil)
 		return
 	}
 
-	staticURL, err := h.StaticUseCase.GetStaticURL(uuid.MustParse(staticIdStr))
+	staticURL, err := h.StaticUseCase.GetStaticURL(staticId)
 	if err != nil {
 		if errors.Is(err, ErrStaticFileNotFound) {
 			h.sendError(writer, http.StatusNotFound, err, "static file not found", nil)
