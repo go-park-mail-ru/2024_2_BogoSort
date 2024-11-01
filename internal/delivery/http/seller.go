@@ -31,7 +31,7 @@ func NewSellerEndpoints(sellerRepo repository.Seller, logger *zap.Logger) *Selle
 }
 
 func (s *SellerEndpoints) Configure(router *mux.Router) {
-	router.HandleFunc("/seller/{seller_id}", s.GetSellerByID).Methods(http.MethodGet)
+	router.HandleFunc("api/v1/seller/{seller_id}", s.GetSellerByID).Methods(http.MethodGet)
 }
 
 // GetSellerByID
@@ -45,7 +45,7 @@ func (s *SellerEndpoints) Configure(router *mux.Router) {
 // @Failure 400 {object} utils.ErrResponse "Некорректный запрос"
 // @Failure 404 {object} utils.ErrResponse "Продавец не найден"
 // @Failure 500 {object} utils.ErrResponse "Внутренняя ошибка сервера"
-// @Router /seller/{seller_id} [get]
+// @Router /api/v1/seller/{seller_id} [get]
 func (s *SellerEndpoints) GetSellerByID(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	sellerID, err := uuid.Parse(vars["seller_id"])

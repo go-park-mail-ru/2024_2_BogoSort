@@ -1,5 +1,24 @@
 definitions:
-  dto.Advert:
+  dto.AdvertRequest:
+    properties:
+      category_id:
+        type: string
+      description:
+        type: string
+      has_delivery:
+        type: boolean
+      location:
+        type: string
+      price:
+        type: integer
+      seller_id:
+        type: string
+      status:
+        $ref: '#/definitions/dto.AdvertStatus'
+      title:
+        type: string
+    type: object
+  dto.AdvertResponse:
     properties:
       category_id:
         type: string
@@ -25,15 +44,27 @@ definitions:
   dto.AdvertStatus:
     enum:
     - active
+    - inactive
     type: string
     x-enum-varnames:
     - AdvertStatusActive
+    - AdvertStatusInactive
   dto.Login:
     properties:
       email:
         type: string
       password:
         type: string
+    type: object
+  dto.PurchaseRequest:
+    properties:
+      cart_id:
+        type: string
+    type: object
+  dto.PurchaseResponse:
+    properties:
+      success:
+        type: boolean
     type: object
   dto.Signup:
     properties:
@@ -75,13 +106,9 @@ definitions:
     type: object
   entity.Seller:
     properties:
-      created_at:
-        type: string
       description:
         type: string
       id:
-        type: string
-      updated_at:
         type: string
       user_id:
         type: string
@@ -95,6 +122,8 @@ definitions:
     type: object
 info:
   contact: {}
+  title: "API"
+  version: "1.0.0"
 paths:
   /api/v1/adverts:
     get:
@@ -115,7 +144,7 @@ paths:
           description: List of adverts
           schema:
             items:
-              $ref: '#/definitions/dto.Advert'
+              $ref: '#/definitions/dto.AdvertResponse'
             type: array
         "400":
           description: Invalid limit or offset
@@ -138,14 +167,14 @@ paths:
         name: advert
         required: true
         schema:
-          $ref: '#/definitions/dto.Advert'
+          $ref: '#/definitions/dto.AdvertRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Advert created
           schema:
-            $ref: '#/definitions/dto.Advert'
+            $ref: '#/definitions/dto.AdvertResponse'
         "400":
           description: Invalid advert data
           schema:
@@ -198,7 +227,7 @@ paths:
         "200":
           description: Advert details
           schema:
-            $ref: '#/definitions/dto.Advert'
+            $ref: '#/definitions/dto.AdvertResponse'
         "400":
           description: Invalid advert ID
           schema:
@@ -229,7 +258,7 @@ paths:
         name: advert
         required: true
         schema:
-          $ref: '#/definitions/dto.Advert'
+          $ref: '#/definitions/dto.AdvertRequest'
       produces:
       - application/json
       responses:
@@ -329,7 +358,7 @@ paths:
           description: List of adverts in cart
           schema:
             items:
-              $ref: '#/definitions/dto.Advert'
+              $ref: '#/definitions/dto.AdvertResponse'
             type: array
         "400":
           description: Invalid cart ID
@@ -358,7 +387,7 @@ paths:
           description: List of adverts by category ID
           schema:
             items:
-              $ref: '#/definitions/dto.Advert'
+              $ref: '#/definitions/dto.AdvertResponse'
             type: array
         "400":
           description: Invalid category ID
@@ -387,7 +416,7 @@ paths:
           description: List of adverts
           schema:
             items:
-              $ref: '#/definitions/dto.Advert'
+              $ref: '#/definitions/dto.AdvertResponse'
             type: array
         "400":
           description: Invalid seller ID
@@ -416,7 +445,7 @@ paths:
           description: List of saved adverts
           schema:
             items:
-              $ref: '#/definitions/dto.Advert'
+              $ref: '#/definitions/dto.AdvertResponse'
             type: array
         "400":
           description: Invalid user ID
@@ -450,13 +479,13 @@ paths:
       summary: Get all categories
       tags:
       - categories
-  /api/v1/static/{staticId}:
+  /api/v1/files/{fileId}:
     get:
-      description: Get a static file by its ID
+      description: Get a file by its ID
       parameters:
-      - description: Static file ID
+      - description: File ID
         in: path
-        name: staticId
+        name: fileId
         required: true
         type: string
       produces:
@@ -478,10 +507,10 @@ paths:
           description: Failed to get static file
           schema:
             $ref: '#/definitions/utils.ErrResponse'
-      summary: Get static file by ID
+      summary: Get file by ID
       tags:
       - static
-  /login:
+  /api/v1/login:
     post:
       consumes:
       - application/json
@@ -519,7 +548,7 @@ paths:
       summary: User login
       tags:
       - Users
-  /logout:
+  /api/v1/logout:
     post:
       consumes:
       - application/json
@@ -546,7 +575,7 @@ paths:
       summary: User logout
       tags:
       - Authentication
-  /me:
+  /api/v1/me:
     get:
       consumes:
       - application/json
@@ -569,7 +598,7 @@ paths:
       summary: Get current user information
       tags:
       - Users
-  /password:
+  /api/v1/password:
     post:
       consumes:
       - application/json
@@ -607,7 +636,7 @@ paths:
       summary: Change user password
       tags:
       - Users
-  /profile:
+  /api/v1/profile:
     put:
       consumes:
       - application/json
@@ -645,7 +674,7 @@ paths:
       summary: Update user profile
       tags:
       - Users
-  /profile/{user_id}:
+  /api/v1/profile/{user_id}:
     get:
       consumes:
       - application/json
@@ -674,7 +703,41 @@ paths:
       summary: Get user profile
       tags:
       - Users
-  /seller/{seller_id}:
+  /api/v1/purchase:
+    post:
+      consumes:
+      - application/json
+      description: Принимает ID корзины и выполняет процесс покупки
+      parameters:
+      - description: Purchase request
+        in: body
+        name: purchase
+        required: true
+        schema:
+          $ref: '#/definitions/dto.PurchaseRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful purchase
+          schema:
+            $ref: '#/definitions/dto.PurchaseResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "404":
+          description: Cart not found
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Совершает покупку по ID корзины
+      tags:
+      - Покупки
+  /api/v1/seller/{seller_id}:
     get:
       consumes:
       - application/json
@@ -707,7 +770,7 @@ paths:
       summary: Получение продавца по ID
       tags:
       - Продавцы
-  /signup:
+  /api/v1/signup:
     post:
       consumes:
       - application/json
@@ -741,4 +804,34 @@ paths:
       summary: User registration
       tags:
       - Users
+  /api/v1/user/{user_id}/image:
+    put:
+      description: Upload an image associated with an advert by its ID
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: Image file to upload
+        in: formData
+        name: image
+        required: true
+        type: file
+      responses:
+        "200":
+          description: Image uploaded
+          schema:
+            type: string
+        "400":
+          description: Invalid user ID or file not attached
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Failed to upload image
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Upload an image for an advert
+      tags:
+      - adverts
 swagger: "2.0"

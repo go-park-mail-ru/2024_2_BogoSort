@@ -29,6 +29,8 @@ github.com/google/uuid
 # github.com/gorilla/mux v1.8.1
 ## explicit; go 1.20
 github.com/gorilla/mux
+# github.com/guregu/null v4.0.0+incompatible
+## explicit
 # github.com/jackc/pgpassfile v1.0.0
 ## explicit; go 1.12
 github.com/jackc/pgpassfile
@@ -106,9 +108,7 @@ go.uber.org/zap/zapcore
 # golang.org/x/crypto v0.28.0
 ## explicit; go 1.20
 golang.org/x/crypto/argon2
-golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blake2b
-golang.org/x/crypto/blowfish
 golang.org/x/crypto/pbkdf2
 # golang.org/x/sync v0.8.0
 ## explicit; go 1.18

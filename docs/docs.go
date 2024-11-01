@@ -45,7 +45,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dto.Advert"
+                                "$ref": "#/definitions/dto.AdvertResponse"
                             }
                         }
                     },
@@ -82,7 +82,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.Advert"
+                            "$ref": "#/definitions/dto.AdvertRequest"
                         }
                     }
                 ],
@@ -90,7 +90,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Advert created",
                         "schema": {
-                            "$ref": "#/definitions/dto.Advert"
+                            "$ref": "#/definitions/dto.AdvertResponse"
                         }
                     },
                     "400": {
@@ -133,7 +133,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dto.Advert"
+                                "$ref": "#/definitions/dto.AdvertResponse"
                             }
                         }
                     },
@@ -177,7 +177,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dto.Advert"
+                                "$ref": "#/definitions/dto.AdvertResponse"
                             }
                         }
                     },
@@ -221,7 +221,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dto.Advert"
+                                "$ref": "#/definitions/dto.AdvertResponse"
                             }
                         }
                     },
@@ -265,7 +265,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dto.Advert"
+                                "$ref": "#/definitions/dto.AdvertResponse"
                             }
                         }
                     },
@@ -307,7 +307,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Advert details",
                         "schema": {
-                            "$ref": "#/definitions/dto.Advert"
+                            "$ref": "#/definitions/dto.AdvertResponse"
                         }
                     },
                     "400": {
@@ -356,7 +356,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.Advert"
+                            "$ref": "#/definitions/dto.AdvertRequest"
                         }
                     }
                 ],
@@ -551,21 +551,21 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/static/{staticId}": {
+        "/api/v1/files/{fileId}": {
             "get": {
-                "description": "Get a static file by its ID",
+                "description": "Get a file by its ID",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "static"
                 ],
-                "summary": "Get static file by ID",
+                "summary": "Get file by ID",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Static file ID",
-                        "name": "staticId",
+                        "description": "File ID",
+                        "name": "fileId",
                         "in": "path",
                         "required": true
                     }
@@ -598,7 +598,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/login": {
+        "/api/v1/login": {
             "post": {
                 "description": "Allows a user to log into the system",
                 "consumes": [
@@ -656,7 +656,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/logout": {
+        "/api/v1/logout": {
             "post": {
                 "description": "Allows the user to log out of the system by deleting their session",
                 "consumes": [
@@ -697,7 +697,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/me": {
+        "/api/v1/me": {
             "get": {
                 "description": "Returns information about the currently authenticated user",
                 "consumes": [
@@ -732,7 +732,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/password": {
+        "/api/v1/password": {
             "post": {
                 "description": "Allows a user to change their password",
                 "consumes": [
@@ -790,7 +790,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/profile": {
+        "/api/v1/profile": {
             "put": {
                 "description": "Allows a user to update their profile information",
                 "consumes": [
@@ -848,7 +848,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/profile/{user_id}": {
+        "/api/v1/profile/{user_id}": {
             "get": {
                 "description": "Returns user information by their ID",
                 "consumes": [
@@ -892,7 +892,59 @@ const docTemplate = `{
                 }
             }
         },
-        "/seller/{seller_id}": {
+        "/api/v1/purchase": {
+            "post": {
+                "description": "Принимает ID корзины и выполняет процесс покупки",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Покупки"
+                ],
+                "summary": "Совершает покупку по ID корзины",
+                "parameters": [
+                    {
+                        "description": "Purchase request",
+                        "name": "purchase",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.PurchaseRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful purchase",
+                        "schema": {
+                            "$ref": "#/definitions/dto.PurchaseResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameters",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Cart not found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/seller/{seller_id}": {
             "get": {
                 "description": "Возвращает информацию о продавце по его ID",
                 "consumes": [
@@ -942,7 +994,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/signup": {
+        "/api/v1/signup": {
             "post": {
                 "description": "Creates a new user in the system",
                 "consumes": [
@@ -993,10 +1045,84 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/api/v1/user/{user_id}/image": {
+            "put": {
+                "description": "Upload an image associated with an advert by its ID",
+                "tags": [
+                    "adverts"
+                ],
+                "summary": "Upload an image for an advert",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Image file to upload",
+                        "name": "image",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Image uploaded",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid user ID or file not attached",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to upload image",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
-        "dto.Advert": {
+        "dto.AdvertRequest": {
+            "type": "object",
+            "properties": {
+                "category_id": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "has_delivery": {
+                    "type": "boolean"
+                },
+                "location": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "integer"
+                },
+                "seller_id": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/dto.AdvertStatus"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.AdvertResponse": {
             "type": "object",
             "properties": {
                 "category_id": {
@@ -1034,10 +1160,12 @@ const docTemplate = `{
         "dto.AdvertStatus": {
             "type": "string",
             "enum": [
-                "active"
+                "active",
+                "inactive"
             ],
             "x-enum-varnames": [
-                "AdvertStatusActive"
+                "AdvertStatusActive",
+                "AdvertStatusInactive"
             ]
         },
         "dto.Login": {
@@ -1048,6 +1176,22 @@ const docTemplate = `{
                 },
                 "password": {
                     "type": "string"
+                }
+            }
+        },
+        "dto.PurchaseRequest": {
+            "type": "object",
+            "properties": {
+                "cart_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.PurchaseResponse": {
+            "type": "object",
+            "properties": {
+                "success": {
+                    "type": "boolean"
                 }
             }
         },
@@ -1112,16 +1256,10 @@ const docTemplate = `{
         "entity.Seller": {
             "type": "object",
             "properties": {
-                "created_at": {
-                    "type": "string"
-                },
                 "description": {
                     "type": "string"
                 },
                 "id": {
-                    "type": "string"
-                },
-                "updated_at": {
                     "type": "string"
                 },
                 "user_id": {

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"regexp"
-	_ "time"
 	"unicode/utf8"
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/pkg/utils/random"

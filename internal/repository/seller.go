@@ -11,8 +11,10 @@ import (
 type Seller interface {
 	// AddSeller добавляет нового продавца в бд в рамках транзакции
 	AddSeller(tx pgx.Tx, userID uuid.UUID) (uuid.UUID, error)
+
 	// GetSellerByID возвращает продавца по его ID
 	GetSellerByID(sellerID uuid.UUID) (*entity.Seller, error)
+
 	// GetSellerByUserID возвращает продавца по ID пользователя
 	GetSellerByUserID(userID uuid.UUID) (*entity.Seller, error)
 }

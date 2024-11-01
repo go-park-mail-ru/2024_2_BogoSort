@@ -42,12 +42,15 @@ type CartDB struct {
 	logger *zap.Logger
 }
 
-func NewCartRepository(db *pgxpool.Pool, ctx context.Context, logger *zap.Logger) repository.Cart {
+func NewCartRepository(db *pgxpool.Pool, ctx context.Context, logger *zap.Logger) (repository.Cart, error) {
+	if err := db.Ping(ctx); err != nil {
+		return nil, err
+	}
 	return &CartDB{
 		DB:     db,
 		ctx:    ctx,
 		logger: logger,
-	}
+	}, nil
 }
 
 func (c *CartDB) GetCartByUserID(userID uuid.UUID) (entity.Cart, error) {

@@ -48,12 +48,15 @@ type DBSeller struct {
 	UpdatedAt   time.Time
 }
 
-func NewSellerRepository(db *pgxpool.Pool, ctx context.Context, logger *zap.Logger) repository.Seller {
+func NewSellerRepository(db *pgxpool.Pool, ctx context.Context, logger *zap.Logger) (repository.Seller, error) {
+	if err := db.Ping(ctx); err != nil {
+		return nil, err
+	}
 	return &SellerDB{
 		DB:     db,
 		ctx:    ctx,
 		logger: logger,
-	}
+	}, nil
 }
 
 func (s *SellerDB) AddSeller(tx pgx.Tx, userID uuid.UUID) (uuid.UUID, error) {

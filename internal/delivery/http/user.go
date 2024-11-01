@@ -3,6 +3,7 @@ package http
 import (
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -28,25 +29,28 @@ type UserEndpoints struct {
 	userUC         usecase.User
 	authUC         usecase.Auth
 	sessionManager *utils.SessionManager
+	staticUseCase  usecase.StaticUseCase
 	logger         *zap.Logger
 }
 
-func NewUserEndpoints(userUC usecase.User, authUC usecase.Auth, sessionManager *utils.SessionManager, logger *zap.Logger) *UserEndpoints {
+func NewUserEndpoints(userUC usecase.User, authUC usecase.Auth, sessionManager *utils.SessionManager, staticUseCase usecase.StaticUseCase, logger *zap.Logger) *UserEndpoints {
 	return &UserEndpoints{
 		userUC:         userUC,
 		authUC:         authUC,
 		sessionManager: sessionManager,
+		staticUseCase:  staticUseCase,
 		logger:         logger,
 	}
 }
 
 func (u *UserEndpoints) Configure(router *mux.Router) {
-	router.HandleFunc("/signup", u.Signup).Methods(http.MethodPost)
-	router.HandleFunc("/login", u.Login).Methods(http.MethodPost)
-	router.HandleFunc("/password", u.ChangePassword).Methods(http.MethodPost)
-	router.HandleFunc("/profile/{user_id}", u.GetProfile).Methods(http.MethodGet)
-	router.HandleFunc("/profile", u.UpdateProfile).Methods(http.MethodPut)
-	router.HandleFunc("/me", u.GetMe).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/signup", u.Signup).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/login", u.Login).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/password", u.ChangePassword).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/profile/{user_id}", u.GetProfile).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/profile", u.UpdateProfile).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/me", u.GetMe).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/user/{user_id}/image", u.UploadImage).Methods(http.MethodPut)
 }
 
 func (u *UserEndpoints) handleError(w http.ResponseWriter, err error, context string, additionalInfo map[string]string) {
@@ -82,7 +86,7 @@ func (u *UserEndpoints) sendError(w http.ResponseWriter, statusCode int, err err
 // @Failure 400 {object} utils.ErrResponse "Invalid request or user already exists"
 // @Failure 401 {object} utils.ErrResponse "Unauthorized request"
 // @Failure 500 {object} utils.ErrResponse "Internal server error"
-// @Router /signup [post]
+// @Router /api/v1/signup [post]
 func (u *UserEndpoints) Signup(w http.ResponseWriter, r *http.Request) {
 	var credentials dto.Signup
 	if err := json.NewDecoder(r.Body).Decode(&credentials); err != nil {
@@ -127,7 +131,7 @@ func (u *UserEndpoints) Signup(w http.ResponseWriter, r *http.Request) {
 // @Failure 401 {object} utils.ErrResponse "Invalid credentials or unauthorized access"
 // @Failure 404 {object} utils.ErrResponse "User not found"
 // @Failure 500 {object} utils.ErrResponse "Internal server error"
-// @Router /login [post]
+// @Router /api/v1/login [post]
 func (u *UserEndpoints) Login(w http.ResponseWriter, r *http.Request) {
 	var credentials dto.Login
 	if err := json.NewDecoder(r.Body).Decode(&credentials); err != nil {
@@ -169,7 +173,7 @@ func (u *UserEndpoints) Login(w http.ResponseWriter, r *http.Request) {
 // @Failure 401 {object} utils.ErrResponse "Unauthorized access"
 // @Failure 404 {object} utils.ErrResponse "User not found"
 // @Failure 500 {object} utils.ErrResponse "Internal server error"
-// @Router /password [post]
+// @Router /api/v1/password [post]
 func (u *UserEndpoints) ChangePassword(w http.ResponseWriter, r *http.Request) {
 	var updatePassword dto.UpdatePassword
 	if err := json.NewDecoder(r.Body).Decode(&updatePassword); err != nil {
@@ -203,7 +207,7 @@ func (u *UserEndpoints) ChangePassword(w http.ResponseWriter, r *http.Request) {
 // @Failure 401 {object} utils.ErrResponse "Unauthorized access"
 // @Failure 404 {object} utils.ErrResponse "User not found"
 // @Failure 500 {object} utils.ErrResponse "Internal server error"
-// @Router /profile [put]
+// @Router /api/v1/profile [put]
 func (u *UserEndpoints) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	var user dto.User
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
@@ -236,7 +240,7 @@ func (u *UserEndpoints) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} dto.User "User profile"
 // @Failure 404 {object} utils.ErrResponse "User not found"
 // @Failure 500 {object} utils.ErrResponse "Internal server error"
-// @Router /profile/{user_id} [get]
+// @Router /api/v1/profile/{user_id} [get]
 func (u *UserEndpoints) GetProfile(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	userID, err := uuid.Parse(vars["user_id"])
@@ -262,7 +266,7 @@ func (u *UserEndpoints) GetProfile(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} dto.User "User information"
 // @Failure 401 {object} utils.ErrResponse "Unauthorized access"
 // @Failure 500 {object} utils.ErrResponse "Internal server error"
-// @Router /me [get]
+// @Router /api/v1/me [get]
 func (u *UserEndpoints) GetMe(w http.ResponseWriter, r *http.Request) {
 	userID, err := u.sessionManager.GetUserID(r)
 	if err != nil {
@@ -276,4 +280,53 @@ func (u *UserEndpoints) GetMe(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.SendJSONResponse(w, http.StatusOK, user)
+}
+
+// UploadImage godoc
+// @Summary Upload an image for an advert
+// @Description Upload an image associated with an advert by its ID
+// @Tags adverts
+// @Param user_id path string true "User ID"
+// @Param image formData file true "Image file to upload"
+// @Success 200 {string} string "Image uploaded"
+// @Failure 400 {object} utils.ErrResponse "Invalid user ID or file not attached"
+// @Failure 500 {object} utils.ErrResponse "Failed to upload image"
+// @Router /api/v1/user/{user_id}/image [put]
+func (h *UserEndpoints) UploadImage(writer http.ResponseWriter, r *http.Request) {
+	userIDStr := mux.Vars(r)["user_id"]
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		h.sendError(writer, http.StatusBadRequest, err, "invalid advert ID", nil)
+		return
+	}
+
+	fileHeader, _, err := r.FormFile("image")
+	if err != nil {
+		h.sendError(writer, http.StatusBadRequest, err, "file not attached", nil)
+		return
+	}
+
+	data, err := io.ReadAll(fileHeader)
+	if err != nil {
+		h.sendError(writer, http.StatusInternalServerError, err, "failed to read file", nil)
+		return
+	}
+
+	if err = fileHeader.Close(); err != nil {
+		h.sendError(writer, http.StatusInternalServerError, err, "failed to close file", nil)
+		return
+	}
+
+	imageId, err := h.staticUseCase.UploadFile(data)
+	if err != nil {
+		h.sendError(writer, http.StatusInternalServerError, err, "failed to upload image", nil)
+		return
+	}
+
+	if err := h.userUC.UploadImage(userID, imageId); err != nil {
+		h.sendError(writer, http.StatusInternalServerError, err, "failed to upload image", nil)
+		return
+	}
+
+	utils.SendJSONResponse(writer, http.StatusOK, "Image uploaded")
 }

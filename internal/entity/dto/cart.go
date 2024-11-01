@@ -16,3 +16,7 @@ type Cart struct {
 	Adverts []entity.Advert   `json:"adverts"`
 	Status  entity.CartStatus `json:"status"`
 }
+
+type CartResponse struct {
+	Cart Cart `json:"cart"`
+}

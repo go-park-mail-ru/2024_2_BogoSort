@@ -18,6 +18,11 @@ import (
 	"github.com/pkg/errors"
 )
 
+func handleRepoError(err error, message string) error {
+	zap.L().Error(message, zap.Error(err))
+	return errors.Wrap(err, message)
+}
+
 func NewRouter(cfg config.Config) (*mux.Router, error) {
 	zap.ReplaceGlobals(zap.Must(zap.NewProduction()))
 	defer zap.L().Sync()
@@ -37,56 +42,60 @@ func NewRouter(cfg config.Config) (*mux.Router, error) {
 	}
 
 	ctx := context.Background()
-	sessionRepo := redis.NewSessionRepository(rdb, int(cfg.Session.ExpirationTime.Seconds()), zap.L())
-	userRepo := postgres.NewUserRepository(dbPool, ctx, zap.L())
-	sellerRepo := postgres.NewSellerRepository(dbPool, ctx, zap.L())
-	cartRepo := postgres.NewCartRepository(dbPool, ctx, zap.L())
 
+	advertsRepo, err := postgres.NewAdvertRepository(dbPool, zap.L(), ctx, cfg.PGTimeout)
+	if err != nil {
+		return nil, handleRepoError(err, "unable to create advert repository")
+	}
+	staticRepo, err := postgres.NewStaticRepository(ctx, dbPool, cfg.Static.Path, cfg.Static.MaxSize, zap.L(), cfg.PGTimeout)
+	if err != nil {
+		return nil, handleRepoError(err, "unable to create static repository")
+	}
+	categoryRepo, err := postgres.NewCategoryRepository(dbPool, zap.L(), ctx, cfg.PGTimeout)
+	if err != nil {
+		return nil, handleRepoError(err, "unable to create category repository")
+	}
+	sessionRepo, err := redis.NewSessionRepository(rdb, int(cfg.Session.ExpirationTime.Seconds()), ctx, zap.L())
+	if err != nil {
+		return nil, handleRepoError(err, "unable to create session repository")
+	}
+	userRepo, err := postgres.NewUserRepository(dbPool, ctx, zap.L())
+	if err != nil {
+		return nil, handleRepoError(err, "unable to create user repository")
+	}
+	sellerRepo, err := postgres.NewSellerRepository(dbPool, ctx, zap.L())
+	if err != nil {
+		return nil, handleRepoError(err, "unable to create seller repository")
+	}
+	cartRepo, err := postgres.NewCartRepository(dbPool, ctx, zap.L())
+	if err != nil {
+		return nil, handleRepoError(err, "unable to create cart repository")
+	}
+
+	advertsUseCase := service.NewAdvertService(advertsRepo, staticRepo, sellerRepo, zap.L())
+	staticUseCase := service.NewStaticService(staticRepo, zap.L())
+	categoryUseCase := service.NewCategoryService(categoryRepo, zap.L())
 	cartUC := service.NewCartService(cartRepo, zap.L())
 	userUC := service.NewUserService(userRepo, sellerRepo, zap.L())
 	sessionUC := service.NewAuthService(sessionRepo, zap.L())
-
 	sessionManager := utils.NewSessionManager(sessionUC, int(cfg.Session.ExpirationTime.Seconds()), cfg.Session.SecureCookie, zap.L())
 
+	advertsHandler := http3.NewAdvertEndpoints(advertsUseCase, staticUseCase, sessionManager, zap.L())
 	authHandler := http3.NewAuthEndpoints(sessionUC, sessionManager, zap.L())
-	userHandler := http3.NewUserEndpoints(userUC, sessionUC, sessionManager, zap.L())
+	userHandler := http3.NewUserEndpoints(userUC, sessionUC, sessionManager, staticUseCase, zap.L())
 	sellerHandler := http3.NewSellerEndpoints(sellerRepo, zap.L())
 	cartHandler := http3.NewCartEndpoints(cartUC, zap.L())
-
-	authHandler.Configure(router)
-	userHandler.Configure(router)
-	sellerHandler.Configure(router)
-
-	advertsRepo, err := postgres.NewAdvertRepository(dbPool, zap.L(), context.Background(), cfg.PGTimeout)
-	if err != nil {
-		zap.L().Error("unable to create advert repository", zap.Error(err))
-		return nil, errors.Wrap(err, "unable to create advert repository")
-	}
-
-	staticRepo, err := postgres.NewStaticRepository(context.Background(), dbPool, cfg.Static.Path, cfg.Static.MaxSize, zap.L(), cfg.PGTimeout)
-	if err != nil {
-		zap.L().Error("unable to create static repository", zap.Error(err))
-		return nil, errors.Wrap(err, "unable to create static repository")
-	}
-
-	categoryRepo, err := postgres.NewCategoryRepository(dbPool, zap.L(), context.Background(), cfg.PGTimeout)
-	if err != nil {
-		zap.L().Error("unable to create category repository", zap.Error(err))
-		return nil, errors.Wrap(err, "unable to create category repository")
-	}
-
-	advertsUseCase := service.NewAdvertService(advertsRepo, staticRepo, zap.L())
-	staticUseCase := service.NewStaticService(staticRepo, zap.L())
-	categoryUseCase := service.NewCategoryService(categoryRepo, zap.L())
-
-	advertsHandler := http3.NewAdvertEndpoints(advertsUseCase, staticUseCase, zap.L())
-
 	categoryHandler := http3.NewCategoryEndpoints(categoryUseCase, zap.L())
+	staticHandler := http3.NewStaticEndpoints(staticUseCase, zap.L())
 
 	advertsHandler.ConfigureRoutes(router)
 	categoryHandler.ConfigureRoutes(router)
+	authHandler.Configure(router)
+	userHandler.Configure(router)
+	sellerHandler.Configure(router)
 	cartHandler.Configure(router)
-
+	staticHandler.ConfigureRoutes(router)
+	
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
 	return router, nil

@@ -7,10 +7,12 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 )
 
@@ -37,7 +39,10 @@ type StaticDB struct {
 	timeout   time.Duration
 }
 
-func NewStaticRepository(ctx context.Context, dbpool PgxPoolIface, basicPath string, maxSize int, logger *zap.Logger, timeout time.Duration) (repository.StaticRepository, error) {
+func NewStaticRepository(ctx context.Context, dbpool *pgxpool.Pool, basicPath string, maxSize int, logger *zap.Logger, timeout time.Duration) (repository.StaticRepository, error) {
+	if err := dbpool.Ping(ctx); err != nil {
+		return nil, err
+	}
 	return &StaticDB{
 		DB:        dbpool,
 		BasicPath: basicPath,
@@ -111,7 +116,7 @@ func (s StaticDB) UploadStatic(path, filename string, data []byte) (uuid.UUID, e
 	}
 
 	var id uuid.UUID
-	if err = s.DB.QueryRow(ctx, uploadStaticQuery, s.BasicPath + path, filename).Scan(&id); err != nil {
+	if err = s.DB.QueryRow(ctx, uploadStaticQuery, s.BasicPath+path, filename).Scan(&id); err != nil {
 		s.Logger.Error("error uploading static", zap.String("path", fmt.Sprintf("%s/%s/%s", s.BasicPath, path, filename)), zap.Error(err))
 		return uuid.UUID{}, entity.PSQLWrap(err, errors.New("ошибка при выполнении sql-запроса UploadStatic"))
 	}
