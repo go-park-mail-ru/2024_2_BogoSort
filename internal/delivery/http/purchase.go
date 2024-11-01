@@ -13,11 +13,11 @@ type PurchaseEndpoints struct {
 // @Tags Покупки
 // @Accept json
 // @Produce json
-// @Param purchase body dto.PurchaseRequest true "Данные покупки"
-// @Success 200 {object} dto.PurchaseResponse "Успешная покупка"
-// @Failure 400 {object} utils.ErrResponse "Неверные параметры запроса"
-// @Failure 404 {object} utils.ErrResponse "Корзина не найдена"
-// @Failure 500 {object} utils.ErrResponse "Внутренняя ошибка сервера"
+// @Param purchase body dto.PurchaseRequest true "Purchase request"
+// @Success 200 {object} dto.PurchaseResponse "Successful purchase"
+// @Failure 400 {object} utils.ErrResponse "Invalid request parameters"
+// @Failure 404 {object} utils.ErrResponse "Cart not found"
+// @Failure 500 {object} utils.ErrResponse "Internal server error"
 // @Router /purchase [post]
 func (h *PurchaseEndpoints) CreatePurchase(w http.ResponseWriter, r *http.Request) {
 

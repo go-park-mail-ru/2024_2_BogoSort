@@ -30,6 +30,17 @@ func (h *CartEndpoints) Configure(router *mux.Router) {
 	router.HandleFunc("/cart/add", h.AddAdvertToCart).Methods(http.MethodPost)
 }
 
+// GetCartByID Retrieves the cart by its ID
+// @Summary Retrieve cart by ID
+// @Description Retrieves detailed information about a cart using its unique identifier
+// @Tags Cart
+// @Accept json
+// @Produce json
+// @Param cart_id path string true "Cart ID"
+// @Success 200 {object} dto.CartResponse "Successfully retrieved cart"
+// @Failure 400 {object} utils.ErrResponse "Invalid cart ID format"
+// @Failure 500 {object} utils.ErrResponse "Internal server error"
+// @Router /cart/{cart_id} [get]
 func (h *CartEndpoints) GetCartByID(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	cartIDStr, ok := vars["cart_id"]
@@ -56,6 +67,17 @@ func (h *CartEndpoints) GetCartByID(w http.ResponseWriter, r *http.Request) {
 	utils.SendJSONResponse(w, http.StatusOK, cart)
 }
 
+// GetCartByUserID Retrieves the cart by the user's ID
+// @Summary Retrieve cart by User ID
+// @Description Retrieves detailed information about a cart associated with a specific user
+// @Tags Cart
+// @Accept json
+// @Produce json
+// @Param user_id path string true "User ID"
+// @Success 200 {object} dto.CartResponse "Successfully retrieved cart"
+// @Failure 400 {object} utils.ErrResponse "Invalid user ID format"
+// @Failure 500 {object} utils.ErrResponse "Internal server error"
+// @Router /cart/user/{user_id} [get]
 func (h *CartEndpoints) GetCartByUserID(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	userIDStr, ok := vars["user_id"]
@@ -81,6 +103,17 @@ func (h *CartEndpoints) GetCartByUserID(w http.ResponseWriter, r *http.Request) 
 	utils.SendJSONResponse(w, http.StatusOK, cart)
 }
 
+// AddAdvertToCart Adds an advert to the user's cart
+// @Summary Add advert to user's cart
+// @Description Adds a new advert to the cart associated with a user
+// @Tags Cart
+// @Accept json
+// @Produce json
+// @Param purchase body dto.AddAdvertToUserCartRequest true "Data to add advert to cart"
+// @Success 200 {object} map[string]string "Successfully added advert"
+// @Failure 400 {object} utils.ErrResponse "Invalid request data"
+// @Failure 500 {object} utils.ErrResponse "Internal server error"
+// @Router /cart/add [post]
 func (h *CartEndpoints) AddAdvertToCart(w http.ResponseWriter, r *http.Request) {
 	var req dto.AddAdvertToUserCartRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
