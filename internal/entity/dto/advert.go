@@ -3,7 +3,6 @@ package dto
 import "github.com/google/uuid"
 
 type AdvertRequest struct {
-	SellerId    uuid.UUID `json:"seller_id"`
 	CategoryId  uuid.UUID `json:"category_id"`
 	Title       string    `json:"title"`
 	Description string    `json:"description"`

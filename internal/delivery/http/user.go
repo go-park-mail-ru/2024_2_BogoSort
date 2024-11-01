@@ -29,7 +29,7 @@ type UserEndpoints struct {
 	userUC         usecase.User
 	authUC         usecase.Auth
 	sessionManager *utils.SessionManager
-	StaticUseCase  usecase.StaticUseCase
+	staticUseCase  usecase.StaticUseCase
 	logger         *zap.Logger
 }
 
@@ -38,7 +38,7 @@ func NewUserEndpoints(userUC usecase.User, authUC usecase.Auth, sessionManager *
 		userUC:         userUC,
 		authUC:         authUC,
 		sessionManager: sessionManager,
-		StaticUseCase:  staticUseCase,
+		staticUseCase:  staticUseCase,
 		logger:         logger,
 	}
 }
@@ -317,7 +317,7 @@ func (h *UserEndpoints) UploadImage(writer http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	imageId, err := h.StaticUseCase.UploadFile(data)
+	imageId, err := h.staticUseCase.UploadFile(data)
 	if err != nil {
 		h.sendError(writer, http.StatusInternalServerError, err, "failed to upload image", nil)
 		return

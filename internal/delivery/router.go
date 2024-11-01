@@ -72,7 +72,7 @@ func NewRouter(cfg config.Config) (*mux.Router, error) {
 		return nil, handleRepoError(err, "unable to create cart repository")
 	}
 
-	advertsUseCase := service.NewAdvertService(advertsRepo, staticRepo, zap.L())
+	advertsUseCase := service.NewAdvertService(advertsRepo, staticRepo, sellerRepo, zap.L())
 	staticUseCase := service.NewStaticService(staticRepo, zap.L())
 	categoryUseCase := service.NewCategoryService(categoryRepo, zap.L())
 	cartUC := service.NewCartService(cartRepo, zap.L())
@@ -80,7 +80,7 @@ func NewRouter(cfg config.Config) (*mux.Router, error) {
 	sessionUC := service.NewAuthService(sessionRepo, zap.L())
 	sessionManager := utils.NewSessionManager(sessionUC, int(cfg.Session.ExpirationTime.Seconds()), cfg.Session.SecureCookie, zap.L())
 
-	advertsHandler := http3.NewAdvertEndpoints(advertsUseCase, staticUseCase, zap.L())
+	advertsHandler := http3.NewAdvertEndpoints(advertsUseCase, staticUseCase, sessionManager, zap.L())
 	authHandler := http3.NewAuthEndpoints(sessionUC, sessionManager, zap.L())
 	userHandler := http3.NewUserEndpoints(userUC, sessionUC, sessionManager, staticUseCase, zap.L())
 	sellerHandler := http3.NewSellerEndpoints(sellerRepo, zap.L())
