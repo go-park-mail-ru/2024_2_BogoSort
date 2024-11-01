@@ -31,7 +31,7 @@ func NewAdvertService(advertRepo repository.AdvertRepository,
 	}
 }
 
-func (s *AdvertService) advertEntityToDTO(advert *entity.Advert) (*dto.Advert, error) {
+func (s *AdvertService) advertEntityToDTO(advert *entity.Advert) (*dto.AdvertResponse, error) {
 	var posterURL string
 
 	if !advert.ImageURL.Valid {
@@ -44,7 +44,7 @@ func (s *AdvertService) advertEntityToDTO(advert *entity.Advert) (*dto.Advert, e
 		}
 	}
 
-	advertDTO := dto.Advert{
+	advertDTO := dto.AdvertResponse{
 		ID:          advert.ID,
 		SellerId:    advert.SellerId,
 		CategoryId:  advert.CategoryId,
@@ -60,8 +60,8 @@ func (s *AdvertService) advertEntityToDTO(advert *entity.Advert) (*dto.Advert, e
 	return &advertDTO, nil
 }
 
-func (s *AdvertService) advertEntitiesToDTO(adverts []*entity.Advert) ([]*dto.Advert, error) {
-	dtoAdverts := make([]*dto.Advert, 0, len(adverts))
+func (s *AdvertService) advertEntitiesToDTO(adverts []*entity.Advert) ([]*dto.AdvertResponse, error) {
+	dtoAdverts := make([]*dto.AdvertResponse, 0, len(adverts))
 	for _, advert := range adverts {
 		advertDTO, err := s.advertEntityToDTO(advert)
 		if err != nil {
@@ -72,7 +72,7 @@ func (s *AdvertService) advertEntitiesToDTO(adverts []*entity.Advert) ([]*dto.Ad
 	return dtoAdverts, nil
 }
 
-func (s *AdvertService) GetAdverts(limit, offset int) ([]*dto.Advert, error) {
+func (s *AdvertService) GetAdverts(limit, offset int) ([]*dto.AdvertResponse, error) {
 	adverts, err := s.AdvertRepo.GetAdverts(limit, offset)
 	if err != nil {
 		return nil, entity.UsecaseWrap(err, err)
@@ -80,7 +80,7 @@ func (s *AdvertService) GetAdverts(limit, offset int) ([]*dto.Advert, error) {
 	return s.advertEntitiesToDTO(adverts)
 }
 
-func (s *AdvertService) GetAdvertsBySellerId(sellerId uuid.UUID) ([]*dto.Advert, error) {
+func (s *AdvertService) GetAdvertsBySellerId(sellerId uuid.UUID) ([]*dto.AdvertResponse, error) {
 	adverts, err := s.AdvertRepo.GetAdvertsBySellerId(sellerId)
 	if err != nil {
 		return nil, entity.UsecaseWrap(err, err)
@@ -88,7 +88,7 @@ func (s *AdvertService) GetAdvertsBySellerId(sellerId uuid.UUID) ([]*dto.Advert,
 	return s.advertEntitiesToDTO(adverts)
 }
 
-func (s *AdvertService) GetSavedAdvertsByUserId(userId uuid.UUID) ([]*dto.Advert, error) {
+func (s *AdvertService) GetSavedAdvertsByUserId(userId uuid.UUID) ([]*dto.AdvertResponse, error) {
 	savedAdverts, err := s.AdvertRepo.GetSavedAdvertsByUserId(userId)
 	if err != nil {
 		return nil, entity.UsecaseWrap(err, err)
@@ -96,7 +96,7 @@ func (s *AdvertService) GetSavedAdvertsByUserId(userId uuid.UUID) ([]*dto.Advert
 	return s.advertEntitiesToDTO(savedAdverts)
 }
 
-func (s *AdvertService) GetAdvertsByCartId(cartId uuid.UUID) ([]*dto.Advert, error) {
+func (s *AdvertService) GetAdvertsByCartId(cartId uuid.UUID) ([]*dto.AdvertResponse, error) {
 	adverts, err := s.AdvertRepo.GetAdvertsByCartId(cartId)
 	if err != nil {
 		return nil, entity.UsecaseWrap(err, err)
@@ -104,7 +104,7 @@ func (s *AdvertService) GetAdvertsByCartId(cartId uuid.UUID) ([]*dto.Advert, err
 	return s.advertEntitiesToDTO(adverts)
 }
 
-func (s *AdvertService) GetAdvertById(advertId uuid.UUID) (*dto.Advert, error) {
+func (s *AdvertService) GetAdvertById(advertId uuid.UUID) (*dto.AdvertResponse, error) {
 	advert, err := s.AdvertRepo.GetAdvertById(advertId)
 
 	if err != nil {
@@ -117,7 +117,7 @@ func (s *AdvertService) GetAdvertById(advertId uuid.UUID) (*dto.Advert, error) {
 	return s.advertEntityToDTO(advert)
 }
 
-func (s *AdvertService) AddAdvert(advert *dto.Advert) (*dto.Advert, error) {
+func (s *AdvertService) AddAdvert(advert *dto.AdvertRequest) (*dto.AdvertResponse, error) {
 	if err := entity.ValidateAdvert(advert.Title, 
         advert.Description, 
         advert.Location, 
@@ -132,7 +132,6 @@ func (s *AdvertService) AddAdvert(advert *dto.Advert) (*dto.Advert, error) {
 		Title:       strings.TrimSpace(advert.Title),
 		Description: strings.TrimSpace(advert.Description),
 		Price:       advert.Price,
-		ImageURL:    uuid.NullUUID{UUID: uuid.MustParse(advert.ImageURL), Valid: true},
 		Status:      entity.AdvertStatus(advert.Status),
 		HasDelivery: advert.HasDelivery,
 		Location:    advert.Location,
@@ -144,7 +143,7 @@ func (s *AdvertService) AddAdvert(advert *dto.Advert) (*dto.Advert, error) {
 	return s.advertEntityToDTO(entityAdvert)
 }
 
-func (s *AdvertService) UpdateAdvert(advert *dto.Advert) error {
+func (s *AdvertService) UpdateAdvert(advert *dto.AdvertRequest) error {
 	if err := entity.ValidateAdvert(advert.Title, 
         advert.Description, 
         advert.Location, 
@@ -154,13 +153,11 @@ func (s *AdvertService) UpdateAdvert(advert *dto.Advert) error {
 	}
 
 	err := s.AdvertRepo.UpdateAdvert(&entity.Advert{
-		ID:          advert.ID,
 		SellerId:    advert.SellerId,
 		CategoryId:  advert.CategoryId,
 		Title:       strings.TrimSpace(advert.Title),
 		Description: strings.TrimSpace(advert.Description),
 		Price:       advert.Price,
-		ImageURL:    uuid.NullUUID{UUID: uuid.MustParse(advert.ImageURL), Valid: true},
 		Status:      entity.AdvertStatus(advert.Status),
 		HasDelivery: advert.HasDelivery,
 		Location:    advert.Location,
@@ -194,7 +191,7 @@ func (s *AdvertService) UpdateAdvertStatus(advertId uuid.UUID, status string) er
 	return nil
 }
 
-func (s *AdvertService) GetAdvertsByCategoryId(categoryId uuid.UUID) ([]*dto.Advert, error) {
+func (s *AdvertService) GetAdvertsByCategoryId(categoryId uuid.UUID) ([]*dto.AdvertResponse, error) {
 	adverts, err := s.AdvertRepo.GetAdvertsByCategoryId(categoryId)
 	if err != nil {
 		return nil, entity.UsecaseWrap(err, err)
