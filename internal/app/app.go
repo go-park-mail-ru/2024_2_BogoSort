@@ -60,17 +60,16 @@ func (server *Server) Run() error {
 	}()
 
 	<-stop
-	log.Println("shutting down server...")
+	zap.L().Info("shutting down server...")
 
 	ctx, cancel := context.WithTimeout(context.Background(), config.GetShutdownTimeout())
 	defer cancel()
 
 	if err := server.Shutdown(ctx); err != nil {
-		log.Printf("server forced to shutdown: %v", err)
-		os.Exit(1)
+		zap.L().Error("server forced to shutdown", zap.Error(err))
 	}
 
-	log.Println("server exiting")
+	zap.L().Info("server exiting")
 
 	return nil
 }

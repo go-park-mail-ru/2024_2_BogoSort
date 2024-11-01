@@ -7,7 +7,7 @@ import (
 	_ "time"
 	"unicode/utf8"
 
-	"github.com/go-park-mail-ru/2024_1_Cyberkotletki/pkg/random"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/pkg/utils/random"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/argon2"
 )

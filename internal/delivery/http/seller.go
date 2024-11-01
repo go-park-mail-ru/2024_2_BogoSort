@@ -41,7 +41,7 @@ func (s *SellerEndpoints) Configure(router *mux.Router) {
 // @Accept json
 // @Produce json
 // @Param seller_id path string true "ID продавца"
-// @Success 200 {object} dto.SellerResponse "Информация о продавце"
+// @Success 200 {object} entity.Seller "Информация о продавце"
 // @Failure 400 {object} utils.ErrResponse "Некорректный запрос"
 // @Failure 404 {object} utils.ErrResponse "Продавец не найден"
 // @Failure 500 {object} utils.ErrResponse "Внутренняя ошибка сервера"

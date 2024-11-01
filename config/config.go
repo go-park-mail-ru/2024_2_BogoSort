@@ -5,7 +5,6 @@ import (
 	"os"
 	"strconv"
 	"time"
-
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
@@ -30,10 +29,17 @@ type Config struct {
 	PGPort  int           `yaml:"pg_port"`
 	PGUser  string        `yaml:"pg_user"`
 	PGPass  string        `yaml:"pg_password"`
+	PGTimeout time.Duration `yaml:"pg_timeout" default:"5s"`
 	PGDB    string        `yaml:"pg_db"`
 	RdAddr  string        `yaml:"rd_addr"`
 	RdPass  string        `yaml:"rd_password"`
 	RdDB    int           `yaml:"rd_db"`
+	Static StaticConfig   `yaml:"static"`
+}
+
+type StaticConfig struct {
+	Path string `yaml:"path"`
+	MaxSize int `yaml:"max_size"`
 }
 
 var cfg Config
@@ -98,6 +104,6 @@ func GetShutdownTimeout() time.Duration {
 	return cfg.Server.ShutdownTimeout
 }
 
-func GetSessionExpirationTime() time.Duration {
-	return cfg.Session.ExpirationTime
+func GetStaticConfig() StaticConfig {
+	return cfg.Static
 }

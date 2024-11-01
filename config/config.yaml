@@ -14,7 +14,12 @@ pg_port: 5432
 pg_user: "postgres"
 pg_password: "postgres"
 pg_db: "emporiumdb"
+pg_timeout: 5s
 
 rd_addr: "localhost:6379"
 rd_password: ""
 rd_db: 0
+
+static:
+  path: "static/"
+  max_size: 1048576

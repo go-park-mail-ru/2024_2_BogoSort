@@ -72,22 +72,21 @@ func (u *UserEndpoints) sendError(w http.ResponseWriter, statusCode int, err err
 }
 
 // Signup
-// @Summary Регистрация нового пользователя
-// @Description Создает нового пользователя в системе
-// @Tags Пользователи
+// @Summary User registration
+// @Description Creates a new user in the system
+// @Tags Users
 // @Accept json
 // @Produce json
-// @Param signup body dto.Signup true "Данные для регистрации"
+// @Param signup body dto.Signup true "Registration data"
 // @Success 200 {string} string "SessionID"
-// @Failure 400 {object} utils.ErrResponse "Некорректный запрос или пользователь уже существует"
-// @Failure 401 {object} utils.ErrResponse "Несанкционированный запрос"
-// @Failure 500 {object} utils.ErrResponse "Внутренняя ошибка сервера"
+// @Failure 400 {object} utils.ErrResponse "Invalid request or user already exists"
+// @Failure 401 {object} utils.ErrResponse "Unauthorized request"
+// @Failure 500 {object} utils.ErrResponse "Internal server error"
 // @Router /signup [post]
 func (u *UserEndpoints) Signup(w http.ResponseWriter, r *http.Request) {
 	var credentials dto.Signup
 	if err := json.NewDecoder(r.Body).Decode(&credentials); err != nil {
-		u.logger.Error("error decoding signup request", zap.Error(err))
-		utils.SendErrorResponse(w, http.StatusBadRequest, ErrInvalidRequestBody.Error())
+		u.sendError(w, http.StatusBadRequest, err, "error decoding signup request", nil)
 		return
 	}
 
@@ -99,8 +98,7 @@ func (u *UserEndpoints) Signup(w http.ResponseWriter, r *http.Request) {
 
 	sessionID, err := u.sessionManager.CreateSession(userID)
 	if err != nil {
-		u.logger.Error("error creating session", zap.String("userID", userID.String()), zap.Error(err))
-		utils.SendErrorResponse(w, http.StatusInternalServerError, err.Error())
+		u.sendError(w, http.StatusInternalServerError, err, "error creating session", map[string]string{"userID": userID.String()})
 		return
 	}
 	u.logger.Info("session created", zap.String("sessionID", sessionID), zap.String("userID", userID.String()))
@@ -118,23 +116,22 @@ func (u *UserEndpoints) Signup(w http.ResponseWriter, r *http.Request) {
 }
 
 // Login
-// @Summary Вход пользователя
-// @Description Позволяет пользователю войти в систему
-// @Tags Пользователи
+// @Summary User login
+// @Description Allows a user to log into the system
+// @Tags Users
 // @Accept json
 // @Produce json
-// @Param login body dto.Login true "Данные для входа"
+// @Param login body dto.Login true "Login data"
 // @Success 200 {string} string "SessionID"
-// @Failure 400 {object} utils.ErrResponse "Некорректный запрос"
-// @Failure 401 {object} utils.ErrResponse "Неверные учетные данные или несанкционированный доступ"
-// @Failure 404 {object} utils.ErrResponse "Пользователь не найден"
-// @Failure 500 {object} utils.ErrResponse "Внутренняя ошибка сервера"
+// @Failure 400 {object} utils.ErrResponse "Invalid request"
+// @Failure 401 {object} utils.ErrResponse "Invalid credentials or unauthorized access"
+// @Failure 404 {object} utils.ErrResponse "User not found"
+// @Failure 500 {object} utils.ErrResponse "Internal server error"
 // @Router /login [post]
 func (u *UserEndpoints) Login(w http.ResponseWriter, r *http.Request) {
 	var credentials dto.Login
 	if err := json.NewDecoder(r.Body).Decode(&credentials); err != nil {
-		u.logger.Error("error decoding login request", zap.Error(err))
-		utils.SendErrorResponse(w, http.StatusBadRequest, ErrInvalidRequestBody.Error())
+		u.sendError(w, http.StatusBadRequest, err, "error decoding login request", nil)
 		return
 	}
 	userID, err := u.userUC.Login(&credentials)
@@ -145,16 +142,14 @@ func (u *UserEndpoints) Login(w http.ResponseWriter, r *http.Request) {
 
 	sessionID, err := u.sessionManager.CreateSession(userID)
 	if err != nil {
-		u.logger.Error("error creating session", zap.String("userID", userID.String()), zap.Error(err))
-		utils.SendErrorResponse(w, http.StatusInternalServerError, err.Error())
+		u.sendError(w, http.StatusInternalServerError, err, "error creating session", map[string]string{"userID": userID.String()})
 		return
 	}
 	u.logger.Info("session created", zap.String("sessionID", sessionID), zap.String("userID", userID.String()))
 
 	cookie, err := u.sessionManager.SetSession(sessionID)
 	if err != nil {
-		u.logger.Error("error setting session cookie", zap.Error(err))
-		utils.SendErrorResponse(w, http.StatusInternalServerError, "Failed to set session")
+		u.sendError(w, http.StatusInternalServerError, err, "error setting session cookie", nil)
 		return
 	}
 	http.SetCookie(w, cookie)
@@ -163,29 +158,27 @@ func (u *UserEndpoints) Login(w http.ResponseWriter, r *http.Request) {
 }
 
 // ChangePassword
-// @Summary Изменение пароля пользователя
-// @Description Позволяет пользователю изменить свой пароль
-// @Tags Пользователи
+// @Summary Change user password
+// @Description Allows a user to change their password
+// @Tags Users
 // @Accept json
 // @Produce json
-// @Param password body dto.UpdatePassword true "Данные для изменения пароля"
-// @Success 200 {string} string "Пароль изменен успешно"
-// @Failure 400 {object} utils.ErrResponse "Некорректные данные"
-// @Failure 401 {object} utils.ErrResponse "Несанкционированный доступ"
-// @Failure 404 {object} utils.ErrResponse "Пользователь не найден"
-// @Failure 500 {object} utils.ErrResponse "Внутренняя ошибка сервера"
+// @Param password body dto.UpdatePassword true "Password change data"
+// @Success 200 {string} string "Password changed successfully"
+// @Failure 400 {object} utils.ErrResponse "Invalid data"
+// @Failure 401 {object} utils.ErrResponse "Unauthorized access"
+// @Failure 404 {object} utils.ErrResponse "User not found"
+// @Failure 500 {object} utils.ErrResponse "Internal server error"
 // @Router /password [post]
 func (u *UserEndpoints) ChangePassword(w http.ResponseWriter, r *http.Request) {
 	var updatePassword dto.UpdatePassword
 	if err := json.NewDecoder(r.Body).Decode(&updatePassword); err != nil {
-		u.logger.Error("error decoding change password request", zap.Error(err))
-		utils.SendErrorResponse(w, http.StatusBadRequest, ErrInvalidRequestBody.Error())
+		u.sendError(w, http.StatusBadRequest, err, "error decoding change password request", nil)
 		return
 	}
 	userID, err := u.sessionManager.GetUserID(r)
 	if err != nil {
-		u.logger.Error("unauthorized request", zap.Error(err))
-		utils.SendErrorResponse(w, http.StatusUnauthorized, err.Error())
+		u.sendError(w, http.StatusUnauthorized, err, "unauthorized request", nil)
 		return
 	}
 	err = u.userUC.ChangePassword(userID, &updatePassword)
@@ -199,23 +192,22 @@ func (u *UserEndpoints) ChangePassword(w http.ResponseWriter, r *http.Request) {
 }
 
 // UpdateProfile
-// @Summary Обновление профиля пользователя
-// @Description Позволяет пользователю обновить информацию своего профиля
-// @Tags Пользователи
+// @Summary Update user profile
+// @Description Allows a user to update their profile information
+// @Tags Users
 // @Accept json
 // @Produce json
-// @Param profile body dto.User true "Данные профиля"
-// @Success 200 {string} string "Профиль обновлен успешно"
-// @Failure 400 {object} utils.ErrResponse "Некорректные данные"
-// @Failure 401 {object} utils.ErrResponse "Несанкционированный доступ"
-// @Failure 404 {object} utils.ErrResponse "Пользователь не найден"
-// @Failure 500 {object} utils.ErrResponse "Внутренняя ошибка сервера"
+// @Param profile body dto.User true "Profile data"
+// @Success 200 {string} string "Profile updated successfully"
+// @Failure 400 {object} utils.ErrResponse "Invalid data"
+// @Failure 401 {object} utils.ErrResponse "Unauthorized access"
+// @Failure 404 {object} utils.ErrResponse "User not found"
+// @Failure 500 {object} utils.ErrResponse "Internal server error"
 // @Router /profile [put]
 func (u *UserEndpoints) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	var user dto.User
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		u.logger.Error("error decoding update profile request", zap.Error(err))
-		utils.SendErrorResponse(w, http.StatusBadRequest, ErrInvalidRequestBody.Error())
+		u.sendError(w, http.StatusBadRequest, err, "error decoding update profile request", nil)
 		return
 	}
 	userID, err := u.sessionManager.GetUserID(r)
@@ -235,22 +227,21 @@ func (u *UserEndpoints) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetProfile
-// @Summary Получение профиля пользователя
-// @Description Возвращает информацию о пользователе по его ID
-// @Tags Пользователи
+// @Summary Get user profile
+// @Description Returns user information by their ID
+// @Tags Users
 // @Accept json
 // @Produce json
-// @Param user_id path string true "ID пользователя"
-// @Success 200 {object} dto.User "Профиль пользователя"
-// @Failure 404 {object} utils.ErrResponse "Пользователь не найден"
-// @Failure 500 {object} utils.ErrResponse "Внутренняя ошибка сервера"
+// @Param user_id path string true "User ID"
+// @Success 200 {object} dto.User "User profile"
+// @Failure 404 {object} utils.ErrResponse "User not found"
+// @Failure 500 {object} utils.ErrResponse "Internal server error"
 // @Router /profile/{user_id} [get]
 func (u *UserEndpoints) GetProfile(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	userID, err := uuid.Parse(vars["user_id"])
 	if err != nil {
-		u.logger.Error("error parsing userID", zap.Error(err))
-		utils.SendErrorResponse(w, http.StatusBadRequest, err.Error())
+		u.sendError(w, http.StatusBadRequest, err, "error parsing userID", nil)
 		return
 	}
 	user, err := u.userUC.GetUser(userID)
@@ -259,25 +250,23 @@ func (u *UserEndpoints) GetProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u.logger.Info("user found", zap.String("userID", userID.String()))
 	utils.SendJSONResponse(w, http.StatusOK, user)
 }
 
 // GetMe
-// @Summary Получение информации о текущем пользователе
-// @Description Возвращает информацию о пользователе, текущий пользователь которого аутентифицирован
-// @Tags Пользователи
+// @Summary Get current user information
+// @Description Returns information about the currently authenticated user
+// @Tags Users
 // @Accept json
 // @Produce json
-// @Success 200 {object} dto.User "Информация о пользователе"
-// @Failure 401 {object} utils.ErrResponse "Несанкционированный доступ"
-// @Failure 500 {object} utils.ErrResponse "Внутренняя ошибка сервера"
+// @Success 200 {object} dto.User "User information"
+// @Failure 401 {object} utils.ErrResponse "Unauthorized access"
+// @Failure 500 {object} utils.ErrResponse "Internal server error"
 // @Router /me [get]
 func (u *UserEndpoints) GetMe(w http.ResponseWriter, r *http.Request) {
 	userID, err := u.sessionManager.GetUserID(r)
 	if err != nil {
-		u.logger.Error("unauthorized request", zap.Error(err))
-		utils.SendErrorResponse(w, http.StatusUnauthorized, err.Error())
+		u.sendError(w, http.StatusUnauthorized, err, "unauthorized request", nil)
 		return
 	}
 	user, err := u.userUC.GetUser(userID)
@@ -286,6 +275,5 @@ func (u *UserEndpoints) GetMe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u.logger.Info("user found", zap.String("userID", userID.String()))
 	utils.SendJSONResponse(w, http.StatusOK, user)
 }
