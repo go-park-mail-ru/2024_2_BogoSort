@@ -97,14 +97,6 @@ func (s *AdvertService) GetAdvertsByUserId(userId uuid.UUID) ([]*dto.AdvertRespo
 	return s.advertEntitiesToDTO(adverts)
 }
 
-func (s *AdvertService) GetSavedAdvertsByUserId(userId uuid.UUID) ([]*dto.AdvertResponse, error) {
-	savedAdverts, err := s.advertRepo.GetSavedAdvertsByUserId(userId)
-	if err != nil {
-		return nil, entity.UsecaseWrap(err, err)
-	}
-	return s.advertEntitiesToDTO(savedAdverts)
-}
-
 func (s *AdvertService) GetAdvertsByCartId(cartId uuid.UUID) ([]*dto.AdvertResponse, error) {
 	adverts, err := s.advertRepo.GetAdvertsByCartId(cartId)
 	if err != nil {

@@ -12,9 +12,6 @@ type AdvertUseCase interface {
 	// GetAdvertsByUserId возвращает массив объявлений в соответствии с userId
 	GetAdvertsByUserId(userId uuid.UUID) ([]*dto.AdvertResponse, error)
 
-	// GetSavedAdvertsByUserId возвращает массив сохраненных объявлений в соответствии userId
-	GetSavedAdvertsByUserId(userId uuid.UUID) ([]*dto.AdvertResponse, error)
-
 	// GetAdvertsByCartId возвращает массив объявлений, которые находятся в корзине
 	GetAdvertsByCartId(cartId uuid.UUID) ([]*dto.AdvertResponse, error)
 

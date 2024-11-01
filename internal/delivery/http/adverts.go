@@ -46,7 +46,6 @@ func NewAdvertEndpoints(advertUseCase usecase.AdvertUseCase,
 func (h *AdvertEndpoints) ConfigureRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/adverts/{advertId}", h.GetAdvertById).Methods("GET")
 	router.HandleFunc("/api/v1/adverts/seller/{sellerId}", h.GetAdvertsBySellerId).Methods("GET")
-	router.HandleFunc("/api/v1/adverts/user/{userId}/saved", h.GetSavedAdvertsByUserId).Methods("GET")
 	router.HandleFunc("/api/v1/adverts/cart/{cartId}", h.GetAdvertsByCartId).Methods("GET")
 	router.HandleFunc("/api/v1/adverts", h.AddAdvert).Methods("POST")
 	router.HandleFunc("/api/v1/adverts/{advertId}", h.UpdateAdvert).Methods("PUT")
@@ -111,33 +110,6 @@ func (h *AdvertEndpoints) GetAdvertsBySellerId(writer http.ResponseWriter, r *ht
 	adverts, err := h.advertUseCase.GetAdvertsByUserId(sellerId)
 	if err != nil {
 		h.sendError(writer, http.StatusInternalServerError, err, "failed to get adverts by seller ID", nil)
-		return
-	}
-
-	utils.SendJSONResponse(writer, http.StatusOK, adverts)
-}
-
-// GetSavedAdvertsByUserId godoc
-// @Summary Retrieve saved adverts by user ID
-// @Description Fetch a list of saved adverts associated with a specific user ID
-// @Tags adverts
-// @Produce json
-// @Param userId path string true "User ID"
-// @Success 200 {array} dto.AdvertResponse "List of saved adverts"
-// @Failure 400 {object} utils.ErrResponse "Invalid user ID"
-// @Failure 500 {object} utils.ErrResponse "Failed to retrieve saved adverts by user ID"
-// @Router /api/v1/adverts/user/{userId}/saved [get]
-func (h *AdvertEndpoints) GetSavedAdvertsByUserId(writer http.ResponseWriter, r *http.Request) {
-	userIdStr := mux.Vars(r)["userId"]
-	userId, err := uuid.Parse(userIdStr)
-	if err != nil {
-		h.sendError(writer, http.StatusBadRequest, err, "invalid user ID", nil)
-		return
-	}
-
-	adverts, err := h.advertUseCase.GetSavedAdvertsByUserId(userId)
-	if err != nil {
-		h.sendError(writer, http.StatusInternalServerError, err, "failed to get saved adverts by user ID", nil)
 		return
 	}
 
