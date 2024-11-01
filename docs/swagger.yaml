@@ -1,15 +1,10 @@
 definitions:
-<<<<<<< HEAD
   dto.Advert:
-=======
-  dto.Login:
->>>>>>> TP-09_data_base
     properties:
       category_id:
         type: string
       description:
         type: string
-<<<<<<< HEAD
       has_delivery:
         type: boolean
       id:
@@ -33,7 +28,12 @@ definitions:
     type: string
     x-enum-varnames:
     - AdvertStatusActive
-=======
+  dto.Login:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
     type: object
   dto.Signup:
     properties:
@@ -52,6 +52,7 @@ definitions:
   dto.User:
     properties:
       avatar_id:
+        default: 00000000-0000-0000-0000-000000000000
         type: string
       email:
         type: string
@@ -65,7 +66,26 @@ definitions:
       username:
         type: string
     type: object
->>>>>>> TP-09_data_base
+  entity.Category:
+    properties:
+      id:
+        type: string
+      title:
+        type: string
+    type: object
+  entity.Seller:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: string
+    type: object
   utils.ErrResponse:
     properties:
       code:
@@ -75,13 +95,10 @@ definitions:
     type: object
 info:
   contact: {}
-  title: API
-  version: 1.0.0
 paths:
-<<<<<<< HEAD
   /api/v1/adverts:
     get:
-      description: Get a list of all adverts
+      description: Fetch a list of all adverts
       parameters:
       - description: Limit the number of results
         in: query
@@ -105,16 +122,16 @@ paths:
           schema:
             $ref: '#/definitions/utils.ErrResponse'
         "500":
-          description: Failed to get adverts
+          description: Failed to retrieve adverts
           schema:
             $ref: '#/definitions/utils.ErrResponse'
-      summary: Get all adverts
+      summary: Retrieve all adverts
       tags:
       - adverts
     post:
       consumes:
       - application/json
-      description: Create a new advert
+      description: Add a new advert to the system
       parameters:
       - description: Advert data
         in: body
@@ -134,15 +151,15 @@ paths:
           schema:
             $ref: '#/definitions/utils.ErrResponse'
         "500":
-          description: Failed to add advert
+          description: Failed to create advert
           schema:
             $ref: '#/definitions/utils.ErrResponse'
-      summary: Add a new advert
+      summary: Create a new advert
       tags:
       - adverts
   /api/v1/adverts/{advertId}:
     delete:
-      description: Delete an advert by its ID
+      description: Remove an advert from the system using its ID
       parameters:
       - description: Advert ID
         in: path
@@ -168,7 +185,7 @@ paths:
       tags:
       - adverts
     get:
-      description: Get an advert by its ID
+      description: Fetch an advert based on its ID
       parameters:
       - description: Advert ID
         in: path
@@ -191,16 +208,16 @@ paths:
           schema:
             $ref: '#/definitions/utils.ErrResponse'
         "500":
-          description: Failed to get advert by ID
+          description: Failed to retrieve advert by ID
           schema:
             $ref: '#/definitions/utils.ErrResponse'
-      summary: Get an advert by ID
+      summary: Retrieve an advert by ID
       tags:
       - adverts
     put:
       consumes:
       - application/json
-      description: Update an advert's information
+      description: Modify the details of an existing advert
       parameters:
       - description: Advert ID
         in: path
@@ -235,7 +252,7 @@ paths:
       - adverts
   /api/v1/adverts/{advertId}/image:
     put:
-      description: Upload an image by ID
+      description: Upload an image associated with an advert by its ID
       parameters:
       - description: Advert ID
         in: path
@@ -260,12 +277,12 @@ paths:
           description: Failed to upload image
           schema:
             $ref: '#/definitions/utils.ErrResponse'
-      summary: Upload an image
+      summary: Upload an image for an advert
       tags:
       - adverts
   /api/v1/adverts/{advertId}/status:
     put:
-      description: Update advert status by ID
+      description: Change the status of an advert by its ID
       parameters:
       - description: Advert ID
         in: path
@@ -293,12 +310,12 @@ paths:
           description: Failed to update advert status
           schema:
             $ref: '#/definitions/utils.ErrResponse'
-      summary: Update advert status
+      summary: Update the status of an advert
       tags:
       - adverts
   /api/v1/adverts/cart/{cartId}:
     get:
-      description: Get a list of adverts in the specified cart
+      description: Fetch a list of adverts in the specified cart
       parameters:
       - description: Cart ID
         in: path
@@ -319,15 +336,15 @@ paths:
           schema:
             $ref: '#/definitions/utils.ErrResponse'
         "500":
-          description: Failed to get adverts by cart ID
+          description: Failed to retrieve adverts by cart ID
           schema:
             $ref: '#/definitions/utils.ErrResponse'
-      summary: Get adverts by cart ID
+      summary: Retrieve adverts by cart ID
       tags:
       - adverts
   /api/v1/adverts/category/{categoryId}:
     get:
-      description: Get a list of adverts by category ID
+      description: Fetch a list of adverts associated with a specific category ID
       parameters:
       - description: Category ID
         in: path
@@ -348,15 +365,15 @@ paths:
           schema:
             $ref: '#/definitions/utils.ErrResponse'
         "500":
-          description: Failed to get adverts by category ID
+          description: Failed to retrieve adverts by category ID
           schema:
             $ref: '#/definitions/utils.ErrResponse'
-      summary: Get adverts by category ID
+      summary: Retrieve adverts by category ID
       tags:
       - adverts
   /api/v1/adverts/seller/{sellerId}:
     get:
-      description: Get a list of adverts by seller ID
+      description: Fetch a list of adverts associated with a specific seller ID
       parameters:
       - description: Seller ID
         in: path
@@ -377,15 +394,15 @@ paths:
           schema:
             $ref: '#/definitions/utils.ErrResponse'
         "500":
-          description: Failed to get adverts by seller ID
+          description: Failed to retrieve adverts by seller ID
           schema:
             $ref: '#/definitions/utils.ErrResponse'
-      summary: Get adverts by seller ID
+      summary: Retrieve adverts by seller ID
       tags:
       - adverts
   /api/v1/adverts/user/{userId}/saved:
     get:
-      description: Get a list of saved adverts by user ID
+      description: Fetch a list of saved adverts associated with a specific user ID
       parameters:
       - description: User ID
         in: path
@@ -406,12 +423,33 @@ paths:
           schema:
             $ref: '#/definitions/utils.ErrResponse'
         "500":
-          description: Failed to get saved adverts by user ID
+          description: Failed to retrieve saved adverts by user ID
           schema:
             $ref: '#/definitions/utils.ErrResponse'
-      summary: Get saved adverts by user ID
+      summary: Retrieve saved adverts by user ID
       tags:
       - adverts
+  /api/v1/categories:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of all categories
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/entity.Category'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Get all categories
+      tags:
+      - categories
   /api/v1/static/{staticId}:
     get:
       description: Get a static file by its ID
@@ -443,14 +481,13 @@ paths:
       summary: Get static file by ID
       tags:
       - static
-=======
   /login:
     post:
       consumes:
       - application/json
-      description: Позволяет пользователю войти в систему
+      description: Allows a user to log into the system
       parameters:
-      - description: Данные для входа
+      - description: Login data
         in: body
         name: login
         required: true
@@ -464,82 +501,81 @@ paths:
           schema:
             type: string
         "400":
-          description: Некорректный запрос
+          description: Invalid request
           schema:
             $ref: '#/definitions/utils.ErrResponse'
         "401":
-          description: Неверные учетные данные или несанкционированный доступ
+          description: Invalid credentials or unauthorized access
           schema:
             $ref: '#/definitions/utils.ErrResponse'
         "404":
-          description: Пользователь не найден
+          description: User not found
           schema:
             $ref: '#/definitions/utils.ErrResponse'
         "500":
-          description: Внутренняя ошибка сервера
+          description: Internal server error
           schema:
             $ref: '#/definitions/utils.ErrResponse'
-      summary: Вход пользователя
+      summary: User login
       tags:
-      - Пользователи
+      - Users
   /logout:
     post:
       consumes:
       - application/json
-      description: Позволяет пользователю выйти из системы, удаляя его сессию
+      description: Allows the user to log out of the system by deleting their session
       produces:
       - application/json
       responses:
         "200":
-          description: Вы успешно вышли из системы
+          description: You have successfully logged out
           schema:
             type: string
         "400":
-          description: Некорректный запрос или отсутствие cookie
+          description: Invalid request or missing cookie
           schema:
             $ref: '#/definitions/utils.ErrResponse'
         "401":
-          description: Несанкционированный доступ
+          description: Unauthorized access
           schema:
             $ref: '#/definitions/utils.ErrResponse'
         "500":
-          description: Внутренняя ошибка сервера
+          description: Internal server error
           schema:
             $ref: '#/definitions/utils.ErrResponse'
-      summary: Выход пользователя
+      summary: User logout
       tags:
-      - Аутентификация
+      - Authentication
   /me:
     get:
       consumes:
       - application/json
-      description: Возвращает информацию о пользователе, текущий пользователь которого
-        аутентифицирован
+      description: Returns information about the currently authenticated user
       produces:
       - application/json
       responses:
         "200":
-          description: Информация о пользователе
+          description: User information
           schema:
             $ref: '#/definitions/dto.User'
         "401":
-          description: Несанкционированный доступ
+          description: Unauthorized access
           schema:
             $ref: '#/definitions/utils.ErrResponse'
         "500":
-          description: Внутренняя ошибка сервера
+          description: Internal server error
           schema:
             $ref: '#/definitions/utils.ErrResponse'
-      summary: Получение информации о текущем пользователе
+      summary: Get current user information
       tags:
-      - Пользователи
+      - Users
   /password:
     post:
       consumes:
       - application/json
-      description: Позволяет пользователю изменить свой пароль
+      description: Allows a user to change their password
       parameters:
-      - description: Данные для изменения пароля
+      - description: Password change data
         in: body
         name: password
         required: true
@@ -549,35 +585,35 @@ paths:
       - application/json
       responses:
         "200":
-          description: Пароль изменен успешно
+          description: Password changed successfully
           schema:
             type: string
         "400":
-          description: Некорректные данные
+          description: Invalid data
           schema:
             $ref: '#/definitions/utils.ErrResponse'
         "401":
-          description: Несанкционированный доступ
+          description: Unauthorized access
           schema:
             $ref: '#/definitions/utils.ErrResponse'
         "404":
-          description: Пользователь не найден
+          description: User not found
           schema:
             $ref: '#/definitions/utils.ErrResponse'
         "500":
-          description: Внутренняя ошибка сервера
+          description: Internal server error
           schema:
             $ref: '#/definitions/utils.ErrResponse'
-      summary: Изменение пароля пользователя
+      summary: Change user password
       tags:
-      - Пользователи
+      - Users
   /profile:
     put:
       consumes:
       - application/json
-      description: Позволяет пользователю обновить информацию своего профиля
+      description: Allows a user to update their profile information
       parameters:
-      - description: Данные профиля
+      - description: Profile data
         in: body
         name: profile
         required: true
@@ -587,35 +623,35 @@ paths:
       - application/json
       responses:
         "200":
-          description: Профиль обновлен успешно
+          description: Profile updated successfully
           schema:
             type: string
         "400":
-          description: Некорректные данные
+          description: Invalid data
           schema:
             $ref: '#/definitions/utils.ErrResponse'
         "401":
-          description: Несанкционированный доступ
+          description: Unauthorized access
           schema:
             $ref: '#/definitions/utils.ErrResponse'
         "404":
-          description: Пользователь не найден
+          description: User not found
           schema:
             $ref: '#/definitions/utils.ErrResponse'
         "500":
-          description: Внутренняя ошибка сервера
+          description: Internal server error
           schema:
             $ref: '#/definitions/utils.ErrResponse'
-      summary: Обновление профиля пользователя
+      summary: Update user profile
       tags:
-      - Пользователи
+      - Users
   /profile/{user_id}:
     get:
       consumes:
       - application/json
-      description: Возвращает информацию о пользователе по его ID
+      description: Returns user information by their ID
       parameters:
-      - description: ID пользователя
+      - description: User ID
         in: path
         name: user_id
         required: true
@@ -624,27 +660,60 @@ paths:
       - application/json
       responses:
         "200":
-          description: Профиль пользователя
+          description: User profile
           schema:
             $ref: '#/definitions/dto.User'
         "404":
-          description: Пользователь не найден
+          description: User not found
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Get user profile
+      tags:
+      - Users
+  /seller/{seller_id}:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает информацию о продавце по его ID
+      parameters:
+      - description: ID продавца
+        in: path
+        name: seller_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Информация о продавце
+          schema:
+            $ref: '#/definitions/entity.Seller'
+        "400":
+          description: Некорректный запрос
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "404":
+          description: Продавец не найден
           schema:
             $ref: '#/definitions/utils.ErrResponse'
         "500":
           description: Внутренняя ошибка сервера
           schema:
             $ref: '#/definitions/utils.ErrResponse'
-      summary: Получение профиля пользователя
+      summary: Получение продавца по ID
       tags:
-      - Пользователи
+      - Продавцы
   /signup:
     post:
       consumes:
       - application/json
-      description: Создает нового пользователя в системе
+      description: Creates a new user in the system
       parameters:
-      - description: Данные для регистрации
+      - description: Registration data
         in: body
         name: signup
         required: true
@@ -658,19 +727,18 @@ paths:
           schema:
             type: string
         "400":
-          description: Некорректный запрос или пользователь уже существует
+          description: Invalid request or user already exists
           schema:
             $ref: '#/definitions/utils.ErrResponse'
         "401":
-          description: Несанкционированный запрос
+          description: Unauthorized request
           schema:
             $ref: '#/definitions/utils.ErrResponse'
         "500":
-          description: Внутренняя ошибка сервера
+          description: Internal server error
           schema:
             $ref: '#/definitions/utils.ErrResponse'
-      summary: Регистрация нового пользователя
+      summary: User registration
       tags:
-      - Пользователи
->>>>>>> TP-09_data_base
+      - Users
 swagger: "2.0"

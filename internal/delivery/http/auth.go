@@ -33,15 +33,15 @@ func (a *AuthEndpoints) handleError(w http.ResponseWriter, err error, method str
 }
 
 // Logout
-// @Summary Выход пользователя
-// @Description Позволяет пользователю выйти из системы, удаляя его сессию
-// @Tags Аутентификация
+// @Summary User logout
+// @Description Allows the user to log out of the system by deleting their session
+// @Tags Authentication
 // @Accept json
 // @Produce json
-// @Success 200 {string} string "Вы успешно вышли из системы"
-// @Failure 400 {object} utils.ErrResponse "Некорректный запрос или отсутствие cookie"
-// @Failure 401 {object} utils.ErrResponse "Несанкционированный доступ"
-// @Failure 500 {object} utils.ErrResponse "Внутренняя ошибка сервера"
+// @Success 200 {string} string "You have successfully logged out"
+// @Failure 400 {object} utils.ErrResponse "Invalid request or missing cookie"
+// @Failure 401 {object} utils.ErrResponse "Unauthorized access"
+// @Failure 500 {object} utils.ErrResponse "Internal server error"
 // @Router /logout [post]
 func (a *AuthEndpoints) Logout(w http.ResponseWriter, r *http.Request) {
 	userID, err := a.sessionManager.GetUserID(r)
@@ -65,5 +65,5 @@ func (a *AuthEndpoints) Logout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	a.logger.Info("user logged out", zap.String("userID", userID.String()))
-	utils.SendJSONResponse(w, http.StatusOK, "Вы успешно вышли из системы")
+	utils.SendJSONResponse(w, http.StatusOK, "You have successfully logged out")
 }

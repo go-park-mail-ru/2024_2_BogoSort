@@ -48,23 +48,24 @@ func (h *StaticEndpoints) GetStaticById(writer http.ResponseWriter, r *http.Requ
 	staticIdStr := mux.Vars(r)["staticId"]
 	staticId, err := strconv.Atoi(staticIdStr)
 	if err != nil || staticId <= 0 {
-		h.logger.Error("invalid static ID", zap.Error(err))
-		utils.SendErrorResponse(writer, http.StatusBadRequest, ErrInvalidStaticID.Error())
+		h.sendError(writer, http.StatusBadRequest, err, "invalid static ID", nil)
 		return
 	}
 
 	staticURL, err := h.StaticUseCase.GetStaticURL(uuid.MustParse(staticIdStr))
 	if err != nil {
-		h.logger.Error("failed to get static file", zap.Error(err))
 		if errors.Is(err, ErrStaticFileNotFound) {
-			h.logger.Error("static file not found", zap.Error(err))
-			utils.SendErrorResponse(writer, http.StatusNotFound, ErrStaticFileNotFound.Error())
+			h.sendError(writer, http.StatusNotFound, err, "static file not found", nil)
 		} else {
-			h.logger.Error("failed to get static file", zap.Error(err))
-			utils.SendErrorResponse(writer, http.StatusInternalServerError, ErrFailedToGetStatic.Error())
+			h.sendError(writer, http.StatusInternalServerError, err, "failed to get static file", nil)
 		}
 		return
 	}
 
 	utils.SendJSONResponse(writer, http.StatusOK, staticURL)
+}
+
+func (e *StaticEndpoints) sendError(w http.ResponseWriter, statusCode int, err error, context string, additionalInfo map[string]string) {
+	e.logger.Error(err.Error(), zap.String("context", context), zap.Any("info", additionalInfo))
+	utils.SendErrorResponse(w, statusCode, err.Error())
 }
