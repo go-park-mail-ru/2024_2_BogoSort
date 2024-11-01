@@ -14,7 +14,7 @@ import (
 
 var (
 	queryCreateCart = `
-		INSERT INTO carts (user_id) VALUES ($1) RETURNING id
+		INSERT INTO cart (user_id) VALUES ($1) RETURNING id
 	`
 	queryAddAdvertToCart = `
 		INSERT INTO cart_advert (cart_id, advert_id) VALUES ($1, $2)
@@ -22,17 +22,17 @@ var (
 	queryGetAdvertsByCartID = `
 		SELECT a.id, a.title, a.description, a.price, a.location, a.has_delivery, a.status
 		FROM cart_advert ca
-		JOIN adverts a ON ca.advert_id = a.id
+		JOIN advert a ON ca.advert_id = a.id
 		WHERE ca.cart_id = $1
 	`
-	queryGetOrCreateCart = `
-		SELECT id FROM carts WHERE user_id = $1 AND status = 'active' LIMIT 1
+	queryGetCart = `
+		SELECT id, user_id, status FROM cart WHERE user_id = $1 AND status = 'active' LIMIT 1
 	`
 	queryUpdateCartStatus = `
-		UPDATE carts SET status = $2 WHERE id = $1
+		UPDATE cart SET status = $2 WHERE id = $1
 	`
 	queryGetCartByID = `
-		SELECT id, user_id, status FROM carts WHERE id = $1
+		SELECT id, user_id, status FROM cart WHERE id = $1
 	`
 )
 
@@ -50,19 +50,19 @@ func NewCartRepository(db *pgxpool.Pool, ctx context.Context, logger *zap.Logger
 	}
 }
 
-func (c *CartDB) GetCartByUserID(userID uuid.UUID) (uuid.UUID, error) {
-	var cartID uuid.UUID
-	err := c.DB.QueryRow(c.ctx, queryGetOrCreateCart, userID).Scan(&cartID)
+func (c *CartDB) GetCartByUserID(userID uuid.UUID) (entity.Cart, error) {
+	var cart entity.Cart
+	err := c.DB.QueryRow(c.ctx, queryGetCart, userID).Scan(&cart.ID, &cart.UserID, &cart.Status)
 
 	switch {
 	case errors.Is(err, pgx.ErrNoRows):
-		return uuid.Nil, repository.ErrCartNotFound
+		return entity.Cart{}, repository.ErrCartNotFound
 	case err != nil:
 		c.logger.Error("error getting cart by user id", zap.String("user_id", userID.String()), zap.Error(err))
-		return uuid.Nil, entity.PSQLWrap(errors.New("error getting cart by user id"), err)
+		return entity.Cart{}, entity.PSQLWrap(errors.New("error getting cart by user id"), err)
 	}
 
-	return cartID, nil
+	return cart, nil
 }
 
 func (c *CartDB) CreateCart(userID uuid.UUID) (uuid.UUID, error) {

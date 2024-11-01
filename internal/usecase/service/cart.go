@@ -23,17 +23,18 @@ func NewCartService(cartRepo repository.Cart, logger *zap.Logger) *CartService {
 }
 
 func (c *CartService) AddAdvertToUserCart(userID uuid.UUID, AdvertID uuid.UUID) error {
-	cartID, err := c.cartRepo.GetCartByUserID(userID)
+	cart, err := c.cartRepo.GetCartByUserID(userID)
 	switch {
 	case errors.Is(err, repository.ErrCartNotFound):
-		cartID, err = c.cartRepo.CreateCart(userID)
+		cartID, err := c.cartRepo.CreateCart(userID)
 		if err != nil {
 			return entity.PSQLWrap(errors.New("error creating cart"), err)
 		}
+		return c.cartRepo.AddAdvertToCart(cartID, AdvertID)
 	case err != nil:
 		return entity.PSQLWrap(errors.New("error getting cart by user id"), err)
 	}
-	return c.cartRepo.AddAdvertToCart(cartID, AdvertID)
+	return c.cartRepo.AddAdvertToCart(cart.ID, AdvertID)
 }
 
 func (c *CartService) GetCartByID(cartID uuid.UUID) (dto.Cart, error) {
@@ -41,13 +42,17 @@ func (c *CartService) GetCartByID(cartID uuid.UUID) (dto.Cart, error) {
 	if err != nil {
 		return dto.Cart{}, entity.PSQLWrap(errors.New("error getting adverts by cart id"), err)
 	}
-	return dto.Cart{Adverts: adverts}, nil
+	cart, err := c.cartRepo.GetCartByID(cartID)
+	if err != nil {
+		return dto.Cart{}, entity.PSQLWrap(errors.New("error getting cart by id"), err)
+	}
+	return dto.Cart{Adverts: adverts, ID: cart.ID, UserID: cart.UserID, Status: cart.Status}, nil
 }
 
 func (c *CartService) GetCartByUserID(userID uuid.UUID) (dto.Cart, error) {
-	cartID, err := c.cartRepo.GetCartByUserID(userID)
+	cart, err := c.cartRepo.GetCartByUserID(userID)
 	if err != nil {
 		return dto.Cart{}, entity.PSQLWrap(errors.New("error getting cart by user id"), err)
 	}
-	return c.GetCartByID(cartID)
+	return c.GetCartByID(cart.ID)
 }
