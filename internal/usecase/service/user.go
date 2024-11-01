@@ -181,3 +181,11 @@ func (u *UserService) ChangePassword(userID uuid.UUID, password *dto.UpdatePassw
 	}
 	return nil
 }
+
+func (u *UserService) UploadImage(userID uuid.UUID, imageId uuid.UUID) error {
+	if err := u.userRepo.UploadImage(userID, imageId); err != nil {
+		return entity.UsecaseWrap(ErrAdvertBadRequest, ErrAdvertBadRequest)
+	}
+
+	return nil
+}

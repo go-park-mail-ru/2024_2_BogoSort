@@ -8,16 +8,18 @@ import (
 )
 
 type User interface {
-	// Регистрация пользователя
+	// Signup регистрация пользователя
 	Signup(*dto.Signup) (uuid.UUID, error)
-	// Авторизация пользователя
+	// Login авторизация пользователя
 	Login(*dto.Login) (uuid.UUID, error)
-	// Обновление данных пользователя
+	// UpdateInfo обновление данных пользователя
 	UpdateInfo(*dto.User) error
-	// Изменение пароля
+	// ChangePassword изменение пароля
 	ChangePassword(userID uuid.UUID, password *dto.UpdatePassword) error
-	// Получение данных пользователя
+	// GetUser получение данных пользователя
 	GetUser(userID uuid.UUID) (*dto.User, error)
+	// UploadImage обновление аватара пользователя
+	UploadImage(userID uuid.UUID, imageID uuid.UUID) error
 }
 
 type UserIncorrectDataError struct {

@@ -43,6 +43,10 @@ const (
 	queryDeleteUser = `
 		DELETE FROM "user" WHERE id = $1
 	`
+
+	uploadAvatarQuery = `
+		UPDATE "user" SET image_id = $1 WHERE id = $2
+	`
 )
 
 type UsersDB struct {
@@ -174,7 +178,7 @@ func (us *UsersDB) GetUserById(id uuid.UUID) (*entity.User, error) {
 }
 
 func (us *UsersDB) UpdateUser(user *entity.User) error {
-	_, err := us.DB.Exec(us.ctx, queryUpdateUser, user.Username, user.Phone, "95b58cea-2598-4100-81bc-3aa45a894a99", user.ID)
+	_, err := us.DB.Exec(us.ctx, queryUpdateUser, user.Username, user.Phone, uuid.Nil, user.ID)
 	switch {
 	case errors.Is(err, pgx.ErrNoRows):
 		us.logger.Error("user not found", zap.String("id", user.ID.String()))
@@ -196,6 +200,22 @@ func (us *UsersDB) DeleteUser(userID uuid.UUID) error {
 	case err != nil:
 		us.logger.Error("error deleting user", zap.String("id", userID.String()), zap.Error(err))
 		return entity.PSQLWrap(errors.New("error deleting user"), err)
+	}
+
+	return nil
+}
+
+func (us *UsersDB) UploadImage(userID uuid.UUID, imageId uuid.UUID) error {
+	result, err := us.DB.Exec(us.ctx, uploadAvatarQuery, imageId, userID)
+	if err != nil {
+		us.logger.Error("failed to upload image", zap.Error(err), zap.String("user_id", userID.String()))
+		return entity.PSQLWrap(err)
+	}
+
+	rowsAffected := result.RowsAffected()
+	if rowsAffected == 0 {
+		us.logger.Error("user not found", zap.String("user_id", userID.String()))
+		return entity.PSQLWrap(repository.ErrUserNotFound)
 	}
 
 	return nil

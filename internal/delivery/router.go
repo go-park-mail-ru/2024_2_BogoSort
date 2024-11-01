@@ -82,7 +82,7 @@ func NewRouter(cfg config.Config) (*mux.Router, error) {
 
 	advertsHandler := http3.NewAdvertEndpoints(advertsUseCase, staticUseCase, zap.L())
 	authHandler := http3.NewAuthEndpoints(sessionUC, sessionManager, zap.L())
-	userHandler := http3.NewUserEndpoints(userUC, sessionUC, sessionManager, zap.L())
+	userHandler := http3.NewUserEndpoints(userUC, sessionUC, sessionManager, staticUseCase, zap.L())
 	sellerHandler := http3.NewSellerEndpoints(sellerRepo, zap.L())
 	cartHandler := http3.NewCartEndpoints(cartUC, zap.L())
 	categoryHandler := http3.NewCategoryEndpoints(categoryUseCase, zap.L())

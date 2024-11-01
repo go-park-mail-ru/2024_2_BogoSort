@@ -3,6 +3,7 @@ package http
 import (
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -28,14 +29,16 @@ type UserEndpoints struct {
 	userUC         usecase.User
 	authUC         usecase.Auth
 	sessionManager *utils.SessionManager
+	StaticUseCase  usecase.StaticUseCase
 	logger         *zap.Logger
 }
 
-func NewUserEndpoints(userUC usecase.User, authUC usecase.Auth, sessionManager *utils.SessionManager, logger *zap.Logger) *UserEndpoints {
+func NewUserEndpoints(userUC usecase.User, authUC usecase.Auth, sessionManager *utils.SessionManager, staticUseCase usecase.StaticUseCase, logger *zap.Logger) *UserEndpoints {
 	return &UserEndpoints{
 		userUC:         userUC,
 		authUC:         authUC,
 		sessionManager: sessionManager,
+		StaticUseCase:  staticUseCase,
 		logger:         logger,
 	}
 }
@@ -276,4 +279,53 @@ func (u *UserEndpoints) GetMe(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.SendJSONResponse(w, http.StatusOK, user)
+}
+
+// UploadImage godoc
+// @Summary Upload an image for an advert
+// @Description Upload an image associated with an advert by its ID
+// @Tags adverts
+// @Param user_id path string true "User ID"
+// @Param image formData file true "Image file to upload"
+// @Success 200 {string} string "Image uploaded"
+// @Failure 400 {object} utils.ErrResponse "Invalid user ID or file not attached"
+// @Failure 500 {object} utils.ErrResponse "Failed to upload image"
+// @Router /api/v1/user/{user_id}/image [put]
+func (h *UserEndpoints) UploadImage(writer http.ResponseWriter, r *http.Request) {
+	userIDStr := mux.Vars(r)["user_id"]
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		h.sendError(writer, http.StatusBadRequest, err, "invalid advert ID", nil)
+		return
+	}
+
+	fileHeader, _, err := r.FormFile("image")
+	if err != nil {
+		h.sendError(writer, http.StatusBadRequest, err, "file not attached", nil)
+		return
+	}
+
+	data, err := io.ReadAll(fileHeader)
+	if err != nil {
+		h.sendError(writer, http.StatusInternalServerError, err, "failed to read file", nil)
+		return
+	}
+
+	if err = fileHeader.Close(); err != nil {
+		h.sendError(writer, http.StatusInternalServerError, err, "failed to close file", nil)
+		return
+	}
+
+	imageId, err := h.StaticUseCase.UploadFile(data)
+	if err != nil {
+		h.sendError(writer, http.StatusInternalServerError, err, "failed to upload image", nil)
+		return
+	}
+
+	if err := h.userUC.UploadImage(userID, imageId); err != nil {
+		h.sendError(writer, http.StatusInternalServerError, err, "failed to upload image", nil)
+		return
+	}
+
+	utils.SendJSONResponse(writer, http.StatusOK, "Image uploaded")
 }

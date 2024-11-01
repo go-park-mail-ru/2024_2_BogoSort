@@ -21,6 +21,8 @@ type User interface {
 	UpdateUser(user *entity.User) error
 	// DeleteUser удаляет пользователя
 	DeleteUser(userID uuid.UUID) error
+	// UploadImage обновляет аватар пользователя
+	UploadImage(userID uuid.UUID, imageId uuid.UUID) error
 }
 
 var (
