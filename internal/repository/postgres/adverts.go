@@ -3,20 +3,20 @@ package postgres
 import (
 	"context"
 	"errors"
+	"time"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5"
 	"go.uber.org/zap"
-	"time"
 )
 
 type AdvertDB struct {
 	DB      *pgxpool.Pool
 	logger  *zap.Logger
-	timeout time.Duration
 	ctx     context.Context
+	timeout time.Duration
 }
 
 const (
@@ -88,23 +88,23 @@ type AdvertRepoModel struct {
     Location    string
 }
 
-func NewAdvertRepository(db *pgxpool.Pool, logger *zap.Logger, timeout time.Duration, ctx context.Context) (repository.AdvertRepository, error) {
+func NewAdvertRepository(db *pgxpool.Pool, logger *zap.Logger, ctx context.Context, timeout time.Duration) (repository.AdvertRepository, error) {
 	if err := db.Ping(ctx); err != nil {
 		return nil, err
 	}
 	return &AdvertDB{
 		DB:      db,
 		logger:  logger,
-		timeout: timeout,
 		ctx:     ctx,
+		timeout: timeout,
 	}, nil
 }
 
 func (r *AdvertDB) AddAdvert(a *entity.Advert) (*entity.Advert, error) {
+	var dbAdvert AdvertRepoModel
+
 	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
 	defer cancel()
-
-	var dbAdvert AdvertRepoModel
 
 	err := r.DB.QueryRow(ctx, insertAdvertQuery,
 		a.Title,
@@ -150,10 +150,10 @@ func (r *AdvertDB) AddAdvert(a *entity.Advert) (*entity.Advert, error) {
 }
 
 func (r *AdvertDB) GetAdverts(limit, offset int) ([]*entity.Advert, error) {
+	var adverts []*entity.Advert
+
 	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
 	defer cancel()
-
-	var adverts []*entity.Advert
 
 	rows, err := r.DB.Query(ctx, selectAdvertsQuery, limit, offset)
 	if err != nil {
@@ -201,10 +201,10 @@ func (r *AdvertDB) GetAdverts(limit, offset int) ([]*entity.Advert, error) {
 }
 
 func (r *AdvertDB) GetAdvertsByCategoryId(categoryId uuid.UUID) ([]*entity.Advert, error) {
+	var adverts []*entity.Advert
+
 	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
 	defer cancel()
-
-	var adverts []*entity.Advert
 
 	rows, err := r.DB.Query(ctx, selectAdvertsByCategoryIdQuery, categoryId)
 	if err != nil {
@@ -252,10 +252,10 @@ func (r *AdvertDB) GetAdvertsByCategoryId(categoryId uuid.UUID) ([]*entity.Adver
 }
 
 func (r *AdvertDB) GetAdvertsBySellerId(sellerId uuid.UUID) ([]*entity.Advert, error) {
+	var adverts []*entity.Advert
+
 	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
 	defer cancel()
-
-	var adverts []*entity.Advert
 
 	rows, err := r.DB.Query(ctx, selectAdvertsByUserIdQuery, sellerId)
 	if err != nil {
@@ -304,10 +304,10 @@ func (r *AdvertDB) GetAdvertsBySellerId(sellerId uuid.UUID) ([]*entity.Advert, e
 }
 
 func (r *AdvertDB) GetSavedAdvertsByUserId(userId uuid.UUID) ([]*entity.Advert, error) {
+	var adverts []*entity.Advert
+
 	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
 	defer cancel()
-
-	var adverts []*entity.Advert
 
 	rows, err := r.DB.Query(ctx, selectSavedAdvertsByUserIdQuery, userId)
 	if err != nil {
@@ -356,10 +356,10 @@ func (r *AdvertDB) GetSavedAdvertsByUserId(userId uuid.UUID) ([]*entity.Advert, 
 }
 
 func (r *AdvertDB) GetAdvertsByCartId(cartId uuid.UUID) ([]*entity.Advert, error) {
+	var adverts []*entity.Advert
+
 	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
 	defer cancel()
-
-	var adverts []*entity.Advert
 
 	rows, err := r.DB.Query(ctx, selectAdvertsByCartIdQuery, cartId)
 	if err != nil {
@@ -408,10 +408,10 @@ func (r *AdvertDB) GetAdvertsByCartId(cartId uuid.UUID) ([]*entity.Advert, error
 }
 
 func (r *AdvertDB) GetAdvertById(advertId uuid.UUID) (*entity.Advert, error) {
+	var dbAdvert AdvertRepoModel
+
 	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
 	defer cancel()
-
-	var dbAdvert AdvertRepoModel
 
 	err := r.DB.QueryRow(ctx, selectAdvertByIdQuery, advertId).Scan(
 		&dbAdvert.ID,

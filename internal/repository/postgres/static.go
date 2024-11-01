@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"time"
-
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
 	"github.com/google/uuid"
@@ -36,24 +35,27 @@ type StaticDB struct {
 	BasicPath string
 	MaxSize   int
 	Ctx       context.Context
-	Timeout   time.Duration
+	timeout   time.Duration
 }
 
-func NewStaticRepository(ctx context.Context, timeout time.Duration, dbpool PgxPoolIface, basicPath string, maxSize int, logger *zap.Logger) (repository.StaticRepository, error) {
+func NewStaticRepository(ctx context.Context, dbpool PgxPoolIface, basicPath string, maxSize int, logger *zap.Logger, timeout time.Duration) (repository.StaticRepository, error) {
 	return &StaticDB{
 		DB:        dbpool,
 		BasicPath: basicPath,
 		MaxSize:   maxSize,
 		Logger:    logger,
 		Ctx:       ctx,
-		Timeout:   timeout,
+		timeout:   timeout,
 	}, nil
 }
 
 func (s StaticDB) GetStatic(staticID uuid.UUID) (string, error) {
 	var path, name string
 
-	err := s.DB.QueryRow(context.Background(), getStaticQuery, staticID).Scan(&path, &name)
+	ctx, cancel := context.WithTimeout(s.Ctx, s.timeout)
+	defer cancel()
+
+	err := s.DB.QueryRow(ctx, getStaticQuery, staticID).Scan(&path, &name)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			s.Logger.Error("postgres: static not found", zap.String("static_id", staticID.String()))
@@ -69,6 +71,9 @@ func (s StaticDB) GetStatic(staticID uuid.UUID) (string, error) {
 }
 
 func (s StaticDB) UploadStatic(path, filename string, data []byte) (uuid.UUID, error) {
+	ctx, cancel := context.WithTimeout(s.Ctx, s.timeout)
+	defer cancel()
+
 	if len(data) > s.MaxSize {
 		s.Logger.Error("postgres: static too large", zap.Int("size", len(data)), zap.Int("max_size", s.MaxSize))
 		return uuid.UUID{}, entity.PSQLWrap(repository.ErrStaticTooLarge)
@@ -109,7 +114,7 @@ func (s StaticDB) UploadStatic(path, filename string, data []byte) (uuid.UUID, e
 	}
 
 	var id uuid.UUID
-	if err = s.DB.QueryRow(context.Background(), uploadStaticQuery, s.BasicPath + path, filename).Scan(&id); err != nil {
+	if err = s.DB.QueryRow(ctx, uploadStaticQuery, s.BasicPath + path, filename).Scan(&id); err != nil {
 		s.Logger.Error("error uploading static", zap.String("path", fmt.Sprintf("%s/%s/%s", s.BasicPath, path, filename)), zap.Error(err))
 		return uuid.UUID{}, entity.PSQLWrap(err, errors.New("ошибка при выполнении sql-запроса UploadStatic"))
 	}

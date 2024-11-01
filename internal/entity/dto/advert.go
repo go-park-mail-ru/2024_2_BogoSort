@@ -15,10 +15,6 @@ type Advert struct {
 	Location    string       `json:"location"`
 }
 
-type AdvertResponseList struct {
-	Adverts []Advert `json:"adverts"`
-}
-
 type AdvertStatus string
 
 const (

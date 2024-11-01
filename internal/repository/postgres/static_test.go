@@ -11,8 +11,8 @@ import (
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
 	postgres2 "github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository/mocks"
-	"github.com/jackc/pgx/v5"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/pashagolub/pgxmock/v4"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -36,14 +36,16 @@ func TestStaticDB_GetStatic_Success(t *testing.T) {
 	mockPool, adapter := setupMockDB(t)
 	defer mockPool.Close()
 
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	logger, _ := zap.NewDevelopment()
 	repo := StaticDB{
 		DB:        adapter,
 		Logger:    logger,
 		BasicPath: tempDir,
 		MaxSize:   10 * 1024 * 1024,
-		Ctx:       context.Background(),
-		Timeout:   time.Second * 5,
+		Ctx:       ctx,
 	}
 
 	staticID := uuid.New()
@@ -76,14 +78,16 @@ func TestStaticDB_GetStatic_NotFound(t *testing.T) {
 	mockPool, adapter := setupMockDB(t)
 	defer mockPool.Close()
 
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	logger, _ := zap.NewDevelopment()
 	repo := StaticDB{
 		DB:        adapter,
 		Logger:    logger,
 		BasicPath: tempDir,
 		MaxSize:   10 * 1024 * 1024,
-		Ctx:       context.Background(),
-		Timeout:   time.Second * 5,
+		Ctx:       ctx,
 	}
 
 	staticID := uuid.New()
@@ -110,14 +114,16 @@ func TestStaticDB_UploadStatic_Success(t *testing.T) {
 	mockPool, adapter := setupMockDB(t)
 	defer mockPool.Close()
 
+	ctx, cancel := context.WithTimeout(context.Background(), 5)
+	defer cancel()
+
 	logger, _ := zap.NewDevelopment()
 	repo := StaticDB{
 		DB:        adapter,
 		Logger:    logger,
 		BasicPath: tempDir,
 		MaxSize:   10 * 1024 * 1024,
-		Ctx:       context.Background(),
-		Timeout:   time.Second * 5,
+		Ctx:       ctx,
 	}
 
 	path := "testing/staticfiles/test/path"
@@ -147,14 +153,16 @@ func TestStaticDB_UploadStatic_FileTooLarge(t *testing.T) {
 	mockPool, adapter := setupMockDB(t)
 	defer mockPool.Close()
 
+	ctx, cancel := context.WithTimeout(context.Background(), 5)
+	defer cancel()
+
 	logger, _ := zap.NewDevelopment()
 	repo := StaticDB{
 		DB:        adapter,
 		Logger:    logger,
 		BasicPath: tempDir,
 		MaxSize:   10,
-		Ctx:       context.Background(),
-		Timeout:   time.Second * 5,
+		Ctx:       ctx,
 	}
 
 	path := "testing/staticfiles/test/path"
@@ -179,14 +187,16 @@ func TestStaticDB_UploadStatic_SQL_Error(t *testing.T) {
 	mockPool, adapter := setupMockDB(t)
 	defer mockPool.Close()
 
+	ctx, cancel := context.WithTimeout(context.Background(), 5)
+	defer cancel()
+
 	logger, _ := zap.NewDevelopment()
 	repo := StaticDB{
 		DB:        adapter,
 		Logger:    logger,
 		BasicPath: tempDir,
 		MaxSize:   10 * 1024 * 1024,
-		Ctx:       context.Background(),
-		Timeout:   time.Second * 5,
+		Ctx:       ctx,
 	}
 
 	path := "testing/staticfiles/test/path"

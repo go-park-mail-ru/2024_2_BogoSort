@@ -23,25 +23,34 @@ func NewRouter(cfg config.Config) *mux.Router {
         return nil
     }
 
-    advertsRepo, err := postgres.NewAdvertRepository(dbPool, zap.L(), cfg.PGTimeout, context.Background())
+    advertsRepo, err := postgres.NewAdvertRepository(dbPool, zap.L(), context.Background(), cfg.PGTimeout)
     if err != nil {
         zap.L().Error("unable to create advert repository", zap.Error(err))
         return nil
     }
 
-    staticRepo, err := postgres.NewStaticRepository(context.Background(), cfg.PGTimeout, dbPool, cfg.Static.Path, cfg.Static.MaxSize, zap.L())
+    staticRepo, err := postgres.NewStaticRepository(context.Background(), dbPool, cfg.Static.Path, cfg.Static.MaxSize, zap.L(), cfg.PGTimeout)
     if err != nil {
         zap.L().Error("unable to create static repository", zap.Error(err))
         return nil
     }
 
+	categoryRepo, err := postgres.NewCategoryRepository(dbPool, zap.L(), context.Background(), cfg.PGTimeout)
+	if err != nil {
+		zap.L().Error("unable to create category repository", zap.Error(err))
+		return nil
+	}
+
     advertsUseCase := service.NewAdvertService(advertsRepo, staticRepo, zap.L())
 	staticUseCase := service.NewStaticService(staticRepo, zap.L())
+	categoryUseCase := service.NewCategoryService(categoryRepo, zap.L())
 
     advertsHandler := http3.NewAdvertEndpoints(advertsUseCase, staticUseCase, zap.L())
 
-    advertsHandler.ConfigureRoutes(router)
+	categoryHandler := http3.NewCategoryEndpoints(categoryUseCase, zap.L())
 
+    advertsHandler.ConfigureRoutes(router)
+	categoryHandler.ConfigureRoutes(router)
     router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
     return router
