@@ -44,13 +44,13 @@ func NewUserEndpoints(userUC usecase.User, authUC usecase.Auth, sessionManager *
 }
 
 func (u *UserEndpoints) Configure(router *mux.Router) {
-	router.HandleFunc("/signup", u.Signup).Methods(http.MethodPost)
-	router.HandleFunc("/login", u.Login).Methods(http.MethodPost)
-	router.HandleFunc("/password", u.ChangePassword).Methods(http.MethodPost)
-	router.HandleFunc("/profile/{user_id}", u.GetProfile).Methods(http.MethodGet)
-	router.HandleFunc("/profile", u.UpdateProfile).Methods(http.MethodPut)
-	router.HandleFunc("/me", u.GetMe).Methods(http.MethodGet)
-	router.HandleFunc("/{user_id}/image", u.UploadImage).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/signup", u.Signup).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/login", u.Login).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/password", u.ChangePassword).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/profile/{user_id}", u.GetProfile).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/profile", u.UpdateProfile).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/me", u.GetMe).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/user/{user_id}/image", u.UploadImage).Methods(http.MethodPut)
 }
 
 func (u *UserEndpoints) handleError(w http.ResponseWriter, err error, context string, additionalInfo map[string]string) {

@@ -31,7 +31,7 @@ func NewSellerEndpoints(sellerRepo repository.Seller, logger *zap.Logger) *Selle
 }
 
 func (s *SellerEndpoints) Configure(router *mux.Router) {
-	router.HandleFunc("/seller/{seller_id}", s.GetSellerByID).Methods(http.MethodGet)
+	router.HandleFunc("api/v1/seller/{seller_id}", s.GetSellerByID).Methods(http.MethodGet)
 }
 
 // GetSellerByID

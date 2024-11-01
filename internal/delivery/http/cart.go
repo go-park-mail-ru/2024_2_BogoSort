@@ -25,9 +25,9 @@ func NewCartEndpoints(cartUC usecase.Cart, logger *zap.Logger) *CartEndpoints {
 }
 
 func (h *CartEndpoints) Configure(router *mux.Router) {
-	router.HandleFunc("/cart/{cart_id}", h.GetCartByID).Methods(http.MethodGet)
-	router.HandleFunc("/cart/user/{user_id}", h.GetCartByUserID).Methods(http.MethodGet)
-	router.HandleFunc("/cart/add", h.AddAdvertToCart).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/cart/{cart_id}", h.GetCartByID).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/cart/user/{user_id}", h.GetCartByUserID).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/cart/add", h.AddAdvertToCart).Methods(http.MethodPost)
 }
 
 // GetCartByID Retrieves the cart by its ID
