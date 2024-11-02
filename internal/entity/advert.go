@@ -32,7 +32,7 @@ type AdvertStatus string
 
 const (
 	AdvertStatusActive   AdvertStatus = "active"
-	AdvertStatusInactive AdvertStatus = "inactive"
+	AdvertStatusInactive              = "inactive"
 )
 
 func ValidateAdvert(title, description, location, status string, price int) error {
