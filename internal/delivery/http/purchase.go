@@ -24,10 +24,10 @@ func (h *PurchaseEndpoints) ConfigureRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/purchase", h.AddPurchase).Methods("POST")
 }
 
-// AddPurchase Обрабатывает добавление покупки
-// @Summary Добавляет покупку
-// @Description Принимает данные покупки и добавляет их в систему
-// @Tags Покупки
+// AddPurchase processes the addition of a purchase
+// @Summary Adds a purchase
+// @Description Accepts purchase data, validates it, and adds it to the system. Returns a response with purchase data or an error.
+// @Tags Purchases
 // @Accept json
 // @Produce json
 // @Param purchase body dto.PurchaseRequest true "Purchase request"
