@@ -207,7 +207,7 @@ info:
 paths:
   /api/v1/adverts:
     get:
-      description: Fetch a list of all adverts
+      description: Fetch a list of all adverts with optional pagination.
       parameters:
       - description: Limit the number of results
         in: query
@@ -240,7 +240,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: Add a new advert to the system
+      description: Add a new advert to the system.
       parameters:
       - description: Advert data
         in: body
@@ -268,7 +268,7 @@ paths:
       - adverts
   /api/v1/adverts/{advertId}:
     delete:
-      description: Remove an advert from the system using its ID
+      description: Remove an advert from the system using its ID.
       parameters:
       - description: Advert ID
         in: path
@@ -280,6 +280,10 @@ paths:
           description: Advert deleted
         "400":
           description: Invalid advert ID
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "403":
+          description: Forbidden
           schema:
             $ref: '#/definitions/utils.ErrResponse'
         "404":
@@ -294,7 +298,7 @@ paths:
       tags:
       - adverts
     get:
-      description: Fetch an advert based on its ID
+      description: Fetch an advert based on its ID.
       parameters:
       - description: Advert ID
         in: path
@@ -326,7 +330,7 @@ paths:
     put:
       consumes:
       - application/json
-      description: Modify the details of an existing advert
+      description: Modify the details of an existing advert.
       parameters:
       - description: Advert ID
         in: path
@@ -348,6 +352,10 @@ paths:
           description: Invalid advert data
           schema:
             $ref: '#/definitions/utils.ErrResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
         "404":
           description: Advert not found
           schema:
@@ -361,7 +369,7 @@ paths:
       - adverts
   /api/v1/adverts/{advertId}/image:
     put:
-      description: Upload an image associated with an advert by its ID
+      description: Upload an image associated with an advert by its ID.
       parameters:
       - description: Advert ID
         in: path
@@ -391,7 +399,7 @@ paths:
       - adverts
   /api/v1/adverts/{advertId}/status:
     put:
-      description: Change the status of an advert by its ID
+      description: Change the status of an advert by its ID.
       parameters:
       - description: Advert ID
         in: path
@@ -411,6 +419,10 @@ paths:
           description: Invalid advert ID or status
           schema:
             $ref: '#/definitions/utils.ErrResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
         "404":
           description: Advert not found
           schema:
@@ -424,7 +436,7 @@ paths:
       - adverts
   /api/v1/adverts/cart/{cartId}:
     get:
-      description: Fetch a list of adverts in the specified cart
+      description: Fetch a list of adverts in the specified cart.
       parameters:
       - description: Cart ID
         in: path
@@ -444,6 +456,10 @@ paths:
           description: Invalid cart ID
           schema:
             $ref: '#/definitions/utils.ErrResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
         "500":
           description: Failed to retrieve adverts by cart ID
           schema:
@@ -453,7 +469,7 @@ paths:
       - adverts
   /api/v1/adverts/category/{categoryId}:
     get:
-      description: Fetch a list of adverts associated with a specific category ID
+      description: Fetch a list of adverts associated with a specific category ID.
       parameters:
       - description: Category ID
         in: path
@@ -482,7 +498,7 @@ paths:
       - adverts
   /api/v1/adverts/seller/{sellerId}:
     get:
-      description: Fetch a list of adverts associated with a specific seller ID
+      description: Fetch a list of adverts associated with a specific seller ID.
       parameters:
       - description: Seller ID
         in: path
@@ -500,6 +516,10 @@ paths:
             type: array
         "400":
           description: Invalid seller ID
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "403":
+          description: Forbidden
           schema:
             $ref: '#/definitions/utils.ErrResponse'
         "500":

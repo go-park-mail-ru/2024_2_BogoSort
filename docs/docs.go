@@ -17,7 +17,7 @@ const docTemplate = `{
     "paths": {
         "/api/v1/adverts": {
             "get": {
-                "description": "Fetch a list of all adverts",
+                "description": "Fetch a list of all adverts with optional pagination.",
                 "produces": [
                     "application/json"
                 ],
@@ -64,7 +64,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Add a new advert to the system",
+                "description": "Add a new advert to the system.",
                 "consumes": [
                     "application/json"
                 ],
@@ -110,7 +110,7 @@ const docTemplate = `{
         },
         "/api/v1/adverts/cart/{cartId}": {
             "get": {
-                "description": "Fetch a list of adverts in the specified cart",
+                "description": "Fetch a list of adverts in the specified cart.",
                 "produces": [
                     "application/json"
                 ],
@@ -143,6 +143,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/utils.ErrResponse"
                         }
                     },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
                     "500": {
                         "description": "Failed to retrieve adverts by cart ID",
                         "schema": {
@@ -154,7 +160,7 @@ const docTemplate = `{
         },
         "/api/v1/adverts/category/{categoryId}": {
             "get": {
-                "description": "Fetch a list of adverts associated with a specific category ID",
+                "description": "Fetch a list of adverts associated with a specific category ID.",
                 "produces": [
                     "application/json"
                 ],
@@ -198,7 +204,7 @@ const docTemplate = `{
         },
         "/api/v1/adverts/seller/{sellerId}": {
             "get": {
-                "description": "Fetch a list of adverts associated with a specific seller ID",
+                "description": "Fetch a list of adverts associated with a specific seller ID.",
                 "produces": [
                     "application/json"
                 ],
@@ -231,6 +237,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/utils.ErrResponse"
                         }
                     },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
                     "500": {
                         "description": "Failed to retrieve adverts by seller ID",
                         "schema": {
@@ -242,7 +254,7 @@ const docTemplate = `{
         },
         "/api/v1/adverts/{advertId}": {
             "get": {
-                "description": "Fetch an advert based on its ID",
+                "description": "Fetch an advert based on its ID.",
                 "produces": [
                     "application/json"
                 ],
@@ -287,7 +299,7 @@ const docTemplate = `{
                 }
             },
             "put": {
-                "description": "Modify the details of an existing advert",
+                "description": "Modify the details of an existing advert.",
                 "consumes": [
                     "application/json"
                 ],
@@ -326,6 +338,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/utils.ErrResponse"
                         }
                     },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
                     "404": {
                         "description": "Advert not found",
                         "schema": {
@@ -341,7 +359,7 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "description": "Remove an advert from the system using its ID",
+                "description": "Remove an advert from the system using its ID.",
                 "tags": [
                     "adverts"
                 ],
@@ -365,6 +383,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/utils.ErrResponse"
                         }
                     },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
                     "404": {
                         "description": "Advert not found",
                         "schema": {
@@ -382,7 +406,7 @@ const docTemplate = `{
         },
         "/api/v1/adverts/{advertId}/image": {
             "put": {
-                "description": "Upload an image associated with an advert by its ID",
+                "description": "Upload an image associated with an advert by its ID.",
                 "tags": [
                     "adverts"
                 ],
@@ -427,7 +451,7 @@ const docTemplate = `{
         },
         "/api/v1/adverts/{advertId}/status": {
             "put": {
-                "description": "Change the status of an advert by its ID",
+                "description": "Change the status of an advert by its ID.",
                 "tags": [
                     "adverts"
                 ],
@@ -456,6 +480,12 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Invalid advert ID or status",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
                         "schema": {
                             "$ref": "#/definitions/utils.ErrResponse"
                         }

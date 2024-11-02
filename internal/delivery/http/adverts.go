@@ -59,7 +59,7 @@ func (h *AdvertEndpoints) ConfigureRoutes(router *mux.Router) {
 
 // GetAdverts godoc
 // @Summary Retrieve all adverts
-// @Description Fetch a list of all adverts
+// @Description Fetch a list of all adverts with optional pagination.
 // @Tags adverts
 // @Produce json
 // @Param limit query int false "Limit the number of results"
@@ -92,12 +92,13 @@ func (h *AdvertEndpoints) GetAdverts(writer http.ResponseWriter, r *http.Request
 
 // GetAdvertsBySellerId godoc
 // @Summary Retrieve adverts by seller ID
-// @Description Fetch a list of adverts associated with a specific seller ID
+// @Description Fetch a list of adverts associated with a specific seller ID.
 // @Tags adverts
 // @Produce json
 // @Param sellerId path string true "Seller ID"
 // @Success 200 {array} dto.AdvertResponse "List of adverts"
 // @Failure 400 {object} utils.ErrResponse "Invalid seller ID"
+// @Failure 403 {object} utils.ErrResponse "Forbidden"
 // @Failure 500 {object} utils.ErrResponse "Failed to retrieve adverts by seller ID"
 // @Router /api/v1/adverts/seller/{sellerId} [get]
 func (h *AdvertEndpoints) GetAdvertsBySellerId(writer http.ResponseWriter, r *http.Request) {
@@ -119,12 +120,13 @@ func (h *AdvertEndpoints) GetAdvertsBySellerId(writer http.ResponseWriter, r *ht
 
 // GetAdvertsByCartId godoc
 // @Summary Retrieve adverts by cart ID
-// @Description Fetch a list of adverts in the specified cart
+// @Description Fetch a list of adverts in the specified cart.
 // @Tags adverts
 // @Produce json
 // @Param cartId path string true "Cart ID"
 // @Success 200 {array} dto.AdvertResponse "List of adverts in cart"
 // @Failure 400 {object} utils.ErrResponse "Invalid cart ID"
+// @Failure 403 {object} utils.ErrResponse "Forbidden"
 // @Failure 500 {object} utils.ErrResponse "Failed to retrieve adverts by cart ID"
 // @Router /api/v1/adverts/cart/{cartId} [get]
 func (h *AdvertEndpoints) GetAdvertsByCartId(writer http.ResponseWriter, r *http.Request) {
@@ -146,7 +148,7 @@ func (h *AdvertEndpoints) GetAdvertsByCartId(writer http.ResponseWriter, r *http
 
 // GetAdvertById godoc
 // @Summary Retrieve an advert by ID
-// @Description Fetch an advert based on its ID
+// @Description Fetch an advert based on its ID.
 // @Tags adverts
 // @Produce json
 // @Param advertId path string true "Advert ID"
@@ -174,7 +176,7 @@ func (h *AdvertEndpoints) GetAdvertById(writer http.ResponseWriter, r *http.Requ
 
 // AddAdvert godoc
 // @Summary Create a new advert
-// @Description Add a new advert to the system
+// @Description Add a new advert to the system.
 // @Tags adverts
 // @Accept json
 // @Produce json
@@ -207,7 +209,7 @@ func (h *AdvertEndpoints) AddAdvert(writer http.ResponseWriter, r *http.Request)
 
 // UpdateAdvert godoc
 // @Summary Update an existing advert
-// @Description Modify the details of an existing advert
+// @Description Modify the details of an existing advert.
 // @Tags adverts
 // @Accept json
 // @Produce json
@@ -216,6 +218,7 @@ func (h *AdvertEndpoints) AddAdvert(writer http.ResponseWriter, r *http.Request)
 // @Success 200 "Advert updated successfully"
 // @Failure 400 {object} utils.ErrResponse "Invalid advert data"
 // @Failure 404 {object} utils.ErrResponse "Advert not found"
+// @Failure 403 {object} utils.ErrResponse "Forbidden"
 // @Failure 500 {object} utils.ErrResponse "Failed to update advert"
 // @Router /api/v1/adverts/{advertId} [put]
 func (h *AdvertEndpoints) UpdateAdvert(writer http.ResponseWriter, r *http.Request) {
@@ -248,12 +251,13 @@ func (h *AdvertEndpoints) UpdateAdvert(writer http.ResponseWriter, r *http.Reque
 
 // DeleteAdvertById godoc
 // @Summary Delete an advert by ID
-// @Description Remove an advert from the system using its ID
+// @Description Remove an advert from the system using its ID.
 // @Tags adverts
 // @Param advertId path string true "Advert ID"
 // @Success 204 "Advert deleted"
 // @Failure 400 {object} utils.ErrResponse "Invalid advert ID"
 // @Failure 404 {object} utils.ErrResponse "Advert not found"
+// @Failure 403 {object} utils.ErrResponse "Forbidden"
 // @Failure 500 {object} utils.ErrResponse "Failed to delete advert"
 // @Router /api/v1/adverts/{advertId} [delete]
 func (h *AdvertEndpoints) DeleteAdvertById(writer http.ResponseWriter, r *http.Request) {
@@ -280,13 +284,14 @@ func (h *AdvertEndpoints) DeleteAdvertById(writer http.ResponseWriter, r *http.R
 
 // UpdateAdvertStatus godoc
 // @Summary Update the status of an advert
-// @Description Change the status of an advert by its ID
+// @Description Change the status of an advert by its ID.
 // @Tags adverts
 // @Param advertId path string true "Advert ID"
 // @Param status body string true "New status"
 // @Success 200 "Advert status updated"
 // @Failure 400 {object} utils.ErrResponse "Invalid advert ID or status"
 // @Failure 404 {object} utils.ErrResponse "Advert not found"
+// @Failure 403 {object} utils.ErrResponse "Forbidden"
 // @Failure 500 {object} utils.ErrResponse "Failed to update advert status"
 // @Router /api/v1/adverts/{advertId}/status [put]
 func (h *AdvertEndpoints) UpdateAdvertStatus(writer http.ResponseWriter, r *http.Request) {
@@ -319,7 +324,7 @@ func (h *AdvertEndpoints) UpdateAdvertStatus(writer http.ResponseWriter, r *http
 
 // GetAdvertsByCategoryId godoc
 // @Summary Retrieve adverts by category ID
-// @Description Fetch a list of adverts associated with a specific category ID
+// @Description Fetch a list of adverts associated with a specific category ID.
 // @Tags adverts
 // @Produce json
 // @Param categoryId path string true "Category ID"
@@ -346,7 +351,7 @@ func (h *AdvertEndpoints) GetAdvertsByCategoryId(writer http.ResponseWriter, r *
 
 // UploadImage godoc
 // @Summary Upload an image for an advert
-// @Description Upload an image associated with an advert by its ID
+// @Description Upload an image associated with an advert by its ID.
 // @Tags adverts
 // @Param advertId path string true "Advert ID"
 // @Param image formData file true "Image file to upload"
