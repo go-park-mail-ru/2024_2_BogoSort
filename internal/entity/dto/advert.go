@@ -3,11 +3,10 @@ package dto
 import "github.com/google/uuid"
 
 type AdvertRequest struct {
-	SellerId    uuid.UUID    `json:"seller_id"`
-	CategoryId  uuid.UUID    `json:"category_id"`
-	Title       string       `json:"title"`
-	Description string       `json:"description"`
-	Price       uint         `json:"price"`
+	CategoryId  uuid.UUID `json:"category_id"`
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	Price       uint      `json:"price"`
 	Status      AdvertStatus `json:"status"`
 	HasDelivery bool         `json:"has_delivery"`
 	Location    string       `json:"location"`

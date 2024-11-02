@@ -131,13 +131,14 @@ func (c *CartDB) GetAdvertsByCartID(cartID uuid.UUID) ([]entity.Advert, error) {
 	return Adverts, nil
 }
 
-func (c *CartDB) UpdateCartStatus(cartID uuid.UUID, status entity.CartStatus) error {
-	_, err := c.DB.Exec(c.ctx, queryUpdateCartStatus, cartID, status)
+func (c *CartDB) UpdateCartStatus(tx pgx.Tx, cartID uuid.UUID, status entity.CartStatus) error {
+	_, err := tx.Exec(c.ctx, queryUpdateCartStatus, cartID, status)
 	switch {
-	case errors.Is(err, pgx.ErrNoRows):
-		c.logger.Error("cart not found", zap.String("cart_id", cartID.String()))
-		return repository.ErrCartNotFound
 	case err != nil:
+		if errors.Is(err, pgx.ErrNoRows) {
+			c.logger.Error("cart not found", zap.String("cart_id", cartID.String()))
+			return repository.ErrCartNotFound
+		}
 		c.logger.Error("error updating cart status", zap.String("cart_id", cartID.String()), zap.Error(err))
 		return entity.PSQLWrap(errors.New("error updating cart status"), err)
 	}
