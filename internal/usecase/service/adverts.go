@@ -176,6 +176,7 @@ func (s *AdvertService) UpdateAdvert(advert *dto.AdvertRequest, userId uuid.UUID
 	}
 
 	err = s.advertRepo.UpdateAdvert(&entity.Advert{
+		ID:          advertId,
 		SellerId:    seller.ID,
 		CategoryId:  advert.CategoryId,
 		Title:       strings.TrimSpace(advert.Title),

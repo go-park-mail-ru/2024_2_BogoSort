@@ -22,6 +22,7 @@ var (
 	ErrFailedToAddAdvert    = errors.New("failed to add advert")
 	ErrFailedToUpdateAdvert = errors.New("failed to update advert")
 	ErrFailedToDeleteAdvert = errors.New("failed to delete advert")
+	ErrForbidden            = errors.New("forbidden")
 )
 
 type AdvertEndpoints struct {
@@ -163,13 +164,8 @@ func (h *AdvertEndpoints) GetAdvertById(writer http.ResponseWriter, r *http.Requ
 	}
 
 	advert, err := h.advertUseCase.GetAdvertById(advertId)
-
 	if err != nil {
-		if errors.Is(err, ErrAdvertNotFound) {
-			h.sendError(writer, http.StatusNotFound, err, "advert not found", nil)
-		} else {
-			h.sendError(writer, http.StatusInternalServerError, err, "failed to get advert by ID", nil)
-		}
+		h.handleError(writer, err, "failed to get advert by ID")
 		return
 	}
 
@@ -243,11 +239,7 @@ func (h *AdvertEndpoints) UpdateAdvert(writer http.ResponseWriter, r *http.Reque
 	}
 
 	if err := h.advertUseCase.UpdateAdvert(&advert, userID, advertId); err != nil {
-		if errors.Is(err, ErrAdvertNotFound) {
-			h.sendError(writer, http.StatusNotFound, err, "advert not found", nil)
-		} else {
-			h.sendError(writer, http.StatusInternalServerError, err, "failed to update advert", nil)
-		}
+		h.handleError(writer, err, "failed to update advert")
 		return
 	}
 
@@ -279,11 +271,7 @@ func (h *AdvertEndpoints) DeleteAdvertById(writer http.ResponseWriter, r *http.R
 	}
 
 	if err := h.advertUseCase.DeleteAdvertById(advertId, userID); err != nil {
-		if errors.Is(err, ErrAdvertNotFound) {
-			h.sendError(writer, http.StatusNotFound, err, "advert not found", nil)
-		} else {
-			h.sendError(writer, http.StatusInternalServerError, err, "failed to delete advert", nil)
-		}
+		h.handleError(writer, err, "failed to delete advert")
 		return
 	}
 
@@ -322,11 +310,7 @@ func (h *AdvertEndpoints) UpdateAdvertStatus(writer http.ResponseWriter, r *http
 	}
 
 	if err := h.advertUseCase.UpdateAdvertStatus(advertId, status, userID); err != nil {
-		if errors.Is(err, ErrAdvertNotFound) {
-			h.sendError(writer, http.StatusNotFound, err, "advert not found", nil)
-		} else {
-			h.sendError(writer, http.StatusInternalServerError, err, "failed to update advert status", nil)
-		}
+		h.handleError(writer, err, "failed to update advert status")
 		return
 	}
 
@@ -408,7 +392,13 @@ func (h *AdvertEndpoints) UploadImage(writer http.ResponseWriter, r *http.Reques
 	}
 
 	if err := h.advertUseCase.UploadImage(advertId, imageId, userID); err != nil {
-		h.sendError(writer, http.StatusInternalServerError, err, "failed to upload image", nil)
+		if errors.Is(err, ErrAdvertNotFound) {
+			h.sendError(writer, http.StatusNotFound, err, "advert not found", nil)
+		} else if errors.Is(err, ErrForbidden) {
+			h.sendError(writer, http.StatusForbidden, err, "forbidden", nil)
+		} else {
+			h.sendError(writer, http.StatusInternalServerError, err, "failed to upload image", nil)
+		}
 		return
 	}
 
@@ -418,4 +408,15 @@ func (h *AdvertEndpoints) UploadImage(writer http.ResponseWriter, r *http.Reques
 func (h *AdvertEndpoints) sendError(w http.ResponseWriter, statusCode int, err error, context string, additionalInfo map[string]string) {
 	h.logger.Error(err.Error(), zap.String("context", context), zap.Any("info", additionalInfo))
 	utils.SendErrorResponse(w, statusCode, err.Error())
+}
+
+func (h *AdvertEndpoints) handleError(writer http.ResponseWriter, err error, context string) {
+	switch {
+	case errors.Is(err, ErrAdvertNotFound):
+		h.sendError(writer, http.StatusNotFound, err, context, nil)
+	case errors.Is(err, ErrForbidden):
+		h.sendError(writer, http.StatusForbidden, err, context, nil)
+	default:
+		h.sendError(writer, http.StatusInternalServerError, err, context, nil)
+	}
 }

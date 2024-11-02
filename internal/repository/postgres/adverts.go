@@ -3,13 +3,13 @@ package postgres
 import (
 	"context"
 	"errors"
-	"time"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
+	"time"
 )
 
 type AdvertDB struct {
@@ -48,14 +48,14 @@ const (
 	updateAdvertQuery = `
 		UPDATE advert
 		SET title = $1, description = $2, price = $3, location = $4, has_delivery = $5,
-				category_id = $6, seller_id = $7, image_id = $8, status = $9, updated_at = NOW()
-		WHERE id = $10`
+				category_id = $6, status = $7
+		WHERE id = $8`
 
 	deleteAdvertByIdQuery = `DELETE FROM advert WHERE id = $1`
 
 	updateAdvertStatusQuery = `
 		UPDATE advert
-		SET status = $1, updated_at = NOW()
+		SET status = $1
 		WHERE id = $2`
 
 	selectAdvertsByCategoryIdQuery = `
@@ -70,16 +70,16 @@ const (
 )
 
 type AdvertRepoModel struct {
-    ID          uuid.UUID
-    SellerId    uuid.UUID
-    CategoryId  uuid.UUID
-    Title       string
-    Description string
-    Price       uint
-    ImageURL    uuid.NullUUID
-    Status      string
-    HasDelivery bool
-    Location    string
+	ID          uuid.UUID
+	SellerId    uuid.UUID
+	CategoryId  uuid.UUID
+	Title       string
+	Description string
+	Price       uint
+	ImageURL    uuid.NullUUID
+	Status      string
+	HasDelivery bool
+	Location    string
 }
 
 func NewAdvertRepository(db *pgxpool.Pool, logger *zap.Logger, ctx context.Context, timeout time.Duration) (repository.AdvertRepository, error) {
@@ -391,27 +391,25 @@ func (r *AdvertDB) GetAdvertById(advertId uuid.UUID) (*entity.Advert, error) {
 }
 
 func (r *AdvertDB) UpdateAdvert(advert *entity.Advert) error {
-	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
+	ctx, cancel := context.WithTimeout(r.ctx, 5*time.Minute)
 	defer cancel()
 
 	result, err := r.DB.Exec(ctx, updateAdvertQuery,
 		advert.Title,
 		advert.Description,
 		advert.Price,
-			advert.Location,
-			advert.HasDelivery,
-			advert.CategoryId,
-			advert.SellerId,
-			advert.ImageURL,
-			advert.Status,
-			advert.ID,
+		advert.Location,
+		advert.HasDelivery,
+		advert.CategoryId,
+		advert.Status,
+		advert.ID,
 	)
 	if err != nil {
 		r.logger.Error("failed to update advert", zap.Error(err), zap.String("advert_id", advert.ID.String()))
 		return entity.PSQLWrap(err)
 	}
 
-	rowsAffected:= result.RowsAffected()
+	rowsAffected := result.RowsAffected()
 	if rowsAffected == 0 {
 		r.logger.Error("advert not found", zap.String("advert_id", advert.ID.String()))
 		return entity.PSQLWrap(repository.ErrAdvertNotFound)
