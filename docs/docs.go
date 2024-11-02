@@ -240,50 +240,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/adverts/user/{userId}/saved": {
-            "get": {
-                "description": "Fetch a list of saved adverts associated with a specific user ID",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "adverts"
-                ],
-                "summary": "Retrieve saved adverts by user ID",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "User ID",
-                        "name": "userId",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "List of saved adverts",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/dto.AdvertResponse"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid user ID",
-                        "schema": {
-                            "$ref": "#/definitions/utils.ErrResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Failed to retrieve saved adverts by user ID",
-                        "schema": {
-                            "$ref": "#/definitions/utils.ErrResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/api/v1/adverts/{advertId}": {
             "get": {
                 "description": "Fetch an advert based on its ID",
@@ -1042,7 +998,7 @@ const docTemplate = `{
         },
         "/api/v1/purchase": {
             "post": {
-                "description": "Принимает ID корзины и выполняет процесс покупки",
+                "description": "Accepts purchase data, validates it, and adds it to the system. Returns a response with purchase data or an error.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1050,9 +1006,9 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Покупки"
+                    "Purchases"
                 ],
-                "summary": "Совершает покупку по ID корзины",
+                "summary": "Adds a purchase",
                 "parameters": [
                     {
                         "description": "Purchase request",
@@ -1065,7 +1021,7 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "200": {
+                    "201": {
                         "description": "Successful purchase",
                         "schema": {
                             "$ref": "#/definitions/dto.PurchaseResponse"
@@ -1073,12 +1029,6 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Invalid request parameters",
-                        "schema": {
-                            "$ref": "#/definitions/utils.ErrResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Cart not found",
                         "schema": {
                             "$ref": "#/definitions/utils.ErrResponse"
                         }
@@ -1314,9 +1264,6 @@ const docTemplate = `{
                 "price": {
                     "type": "integer"
                 },
-                "seller_id": {
-                    "type": "string"
-                },
                 "status": {
                     "$ref": "#/definitions/dto.AdvertStatus"
                 },
@@ -1410,6 +1357,17 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.DeliveryMethod": {
+            "type": "string",
+            "enum": [
+                "pickup",
+                "delivery"
+            ],
+            "x-enum-varnames": [
+                "DeliveryMethodPickup",
+                "DeliveryMethodDelivery"
+            ]
+        },
         "dto.Login": {
             "type": "object",
             "properties": {
@@ -1421,21 +1379,71 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.PaymentMethod": {
+            "type": "string",
+            "enum": [
+                "card",
+                "cash"
+            ],
+            "x-enum-varnames": [
+                "PaymentMethodCard",
+                "PaymentMethodCash"
+            ]
+        },
         "dto.PurchaseRequest": {
             "type": "object",
             "properties": {
+                "address": {
+                    "type": "string"
+                },
                 "cart_id": {
                     "type": "string"
+                },
+                "delivery_method": {
+                    "$ref": "#/definitions/dto.DeliveryMethod"
+                },
+                "payment_method": {
+                    "$ref": "#/definitions/dto.PaymentMethod"
                 }
             }
         },
         "dto.PurchaseResponse": {
             "type": "object",
             "properties": {
-                "success": {
-                    "type": "boolean"
+                "address": {
+                    "type": "string"
+                },
+                "cart_id": {
+                    "type": "string"
+                },
+                "delivery_method": {
+                    "$ref": "#/definitions/dto.DeliveryMethod"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "payment_method": {
+                    "$ref": "#/definitions/dto.PaymentMethod"
+                },
+                "status": {
+                    "$ref": "#/definitions/dto.PurchaseStatus"
                 }
             }
+        },
+        "dto.PurchaseStatus": {
+            "type": "string",
+            "enum": [
+                "pending",
+                "completed",
+                "in_progress",
+                "canceled"
+            ],
+            "x-enum-varnames": [
+                "StatusPending",
+                "StatusCompleted",
+                "StatusFailed",
+                "StatusCanceled"
+            ]
         },
         "dto.Signup": {
             "type": "object",
