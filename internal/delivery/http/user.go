@@ -107,11 +107,10 @@ func (u *UserEndpoints) Signup(w http.ResponseWriter, r *http.Request) {
 	}
 	u.logger.Info("session created", zap.String("sessionID", sessionID), zap.String("userID", userID.String()))
 
-	// Установка cookie
 	cookie, err := u.sessionManager.SetSession(sessionID)
 	if err != nil {
 		u.logger.Error("error setting session cookie", zap.Error(err))
-		utils.SendErrorResponse(w, http.StatusInternalServerError, "Failed to set session")
+		u.sendError(w, http.StatusInternalServerError, err, "error setting session cookie", nil)
 		return
 	}
 	http.SetCookie(w, cookie)

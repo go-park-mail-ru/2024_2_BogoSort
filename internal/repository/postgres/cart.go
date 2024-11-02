@@ -19,6 +19,9 @@ var (
 	queryAddAdvertToCart = `
 		INSERT INTO cart_advert (cart_id, advert_id) VALUES ($1, $2)
 	`
+	queryDeleteAdvertFromCart = `
+		DELETE FROM cart_advert WHERE cart_id = $1 AND advert_id = $2
+	`
 	queryGetAdvertsByCartID = `
 		SELECT a.id, a.title, a.description, a.price, a.location, a.has_delivery, a.status
 		FROM cart_advert ca
@@ -92,9 +95,23 @@ func (c *CartDB) AddAdvertToCart(cartID uuid.UUID, AdvertID uuid.UUID) error {
 	return nil
 }
 
+func (c *CartDB) DeleteAdvertFromCart(cartID uuid.UUID, AdvertID uuid.UUID) error {
+	_, err := c.DB.Exec(c.ctx, queryDeleteAdvertFromCart, cartID, AdvertID)
+	switch {
+	case errors.Is(err, pgx.ErrNoRows):
+		return repository.ErrCartOrAdvertNotFound
+	case err != nil:
+		c.logger.Error("error deleting Advert from cart", zap.String("cart_id", cartID.String()), zap.String("Advert_id", AdvertID.String()), zap.Error(err))
+		return entity.PSQLWrap(errors.New("error deleting Advert from cart"), err)
+	}
+	return nil
+}
+
 func (c *CartDB) GetAdvertsByCartID(cartID uuid.UUID) ([]entity.Advert, error) {
 	rows, err := c.DB.Query(c.ctx, queryGetAdvertsByCartID, cartID)
 	switch {
+	case errors.Is(err, pgx.ErrNoRows):
+		return nil, repository.ErrCartNotFound
 	case err != nil:
 		c.logger.Error("error getting adverts by cart id", zap.String("cart_id", cartID.String()), zap.Error(err))
 		return nil, entity.PSQLWrap(errors.New("error getting adverts by cart id"), err)

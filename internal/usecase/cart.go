@@ -12,4 +12,6 @@ type Cart interface {
 	GetCartByID(cartID uuid.UUID) (dto.Cart, error)
 	// GetCartByUserID возвращает корзину по ID юзера
 	GetCartByUserID(userID uuid.UUID) (dto.Cart, error)
+	// DeleteAdvertFromCart удаляет товар из корзины по ID корзины и ID товара
+	DeleteAdvertFromCart(cartID uuid.UUID, AdvertID uuid.UUID) error
 }

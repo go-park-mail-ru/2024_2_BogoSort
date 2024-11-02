@@ -2,12 +2,13 @@ package service
 
 import (
 	"errors"
+	"strings"
+
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
-	"strings"
 )
 
 var (
@@ -118,11 +119,11 @@ func (s *AdvertService) GetAdvertById(advertId uuid.UUID) (*dto.AdvertResponse, 
 }
 
 func (s *AdvertService) AddAdvert(advert *dto.AdvertRequest) (*dto.AdvertResponse, error) {
-	if err := entity.ValidateAdvert(advert.Title, 
-        advert.Description, 
-        advert.Location, 
-        string(advert.Status), 
-        int(advert.Price)); err != nil {
+	if err := entity.ValidateAdvert(advert.Title,
+		advert.Description,
+		advert.Location,
+		string(advert.Status),
+		int(advert.Price)); err != nil {
 		return nil, entity.UsecaseWrap(ErrAdvertBadRequest, ErrAdvertBadRequest)
 	}
 
@@ -144,11 +145,11 @@ func (s *AdvertService) AddAdvert(advert *dto.AdvertRequest) (*dto.AdvertRespons
 }
 
 func (s *AdvertService) UpdateAdvert(advert *dto.AdvertRequest) error {
-	if err := entity.ValidateAdvert(advert.Title, 
-        advert.Description, 
-        advert.Location, 
-        string(advert.Status), 
-        int(advert.Price)); err != nil {
+	if err := entity.ValidateAdvert(advert.Title,
+		advert.Description,
+		advert.Location,
+		string(advert.Status),
+		int(advert.Price)); err != nil {
 		return entity.UsecaseWrap(ErrAdvertBadRequest, ErrAdvertBadRequest)
 	}
 
