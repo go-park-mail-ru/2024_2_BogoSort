@@ -12,6 +12,4 @@ type Cart interface {
 	GetCartByID(cartID uuid.UUID) (dto.Cart, error)
 	// GetCartByUserID возвращает корзину по ID юзера
 	GetCartByUserID(userID uuid.UUID) (dto.Cart, error)
-	// UpdateCartStatus обновляет статус корзины
-	UpdateCartStatus(cartID uuid.UUID, cart dto.Cart) error
 }
