@@ -115,13 +115,13 @@ func (c *CartDB) GetAdvertsByCartID(cartID uuid.UUID) ([]entity.Advert, error) {
 }
 
 func (c *CartDB) UpdateCartStatus(tx pgx.Tx, cartID uuid.UUID, status entity.CartStatus) error {
-	var updatedRows int64
-	err := tx.QueryRow(c.ctx, queryUpdateCartStatus, cartID, status).Scan(&updatedRows)
+	_, err := tx.Exec(c.ctx, queryUpdateCartStatus, cartID, status)
 	switch {
-	case updatedRows == 0:
-		c.logger.Error("cart not found", zap.String("cart_id", cartID.String()))
-		return repository.ErrCartNotFound
 	case err != nil:
+		if errors.Is(err, pgx.ErrNoRows) {
+			c.logger.Error("cart not found", zap.String("cart_id", cartID.String()))
+			return repository.ErrCartNotFound
+		}
 		c.logger.Error("error updating cart status", zap.String("cart_id", cartID.String()), zap.Error(err))
 		return entity.PSQLWrap(errors.New("error updating cart status"), err)
 	}
