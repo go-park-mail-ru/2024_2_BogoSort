@@ -114,10 +114,11 @@ func (c *CartDB) GetAdvertsByCartID(cartID uuid.UUID) ([]entity.Advert, error) {
 	return Adverts, nil
 }
 
-func (c *CartDB) UpdateCartStatus(cartID uuid.UUID, status entity.CartStatus) error {
-	_, err := c.DB.Exec(c.ctx, queryUpdateCartStatus, cartID, status)
+func (c *CartDB) UpdateCartStatus(tx pgx.Tx, cartID uuid.UUID, status entity.CartStatus) error {
+	var updatedRows int64
+	err := tx.QueryRow(c.ctx, queryUpdateCartStatus, cartID, status).Scan(&updatedRows)
 	switch {
-	case errors.Is(err, pgx.ErrNoRows):
+	case updatedRows == 0:
 		c.logger.Error("cart not found", zap.String("cart_id", cartID.String()))
 		return repository.ErrCartNotFound
 	case err != nil:

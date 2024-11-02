@@ -4,13 +4,14 @@ import (
 	"errors"
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
+	"github.com/jackc/pgx/v5"
 	"github.com/google/uuid"
 )
 
 type Cart interface {
 	GetAdvertsByCartID(cartID uuid.UUID) ([]entity.Advert, error)
 	AddAdvertToCart(cartID uuid.UUID, AdvertID uuid.UUID) error
-	UpdateCartStatus(cartID uuid.UUID, status entity.CartStatus) error
+	UpdateCartStatus(tx pgx.Tx, cartID uuid.UUID, status entity.CartStatus) error
 	GetCartByUserID(userID uuid.UUID) (entity.Cart, error)
 	CreateCart(userID uuid.UUID) (uuid.UUID, error)
 	GetCartByID(cartID uuid.UUID) (entity.Cart, error)
