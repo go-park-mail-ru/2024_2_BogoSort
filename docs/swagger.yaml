@@ -18,8 +18,6 @@ definitions:
         type: string
       price:
         type: integer
-      seller_id:
-        type: string
       status:
         $ref: '#/definitions/dto.AdvertStatus'
       title:
@@ -81,6 +79,14 @@ definitions:
       cart_id:
         type: string
     type: object
+  dto.DeliveryMethod:
+    enum:
+    - pickup
+    - delivery
+    type: string
+    x-enum-varnames:
+    - DeliveryMethodPickup
+    - DeliveryMethodDelivery
   dto.Login:
     properties:
       email:
@@ -88,16 +94,52 @@ definitions:
       password:
         type: string
     type: object
+  dto.PaymentMethod:
+    enum:
+    - card
+    - cash
+    type: string
+    x-enum-varnames:
+    - PaymentMethodCard
+    - PaymentMethodCash
   dto.PurchaseRequest:
     properties:
+      address:
+        type: string
       cart_id:
         type: string
+      delivery_method:
+        $ref: '#/definitions/dto.DeliveryMethod'
+      payment_method:
+        $ref: '#/definitions/dto.PaymentMethod'
     type: object
   dto.PurchaseResponse:
     properties:
-      success:
-        type: boolean
+      address:
+        type: string
+      cart_id:
+        type: string
+      delivery_method:
+        $ref: '#/definitions/dto.DeliveryMethod'
+      id:
+        type: string
+      payment_method:
+        $ref: '#/definitions/dto.PaymentMethod'
+      status:
+        $ref: '#/definitions/dto.PurchaseStatus'
     type: object
+  dto.PurchaseStatus:
+    enum:
+    - pending
+    - completed
+    - in_progress
+    - canceled
+    type: string
+    x-enum-varnames:
+    - StatusPending
+    - StatusCompleted
+    - StatusFailed
+    - StatusCanceled
   dto.Signup:
     properties:
       email:
@@ -162,8 +204,6 @@ definitions:
     type: object
 info:
   contact: {}
-  title: BogoSort API
-  version: 1.0.0
 paths:
   /api/v1/adverts:
     get:
@@ -467,35 +507,6 @@ paths:
           schema:
             $ref: '#/definitions/utils.ErrResponse'
       summary: Retrieve adverts by seller ID
-      tags:
-      - adverts
-  /api/v1/adverts/user/{userId}/saved:
-    get:
-      description: Fetch a list of saved adverts associated with a specific user ID
-      parameters:
-      - description: User ID
-        in: path
-        name: userId
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: List of saved adverts
-          schema:
-            items:
-              $ref: '#/definitions/dto.AdvertResponse'
-            type: array
-        "400":
-          description: Invalid user ID
-          schema:
-            $ref: '#/definitions/utils.ErrResponse'
-        "500":
-          description: Failed to retrieve saved adverts by user ID
-          schema:
-            $ref: '#/definitions/utils.ErrResponse'
-      summary: Retrieve saved adverts by user ID
       tags:
       - adverts
   /api/v1/cart/{cart_id}:
@@ -844,7 +855,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Принимает ID корзины и выполняет процесс покупки
+      description: Accepts purchase data, validates it, and adds it to the system.
+        Returns a response with purchase data or an error.
       parameters:
       - description: Purchase request
         in: body
@@ -855,7 +867,7 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
+        "201":
           description: Successful purchase
           schema:
             $ref: '#/definitions/dto.PurchaseResponse'
@@ -863,17 +875,13 @@ paths:
           description: Invalid request parameters
           schema:
             $ref: '#/definitions/utils.ErrResponse'
-        "404":
-          description: Cart not found
-          schema:
-            $ref: '#/definitions/utils.ErrResponse'
         "500":
           description: Internal server error
           schema:
             $ref: '#/definitions/utils.ErrResponse'
-      summary: Совершает покупку по ID корзины
+      summary: Adds a purchase
       tags:
-      - Покупки
+      - Purchases
   /api/v1/seller/{seller_id}:
     get:
       consumes:
