@@ -13,9 +13,6 @@ type AdvertRepository interface {
 	// GetAdvertsBySellerId возвращает массив объявлений в соответствии с sellerId
 	GetAdvertsBySellerId(sellerId uuid.UUID) ([]*entity.Advert, error)
 
-	// GetSavedAdvertsByUserId возвращает массив сохраненных объявлений в соответствии userId
-	GetSavedAdvertsByUserId(userId uuid.UUID) ([]*entity.Advert, error)
-
 	// GetAdvertsByCartId возвращает массив объявлений, которые находятся в корзине
 	GetAdvertsByCartId(cartId uuid.UUID) ([]*entity.Advert, error)
 
