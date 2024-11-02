@@ -2,12 +2,13 @@ package service
 
 import (
 	"errors"
+	"strings"
+
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
-	"strings"
 )
 
 var (

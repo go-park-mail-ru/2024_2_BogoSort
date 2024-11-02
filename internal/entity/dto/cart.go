@@ -10,10 +10,15 @@ type AddAdvertToUserCartRequest struct {
 	AdvertID uuid.UUID `json:"advert_id"`
 }
 
+type DeleteAdvertFromUserCartRequest struct {
+	CartID   uuid.UUID `json:"cart_id"`
+	AdvertID uuid.UUID `json:"advert_id"`
+}
+
 type Cart struct {
 	ID      uuid.UUID         `json:"id"`
 	UserID  uuid.UUID         `json:"user_id"`
-	Adverts []entity.Advert   `json:"adverts"`
+	Adverts []AdvertResponse  `json:"adverts"`
 	Status  entity.CartStatus `json:"status"`
 }
 

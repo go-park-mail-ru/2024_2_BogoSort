@@ -519,6 +519,154 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/cart/add": {
+            "post": {
+                "description": "Adds a new advert to the cart associated with a user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Cart"
+                ],
+                "summary": "Add advert to user's cart",
+                "parameters": [
+                    {
+                        "description": "Data to add advert to cart",
+                        "name": "purchase",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.AddAdvertToUserCartRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully added advert",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/cart/delete": {
+            "delete": {
+                "description": "Удаляет объявление из корзины, связанной с пользователем",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Cart"
+                ],
+                "summary": "Удалить объявление из корзины",
+                "parameters": [
+                    {
+                        "description": "Данные для удаления объявления из корзины",
+                        "name": "purchase",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.DeleteAdvertFromUserCartRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully deleted advert from user cart",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Cart or advert not found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/cart/{cart_id}": {
+            "get": {
+                "description": "Retrieves detailed information about a cart using its unique identifier",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Cart"
+                ],
+                "summary": "Retrieve cart by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Cart ID",
+                        "name": "cart_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved cart",
+                        "schema": {
+                            "$ref": "#/definitions/dto.CartResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid cart ID format",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/categories": {
             "get": {
                 "description": "Retrieve a list of all categories",
@@ -1090,9 +1238,64 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/cart/user/{user_id}": {
+            "get": {
+                "description": "Retrieves detailed information about a cart associated with a specific user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Cart"
+                ],
+                "summary": "Retrieve cart by User ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved cart",
+                        "schema": {
+                            "$ref": "#/definitions/dto.CartResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid user ID format",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
+        "dto.AddAdvertToUserCartRequest": {
+            "type": "object",
+            "properties": {
+                "advert_id": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.AdvertRequest": {
             "type": "object",
             "properties": {
@@ -1168,6 +1371,45 @@ const docTemplate = `{
                 "AdvertStatusInactive"
             ]
         },
+        "dto.Cart": {
+            "type": "object",
+            "properties": {
+                "adverts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.AdvertResponse"
+                    }
+                },
+                "id": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/entity.CartStatus"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.CartResponse": {
+            "type": "object",
+            "properties": {
+                "cart": {
+                    "$ref": "#/definitions/dto.Cart"
+                }
+            }
+        },
+        "dto.DeleteAdvertFromUserCartRequest": {
+            "type": "object",
+            "properties": {
+                "advert_id": {
+                    "type": "string"
+                },
+                "cart_id": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.Login": {
             "type": "object",
             "properties": {
@@ -1241,6 +1483,17 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
+        },
+        "entity.CartStatus": {
+            "type": "string",
+            "enum": [
+                "active",
+                "inactive"
+            ],
+            "x-enum-varnames": [
+                "CartStatusActive",
+                "CartStatusInactive"
+            ]
         },
         "entity.Category": {
             "type": "object",

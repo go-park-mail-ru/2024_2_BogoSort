@@ -8,8 +8,8 @@ type AdvertRequest struct {
 	Description string    `json:"description"`
 	Price       uint      `json:"price"`
 	Status      AdvertStatus `json:"status"`
-	HasDelivery bool      `json:"has_delivery"`
-	Location    string    `json:"location"`
+	HasDelivery bool         `json:"has_delivery"`
+	Location    string       `json:"location"`
 }
 
 type AdvertResponse struct {

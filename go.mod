@@ -15,6 +15,7 @@ require github.com/google/uuid v1.6.0
 require (
 	github.com/jackc/pgx/v5 v5.7.1
 	github.com/pashagolub/pgxmock/v4 v4.3.0
+	github.com/rs/cors v1.11.1
 	go.uber.org/zap v1.27.0
 )
 
@@ -30,8 +31,6 @@ require (
 require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
-	github.com/guregu/null v4.0.0+incompatible // indirect
-	github.com/rs/cors v1.11.1 // indirect
 	golang.org/x/sys v0.26.0 // indirect
 )
 
