@@ -1,4 +1,11 @@
 definitions:
+  dto.AddAdvertToUserCartRequest:
+    properties:
+      advert_id:
+        type: string
+      user_id:
+        type: string
+    type: object
   dto.AdvertRequest:
     properties:
       category_id:
@@ -49,6 +56,31 @@ definitions:
     x-enum-varnames:
     - AdvertStatusActive
     - AdvertStatusInactive
+  dto.Cart:
+    properties:
+      adverts:
+        items:
+          $ref: '#/definitions/dto.AdvertResponse'
+        type: array
+      id:
+        type: string
+      status:
+        $ref: '#/definitions/entity.CartStatus'
+      user_id:
+        type: string
+    type: object
+  dto.CartResponse:
+    properties:
+      cart:
+        $ref: '#/definitions/dto.Cart'
+    type: object
+  dto.DeleteAdvertFromUserCartRequest:
+    properties:
+      advert_id:
+        type: string
+      cart_id:
+        type: string
+    type: object
   dto.Login:
     properties:
       email:
@@ -97,6 +129,14 @@ definitions:
       username:
         type: string
     type: object
+  entity.CartStatus:
+    enum:
+    - active
+    - inactive
+    type: string
+    x-enum-varnames:
+    - CartStatusActive
+    - CartStatusInactive
   entity.Category:
     properties:
       id:
@@ -122,8 +162,8 @@ definitions:
     type: object
 info:
   contact: {}
-  title: "API"
-  version: "1.0.0"
+  title: BogoSort API
+  version: 1.0.0
 paths:
   /api/v1/adverts:
     get:
@@ -458,6 +498,103 @@ paths:
       summary: Retrieve saved adverts by user ID
       tags:
       - adverts
+  /api/v1/cart/{cart_id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves detailed information about a cart using its unique identifier
+      parameters:
+      - description: Cart ID
+        in: path
+        name: cart_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved cart
+          schema:
+            $ref: '#/definitions/dto.CartResponse'
+        "400":
+          description: Invalid cart ID format
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Retrieve cart by ID
+      tags:
+      - Cart
+  /api/v1/cart/add:
+    post:
+      consumes:
+      - application/json
+      description: Adds a new advert to the cart associated with a user
+      parameters:
+      - description: Data to add advert to cart
+        in: body
+        name: purchase
+        required: true
+        schema:
+          $ref: '#/definitions/dto.AddAdvertToUserCartRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully added advert
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Add advert to user's cart
+      tags:
+      - Cart
+  /api/v1/cart/delete:
+    delete:
+      consumes:
+      - application/json
+      description: Удаляет объявление из корзины, связанной с пользователем
+      parameters:
+      - description: Данные для удаления объявления из корзины
+        in: body
+        name: purchase
+        required: true
+        schema:
+          $ref: '#/definitions/dto.DeleteAdvertFromUserCartRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully deleted advert from user cart
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "404":
+          description: Cart or advert not found
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Удалить объявление из корзины
+      tags:
+      - Cart
   /api/v1/categories:
     get:
       consumes:
@@ -834,4 +971,34 @@ paths:
       summary: Upload an image for an advert
       tags:
       - adverts
+  /cart/user/{user_id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves detailed information about a cart associated with a specific
+        user
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved cart
+          schema:
+            $ref: '#/definitions/dto.CartResponse'
+        "400":
+          description: Invalid user ID format
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Retrieve cart by User ID
+      tags:
+      - Cart
 swagger: "2.0"
