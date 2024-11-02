@@ -35,6 +35,12 @@ const (
 		FROM advert
 		WHERE seller_id = $1`
 
+	selectSavedAdvertsByUserIdQuery = `
+		SELECT a.id, a.title, a.description, a.price, a.location, a.has_delivery, a.category_id, a.seller_id, a.image_id, a.status
+		FROM advert a
+		INNER JOIN saved_advert sa ON sa.advert_id = a.id
+		WHERE sa.user_id = $1`
+
 	selectAdvertsByCartIdQuery = `
 		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status
 		FROM advert
@@ -291,6 +297,58 @@ func (r *AdvertDB) GetAdvertsBySellerId(sellerId uuid.UUID) ([]*entity.Advert, e
 
 	if err := rows.Err(); err != nil {
 		r.logger.Error("error iterating over rows", zap.Error(err), zap.String("seller_id", sellerId.String()))
+		return nil, entity.PSQLWrap(err)
+	}
+
+	return adverts, nil
+}
+
+func (r *AdvertDB) GetSavedAdvertsByUserId(userId uuid.UUID) ([]*entity.Advert, error) {
+	var adverts []*entity.Advert
+
+	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
+	defer cancel()
+
+	rows, err := r.DB.Query(ctx, selectSavedAdvertsByUserIdQuery, userId)
+	if err != nil {
+		r.logger.Error("failed to execute query", zap.Error(err), zap.String("user_id", userId.String()))
+		return nil, entity.PSQLWrap(err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var dbAdvert AdvertRepoModel
+		if err := rows.Scan(
+			&dbAdvert.ID,
+			&dbAdvert.Title,
+			&dbAdvert.Description,
+			&dbAdvert.Price,
+			&dbAdvert.Location,
+			&dbAdvert.HasDelivery,
+			&dbAdvert.CategoryId,
+			&dbAdvert.SellerId,
+			&dbAdvert.ImageURL,
+			&dbAdvert.Status,
+		); err != nil {
+			r.logger.Error("failed to scan row", zap.Error(err), zap.String("user_id", userId.String()))
+			return nil, entity.PSQLWrap(err)
+		}
+		adverts = append(adverts, &entity.Advert{
+			ID:          dbAdvert.ID,
+			Title:       dbAdvert.Title,
+			Description: dbAdvert.Description,
+			Price:       dbAdvert.Price,
+			Location:    dbAdvert.Location,
+			HasDelivery: dbAdvert.HasDelivery,
+			CategoryId:  dbAdvert.CategoryId,
+			SellerId:    dbAdvert.SellerId,
+			ImageURL:    dbAdvert.ImageURL,
+			Status:      entity.AdvertStatus(dbAdvert.Status),
+		})
+	}
+
+	if err := rows.Err(); err != nil {
+		r.logger.Error("error iterating over rows", zap.Error(err), zap.String("user_id", userId.String()))
 		return nil, entity.PSQLWrap(err)
 	}
 

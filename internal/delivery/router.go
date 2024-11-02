@@ -71,25 +71,19 @@ func NewRouter(cfg config.Config) (*mux.Router, error) {
 	if err != nil {
 		return nil, handleRepoError(err, "unable to create cart repository")
 	}
-	purchaseRepo, err := postgres.NewPurchaseRepository(dbPool, zap.L(), ctx, cfg.PGTimeout)
-	if err != nil {
-		return nil, handleRepoError(err, "unable to create purchase repository")
-	}
 
-	advertsUseCase := service.NewAdvertService(advertsRepo, staticRepo, sellerRepo, zap.L())
+	advertsUseCase := service.NewAdvertService(advertsRepo, staticRepo, zap.L())
 	staticUseCase := service.NewStaticService(staticRepo, zap.L())
 	categoryUseCase := service.NewCategoryService(categoryRepo, zap.L())
-	purchaseUseCase := service.NewPurchaseService(purchaseRepo, cartRepo, zap.L())
 	cartUC := service.NewCartService(cartRepo, zap.L())
 	userUC := service.NewUserService(userRepo, sellerRepo, zap.L())
 	sessionUC := service.NewAuthService(sessionRepo, zap.L())
 	sessionManager := utils.NewSessionManager(sessionUC, int(cfg.Session.ExpirationTime.Seconds()), cfg.Session.SecureCookie, zap.L())
 
-	advertsHandler := http3.NewAdvertEndpoints(advertsUseCase, staticUseCase, sessionManager, zap.L())
+	advertsHandler := http3.NewAdvertEndpoints(advertsUseCase, staticUseCase, zap.L())
 	authHandler := http3.NewAuthEndpoints(sessionUC, sessionManager, zap.L())
 	userHandler := http3.NewUserEndpoints(userUC, sessionUC, sessionManager, staticUseCase, zap.L())
 	sellerHandler := http3.NewSellerEndpoints(sellerRepo, zap.L())
-	purchaseHandler := http3.NewPurchaseEndpoints(purchaseUseCase, zap.L())
 	cartHandler := http3.NewCartEndpoints(cartUC, zap.L())
 	categoryHandler := http3.NewCategoryEndpoints(categoryUseCase, zap.L())
 	staticHandler := http3.NewStaticEndpoints(staticUseCase, zap.L())
@@ -101,7 +95,7 @@ func NewRouter(cfg config.Config) (*mux.Router, error) {
 	sellerHandler.Configure(router)
 	cartHandler.Configure(router)
 	staticHandler.ConfigureRoutes(router)
-	purchaseHandler.ConfigureRoutes(router)
+	
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
 	return router, nil
