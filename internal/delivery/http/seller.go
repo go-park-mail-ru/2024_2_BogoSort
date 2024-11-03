@@ -31,7 +31,8 @@ func NewSellerEndpoints(sellerRepo repository.Seller, logger *zap.Logger) *Selle
 }
 
 func (s *SellerEndpoints) Configure(router *mux.Router) {
-	router.HandleFunc("api/v1/seller/{seller_id}", s.GetSellerByID).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/seller/{seller_id}", s.GetSellerByID).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/seller/user/{user_id}", s.GetSellerByUserID).Methods(http.MethodGet)
 }
 
 // GetSellerByID
@@ -50,17 +51,39 @@ func (s *SellerEndpoints) GetSellerByID(w http.ResponseWriter, r *http.Request) 
 	vars := mux.Vars(r)
 	sellerID, err := uuid.Parse(vars["seller_id"])
 	if err != nil {
-		s.logger.Error("error parsing seller_id", zap.Error(err))
-		utils.SendErrorResponse(w, http.StatusBadRequest, "Invalid seller_id")
+		s.handleError(w, err, "error parsing seller_id")
 		return
 	}
 
 	seller, err := s.sellerRepo.GetSellerByID(sellerID)
+	switch {
+	case errors.Is(err, repository.ErrSellerNotFound):
+		s.handleError(w, err, "error getting seller by id")
+	case err != nil:
+		s.handleError(w, err, "error getting seller by id")
+	}
+
+	s.logger.Info("seller found", zap.String("seller_id", sellerID.String()))
+	utils.SendJSONResponse(w, http.StatusOK, seller)
+}
+
+func (s *SellerEndpoints) GetSellerByUserID(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	userID, err := uuid.Parse(vars["user_id"])
 	if err != nil {
-		s.handleError(w, err, "GetSellerByID")
+		s.handleError(w, err, "error parsing user_id")
 		return
 	}
 
+	seller, err := s.sellerRepo.GetSellerByUserID(userID)
+	switch {
+	case errors.Is(err, repository.ErrSellerNotFound):
+		s.handleError(w, err, "error getting seller by user_id")
+	case err != nil:
+		s.handleError(w, err, "error getting seller by user_id")
+	}
+
+	s.logger.Info("seller found", zap.String("user_id", userID.String()))
 	utils.SendJSONResponse(w, http.StatusOK, seller)
 }
 
