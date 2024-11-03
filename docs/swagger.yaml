@@ -212,6 +212,8 @@ definitions:
     type: object
 info:
   contact: {}
+  title: "API Documentation"
+  version: "1.0.0"
 paths:
   /api/v1/adverts:
     get:
