@@ -37,8 +37,8 @@ func setupTest(t *testing.T) (pgxmock.PgxPoolIface, *postgres2.PgxMockAdapter, s
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 
 	repo := &StaticDB{
-		DB:        adapter,
-		Logger:    zap.L(),
+		DB:      adapter,
+		Logger:  zap.L(),
 		BasicPath: tempDir,
 		MaxSize:   10 * 1024 * 1024,
 		Ctx:       ctx,

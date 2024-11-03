@@ -11,7 +11,7 @@ import (
 )
 
 type PurchaseDB struct {
-	db *pgxpool.Pool
+	db DBExecutor
 	logger *zap.Logger
 	ctx context.Context
 	timeout time.Duration

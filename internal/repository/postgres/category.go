@@ -10,7 +10,7 @@ import (
 )
 
 type CategoryDB struct {
-	DB      *pgxpool.Pool
+	DB      DBExecutor
 	logger  *zap.Logger
 	ctx     context.Context
 	timeout time.Duration
