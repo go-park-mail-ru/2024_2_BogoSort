@@ -141,12 +141,14 @@ func (u *UserService) GetUser(userID uuid.UUID) (*dto.User, error) {
 		return nil, u.handleRepoError(err, "GetUser")
 	}
 	return &dto.User{
-		ID:       entityUser.ID,
-		Email:    entityUser.Email,
-		Username: entityUser.Username,
-		Phone:    entityUser.Phone,
-		AvatarId: entityUser.AvatarId,
-		Status:   entityUser.Status,
+		ID:        entityUser.ID,
+		Email:     entityUser.Email,
+		Username:  entityUser.Username,
+		Phone:     entityUser.Phone,
+		AvatarId:  entityUser.AvatarId,
+		Status:    entityUser.Status,
+		CreatedAt: entityUser.CreatedAt,
+		UpdatedAt: entityUser.UpdatedAt,
 	}, nil
 }
 

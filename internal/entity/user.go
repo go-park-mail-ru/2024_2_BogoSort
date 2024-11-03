@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"regexp"
+	"time"
 	"unicode/utf8"
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/pkg/utils/random"
@@ -26,6 +27,8 @@ type User struct {
 	Phone        string    `db:"phone"`
 	AvatarId     uuid.UUID `db:"avatar_id" default:"00000000-0000-0000-0000-000000000000"`
 	Status       string    `db:"status" default:"active"`
+	CreatedAt    time.Time `db:"created_at"`
+	UpdatedAt    time.Time `db:"updated_at"`
 }
 
 func ValidatePassword(password string) error {

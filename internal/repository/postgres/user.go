@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -23,7 +24,7 @@ const (
 	`
 
 	queryGetUserById = `
-		SELECT id, email, password_hash, password_salt, username, phone_number, image_id, status
+		SELECT id, email, password_hash, password_salt, username, phone_number, image_id, status, created_at, updated_at
 		FROM "user"
 		WHERE id = $1
 	`
@@ -64,6 +65,8 @@ type DBUser struct {
 	Phone        sql.NullString
 	AvatarId     uuid.UUID
 	Status       sql.NullString
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
 }
 
 func NewUserRepository(db *pgxpool.Pool, ctx context.Context, logger *zap.Logger) (repository.User, error) {
@@ -87,6 +90,8 @@ func (us *DBUser) GetEntity() entity.User {
 		Phone:        us.Phone.String,
 		AvatarId:     us.AvatarId,
 		Status:       us.Status.String,
+		CreatedAt:    us.CreatedAt,
+		UpdatedAt:    us.UpdatedAt,
 	}
 }
 
@@ -136,6 +141,8 @@ func (us *UsersDB) GetUserByEmail(email string) (*entity.User, error) {
 		&dbUser.Phone,
 		&dbUser.AvatarId,
 		&dbUser.Status,
+		&dbUser.CreatedAt,
+		&dbUser.UpdatedAt,
 	)
 
 	switch {
@@ -162,6 +169,8 @@ func (us *UsersDB) GetUserById(id uuid.UUID) (*entity.User, error) {
 		&dbUser.Phone,
 		&dbUser.AvatarId,
 		&dbUser.Status,
+		&dbUser.CreatedAt,
+		&dbUser.UpdatedAt,
 	)
 
 	switch {

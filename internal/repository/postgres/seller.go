@@ -100,6 +100,7 @@ func (s *SellerDB) GetSellerByID(sellerID uuid.UUID) (*entity.Seller, error) {
 		return nil, err
 	}
 
+	s.logger.Info("seller found", zap.String("seller_id", sellerID.String()))
 	seller := dbSeller.GetEntity()
 	return &seller, nil
 }
