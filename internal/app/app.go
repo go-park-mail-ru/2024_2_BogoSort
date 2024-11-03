@@ -37,7 +37,7 @@ func (server *Server) Run() error {
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins:   []string{"https://two024-2-bogo-sort.onrender.com"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
-		AllowedHeaders:   []string{"Content-Type", "Authorization"},
+		AllowedHeaders:   []string{"Content-Type", "Authorization", "X-CSRF-Token"},
 		AllowCredentials: true,
 	}).Handler(router)
 

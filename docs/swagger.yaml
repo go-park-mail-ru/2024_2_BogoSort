@@ -649,6 +649,32 @@ paths:
       summary: Get all categories
       tags:
       - categories
+  /api/v1/csrf-token:
+    get:
+      consumes:
+      - application/json
+      description: This endpoint checks for a session ID in the request cookies and
+        retrieves the user ID from the session manager. If both are valid, it generates
+        a CSRF token using the session ID and user ID, and sends it back in the response
+        header. If any step fails, it responds with an appropriate error message.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: CSRF Token
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Failed to create CSRF token
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Retrieve CSRF Token
+      tags:
+      - CSRF
   /api/v1/files/{fileId}:
     get:
       description: Get a file by its ID
