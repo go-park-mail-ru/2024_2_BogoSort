@@ -60,6 +60,8 @@ func (s *AdvertService) advertEntityToDTO(advert *entity.Advert) (*dto.AdvertRes
 		Status:      dto.AdvertStatus(advert.Status),
 		HasDelivery: advert.HasDelivery,
 		Location:    advert.Location,
+		CreatedAt:   advert.CreatedAt,
+		UpdatedAt:   advert.UpdatedAt,
 	}
 
 	return &advertDTO, nil
@@ -120,11 +122,11 @@ func (s *AdvertService) GetAdvertById(advertId uuid.UUID) (*dto.AdvertResponse, 
 }
 
 func (s *AdvertService) AddAdvert(advert *dto.AdvertRequest, userId uuid.UUID) (*dto.AdvertResponse, error) {
-	if err := entity.ValidateAdvert(advert.Title, 
-        advert.Description, 
-        advert.Location, 
-        string(advert.Status), 
-        int(advert.Price)); err != nil {
+	if err := entity.ValidateAdvert(advert.Title,
+		advert.Description,
+		advert.Location,
+		string(advert.Status),
+		int(advert.Price)); err != nil {
 		return nil, entity.UsecaseWrap(ErrAdvertBadRequest, ErrAdvertBadRequest)
 	}
 
@@ -151,11 +153,11 @@ func (s *AdvertService) AddAdvert(advert *dto.AdvertRequest, userId uuid.UUID) (
 }
 
 func (s *AdvertService) UpdateAdvert(advert *dto.AdvertRequest, userId uuid.UUID, advertId uuid.UUID) error {
-	if err := entity.ValidateAdvert(advert.Title, 
-        advert.Description, 
-        advert.Location, 
-        string(advert.Status), 
-        int(advert.Price)); err != nil {
+	if err := entity.ValidateAdvert(advert.Title,
+		advert.Description,
+		advert.Location,
+		string(advert.Status),
+		int(advert.Price)); err != nil {
 		return entity.UsecaseWrap(ErrAdvertBadRequest, ErrAdvertBadRequest)
 	}
 

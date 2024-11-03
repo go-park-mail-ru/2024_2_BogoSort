@@ -1,12 +1,16 @@
 package dto
 
-import "github.com/google/uuid"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type AdvertRequest struct {
-	CategoryId  uuid.UUID `json:"category_id"`
-	Title       string    `json:"title"`
-	Description string    `json:"description"`
-	Price       uint      `json:"price"`
+	CategoryId  uuid.UUID    `json:"category_id"`
+	Title       string       `json:"title"`
+	Description string       `json:"description"`
+	Price       uint         `json:"price"`
 	Status      AdvertStatus `json:"status"`
 	HasDelivery bool         `json:"has_delivery"`
 	Location    string       `json:"location"`
@@ -23,6 +27,8 @@ type AdvertResponse struct {
 	Status      AdvertStatus `json:"status"`
 	HasDelivery bool         `json:"has_delivery"`
 	Location    string       `json:"location"`
+	CreatedAt   time.Time    `json:"created_at"`
+	UpdatedAt   time.Time    `json:"updated_at"`
 }
 
 type AdvertStatus string

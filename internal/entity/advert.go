@@ -3,6 +3,7 @@ package entity
 import (
 	"errors"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -26,6 +27,8 @@ type Advert struct {
 	Status      AdvertStatus  `db:"status"`
 	HasDelivery bool          `db:"has_delivery"`
 	Location    string        `db:"location"`
+	CreatedAt   time.Time     `db:"created_at"`
+	UpdatedAt   time.Time     `db:"updated_at"`
 }
 
 type AdvertStatus string

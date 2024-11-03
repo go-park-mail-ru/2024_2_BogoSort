@@ -3,13 +3,14 @@ package postgres
 import (
 	"context"
 	"errors"
+	"time"
+
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
-	"time"
 )
 
 type AdvertDB struct {
@@ -26,22 +27,22 @@ const (
 		RETURNING id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status`
 
 	selectAdvertsQuery = `
-		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status
+		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at
 		FROM advert
 		LIMIT $1 OFFSET $2`
 
 	selectAdvertsByUserIdQuery = `
-		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status
+		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at
 		FROM advert
 		WHERE seller_id = $1`
 
 	selectAdvertsByCartIdQuery = `
-		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status
+		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at
 		FROM advert
 		WHERE id IN (SELECT advert_id FROM cart_advert WHERE cart_id = $1)`
 
 	selectAdvertByIdQuery = `
-		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status
+		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at
 		FROM advert
 		WHERE id = $1`
 
@@ -59,7 +60,7 @@ const (
 		WHERE id = $2`
 
 	selectAdvertsByCategoryIdQuery = `
-		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status
+		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at
 		FROM advert
 		WHERE category_id = $1`
 
@@ -80,6 +81,8 @@ type AdvertRepoModel struct {
 	Status      string
 	HasDelivery bool
 	Location    string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 }
 
 func NewAdvertRepository(db *pgxpool.Pool, logger *zap.Logger, ctx context.Context, timeout time.Duration) (repository.AdvertRepository, error) {
@@ -168,6 +171,8 @@ func (r *AdvertDB) GetAdverts(limit, offset int) ([]*entity.Advert, error) {
 			&dbAdvert.SellerId,
 			&dbAdvert.ImageURL,
 			&dbAdvert.Status,
+			&dbAdvert.CreatedAt,
+			&dbAdvert.UpdatedAt,
 		); err != nil {
 			r.logger.Error("failed to scan row", zap.Error(err))
 			return nil, entity.PSQLWrap(err)
@@ -183,6 +188,8 @@ func (r *AdvertDB) GetAdverts(limit, offset int) ([]*entity.Advert, error) {
 			SellerId:    dbAdvert.SellerId,
 			ImageURL:    dbAdvert.ImageURL,
 			Status:      entity.AdvertStatus(dbAdvert.Status),
+			CreatedAt:   dbAdvert.CreatedAt,
+			UpdatedAt:   dbAdvert.UpdatedAt,
 		})
 	}
 
@@ -219,6 +226,8 @@ func (r *AdvertDB) GetAdvertsByCategoryId(categoryId uuid.UUID) ([]*entity.Adver
 			&dbAdvert.SellerId,
 			&dbAdvert.ImageURL,
 			&dbAdvert.Status,
+			&dbAdvert.CreatedAt,
+			&dbAdvert.UpdatedAt,
 		); err != nil {
 			r.logger.Error("failed to scan row", zap.Error(err), zap.String("category_id", categoryId.String()))
 			return nil, entity.PSQLWrap(err)
@@ -234,6 +243,8 @@ func (r *AdvertDB) GetAdvertsByCategoryId(categoryId uuid.UUID) ([]*entity.Adver
 			SellerId:    dbAdvert.SellerId,
 			ImageURL:    dbAdvert.ImageURL,
 			Status:      entity.AdvertStatus(dbAdvert.Status),
+			CreatedAt:   dbAdvert.CreatedAt,
+			UpdatedAt:   dbAdvert.UpdatedAt,
 		})
 	}
 
@@ -271,6 +282,8 @@ func (r *AdvertDB) GetAdvertsBySellerId(sellerId uuid.UUID) ([]*entity.Advert, e
 			&dbAdvert.SellerId,
 			&dbAdvert.ImageURL,
 			&dbAdvert.Status,
+			&dbAdvert.CreatedAt,
+			&dbAdvert.UpdatedAt,
 		); err != nil {
 			r.logger.Error("failed to scan row", zap.Error(err), zap.String("seller_id", sellerId.String()))
 			return nil, entity.PSQLWrap(err)
@@ -286,6 +299,8 @@ func (r *AdvertDB) GetAdvertsBySellerId(sellerId uuid.UUID) ([]*entity.Advert, e
 			SellerId:    dbAdvert.SellerId,
 			ImageURL:    dbAdvert.ImageURL,
 			Status:      entity.AdvertStatus(dbAdvert.Status),
+			CreatedAt:   dbAdvert.CreatedAt,
+			UpdatedAt:   dbAdvert.UpdatedAt,
 		})
 	}
 
@@ -323,6 +338,8 @@ func (r *AdvertDB) GetAdvertsByCartId(cartId uuid.UUID) ([]*entity.Advert, error
 			&dbAdvert.SellerId,
 			&dbAdvert.ImageURL,
 			&dbAdvert.Status,
+			&dbAdvert.CreatedAt,
+			&dbAdvert.UpdatedAt,
 		); err != nil {
 			r.logger.Error("failed to scan row", zap.Error(err), zap.String("cart_id", cartId.String()))
 			return nil, entity.PSQLWrap(err)
@@ -338,6 +355,8 @@ func (r *AdvertDB) GetAdvertsByCartId(cartId uuid.UUID) ([]*entity.Advert, error
 			SellerId:    dbAdvert.SellerId,
 			ImageURL:    dbAdvert.ImageURL,
 			Status:      entity.AdvertStatus(dbAdvert.Status),
+			CreatedAt:   dbAdvert.CreatedAt,
+			UpdatedAt:   dbAdvert.UpdatedAt,
 		})
 	}
 
@@ -366,6 +385,8 @@ func (r *AdvertDB) GetAdvertById(advertId uuid.UUID) (*entity.Advert, error) {
 		&dbAdvert.SellerId,
 		&dbAdvert.ImageURL,
 		&dbAdvert.Status,
+		&dbAdvert.CreatedAt,
+		&dbAdvert.UpdatedAt,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -387,6 +408,8 @@ func (r *AdvertDB) GetAdvertById(advertId uuid.UUID) (*entity.Advert, error) {
 		SellerId:    dbAdvert.SellerId,
 		ImageURL:    dbAdvert.ImageURL,
 		Status:      entity.AdvertStatus(dbAdvert.Status),
+		CreatedAt:   dbAdvert.CreatedAt,
+		UpdatedAt:   dbAdvert.UpdatedAt,
 	}, nil
 }
 
