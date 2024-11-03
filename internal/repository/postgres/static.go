@@ -66,7 +66,7 @@ func (s StaticDB) GetStatic(staticID uuid.UUID) (string, error) {
 			return "", entity.PSQLWrap(repository.ErrStaticNotFound)
 		}
 		s.Logger.Error("postgres: error getting static", zap.String("static_id", staticID.String()), zap.Error(err))
-		return "", entity.PSQLWrap(err, errors.New("ошибка при выполнении sql-запроса GetStatic"))
+		return "", entity.PSQLWrap(err, errors.New("error executing SQL query GetStatic"))
 	}
 
 	return fmt.Sprintf("%s/%s", path, name), nil
@@ -87,7 +87,7 @@ func (s StaticDB) UploadStatic(path, filename string, data []byte) (uuid.UUID, e
 		s.Logger.Error("error creating static directory", zap.String("path", dir), zap.Error(err))
 		return uuid.UUID{}, entity.PSQLWrap(
 			err,
-			errors.New("не удалось создать папку для хранения статики"),
+			errors.New("failed to create a directory for storing static files"),
 		)
 	}
 
@@ -96,7 +96,7 @@ func (s StaticDB) UploadStatic(path, filename string, data []byte) (uuid.UUID, e
 		s.Logger.Error("error creating static file", zap.String("path", fmt.Sprintf("%s/%s/%s", s.BasicPath, path, filename)), zap.Error(err))
 		return uuid.UUID{}, entity.PSQLWrap(
 			err,
-			errors.New("не удалось создать файл"),
+			errors.New("failed to create file"),
 		)
 	}
 
@@ -104,21 +104,21 @@ func (s StaticDB) UploadStatic(path, filename string, data []byte) (uuid.UUID, e
 		s.Logger.Error("error writing data to static file", zap.String("path", fmt.Sprintf("%s/%s/%s", s.BasicPath, path, filename)), zap.Error(err))
 		return uuid.UUID{}, entity.PSQLWrap(
 			err,
-			errors.New("не удалось записать данные в файл"),
+			errors.New("failed to write data to file"),
 		)
 	}
 	if err = dst.Close(); err != nil {
 		s.Logger.Error("error closing static file", zap.String("path", fmt.Sprintf("%s/%s/%s", s.BasicPath, path, filename)), zap.Error(err))
 		return uuid.UUID{}, entity.PSQLWrap(
 			err,
-			errors.New("не удалось закрыть файл"),
+			errors.New("failed to close file"),
 		)
 	}
 
 	var id uuid.UUID
 	if err = s.DB.QueryRow(ctx, uploadStaticQuery, s.BasicPath+path, filename).Scan(&id); err != nil {
 		s.Logger.Error("error uploading static", zap.String("path", fmt.Sprintf("%s/%s/%s", s.BasicPath, path, filename)), zap.Error(err))
-		return uuid.UUID{}, entity.PSQLWrap(err, errors.New("ошибка при выполнении sql-запроса UploadStatic"))
+		return uuid.UUID{}, entity.PSQLWrap(err, errors.New("error executing SQL query UploadStatic"))
 	}
 
 	return id, nil
