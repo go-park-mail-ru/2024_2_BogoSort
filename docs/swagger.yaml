@@ -1,59 +1,232 @@
 definitions:
-  handlers.AuthData:
+  dto.AddAdvertToUserCartRequest:
     properties:
-      email:
+      advert_id:
         type: string
-      password:
-        type: string
-    required:
-    - email
-    - password
-    type: object
-  handlers.LoginCredentials:
-    properties:
-      email:
-        type: string
-      password:
-        type: string
-    required:
-    - email
-    - password
-    type: object
-  responses.AuthResponse:
-    properties:
-      email:
-        type: string
-      session_id:
+      user_id:
         type: string
     type: object
-  responses.ErrResponse:
+  dto.AdvertRequest:
     properties:
-      code:
+      category_id:
+        type: string
+      description:
+        type: string
+      has_delivery:
+        type: boolean
+      location:
+        type: string
+      price:
         type: integer
       status:
+        $ref: '#/definitions/dto.AdvertStatus'
+      title:
         type: string
     type: object
-  storage.Advert:
+  dto.AdvertResponse:
     properties:
+      category_id:
+        type: string
+      created_at:
+        type: string
+      description:
+        type: string
+      has_delivery:
+        type: boolean
       id:
-        type: integer
+        type: string
       image_url:
         type: string
       location:
         type: string
       price:
         type: integer
+      seller_id:
+        type: string
+      status:
+        $ref: '#/definitions/dto.AdvertStatus'
+      title:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  dto.AdvertStatus:
+    enum:
+    - active
+    - inactive
+    type: string
+    x-enum-varnames:
+    - AdvertStatusActive
+    - AdvertStatusInactive
+  dto.Cart:
+    properties:
+      adverts:
+        items:
+          $ref: '#/definitions/dto.AdvertResponse'
+        type: array
+      id:
+        type: string
+      status:
+        $ref: '#/definitions/entity.CartStatus'
+      user_id:
+        type: string
+    type: object
+  dto.CartResponse:
+    properties:
+      cart:
+        $ref: '#/definitions/dto.Cart'
+    type: object
+  dto.DeleteAdvertFromUserCartRequest:
+    properties:
+      advert_id:
+        type: string
+      cart_id:
+        type: string
+    type: object
+  dto.DeliveryMethod:
+    enum:
+    - pickup
+    - delivery
+    type: string
+    x-enum-varnames:
+    - DeliveryMethodPickup
+    - DeliveryMethodDelivery
+  dto.Login:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  dto.PaymentMethod:
+    enum:
+    - card
+    - cash
+    type: string
+    x-enum-varnames:
+    - PaymentMethodCard
+    - PaymentMethodCash
+  dto.PurchaseRequest:
+    properties:
+      address:
+        type: string
+      cart_id:
+        type: string
+      delivery_method:
+        $ref: '#/definitions/dto.DeliveryMethod'
+      payment_method:
+        $ref: '#/definitions/dto.PaymentMethod'
+    type: object
+  dto.PurchaseResponse:
+    properties:
+      address:
+        type: string
+      cart_id:
+        type: string
+      delivery_method:
+        $ref: '#/definitions/dto.DeliveryMethod'
+      id:
+        type: string
+      payment_method:
+        $ref: '#/definitions/dto.PaymentMethod'
+      status:
+        $ref: '#/definitions/dto.PurchaseStatus'
+    type: object
+  dto.PurchaseStatus:
+    enum:
+    - pending
+    - completed
+    - in_progress
+    - canceled
+    type: string
+    x-enum-varnames:
+    - StatusPending
+    - StatusCompleted
+    - StatusFailed
+    - StatusCanceled
+  dto.Signup:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  dto.UpdatePassword:
+    properties:
+      new_password:
+        type: string
+      old_password:
+        type: string
+    type: object
+  dto.User:
+    properties:
+      avatar_id:
+        default: 00000000-0000-0000-0000-000000000000
+        type: string
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      phone:
+        type: string
+      status:
+        default: active
+        type: string
+      updated_at:
+        type: string
+      username:
+        type: string
+    type: object
+  entity.CartStatus:
+    enum:
+    - active
+    - inactive
+    type: string
+    x-enum-varnames:
+    - CartStatusActive
+    - CartStatusInactive
+  entity.Category:
+    properties:
+      id:
+        type: string
       title:
         type: string
     type: object
+  entity.Seller:
+    properties:
+      description:
+        type: string
+      id:
+        type: string
+      user_id:
+        type: string
+    type: object
+  utils.ErrResponse:
+    properties:
+      code:
+        type: integer
+      status:
+        type: string
+    type: object
 info:
-  version: "1.0.3"
-  title: "emporium api"
   contact: {}
+  title: "API Documentation"
+  version: "1.0.0"
 paths:
   /api/v1/adverts:
     get:
-      description: Get a list of all adverts
+      description: Fetch a list of all adverts with optional pagination.
+      parameters:
+      - description: Limit the number of results
+        in: query
+        name: limit
+        type: integer
+      - description: Offset for pagination
+        in: query
+        name: offset
+        type: integer
       produces:
       - application/json
       responses:
@@ -61,226 +234,809 @@ paths:
           description: List of adverts
           schema:
             items:
-              $ref: '#/definitions/storage.Advert'
+              $ref: '#/definitions/dto.AdvertResponse'
             type: array
-        "500":
-          description: Failed to get adverts
+        "400":
+          description: Invalid limit or offset
           schema:
-            $ref: '#/definitions/responses.ErrResponse'
-      summary: Get all adverts
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Failed to retrieve adverts
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Retrieve all adverts
       tags:
       - adverts
     post:
       consumes:
       - application/json
-      description: Add a new advert to the list
+      description: Add a new advert to the system.
       parameters:
       - description: Advert data
         in: body
         name: advert
         required: true
         schema:
-          $ref: '#/definitions/storage.Advert'
+          $ref: '#/definitions/dto.AdvertRequest'
       produces:
       - application/json
       responses:
-        "200":
-          description: Advert added successfully
+        "201":
+          description: Advert created
           schema:
-            $ref: '#/definitions/storage.Advert'
+            $ref: '#/definitions/dto.AdvertResponse'
         "400":
-          description: Failed to add advert
+          description: Invalid advert data
           schema:
-            $ref: '#/definitions/responses.ErrResponse'
-      summary: Add a new advert
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Failed to create advert
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Create a new advert
       tags:
       - adverts
-  /api/v1/adverts/{id}:
+  /api/v1/adverts/{advertId}:
     delete:
-      description: Delete an advert by its ID
+      description: Remove an advert from the system using its ID.
       parameters:
       - description: Advert ID
         in: path
-        name: id
+        name: advertId
         required: true
-        type: integer
+        type: string
       responses:
         "204":
-          description: Advert deleted successfully
+          description: Advert deleted
         "400":
-          description: Invalid ID
+          description: Invalid advert ID
           schema:
-            $ref: '#/definitions/responses.ErrResponse'
+            $ref: '#/definitions/utils.ErrResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "404":
+          description: Advert not found
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
         "500":
           description: Failed to delete advert
           schema:
-            $ref: '#/definitions/responses.ErrResponse'
-      summary: Delete an advert
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Delete an advert by ID
       tags:
       - adverts
     get:
-      description: Get a single advert by its ID
+      description: Fetch an advert based on its ID.
       parameters:
       - description: Advert ID
         in: path
-        name: id
+        name: advertId
         required: true
-        type: integer
+        type: string
       produces:
       - application/json
       responses:
         "200":
           description: Advert details
           schema:
-            $ref: '#/definitions/storage.Advert'
+            $ref: '#/definitions/dto.AdvertResponse'
         "400":
-          description: Invalid ID
+          description: Invalid advert ID
           schema:
-            $ref: '#/definitions/responses.ErrResponse'
+            $ref: '#/definitions/utils.ErrResponse'
         "404":
           description: Advert not found
           schema:
-            $ref: '#/definitions/responses.ErrResponse'
+            $ref: '#/definitions/utils.ErrResponse'
         "500":
-          description: Failed to get advert
+          description: Failed to retrieve advert by ID
           schema:
-            $ref: '#/definitions/responses.ErrResponse'
-      summary: Get an advert by ID
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Retrieve an advert by ID
       tags:
       - adverts
     put:
       consumes:
       - application/json
-      description: Update an existing advert by its ID
+      description: Modify the details of an existing advert.
       parameters:
       - description: Advert ID
         in: path
-        name: id
+        name: advertId
         required: true
-        type: integer
-      - description: Advert data
+        type: string
+      - description: Updated advert data
         in: body
         name: advert
         required: true
         schema:
-          $ref: '#/definitions/storage.Advert'
+          $ref: '#/definitions/dto.AdvertRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Advert updated successfully
-          schema:
-            $ref: '#/definitions/storage.Advert'
         "400":
-          description: Invalid ID or data
+          description: Invalid advert data
           schema:
-            $ref: '#/definitions/responses.ErrResponse'
+            $ref: '#/definitions/utils.ErrResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
         "404":
           description: Advert not found
           schema:
-            $ref: '#/definitions/responses.ErrResponse'
+            $ref: '#/definitions/utils.ErrResponse'
         "500":
           description: Failed to update advert
           schema:
-            $ref: '#/definitions/responses.ErrResponse'
-      summary: Update an advert
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Update an existing advert
       tags:
       - adverts
-  /login:
+  /api/v1/adverts/{advertId}/image:
+    put:
+      description: Upload an image associated with an advert by its ID.
+      parameters:
+      - description: Advert ID
+        in: path
+        name: advertId
+        required: true
+        type: string
+      - description: Image file to upload
+        in: formData
+        name: image
+        required: true
+        type: file
+      responses:
+        "200":
+          description: Image uploaded
+          schema:
+            type: string
+        "400":
+          description: Invalid advert ID or file not attached
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Failed to upload image
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Upload an image for an advert
+      tags:
+      - adverts
+  /api/v1/adverts/{advertId}/status:
+    put:
+      description: Change the status of an advert by its ID.
+      parameters:
+      - description: Advert ID
+        in: path
+        name: advertId
+        required: true
+        type: string
+      - description: New status
+        in: body
+        name: status
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Advert status updated
+        "400":
+          description: Invalid advert ID or status
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "404":
+          description: Advert not found
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Failed to update advert status
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Update the status of an advert
+      tags:
+      - adverts
+  /api/v1/adverts/cart/{cartId}:
+    get:
+      description: Fetch a list of adverts in the specified cart.
+      parameters:
+      - description: Cart ID
+        in: path
+        name: cartId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of adverts in cart
+          schema:
+            items:
+              $ref: '#/definitions/dto.AdvertResponse'
+            type: array
+        "400":
+          description: Invalid cart ID
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Failed to retrieve adverts by cart ID
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Retrieve adverts by cart ID
+      tags:
+      - adverts
+  /api/v1/adverts/category/{categoryId}:
+    get:
+      description: Fetch a list of adverts associated with a specific category ID.
+      parameters:
+      - description: Category ID
+        in: path
+        name: categoryId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of adverts by category ID
+          schema:
+            items:
+              $ref: '#/definitions/dto.AdvertResponse'
+            type: array
+        "400":
+          description: Invalid category ID
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Failed to retrieve adverts by category ID
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Retrieve adverts by category ID
+      tags:
+      - adverts
+  /api/v1/adverts/seller/{sellerId}:
+    get:
+      description: Fetch a list of adverts associated with a specific seller ID.
+      parameters:
+      - description: Seller ID
+        in: path
+        name: sellerId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of adverts
+          schema:
+            items:
+              $ref: '#/definitions/dto.AdvertResponse'
+            type: array
+        "400":
+          description: Invalid seller ID
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Failed to retrieve adverts by seller ID
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Retrieve adverts by seller ID
+      tags:
+      - adverts
+  /api/v1/cart/{cart_id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves detailed information about a cart using its unique identifier
+      parameters:
+      - description: Cart ID
+        in: path
+        name: cart_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved cart
+          schema:
+            $ref: '#/definitions/dto.CartResponse'
+        "400":
+          description: Invalid cart ID format
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Retrieve cart by ID
+      tags:
+      - Cart
+  /api/v1/cart/add:
     post:
       consumes:
       - application/json
-      description: Login a user with email and password
+      description: Adds a new advert to the cart associated with a user
       parameters:
-      - description: User credentials
+      - description: Data to add advert to cart
         in: body
-        name: credentials
+        name: purchase
         required: true
         schema:
-          $ref: '#/definitions/handlers.LoginCredentials'
+          $ref: '#/definitions/dto.AddAdvertToUserCartRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully added advert
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Add advert to user's cart
+      tags:
+      - Cart
+  /api/v1/cart/delete:
+    delete:
+      consumes:
+      - application/json
+      description: Удаляет объявление из корзины, связанной с пользователем
+      parameters:
+      - description: Данные для удаления объявления из корзины
+        in: body
+        name: purchase
+        required: true
+        schema:
+          $ref: '#/definitions/dto.DeleteAdvertFromUserCartRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully deleted advert from user cart
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "404":
+          description: Cart or advert not found
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Удалить объявление из корзины
+      tags:
+      - Cart
+  /api/v1/categories:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of all categories
       produces:
       - application/json
       responses:
         "200":
           description: OK
-          headers:
-            X-Authenticated:
-              description: "true"
-              type: string
           schema:
-            $ref: '#/definitions/responses.AuthResponse'
-        "400":
-          description: Invalid request body or data
+            items:
+              $ref: '#/definitions/entity.Category'
+            type: array
+        "500":
+          description: Internal Server Error
           schema:
-            $ref: '#/definitions/responses.ErrResponse'
-        "405":
-          description: Method not allowed
-          schema:
-            $ref: '#/definitions/responses.ErrResponse'
-      summary: Login a user
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Get all categories
       tags:
-      - auth
-  /logout:
-    post:
-      consumes:
-      - application/json
-      description: Logout a user by invalidating the session
+      - categories
+  /api/v1/files/{fileId}:
+    get:
+      description: Get a file by its ID
+      parameters:
+      - description: File ID
+        in: path
+        name: fileId
+        required: true
+        type: string
       produces:
       - application/json
       responses:
         "200":
-          description: Logged out successfully
-          headers:
-            X-Authenticated:
-              description: "false"
-              type: string
+          description: URL of the static file
           schema:
-            additionalProperties:
-              type: string
-            type: object
-        "401":
-          description: No active session or session does not exist
+            type: string
+        "400":
+          description: Invalid static ID
           schema:
-            $ref: '#/definitions/responses.ErrResponse'
-        "405":
-          description: Method not allowed
+            $ref: '#/definitions/utils.ErrResponse'
+        "404":
+          description: Static file not found
           schema:
-            $ref: '#/definitions/responses.ErrResponse'
-      summary: Logout a user
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Failed to get static file
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Get file by ID
       tags:
-      - auth
-  /signup:
+      - static
+  /api/v1/login:
     post:
       consumes:
       - application/json
-      description: Signup a new user with email and password
+      description: Allows a user to log into the system
       parameters:
-      - description: User credentials
+      - description: Login data
         in: body
-        name: credentials
+        name: login
         required: true
         schema:
-          $ref: '#/definitions/handlers.AuthData'
+          $ref: '#/definitions/dto.Login'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: SessionID
+          schema:
+            type: string
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "401":
+          description: Invalid credentials or unauthorized access
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: User login
+      tags:
+      - Users
+  /api/v1/logout:
+    post:
+      consumes:
+      - application/json
+      description: Allows the user to log out of the system by deleting their session
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: You have successfully logged out
+          schema:
+            type: string
+        "400":
+          description: Invalid request or missing cookie
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "401":
+          description: Unauthorized access
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: User logout
+      tags:
+      - Authentication
+  /api/v1/me:
+    get:
+      consumes:
+      - application/json
+      description: Returns information about the currently authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User information
+          schema:
+            $ref: '#/definitions/dto.User'
+        "401":
+          description: Unauthorized access
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Get current user information
+      tags:
+      - Users
+  /api/v1/password:
+    post:
+      consumes:
+      - application/json
+      description: Allows a user to change their password
+      parameters:
+      - description: Password change data
+        in: body
+        name: password
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdatePassword'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Password changed successfully
+          schema:
+            type: string
+        "400":
+          description: Invalid data
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "401":
+          description: Unauthorized access
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Change user password
+      tags:
+      - Users
+  /api/v1/profile:
+    put:
+      consumes:
+      - application/json
+      description: Allows a user to update their profile information
+      parameters:
+      - description: Profile data
+        in: body
+        name: profile
+        required: true
+        schema:
+          $ref: '#/definitions/dto.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Profile updated successfully
+          schema:
+            type: string
+        "400":
+          description: Invalid data
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "401":
+          description: Unauthorized access
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Update user profile
+      tags:
+      - Users
+  /api/v1/profile/{user_id}:
+    get:
+      consumes:
+      - application/json
+      description: Returns user information by their ID
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User profile
+          schema:
+            $ref: '#/definitions/dto.User'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Get user profile
+      tags:
+      - Users
+  /api/v1/purchase:
+    post:
+      consumes:
+      - application/json
+      description: Accepts purchase data, validates it, and adds it to the system.
+        Returns a response with purchase data or an error.
+      parameters:
+      - description: Purchase request
+        in: body
+        name: purchase
+        required: true
+        schema:
+          $ref: '#/definitions/dto.PurchaseRequest'
       produces:
       - application/json
       responses:
         "201":
-          description: Created
+          description: Successful purchase
           schema:
-            $ref: '#/definitions/responses.AuthResponse'
+            $ref: '#/definitions/dto.PurchaseResponse'
         "400":
-          description: User already exists
+          description: Invalid request parameters
           schema:
-            $ref: '#/definitions/responses.ErrResponse'
-        "405":
-          description: Method not allowed
-          schema:
-            $ref: '#/definitions/responses.ErrResponse'
+            $ref: '#/definitions/utils.ErrResponse'
         "500":
-          description: Failed to create user
+          description: Internal server error
           schema:
-            $ref: '#/definitions/responses.ErrResponse'
-      summary: Signup a new user
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Adds a purchase
       tags:
-      - auth
+      - Purchases
+  /api/v1/seller/{seller_id}:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает информацию о продавце по его ID
+      parameters:
+      - description: ID продавца
+        in: path
+        name: seller_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Информация о продавце
+          schema:
+            $ref: '#/definitions/entity.Seller'
+        "400":
+          description: Некорректный запрос
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "404":
+          description: Продавец не найден
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Получение продавца по ID
+      tags:
+      - Продавцы
+  /api/v1/signup:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new user in the system
+      parameters:
+      - description: Registration data
+        in: body
+        name: signup
+        required: true
+        schema:
+          $ref: '#/definitions/dto.Signup'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: SessionID
+          schema:
+            type: string
+        "400":
+          description: Invalid request or user already exists
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "401":
+          description: Unauthorized request
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: User registration
+      tags:
+      - Users
+  /api/v1/user/{user_id}/image:
+    put:
+      description: Upload an image associated with an advert by its ID
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: Image file to upload
+        in: formData
+        name: image
+        required: true
+        type: file
+      responses:
+        "200":
+          description: Image uploaded
+          schema:
+            type: string
+        "400":
+          description: Invalid user ID or file not attached
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Failed to upload image
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Upload an image for an advert
+      tags:
+      - adverts
+  /cart/user/{user_id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves detailed information about a cart associated with a specific
+        user
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved cart
+          schema:
+            $ref: '#/definitions/dto.CartResponse'
+        "400":
+          description: Invalid user ID format
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Retrieve cart by User ID
+      tags:
+      - Cart
 swagger: "2.0"

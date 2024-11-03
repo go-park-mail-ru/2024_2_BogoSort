@@ -8,26 +8,31 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery"
+
 	"github.com/go-park-mail-ru/2024_2_BogoSort/config"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/router"
 	"github.com/pkg/errors"
 	"github.com/rs/cors"
+	"go.uber.org/zap"
 )
 
 type Server struct {
 	server *http.Server
 }
 
-func NewServer() *Server {
-	return &Server{}
-}
-
 func (server *Server) Run() error {
-	if err := config.Init(); err != nil {
-		return err
+	zap.ReplaceGlobals(zap.Must(zap.NewProduction()))
+	defer zap.L().Sync()
+
+	cfg, err := config.Init()
+	if err != nil {
+		return errors.Wrap(err, "failed to init config")
 	}
 
-	router := router.NewRouter()
+	router, err := delivery.NewRouter(cfg)
+	if err != nil {
+		return errors.Wrap(err, "failed to initialize router")
+	}
 
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins:   []string{"https://two024-2-bogo-sort.onrender.com"},
@@ -36,7 +41,7 @@ func (server *Server) Run() error {
 		AllowCredentials: true,
 	}).Handler(router)
 
-	log.Printf("Server started on %s", config.GetServerAddress())
+	zap.L().Info("Server started on " + config.GetServerAddress())
 
 	server.server = &http.Server{
 		Addr:         config.GetServerAddress(),
@@ -48,23 +53,23 @@ func (server *Server) Run() error {
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
-	err := server.server.ListenAndServe()
-	if !errors.Is(err, http.ErrServerClosed) {
-		log.Fatalf("server failed: %v", err)
-	}
+	go func() {
+		if err := server.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("server failed: %v", err)
+		}
+	}()
 
 	<-stop
-	log.Println("shutting down server...")
+	zap.L().Info("shutting down server...")
 
 	ctx, cancel := context.WithTimeout(context.Background(), config.GetShutdownTimeout())
 	defer cancel()
 
 	if err := server.Shutdown(ctx); err != nil {
-		log.Printf("server forced to shutdown: %v", err)
-		os.Exit(1)
+		zap.L().Error("server forced to shutdown", zap.Error(err))
 	}
 
-	log.Println("server exiting")
+	zap.L().Info("server exiting")
 
 	return nil
 }
