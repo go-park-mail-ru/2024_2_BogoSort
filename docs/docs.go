@@ -1308,6 +1308,9 @@ const docTemplate = `{
                 "category_id": {
                     "type": "string"
                 },
+                "created_at": {
+                    "type": "string"
+                },
                 "description": {
                     "type": "string"
                 },
@@ -1333,6 +1336,9 @@ const docTemplate = `{
                     "$ref": "#/definitions/dto.AdvertStatus"
                 },
                 "title": {
+                    "type": "string"
+                },
+                "updated_at": {
                     "type": "string"
                 }
             }
@@ -1504,6 +1510,9 @@ const docTemplate = `{
                     "type": "string",
                     "default": "00000000-0000-0000-0000-000000000000"
                 },
+                "created_at": {
+                    "type": "string"
+                },
                 "email": {
                     "type": "string"
                 },
@@ -1516,6 +1525,9 @@ const docTemplate = `{
                 "status": {
                     "type": "string",
                     "default": "active"
+                },
+                "updated_at": {
+                    "type": "string"
                 },
                 "username": {
                     "type": "string"

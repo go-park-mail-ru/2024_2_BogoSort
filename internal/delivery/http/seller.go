@@ -67,6 +67,18 @@ func (s *SellerEndpoints) GetSellerByID(w http.ResponseWriter, r *http.Request) 
 	utils.SendJSONResponse(w, http.StatusOK, seller)
 }
 
+// GetSellerByUserID Получение продавца по ID пользователя
+// @Summary Получить продавца по ID пользователя
+// @Description Возвращает информацию о продавце, связанном с указанным ID пользователя
+// @Tags Продавцы
+// @Accept json
+// @Produce json
+// @Param user_id path string true "ID пользователя"
+// @Success 200 {object} entity.Seller "Информация о продавце"
+// @Failure 400 {object} utils.ErrResponse "Некорректный ID пользователя"
+// @Failure 404 {object} utils.ErrResponse "Продавец не найден"
+// @Failure 500 {object} utils.ErrResponse "Внутренняя ошибка сервера"
+// @Router /api/v1/seller/user/{user_id} [get]
 func (s *SellerEndpoints) GetSellerByUserID(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	userID, err := uuid.Parse(vars["user_id"])

@@ -27,6 +27,8 @@ definitions:
     properties:
       category_id:
         type: string
+      created_at:
+        type: string
       description:
         type: string
       has_delivery:
@@ -44,6 +46,8 @@ definitions:
       status:
         $ref: '#/definitions/dto.AdvertStatus'
       title:
+        type: string
+      updated_at:
         type: string
     type: object
   dto.AdvertStatus:
@@ -159,6 +163,8 @@ definitions:
       avatar_id:
         default: 00000000-0000-0000-0000-000000000000
         type: string
+      created_at:
+        type: string
       email:
         type: string
       id:
@@ -167,6 +173,8 @@ definitions:
         type: string
       status:
         default: active
+        type: string
+      updated_at:
         type: string
       username:
         type: string
@@ -204,8 +212,6 @@ definitions:
     type: object
 info:
   contact: {}
-  title: "API Documentation"
-  version: "1.0.0"
 paths:
   /api/v1/adverts:
     get:
