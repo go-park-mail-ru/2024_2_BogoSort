@@ -12,6 +12,7 @@ import (
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository/redis"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase/service"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/pkg/connector"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/middleware"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 
@@ -29,6 +30,8 @@ func NewRouter(cfg config.Config) (*mux.Router, error) {
 
 	router := mux.NewRouter()
 	router.Use(recoveryMiddleware)
+
+	authRouter := router.PathPrefix("").Subrouter()
 
 	dbPool, err := connector.GetPostgresConnector(cfg.GetConnectURL())
 	if err != nil {
@@ -75,6 +78,10 @@ func NewRouter(cfg config.Config) (*mux.Router, error) {
 	if err != nil {
 		return nil, handleRepoError(err, "unable to create purchase repository")
 	}
+	csrfToken, err := utils.NewAesCryptHashToken(zap.L())
+	if err != nil {
+		return nil, handleRepoError(err, "unable to create csrf token")
+	}
 
 	advertsUseCase := service.NewAdvertService(advertsRepo, staticRepo, sellerRepo, zap.L())
 	staticUseCase := service.NewStaticService(staticRepo, zap.L())
@@ -94,14 +101,20 @@ func NewRouter(cfg config.Config) (*mux.Router, error) {
 	categoryHandler := http3.NewCategoryEndpoints(categoryUseCase, zap.L())
 	staticHandler := http3.NewStaticEndpoints(staticUseCase, zap.L())
 
-	advertsHandler.ConfigureRoutes(router)
-	categoryHandler.ConfigureRoutes(router)
-	authHandler.Configure(router)
-	userHandler.Configure(router)
-	sellerHandler.Configure(router)
-	cartHandler.Configure(router)
-	staticHandler.ConfigureRoutes(router)
-	purchaseHandler.ConfigureRoutes(router)
+	csrfEndpoints := http3.NewCSRFEndpoints(csrfToken, sessionManager)
+	csrfEndpoints.Configure(router)
+	userHandler.ConfigureCSRFUnprotectedRoutes(router)
+
+	authRouter.Use(middleware.CSRFMiddleware(csrfToken, sessionManager))
+
+	advertsHandler.ConfigureRoutes(authRouter)
+	categoryHandler.ConfigureRoutes(authRouter)
+	authHandler.Configure(authRouter)
+	userHandler.ConfigureRoutes(authRouter)
+	sellerHandler.Configure(authRouter)
+	cartHandler.Configure(authRouter)
+	staticHandler.ConfigureRoutes(authRouter)
+	purchaseHandler.ConfigureRoutes(authRouter)
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
 	return router, nil
@@ -118,3 +131,4 @@ func recoveryMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
+

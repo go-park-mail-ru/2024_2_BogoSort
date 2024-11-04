@@ -35,6 +35,7 @@ type Config struct {
 	RdPass  string        `yaml:"rd_password"`
 	RdDB    int           `yaml:"rd_db"`
 	Static StaticConfig   `yaml:"static"`
+	CSRFSecret string      `yaml:"csrf_secret"`
 }
 
 type StaticConfig struct {
@@ -106,4 +107,8 @@ func GetShutdownTimeout() time.Duration {
 
 func GetStaticConfig() StaticConfig {
 	return cfg.Static
+}
+
+func GetCSRFSecret() string {
+	return cfg.CSRFSecret
 }

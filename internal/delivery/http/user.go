@@ -43,14 +43,17 @@ func NewUserEndpoints(userUC usecase.User, authUC usecase.Auth, sessionManager *
 	}
 }
 
-func (u *UserEndpoints) Configure(router *mux.Router) {
-	router.HandleFunc("/api/v1/signup", u.Signup).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/login", u.Login).Methods(http.MethodPost)
+func (u *UserEndpoints) ConfigureRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/password", u.ChangePassword).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/profile/{user_id}", u.GetProfile).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/profile", u.UpdateProfile).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/me", u.GetMe).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/user/{user_id}/image", u.UploadImage).Methods(http.MethodPut)
+}
+
+func (u *UserEndpoints) ConfigureCSRFUnprotectedRoutes(router *mux.Router) {
+	router.HandleFunc("/api/v1/signup", u.Signup).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/login", u.Login).Methods(http.MethodPost)
 }
 
 func (u *UserEndpoints) handleError(w http.ResponseWriter, err error, context string, additionalInfo map[string]string) {
@@ -98,7 +101,7 @@ func (u *UserEndpoints) Signup(w http.ResponseWriter, r *http.Request) {
 
 	userID, err := u.userUC.Signup(&credentials)
 	if err != nil {
-		u.handleError(w, err, "Signup", map[string]string{"email": credentials.Email})
+		u.handleError(w, err, "Signup", map[string]string{"email": credentials.Email}) 
 		return
 	}
 
