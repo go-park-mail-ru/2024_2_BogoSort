@@ -59,6 +59,8 @@ func (u *UserEndpoints) handleError(w http.ResponseWriter, err error, context st
 	switch {
 	case errors.Is(err, usecase.ErrUserNotFound):
 		u.sendError(w, http.StatusNotFound, ErrUserNotFound, context, additionalInfo)
+	case errors.Is(err, usecase.ErrUserAlreadyExists):
+		u.sendError(w, http.StatusBadRequest, ErrUserAlreadyExists, context, additionalInfo)
 	case errors.Is(err, usecase.ErrInvalidCredentials):
 		u.sendError(w, http.StatusUnauthorized, ErrInvalidCredentials, context, additionalInfo)
 	case errors.As(err, &errUserIncorrectData):

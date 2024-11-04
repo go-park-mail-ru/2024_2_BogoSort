@@ -18,7 +18,7 @@ import (
 
 const (
 	queryGetUserByEmail = `
-		SELECT id, email, password_hash, password_salt, username, phone_number, image_id, status
+		SELECT id, email, password_hash, password_salt, username, phone_number, image_id, status, created_at, updated_at
 		FROM "user"
 		WHERE email = $1
 	`
