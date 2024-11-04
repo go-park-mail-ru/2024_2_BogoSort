@@ -23,6 +23,13 @@ var (
 	ErrFailedToUpdateAdvert = errors.New("failed to update advert")
 	ErrFailedToDeleteAdvert = errors.New("failed to delete advert")
 	ErrForbidden            = errors.New("forbidden")
+	ErrBadRequest           = errors.New("bad request")
+	ErrInvalidAdvertData    = errors.New("invalid advert data")
+	ErrInvalidAdvertStatus  = errors.New("invalid advert status")
+	ErrFileNotAttached      = errors.New("file not attached")
+	ErrFailedToReadFile     = errors.New("failed to read file")
+	ErrFailedToCloseFile    = errors.New("failed to close file")
+	ErrFailedToUploadFile   = errors.New("failed to upload file")
 )
 
 type AdvertEndpoints struct {
@@ -37,7 +44,7 @@ func NewAdvertEndpoints(advertUseCase usecase.AdvertUseCase,
 	sessionManager *utils.SessionManager,
 	logger *zap.Logger) *AdvertEndpoints {
 	return &AdvertEndpoints{
-		advertUseCase: advertUseCase,
+		advertUseCase:  advertUseCase,
 		staticUseCase:  staticUseCase,
 		sessionManager: sessionManager,
 		logger:         logger,
@@ -71,13 +78,13 @@ func (h *AdvertEndpoints) ConfigureRoutes(router *mux.Router) {
 func (h *AdvertEndpoints) GetAdverts(writer http.ResponseWriter, r *http.Request) {
 	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
 	if err != nil || limit <= 0 {
-		h.sendError(writer, http.StatusBadRequest, err, "invalid limit", nil)
+		h.sendError(writer, http.StatusBadRequest, ErrBadRequest, "invalid limit", nil)
 		return
 	}
 
 	offset, err := strconv.Atoi(r.URL.Query().Get("offset"))
 	if err != nil || offset < 0 {
-		h.sendError(writer, http.StatusBadRequest, err, "invalid offset", nil)
+		h.sendError(writer, http.StatusBadRequest, ErrBadRequest, "invalid offset", nil)
 		return
 	}
 
@@ -105,7 +112,7 @@ func (h *AdvertEndpoints) GetAdvertsBySellerId(writer http.ResponseWriter, r *ht
 	sellerIdStr := mux.Vars(r)["sellerId"]
 	sellerId, err := uuid.Parse(sellerIdStr)
 	if err != nil {
-		h.sendError(writer, http.StatusBadRequest, err, "invalid seller ID", nil)
+		h.sendError(writer, http.StatusBadRequest, ErrInvalidID, "invalid seller ID", nil)
 		return
 	}
 
@@ -133,7 +140,7 @@ func (h *AdvertEndpoints) GetAdvertsByCartId(writer http.ResponseWriter, r *http
 	cartIdStr := mux.Vars(r)["cartId"]
 	cartId, err := uuid.Parse(cartIdStr)
 	if err != nil {
-		h.sendError(writer, http.StatusBadRequest, err, "invalid cart ID", nil)
+		h.sendError(writer, http.StatusBadRequest, ErrInvalidID, "invalid cart ID", nil)
 		return
 	}
 
@@ -161,7 +168,7 @@ func (h *AdvertEndpoints) GetAdvertById(writer http.ResponseWriter, r *http.Requ
 	advertIdStr := mux.Vars(r)["advertId"]
 	advertId, err := uuid.Parse(advertIdStr)
 	if err != nil {
-		h.sendError(writer, http.StatusBadRequest, err, "invalid advert ID", nil)
+		h.sendError(writer, http.StatusBadRequest, ErrInvalidID, "invalid advert ID", nil)
 		return
 	}
 
@@ -188,7 +195,7 @@ func (h *AdvertEndpoints) GetAdvertById(writer http.ResponseWriter, r *http.Requ
 func (h *AdvertEndpoints) AddAdvert(writer http.ResponseWriter, r *http.Request) {
 	var advert dto.AdvertRequest
 	if err := json.NewDecoder(r.Body).Decode(&advert); err != nil {
-		h.sendError(writer, http.StatusBadRequest, err, "invalid advert data", nil)
+		h.sendError(writer, http.StatusBadRequest, ErrInvalidAdvertData, "invalid advert data", nil)
 		return
 	}
 
@@ -224,20 +231,20 @@ func (h *AdvertEndpoints) AddAdvert(writer http.ResponseWriter, r *http.Request)
 func (h *AdvertEndpoints) UpdateAdvert(writer http.ResponseWriter, r *http.Request) {
 	var advert dto.AdvertRequest
 	if err := json.NewDecoder(r.Body).Decode(&advert); err != nil {
-		h.sendError(writer, http.StatusBadRequest, err, "invalid advert data", nil)
+		h.sendError(writer, http.StatusBadRequest, ErrInvalidAdvertData, "invalid advert data", nil)
 		return
 	}
 
 	userID, err := h.sessionManager.GetUserID(r)
 	if err != nil {
-		h.sendError(writer, http.StatusUnauthorized, err, "user not found", nil)
+		h.sendError(writer, http.StatusUnauthorized, ErrInvalidCredentials, "user not found", nil)
 		return
 	}
 
 	advertIdStr := mux.Vars(r)["advertId"]
 	advertId, err := uuid.Parse(advertIdStr)
 	if err != nil {
-		h.sendError(writer, http.StatusBadRequest, err, "invalid advert ID", nil)
+		h.sendError(writer, http.StatusBadRequest, ErrInvalidID, "invalid advert ID", nil)
 		return
 	}
 
@@ -264,13 +271,13 @@ func (h *AdvertEndpoints) DeleteAdvertById(writer http.ResponseWriter, r *http.R
 	advertIdStr := mux.Vars(r)["advertId"]
 	advertId, err := uuid.Parse(advertIdStr)
 	if err != nil {
-		h.sendError(writer, http.StatusBadRequest, err, "invalid advert ID", nil)
+		h.sendError(writer, http.StatusBadRequest, ErrInvalidID, "invalid advert ID", nil)
 		return
 	}
 
 	userID, err := h.sessionManager.GetUserID(r)
 	if err != nil {
-		h.sendError(writer, http.StatusUnauthorized, err, "user not found", nil)
+		h.sendError(writer, http.StatusUnauthorized, ErrInvalidCredentials, "user not found", nil)
 		return
 	}
 
@@ -298,19 +305,19 @@ func (h *AdvertEndpoints) UpdateAdvertStatus(writer http.ResponseWriter, r *http
 	advertIdStr := mux.Vars(r)["advertId"]
 	advertId, err := uuid.Parse(advertIdStr)
 	if err != nil {
-		h.sendError(writer, http.StatusBadRequest, err, "invalid advert ID", nil)
+		h.sendError(writer, http.StatusBadRequest, ErrInvalidID, "invalid advert ID", nil)
 		return
 	}
 
 	status := r.FormValue("status")
 	if status != string(dto.AdvertStatusActive) && status != string(dto.AdvertStatusInactive) {
-		h.sendError(writer, http.StatusBadRequest, err, "invalid advert status", nil)
+		h.sendError(writer, http.StatusBadRequest, ErrInvalidAdvertStatus, "invalid advert status", nil)
 		return
 	}
 
 	userID, err := h.sessionManager.GetUserID(r)
 	if err != nil {
-		h.sendError(writer, http.StatusUnauthorized, err, "user not found", nil)
+		h.sendError(writer, http.StatusUnauthorized, ErrInvalidCredentials, "user not found", nil)
 		return
 	}
 
@@ -336,7 +343,7 @@ func (h *AdvertEndpoints) GetAdvertsByCategoryId(writer http.ResponseWriter, r *
 	categoryIdStr := mux.Vars(r)["categoryId"]
 	categoryId, err := uuid.Parse(categoryIdStr)
 	if err != nil {
-		h.sendError(writer, http.StatusBadRequest, err, "invalid category ID", nil)
+		h.sendError(writer, http.StatusBadRequest, ErrInvalidID, "invalid category ID", nil)
 		return
 	}
 
@@ -363,36 +370,36 @@ func (h *AdvertEndpoints) UploadImage(writer http.ResponseWriter, r *http.Reques
 	advertIdStr := mux.Vars(r)["advertId"]
 	advertId, err := uuid.Parse(advertIdStr)
 	if err != nil {
-		h.sendError(writer, http.StatusBadRequest, err, "invalid advert ID", nil)
+		h.sendError(writer, http.StatusBadRequest, ErrInvalidID, "invalid advert ID", nil)
 		return
 	}
 
 	fileHeader, _, err := r.FormFile("image")
 	if err != nil {
-		h.sendError(writer, http.StatusBadRequest, err, "file not attached", nil)
+		h.sendError(writer, http.StatusBadRequest, ErrFileNotAttached, "file not attached", nil)
 		return
 	}
 
 	data, err := io.ReadAll(fileHeader)
 	if err != nil {
-		h.sendError(writer, http.StatusInternalServerError, err, "failed to read file", nil)
+		h.sendError(writer, http.StatusInternalServerError, ErrFailedToReadFile, "failed to read file", nil)
 		return
 	}
 
 	if err = fileHeader.Close(); err != nil {
-		h.sendError(writer, http.StatusInternalServerError, err, "failed to close file", nil)
+		h.sendError(writer, http.StatusInternalServerError, ErrFailedToCloseFile, "failed to close file", nil)
 		return
 	}
 
 	imageId, err := h.staticUseCase.UploadFile(data)
 	if err != nil {
-		h.sendError(writer, http.StatusInternalServerError, err, "failed to upload image", nil)
+		h.sendError(writer, http.StatusInternalServerError, ErrFailedToUploadFile, "failed to upload image", nil)
 		return
 	}
 
-	userID, err := h.sessionManager.GetUserID(r)	
+	userID, err := h.sessionManager.GetUserID(r)
 	if err != nil {
-		h.sendError(writer, http.StatusUnauthorized, err, "user not found", nil)
+		h.sendError(writer, http.StatusUnauthorized, ErrInvalidCredentials, "user not found", nil)
 		return
 	}
 
@@ -402,7 +409,7 @@ func (h *AdvertEndpoints) UploadImage(writer http.ResponseWriter, r *http.Reques
 		} else if errors.Is(err, ErrForbidden) {
 			h.sendError(writer, http.StatusForbidden, err, "forbidden", nil)
 		} else {
-			h.sendError(writer, http.StatusInternalServerError, err, "failed to upload image", nil)
+			h.sendError(writer, http.StatusInternalServerError, ErrFailedToUploadFile, "failed to upload image", nil)
 		}
 		return
 	}
