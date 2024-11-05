@@ -56,22 +56,12 @@ func (u *UserEndpoints) ConfigureProtectedRoutes(router *mux.Router) {
 	protected.HandleFunc("/profile", u.UpdateProfile).Methods(http.MethodPut)
 	protected.HandleFunc("/me", u.GetMe).Methods(http.MethodGet)
 	protected.HandleFunc("/user/{user_id}/image", u.UploadImage).Methods(http.MethodPut)
-	protected.HandleFunc("/profile/{user_id}", u.GetProfile).Methods(http.MethodGet)
 }
 
 func (u *UserEndpoints) ConfigureUnprotectedRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/signup", u.Signup).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/login", u.Login).Methods(http.MethodPost)
-}
-
-func (u *UserEndpoints) sanitizeRequestSignup(credentials *dto.Signup) {
-	credentials.Email = u.policy.Sanitize(credentials.Email)
-	credentials.Password = u.policy.Sanitize(credentials.Password)
-}
-
-func (u *UserEndpoints) sanitizeRequestLogin(credentials *dto.Login) {
-	credentials.Email = u.policy.Sanitize(credentials.Email)
-	credentials.Password = u.policy.Sanitize(credentials.Password)
+	router.HandleFunc("/api/v1/profile/{user_id}", u.GetProfile).Methods(http.MethodGet)
 }
 
 func (u *UserEndpoints) handleError(w http.ResponseWriter, err error, context string, additionalInfo map[string]string) {
@@ -117,7 +107,7 @@ func (u *UserEndpoints) Signup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u.sanitizeRequestSignup(&credentials)
+	utils.SanitizeRequestSignup(&credentials, u.policy)
 
 	userID, err := u.userUC.Signup(&credentials)
 	if err != nil {
@@ -163,7 +153,7 @@ func (u *UserEndpoints) Login(w http.ResponseWriter, r *http.Request) {
 		u.sendError(w, http.StatusBadRequest, err, "error decoding login request", nil)
 		return
 	}
-	u.sanitizeRequestLogin(&credentials)
+	utils.SanitizeRequestLogin(&credentials, u.policy)
 
 	userID, err := u.userUC.Login(&credentials)
 	if err != nil {
