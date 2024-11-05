@@ -14,6 +14,7 @@ import (
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase/service"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/pkg/connector"
 	"github.com/gorilla/mux"
+	"github.com/microcosm-cc/bluemonday"
 	"go.uber.org/zap"
 
 	"github.com/pkg/errors"
@@ -30,6 +31,8 @@ func NewRouter(cfg config.Config) (*mux.Router, error) {
 
 	router := mux.NewRouter()
 	router.Use(recoveryMiddleware)
+
+	policy := bluemonday.UGCPolicy()
 
 	authRouter := router.PathPrefix("").Subrouter()
 
@@ -94,9 +97,9 @@ func NewRouter(cfg config.Config) (*mux.Router, error) {
 
 	router.Use(middleware.NewAuthMiddleware(sessionManager).AuthMiddleware)
 
-	advertsHandler := http3.NewAdvertEndpoints(advertsUseCase, staticUseCase, sessionManager, zap.L())
+	advertsHandler := http3.NewAdvertEndpoints(advertsUseCase, staticUseCase, sessionManager, zap.L(), policy)
 	authHandler := http3.NewAuthEndpoints(sessionUC, sessionManager, zap.L())
-	userHandler := http3.NewUserEndpoints(userUC, sessionUC, sessionManager, staticUseCase, zap.L())
+	userHandler := http3.NewUserEndpoints(userUC, sessionUC, sessionManager, staticUseCase, zap.L(), policy)
 	sellerHandler := http3.NewSellerEndpoints(sellerRepo, zap.L())
 	purchaseHandler := http3.NewPurchaseEndpoints(purchaseUseCase, zap.L())
 	cartHandler := http3.NewCartEndpoints(cartUC, zap.L())
