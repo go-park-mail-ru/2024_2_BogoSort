@@ -90,7 +90,7 @@ func NewRouter(cfg config.Config) (*mux.Router, error) {
 	staticUseCase := service.NewStaticService(staticRepo, zap.L())
 	categoryUseCase := service.NewCategoryService(categoryRepo, zap.L())
 	purchaseUseCase := service.NewPurchaseService(purchaseRepo, advertsRepo, cartRepo, zap.L())
-	cartUC := service.NewCartService(cartRepo, zap.L())
+	cartUC := service.NewCartService(cartRepo, advertsRepo, zap.L())
 	userUC := service.NewUserService(userRepo, sellerRepo, zap.L())
 	sessionUC := service.NewAuthService(sessionRepo, zap.L())
 	sessionManager := utils.NewSessionManager(sessionUC, int(cfg.Session.ExpirationTime.Seconds()), cfg.Session.SecureCookie, zap.L())
