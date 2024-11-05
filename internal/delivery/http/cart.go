@@ -31,6 +31,7 @@ func (h *CartEndpoints) Configure(router *mux.Router) {
 	router.HandleFunc("/api/v1/cart/user/{user_id}", h.GetCartByUserID).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/cart/add", h.AddAdvertToCart).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/cart/delete", h.DeleteAdvertFromCart).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/cart/exists/{user_id}", h.CheckCartExists).Methods(http.MethodGet)
 }
 
 // GetCartByID Retrieves the cart by its ID
@@ -165,4 +166,38 @@ func (h *CartEndpoints) DeleteAdvertFromCart(w http.ResponseWriter, r *http.Requ
 	}
 
 	utils.SendJSONResponse(w, http.StatusOK, map[string]string{"message": "advert deleted from user cart"})
+}
+
+// CheckCartExists Проверяет, существует ли корзина для пользователя
+// @Summary Проверить существование корзины для пользователя
+// @Description Проверяет, существует ли корзина для пользователя по его ID
+// @Tags Cart
+// @Accept json
+// @Produce json
+// @Param user_id path string true "User ID"
+// @Success 200 {object} map[string]bool "Cart existence check result"
+// @Failure 400 {object} utils.ErrResponse "Invalid user ID format"
+// @Failure 500 {object} utils.ErrResponse "Internal server error"
+// @Router /api/v1/cart/exists/{user_id} [get]
+func (h *CartEndpoints) CheckCartExists(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	userIDStr, ok := vars["user_id"]
+	if !ok {
+		utils.SendErrorResponse(w, http.StatusBadRequest, "user_id is required")
+		return
+	}
+
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		utils.SendErrorResponse(w, http.StatusBadRequest, "invalid user_id")
+		return
+	}
+
+	exists, err := h.cartUC.CheckCartExists(userID)
+	if err != nil {
+		utils.SendErrorResponse(w, http.StatusInternalServerError, "failed to check cart existence")
+		return
+	}
+
+	utils.SendJSONResponse(w, http.StatusOK, map[string]bool{"exists": exists})
 }

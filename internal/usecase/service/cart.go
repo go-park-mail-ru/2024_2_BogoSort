@@ -81,3 +81,14 @@ func (c *CartService) GetCartByUserID(userID uuid.UUID) (dto.Cart, error) {
 	}
 	return c.GetCartByID(cart.ID)
 }
+
+func (c *CartService) CheckCartExists(userID uuid.UUID) (bool, error) {
+	_, err := c.cartRepo.GetCartByUserID(userID)
+	switch {
+	case errors.Is(err, repository.ErrCartNotFound):
+		return false, nil
+	case err != nil:
+		return false, entity.PSQLWrap(errors.New("error checking cart existence"), err)
+	}
+	return true, nil
+}

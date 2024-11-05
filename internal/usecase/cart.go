@@ -14,4 +14,6 @@ type Cart interface {
 	GetCartByUserID(userID uuid.UUID) (dto.Cart, error)
 	// DeleteAdvertFromCart удаляет товар из корзины по ID корзины и ID товара
 	DeleteAdvertFromCart(cartID uuid.UUID, AdvertID uuid.UUID) error
+	// CheckCartExists проверяет, существует ли корзина для пользователя
+	CheckCartExists(userID uuid.UUID) (bool, error)
 }
