@@ -1432,11 +1432,13 @@ const docTemplate = `{
             "type": "string",
             "enum": [
                 "active",
-                "inactive"
+                "inactive",
+                "reserved"
             ],
             "x-enum-varnames": [
                 "AdvertStatusActive",
-                "AdvertStatusInactive"
+                "AdvertStatusInactive",
+                "AdvertStatusReserved"
             ]
         },
         "dto.Cart": {

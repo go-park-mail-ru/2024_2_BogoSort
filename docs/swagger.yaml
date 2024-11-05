@@ -54,10 +54,12 @@ definitions:
     enum:
     - active
     - inactive
+    - reserved
     type: string
     x-enum-varnames:
     - AdvertStatusActive
     - AdvertStatusInactive
+    - AdvertStatusReserved
   dto.Cart:
     properties:
       adverts:
@@ -212,8 +214,8 @@ definitions:
     type: object
 info:
   contact: {}
-  title: "API"
-  version: "1.0.0"
+  title: BogoSort API
+  version: 1.0.0
 paths:
   /api/v1/adverts:
     get:
