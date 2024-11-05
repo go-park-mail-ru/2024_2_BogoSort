@@ -5,14 +5,14 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase/mocks"
-	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap"
-	"github.com/golang/mock/gomock"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"encoding/json"
 	"errors"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase/mocks"
+	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 )
 
 func TestGetCategories_Success(t *testing.T) {
@@ -22,7 +22,7 @@ func TestGetCategories_Success(t *testing.T) {
 	mockUseCase := mocks.NewMockCategoryUseCase(ctrl)
 	logger, _ := zap.NewDevelopment()
 
-	mockUseCase.EXPECT().GetCategories().Return([]entity.Category{{ID: uuid.New(), Title: "Category1"}}, nil)
+	mockUseCase.EXPECT().GetCategories().Return([]*entity.Category{{ID: uuid.New(), Title: "Category1"}}, nil)
 
 	endpoints := NewCategoryEndpoints(mockUseCase, logger)
 
