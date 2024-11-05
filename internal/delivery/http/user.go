@@ -44,7 +44,7 @@ func NewUserEndpoints(userUC usecase.User, authUC usecase.Auth, sessionManager *
 	}
 }
 
-func (u *UserEndpoints) Configure(router *mux.Router) {
+func (u *UserEndpoints) ConfigureProtectedRoutes(router *mux.Router) {
 	protected := router.PathPrefix("/api/v1").Subrouter()
 	sessionMiddleware := middleware.NewAuthMiddleware(u.sessionManager)
 	protected.Use(sessionMiddleware.SessionMiddleware)
@@ -53,11 +53,7 @@ func (u *UserEndpoints) Configure(router *mux.Router) {
 	protected.HandleFunc("/profile", u.UpdateProfile).Methods(http.MethodPut)
 	protected.HandleFunc("/me", u.GetMe).Methods(http.MethodGet)
 	protected.HandleFunc("/user/{user_id}/image", u.UploadImage).Methods(http.MethodPut)
-
-	router.HandleFunc("/api/v1/signup", u.Signup).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/login", u.Login).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/profile/{user_id}", u.GetProfile).Methods(http.MethodGet)
-
+	protected.HandleFunc("/profile/{user_id}", u.GetProfile).Methods(http.MethodGet)
 }
 
 func (u *UserEndpoints) ConfigureUnprotectedRoutes(router *mux.Router) {
