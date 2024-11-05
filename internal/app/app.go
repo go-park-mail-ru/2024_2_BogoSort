@@ -38,6 +38,7 @@ func (server *Server) Run() error {
 		AllowedOrigins:   []string{"https://two024-2-bogo-sort.onrender.com"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
 		AllowedHeaders:   []string{"Content-Type", "Authorization", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"X-Authenticated", "X-CSRF-Token"},
 		AllowCredentials: true,
 	}).Handler(router)
 

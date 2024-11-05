@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
+	"github.com/microcosm-cc/bluemonday"
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/middleware"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/utils"
@@ -32,15 +33,17 @@ type UserEndpoints struct {
 	sessionManager *utils.SessionManager
 	staticUseCase  usecase.StaticUseCase
 	logger         *zap.Logger
+	policy         *bluemonday.Policy
 }
 
-func NewUserEndpoints(userUC usecase.User, authUC usecase.Auth, sessionManager *utils.SessionManager, staticUseCase usecase.StaticUseCase, logger *zap.Logger) *UserEndpoints {
+func NewUserEndpoints(userUC usecase.User, authUC usecase.Auth, sessionManager *utils.SessionManager, staticUseCase usecase.StaticUseCase, logger *zap.Logger, policy *bluemonday.Policy) *UserEndpoints {
 	return &UserEndpoints{
 		userUC:         userUC,
 		authUC:         authUC,
 		sessionManager: sessionManager,
 		staticUseCase:  staticUseCase,
 		logger:         logger,
+		policy:         policy,
 	}
 }
 
@@ -59,6 +62,16 @@ func (u *UserEndpoints) ConfigureProtectedRoutes(router *mux.Router) {
 func (u *UserEndpoints) ConfigureUnprotectedRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/signup", u.Signup).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/login", u.Login).Methods(http.MethodPost)
+}
+
+func (u *UserEndpoints) sanitizeRequestSignup(credentials *dto.Signup) {
+	credentials.Email = u.policy.Sanitize(credentials.Email)
+	credentials.Password = u.policy.Sanitize(credentials.Password)
+}
+
+func (u *UserEndpoints) sanitizeRequestLogin(credentials *dto.Login) {
+	credentials.Email = u.policy.Sanitize(credentials.Email)
+	credentials.Password = u.policy.Sanitize(credentials.Password)
 }
 
 func (u *UserEndpoints) handleError(w http.ResponseWriter, err error, context string, additionalInfo map[string]string) {
@@ -104,6 +117,8 @@ func (u *UserEndpoints) Signup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	u.sanitizeRequestSignup(&credentials)
+
 	userID, err := u.userUC.Signup(&credentials)
 	if err != nil {
 		u.handleError(w, err, "Signup", map[string]string{"email": credentials.Email})
@@ -148,6 +163,8 @@ func (u *UserEndpoints) Login(w http.ResponseWriter, r *http.Request) {
 		u.sendError(w, http.StatusBadRequest, err, "error decoding login request", nil)
 		return
 	}
+	u.sanitizeRequestLogin(&credentials)
+
 	userID, err := u.userUC.Login(&credentials)
 	if err != nil {
 		u.handleError(w, err, "Login", map[string]string{"email": credentials.Email})
@@ -190,6 +207,8 @@ func (u *UserEndpoints) ChangePassword(w http.ResponseWriter, r *http.Request) {
 		u.sendError(w, http.StatusBadRequest, err, "error decoding change password request", nil)
 		return
 	}
+	utils.SanitizeRequestChangePassword(&updatePassword, u.policy)
+
 	userID, err := u.sessionManager.GetUserID(r)
 	if err != nil {
 		u.sendError(w, http.StatusUnauthorized, err, "unauthorized request", nil)
@@ -224,6 +243,7 @@ func (u *UserEndpoints) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 		u.sendError(w, http.StatusBadRequest, err, "error decoding update profile request", nil)
 		return
 	}
+	utils.SanitizeRequestUser(&user, u.policy)
 	userID, err := u.sessionManager.GetUserID(r)
 	if err != nil {
 		u.handleError(w, err, "UpdateProfile", nil)
@@ -263,7 +283,7 @@ func (u *UserEndpoints) GetProfile(w http.ResponseWriter, r *http.Request) {
 		u.handleError(w, err, "GetProfile", map[string]string{"userID": userID.String()})
 		return
 	}
-
+	utils.SanitizeResponseUser(user, u.policy)
 	utils.SendJSONResponse(w, http.StatusOK, user)
 }
 
@@ -288,7 +308,7 @@ func (u *UserEndpoints) GetMe(w http.ResponseWriter, r *http.Request) {
 		u.handleError(w, err, "GetMe", map[string]string{"userID": userID.String()})
 		return
 	}
-
+	utils.SanitizeResponseUser(user, u.policy)
 	utils.SendJSONResponse(w, http.StatusOK, user)
 }
 

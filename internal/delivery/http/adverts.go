@@ -3,16 +3,18 @@ package http
 import (
 	"encoding/json"
 	"errors"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/utils"
-	"github.com/google/uuid"
-	"go.uber.org/zap"
 	"io"
 	"net/http"
 	"strconv"
 
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/utils"
+	"github.com/google/uuid"
+	"go.uber.org/zap"
+
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase"
 	"github.com/gorilla/mux"
+	"github.com/microcosm-cc/bluemonday"
 )
 
 var (
@@ -30,17 +32,20 @@ type AdvertEndpoints struct {
 	staticUseCase  usecase.StaticUseCase
 	sessionManager *utils.SessionManager
 	logger         *zap.Logger
+	policy         *bluemonday.Policy
 }
 
 func NewAdvertEndpoints(advertUseCase usecase.AdvertUseCase,
 	staticUseCase usecase.StaticUseCase,
 	sessionManager *utils.SessionManager,
-	logger *zap.Logger) *AdvertEndpoints {
+	logger *zap.Logger,
+	policy *bluemonday.Policy) *AdvertEndpoints {
 	return &AdvertEndpoints{
-		advertUseCase: advertUseCase,
+		advertUseCase:  advertUseCase,
 		staticUseCase:  staticUseCase,
 		sessionManager: sessionManager,
 		logger:         logger,
+		policy:         policy,
 	}
 }
 
@@ -87,6 +92,9 @@ func (h *AdvertEndpoints) GetAdverts(writer http.ResponseWriter, r *http.Request
 		return
 	}
 
+	for _, advert := range adverts {
+		utils.SanitizeResponseAdvert(advert, h.policy)
+	}
 	utils.SendJSONResponse(writer, http.StatusOK, adverts)
 }
 
@@ -115,6 +123,9 @@ func (h *AdvertEndpoints) GetAdvertsBySellerId(writer http.ResponseWriter, r *ht
 		return
 	}
 
+	for _, advert := range adverts {
+		utils.SanitizeResponseAdvert(advert, h.policy)
+	}
 	utils.SendJSONResponse(writer, http.StatusOK, adverts)
 }
 
@@ -143,6 +154,9 @@ func (h *AdvertEndpoints) GetAdvertsByCartId(writer http.ResponseWriter, r *http
 		return
 	}
 
+	for _, advert := range adverts {
+		utils.SanitizeResponseAdvert(advert, h.policy)
+	}
 	utils.SendJSONResponse(writer, http.StatusOK, adverts)
 }
 
@@ -171,6 +185,7 @@ func (h *AdvertEndpoints) GetAdvertById(writer http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	utils.SanitizeResponseAdvert(advert, h.policy)
 	utils.SendJSONResponse(writer, http.StatusOK, advert)
 }
 
@@ -191,6 +206,8 @@ func (h *AdvertEndpoints) AddAdvert(writer http.ResponseWriter, r *http.Request)
 		h.sendError(writer, http.StatusBadRequest, err, "invalid advert data", nil)
 		return
 	}
+
+	utils.SanitizeRequestAdvert(&advert, h.policy)
 
 	userID, err := h.sessionManager.GetUserID(r)
 	if err != nil {
@@ -227,6 +244,8 @@ func (h *AdvertEndpoints) UpdateAdvert(writer http.ResponseWriter, r *http.Reque
 		h.sendError(writer, http.StatusBadRequest, err, "invalid advert data", nil)
 		return
 	}
+
+	utils.SanitizeRequestAdvert(&advert, h.policy)
 
 	userID, err := h.sessionManager.GetUserID(r)
 	if err != nil {
@@ -346,6 +365,9 @@ func (h *AdvertEndpoints) GetAdvertsByCategoryId(writer http.ResponseWriter, r *
 		return
 	}
 
+	for _, advert := range adverts {
+		utils.SanitizeResponseAdvert(advert, h.policy)
+	}
 	utils.SendJSONResponse(writer, http.StatusOK, adverts)
 }
 
@@ -390,7 +412,7 @@ func (h *AdvertEndpoints) UploadImage(writer http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	userID, err := h.sessionManager.GetUserID(r)	
+	userID, err := h.sessionManager.GetUserID(r)
 	if err != nil {
 		h.sendError(writer, http.StatusUnauthorized, err, "user not found", nil)
 		return
