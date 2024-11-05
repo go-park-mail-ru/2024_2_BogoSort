@@ -7,6 +7,7 @@ import (
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
@@ -76,4 +77,28 @@ func (s *PurchaseService) AddPurchase(purchaseRequest dto.PurchaseRequest) (*dto
 	}
 
 	return s.purchaseEntityToDTO(purchase)
+}
+
+func (s *PurchaseService) GetPurchasesByUserID(userID uuid.UUID) ([]*dto.PurchaseResponse, error) {
+	purchases, err := s.purchaseRepo.GetPurchasesByUserID(userID)
+	if err != nil {
+		return nil, entity.UsecaseWrap(errors.New("failed to get purchases"), err)
+	}
+
+	return s.purchaseEntitiesToDTO(purchases)
+}
+
+func (s *PurchaseService) purchaseEntitiesToDTO(purchases []*entity.Purchase) ([]*dto.PurchaseResponse, error) {
+	var purchaseDTOs []*dto.PurchaseResponse
+
+	for _, purchase := range purchases {
+		dto, err := s.purchaseEntityToDTO(purchase)
+		if err != nil {
+			s.logger.Error("failed to convert purchase entity to DTO", zap.Error(err))
+			return nil, err
+		}
+		purchaseDTOs = append(purchaseDTOs, dto)
+	}
+
+	return purchaseDTOs, nil
 }

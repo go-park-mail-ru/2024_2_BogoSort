@@ -214,8 +214,6 @@ definitions:
     type: object
 info:
   contact: {}
-  title: BogoSort API
-  version: 1.0.0
 paths:
   /api/v1/adverts:
     get:
@@ -969,6 +967,38 @@ paths:
           schema:
             $ref: '#/definitions/utils.ErrResponse'
       summary: Adds a purchase
+      tags:
+      - Purchases
+  /api/v1/purchase/{user_id}:
+    get:
+      consumes:
+      - application/json
+      description: Accepts a user ID, validates it, and retrieves purchases from the
+        system. Returns a response with purchase data or an error.
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful purchase
+          schema:
+            items:
+              $ref: '#/definitions/dto.PurchaseResponse'
+            type: array
+        "400":
+          description: Invalid user ID
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Retrieves purchases by user ID
       tags:
       - Purchases
   /api/v1/seller/{seller_id}:

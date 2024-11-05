@@ -8,7 +8,7 @@ type Purchase struct {
 	Address        string    `db:"address"`
 	Status         PurchaseStatus `db:"status"`
 	PaymentMethod  PaymentMethod `db:"payment_method"`
-	DeliveryMethod DeliveryMethod `db:"delivery_method"`
+	DeliveryMethod DeliveryMethod `db:"delivery_method"` 
 }
 
 type PurchaseStatus string
