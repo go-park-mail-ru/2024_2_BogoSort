@@ -1,12 +1,17 @@
 package utils
 
 import (
+	"errors"
 	"net/http"
 	"time"
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
+)
+
+var (
+	ErrSessionExpired = errors.New("session has expired")
 )
 
 type SessionManager struct {
@@ -51,7 +56,14 @@ func (s *SessionManager) GetUserID(r *http.Request) (uuid.UUID, error) {
 		return uuid.Nil, err
 	}
 
-	return s.sessionUC.GetUserIdBySession(cookie.Value)
+	userID, err := s.sessionUC.GetUserIdBySession(cookie.Value)
+	if err != nil {
+		s.logger.Error("session expired or not found", zap.String("sessionID", cookie.Value))
+		s.DeleteSession(cookie.Value)
+		return uuid.Nil, ErrSessionExpired
+	}
+
+	return userID, nil
 }
 
 func (s *SessionManager) DeleteSession(sessionID string) error {

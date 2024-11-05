@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/middleware"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/utils"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase"
@@ -44,13 +45,19 @@ func NewUserEndpoints(userUC usecase.User, authUC usecase.Auth, sessionManager *
 }
 
 func (u *UserEndpoints) Configure(router *mux.Router) {
+	protected := router.PathPrefix("/api/v1").Subrouter()
+	sessionMiddleware := middleware.NewAuthMiddleware(u.sessionManager)
+	protected.Use(sessionMiddleware.SessionMiddleware)
+
+	protected.HandleFunc("/password", u.ChangePassword).Methods(http.MethodPost)
+	protected.HandleFunc("/profile", u.UpdateProfile).Methods(http.MethodPut)
+	protected.HandleFunc("/me", u.GetMe).Methods(http.MethodGet)
+	protected.HandleFunc("/user/{user_id}/image", u.UploadImage).Methods(http.MethodPut)
+
 	router.HandleFunc("/api/v1/signup", u.Signup).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/login", u.Login).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/password", u.ChangePassword).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/profile/{user_id}", u.GetProfile).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/profile", u.UpdateProfile).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/me", u.GetMe).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/user/{user_id}/image", u.UploadImage).Methods(http.MethodPut)
+
 }
 
 func (u *UserEndpoints) handleError(w http.ResponseWriter, err error, context string, additionalInfo map[string]string) {
@@ -117,6 +124,7 @@ func (u *UserEndpoints) Signup(w http.ResponseWriter, r *http.Request) {
 	}
 	http.SetCookie(w, cookie)
 
+	w.Header().Set("X-authenticated", "true")
 	utils.SendJSONResponse(w, http.StatusOK, "Signup successful")
 }
 
@@ -158,7 +166,7 @@ func (u *UserEndpoints) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.SetCookie(w, cookie)
-
+	w.Header().Set("X-authenticated", "true")
 	utils.SendJSONResponse(w, http.StatusOK, sessionID)
 }
 

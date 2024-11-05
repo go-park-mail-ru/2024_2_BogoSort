@@ -3,6 +3,7 @@ package http
 import (
 	"net/http"
 
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/middleware"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/utils"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase"
 	"github.com/gorilla/mux"
@@ -24,7 +25,11 @@ func NewAuthEndpoints(authUC usecase.Auth, sessionManager *utils.SessionManager,
 }
 
 func (a *AuthEndpoints) Configure(router *mux.Router) {
-	router.HandleFunc("/api/v1/logout", a.Logout).Methods(http.MethodPost)
+	protected := router.PathPrefix("/api/v1").Subrouter()
+	sessionMiddleware := middleware.NewAuthMiddleware(a.sessionManager)
+	protected.Use(sessionMiddleware.SessionMiddleware)
+
+	protected.HandleFunc("/logout", a.Logout).Methods(http.MethodPost)
 }
 
 func (a *AuthEndpoints) handleError(w http.ResponseWriter, err error, method string, data map[string]string) {
@@ -54,16 +59,13 @@ func (a *AuthEndpoints) Logout(w http.ResponseWriter, r *http.Request) {
 		a.handleError(w, err, "Logout", nil)
 		return
 	}
-	err = a.authUC.Logout(cookie.Value)
-	if err != nil {
-		a.handleError(w, err, "Logout", map[string]string{"userID": userID.String()})
-		return
-	}
+
 	err = a.sessionManager.DeleteSession(cookie.Value)
 	if err != nil {
 		a.handleError(w, err, "Logout", map[string]string{"userID": userID.String()})
 		return
 	}
 	a.logger.Info("user logged out", zap.String("userID", userID.String()))
+	w.Header().Set("X-authenticated", "false")
 	utils.SendJSONResponse(w, http.StatusOK, "You have successfully logged out")
 }

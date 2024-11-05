@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/config"
 	http3 "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/middleware"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/utils"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository/postgres"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository/redis"
@@ -85,6 +86,8 @@ func NewRouter(cfg config.Config) (*mux.Router, error) {
 	sessionUC := service.NewAuthService(sessionRepo, zap.L())
 	sessionManager := utils.NewSessionManager(sessionUC, int(cfg.Session.ExpirationTime.Seconds()), cfg.Session.SecureCookie, zap.L())
 
+	router.Use(middleware.NewAuthMiddleware(sessionManager).AuthMiddleware)
+
 	advertsHandler := http3.NewAdvertEndpoints(advertsUseCase, staticUseCase, sessionManager, zap.L())
 	authHandler := http3.NewAuthEndpoints(sessionUC, sessionManager, zap.L())
 	userHandler := http3.NewUserEndpoints(userUC, sessionUC, sessionManager, staticUseCase, zap.L())
@@ -102,6 +105,7 @@ func NewRouter(cfg config.Config) (*mux.Router, error) {
 	cartHandler.Configure(router)
 	staticHandler.ConfigureRoutes(router)
 	purchaseHandler.ConfigureRoutes(router)
+
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
 	return router, nil
