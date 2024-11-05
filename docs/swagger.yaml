@@ -212,7 +212,7 @@ definitions:
     type: object
 info:
   contact: {}
-  title: "API Documentation"
+  title: "API"
   version: "1.0.0"
 paths:
   /api/v1/adverts:
@@ -943,6 +943,39 @@ paths:
           schema:
             $ref: '#/definitions/utils.ErrResponse'
       summary: Получение продавца по ID
+      tags:
+      - Продавцы
+  /api/v1/seller/user/{user_id}:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает информацию о продавце, связанном с указанным ID пользователя
+      parameters:
+      - description: ID пользователя
+        in: path
+        name: user_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Информация о продавце
+          schema:
+            $ref: '#/definitions/entity.Seller'
+        "400":
+          description: Некорректный ID пользователя
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "404":
+          description: Продавец не найден
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Получить продавца по ID пользователя
       tags:
       - Продавцы
   /api/v1/signup:

@@ -1072,6 +1072,56 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/seller/user/{user_id}": {
+            "get": {
+                "description": "Возвращает информацию о продавце, связанном с указанным ID пользователя",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Продавцы"
+                ],
+                "summary": "Получить продавца по ID пользователя",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID пользователя",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Информация о продавце",
+                        "schema": {
+                            "$ref": "#/definitions/entity.Seller"
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректный ID пользователя",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Продавец не найден",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/seller/{seller_id}": {
             "get": {
                 "description": "Возвращает информацию о продавце по его ID",
