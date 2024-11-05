@@ -1,11 +1,11 @@
 -- Заполнение таблицы "static"
 INSERT INTO static (id, name, path, created_at)
 VALUES
-    (uuid_generate_v4(), 'image1.jpg', '/images/image1.jpg', CURRENT_TIMESTAMP),
-    (uuid_generate_v4(), 'image2.jpg', '/images/image2.jpg', CURRENT_TIMESTAMP),
-    (uuid_generate_v4(), 'image3.jpg', '/images/image3.jpg', CURRENT_TIMESTAMP),
-    (uuid_generate_v4(), 'image4.jpg', '/images/image4.jpg', CURRENT_TIMESTAMP),
-    (uuid_generate_v4(), 'image5.jpg', '/images/image5.jpg', CURRENT_TIMESTAMP);
+    (uuid_generate_v4(), 'image1.jpg', 'static/', CURRENT_TIMESTAMP),
+    (uuid_generate_v4(), 'image2.jpg', 'static/', CURRENT_TIMESTAMP),
+    (uuid_generate_v4(), 'image3.jpg', 'static/', CURRENT_TIMESTAMP),
+    (uuid_generate_v4(), 'image4.jpg', 'static/', CURRENT_TIMESTAMP),
+    (uuid_generate_v4(), 'image5.jpg', 'static/', CURRENT_TIMESTAMP);
 
 -- Заполнение таблицы "user"
 INSERT INTO "user" (id, username, email, password_hash, password_salt, phone_number, image_id, status, created_at, updated_at)
@@ -41,27 +41,27 @@ VALUES
         (SELECT id FROM seller WHERE description = 'Продавец электроники и бытовой техники'), 
         (SELECT id FROM static WHERE name = 'image1.jpg'), 
         (SELECT id FROM category WHERE title = 'Электроника'), 
-        CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'Москва', TRUE, 'доступен'),
+        CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'Москва', TRUE, 'active'),
     (uuid_generate_v4(), 'Кроссовки Nike', 'Стильные и удобные кроссовки для повседневного использования', 7000, 
         (SELECT id FROM seller WHERE description = 'Продавец модной одежды и аксессуаров'), 
         (SELECT id FROM static WHERE name = 'image2.jpg'), 
         (SELECT id FROM category WHERE title = 'Одежда'), 
-        CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'Санкт-Петербург', FALSE, 'доступен'),
+        CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'Санкт-Петербург', FALSE, 'active'),
     (uuid_generate_v4(), 'Гантели 10 кг', 'Комплект гантелей для домашнего использования', 2000, 
         (SELECT id FROM seller WHERE description = 'Продавец спортивного инвентаря'), 
         (SELECT id FROM static WHERE name = 'image3.jpg'), 
         (SELECT id FROM category WHERE title = 'Спорт и отдых'), 
-        CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'Новосибирск', TRUE, 'доступен'),
+        CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'Новосибирск', TRUE, 'active'),
     (uuid_generate_v4(), 'Книга "Война и мир"', 'Классическое произведение Льва Толстого', 500, 
         (SELECT id FROM seller WHERE description = 'Продавец книг и канцелярии'), 
         (SELECT id FROM static WHERE name = 'image4.jpg'), 
         (SELECT id FROM category WHERE title = 'Книги и канцелярия'), 
-        CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'Екатеринбург', FALSE, 'доступен'),
+        CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'Екатеринбург', FALSE, 'active'),
     (uuid_generate_v4(), 'Диван угловой', 'Удобный угловой диван для гостиной', 45000, 
         (SELECT id FROM seller WHERE description = 'Продавец мебели и декора'), 
         (SELECT id FROM static WHERE name = 'image5.jpg'), 
         (SELECT id FROM category WHERE title = 'Техника для дома'), 
-        CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'Казань', TRUE, 'доступен');
+        CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'Казань', TRUE, 'active');
 
 -- Заполнение таблицы "subscription"
 INSERT INTO subscription (id, user_id, seller_id)

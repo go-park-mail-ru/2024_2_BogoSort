@@ -368,6 +368,15 @@ func (r *AdvertDB) GetAdvertsByCartId(cartId uuid.UUID) ([]*entity.Advert, error
 	return adverts, nil
 }
 
+func (r *AdvertDB) BeginTransaction() (pgx.Tx, error) {
+	tx, err := r.DB.Begin(r.ctx)
+	if err != nil {
+		r.logger.Error("failed to begin transaction", zap.Error(err))
+		return nil, err
+	}
+	return tx, nil
+}
+
 func (r *AdvertDB) GetAdvertById(advertId uuid.UUID) (*entity.Advert, error) {
 	var dbAdvert AdvertRepoModel
 
@@ -460,11 +469,11 @@ func (r *AdvertDB) DeleteAdvertById(advertId uuid.UUID) error {
 	return nil
 }
 
-func (r *AdvertDB) UpdateAdvertStatus(advertId uuid.UUID, status string) error {
+func (r *AdvertDB) UpdateAdvertStatus(tx pgx.Tx, advertId uuid.UUID, status entity.AdvertStatus) error {
 	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
 	defer cancel()
 
-	result, err := r.DB.Exec(ctx, updateAdvertStatusQuery, status, advertId)
+	result, err := tx.Exec(ctx, updateAdvertStatusQuery, status, advertId)
 	if err != nil {
 		r.logger.Error("failed to update advert status", zap.Error(err), zap.String("advert_id", advertId.String()))
 		return entity.PSQLWrap(err)

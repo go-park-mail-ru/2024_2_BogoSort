@@ -86,7 +86,7 @@ func NewRouter(cfg config.Config) (*mux.Router, error) {
 	advertsUseCase := service.NewAdvertService(advertsRepo, staticRepo, sellerRepo, zap.L())
 	staticUseCase := service.NewStaticService(staticRepo, zap.L())
 	categoryUseCase := service.NewCategoryService(categoryRepo, zap.L())
-	purchaseUseCase := service.NewPurchaseService(purchaseRepo, cartRepo, zap.L())
+	purchaseUseCase := service.NewPurchaseService(purchaseRepo, advertsRepo, cartRepo, zap.L())
 	cartUC := service.NewCartService(cartRepo, zap.L())
 	userUC := service.NewUserService(userRepo, sellerRepo, zap.L())
 	sessionUC := service.NewAuthService(sessionRepo, zap.L())
@@ -105,15 +105,13 @@ func NewRouter(cfg config.Config) (*mux.Router, error) {
 
 	csrfEndpoints := http3.NewCSRFEndpoints(csrfToken, sessionManager)
 	csrfEndpoints.Configure(router)
-	userHandler.ConfigureCSRFUnprotectedRoutes(router)
+	userHandler.ConfigureUnprotectedRoutes(router)
 
 	authRouter.Use(middleware.CSRFMiddleware(csrfToken, sessionManager))
 
 	advertsHandler.ConfigureRoutes(authRouter)
 	categoryHandler.ConfigureRoutes(authRouter)
 	authHandler.Configure(authRouter)
-	userHandler.ConfigureUnprotectedRoutes(authRouter)
-	userHandler.ConfigureCSRFUnprotectedRoutes(authRouter)
 	userHandler.ConfigureProtectedRoutes(authRouter)
 	sellerHandler.Configure(authRouter)
 	cartHandler.Configure(authRouter)

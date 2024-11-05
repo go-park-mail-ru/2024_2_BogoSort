@@ -3,6 +3,7 @@ package repository
 import (
 	"errors"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
+	"github.com/jackc/pgx/v5"
 	"github.com/google/uuid"
 )
 
@@ -44,10 +45,13 @@ type AdvertRepository interface {
 	// Возможные ошибки:
 	// ErrAdvertBadRequest - некорректные данные для создания объявления
 	// ErrAdvertNotFound - объявление не найдено
-	UpdateAdvertStatus(advertId uuid.UUID, status string) error
+	UpdateAdvertStatus(tx pgx.Tx, advertId uuid.UUID, status entity.AdvertStatus) error
 
 	// UploadImage загружает изображение в объявление
 	UploadImage(advertId uuid.UUID, imageId uuid.UUID) error
+
+	// BeginTransaction начинает транзакцию
+	BeginTransaction() (pgx.Tx, error)
 }
 
 var (

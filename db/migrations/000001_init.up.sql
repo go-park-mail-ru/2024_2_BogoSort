@@ -6,6 +6,7 @@ CREATE TYPE payment_method AS ENUM ('cash', 'card');
 CREATE TYPE delivery_method AS ENUM ('pickup', 'delivery');
 CREATE TYPE purchase_status AS ENUM ('pending', 'in_progress', 'completed', 'cancelled');
 CREATE TYPE cart_status AS ENUM ('active', 'inactive', 'deleted');
+CREATE TYPE advert_status AS ENUM ('active', 'inactive', 'reserved');
 
 -- Таблица для хранения статических файлов
 CREATE TABLE IF NOT EXISTS static (
@@ -80,8 +81,7 @@ CREATE TABLE IF NOT EXISTS advert (
     location TEXT
         CONSTRAINT advert_location_length CHECK (LENGTH(location) <= 150) NOT NULL,
     has_delivery BOOLEAN NOT NULL,
-    status TEXT NOT NULL
-        CONSTRAINT status_length CHECK (LENGTH(status) <= 255) NOT NULL,
+    status advert_status DEFAULT 'active',
     FOREIGN KEY (seller_id) REFERENCES seller(id) ON DELETE CASCADE,
     FOREIGN KEY (image_id) REFERENCES static(id) ON DELETE SET NULL,
     FOREIGN KEY (category_id) REFERENCES category(id) ON DELETE SET NULL

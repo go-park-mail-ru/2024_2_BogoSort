@@ -3,7 +3,7 @@ package usecase
 import (
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
 	"github.com/google/uuid"
-)
+)	
 
 type AdvertUseCase interface {
 	// GetAdverts возвращает массив объявлений в соответствии с offset и limit
@@ -37,7 +37,7 @@ type AdvertUseCase interface {
 	// ErrAdvertBadRequest - некорректные данные для обновления статуса объявления
 	// ErrAdvertNotFound - объявление не найдено
 	// ErrForbidden - нет прав на обновление статуса объявления
-	UpdateAdvertStatus(advertId uuid.UUID, status string, userId uuid.UUID) error
+	UpdateAdvertStatus(advertId uuid.UUID, status dto.AdvertStatus, userId uuid.UUID) error
 
 	// DeleteAdvertById удаляет объявление по Id
 	// Возможные ошибки:

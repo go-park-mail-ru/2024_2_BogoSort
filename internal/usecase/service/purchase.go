@@ -13,11 +13,12 @@ import (
 type PurchaseService struct {
 	purchaseRepo repository.PurchaseRepository
 	cartRepo repository.Cart
+	advertRepo repository.AdvertRepository
 	logger       *zap.Logger
 }
 
-func NewPurchaseService(purchaseRepo repository.PurchaseRepository, cartRepo repository.Cart, logger *zap.Logger) *PurchaseService {
-	return &PurchaseService{purchaseRepo: purchaseRepo, cartRepo: cartRepo, logger: logger}
+func NewPurchaseService(purchaseRepo repository.PurchaseRepository, advertRepo repository.AdvertRepository, cartRepo repository.Cart, logger *zap.Logger) *PurchaseService {
+	return &PurchaseService{purchaseRepo: purchaseRepo, advertRepo: advertRepo, cartRepo: cartRepo, logger: logger}
 }
 
 func (s *PurchaseService) purchaseEntityToDTO(purchase *entity.Purchase) (*dto.PurchaseResponse, error) {
@@ -60,6 +61,18 @@ func (s *PurchaseService) AddPurchase(purchaseRequest dto.PurchaseRequest) (*dto
 	err = s.cartRepo.UpdateCartStatus(tx, purchase.CartID, entity.CartStatusInactive)
 	if err != nil {
 		return nil, entity.UsecaseWrap(errors.New("failed to update cart status"), err)
+	}
+
+	adverts, err := s.advertRepo.GetAdvertsByCartId(purchase.CartID)
+	if err != nil {
+		return nil, entity.UsecaseWrap(errors.New("failed to get adverts"), err)
+	}
+
+	for _, advert := range adverts {
+		err = s.advertRepo.UpdateAdvertStatus(tx, advert.ID, entity.AdvertStatusReserved)
+		if err != nil {
+			return nil, entity.UsecaseWrap(errors.New("failed to update advert status"), err)
+		}
 	}
 
 	return s.purchaseEntityToDTO(purchase)

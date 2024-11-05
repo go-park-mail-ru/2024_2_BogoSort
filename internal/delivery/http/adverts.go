@@ -314,7 +314,7 @@ func (h *AdvertEndpoints) UpdateAdvertStatus(writer http.ResponseWriter, r *http
 		return
 	}
 
-	if err := h.advertUseCase.UpdateAdvertStatus(advertId, status, userID); err != nil {
+	if err := h.advertUseCase.UpdateAdvertStatus(advertId, dto.AdvertStatus(status), userID); err != nil {
 		h.handleError(writer, err, "failed to update advert status")
 		return
 	}

@@ -36,4 +36,5 @@ type AdvertStatus string
 const (
 	AdvertStatusActive   AdvertStatus = "active"
 	AdvertStatusInactive AdvertStatus = "inactive"
+	AdvertStatusReserved AdvertStatus = "reserved"
 )

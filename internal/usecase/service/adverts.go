@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"strings"
+	"context"
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
@@ -219,7 +220,21 @@ func (s *AdvertService) DeleteAdvertById(advertId uuid.UUID, userId uuid.UUID) e
 	return nil
 }
 
-func (s *AdvertService) UpdateAdvertStatus(advertId uuid.UUID, status string, userId uuid.UUID) error {
+func (s *AdvertService) UpdateAdvertStatus(advertId uuid.UUID, status dto.AdvertStatus, userId uuid.UUID) error {
+	ctx := context.Background()
+	tx, err := s.advertRepo.BeginTransaction()
+	if err != nil {
+		s.logger.Error("failed to begin transaction", zap.Error(err))
+		return entity.UsecaseWrap(errors.New("failed to begin transaction"), err)
+	}
+	defer func() {
+		if err != nil {
+			tx.Rollback(ctx)
+		} else {
+			tx.Commit(ctx)
+		}
+	}()
+
 	seller, err := s.sellerRepo.GetSellerByUserID(userId)
 	if err != nil {
 		return entity.UsecaseWrap(err, repository.ErrSellerNotFound)
@@ -233,7 +248,7 @@ func (s *AdvertService) UpdateAdvertStatus(advertId uuid.UUID, status string, us
 		return entity.UsecaseWrap(ErrForbidden, ErrForbidden)
 	}
 
-	if err := s.advertRepo.UpdateAdvertStatus(advertId, status); err != nil {
+	if err := s.advertRepo.UpdateAdvertStatus(tx, advertId, entity.AdvertStatus(status)); err != nil {
 		if errors.Is(err, repository.ErrAdvertNotFound) {
 			return entity.UsecaseWrap(ErrAdvertNotFound, ErrAdvertNotFound)
 		}
