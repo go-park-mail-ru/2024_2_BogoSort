@@ -60,6 +60,16 @@ func (u *UserEndpoints) Configure(router *mux.Router) {
 
 }
 
+func (u *UserEndpoints) ConfigureUnprotectedRoutes(router *mux.Router) {
+	router.HandleFunc("/api/v1/signup", u.Signup).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/login", u.Login).Methods(http.MethodPost)
+}
+
+func (u *UserEndpoints) ConfigureCSRFUnprotectedRoutes(router *mux.Router) {
+	router.HandleFunc("/api/v1/signup", u.Signup).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/login", u.Login).Methods(http.MethodPost)
+}
+
 func (u *UserEndpoints) handleError(w http.ResponseWriter, err error, context string, additionalInfo map[string]string) {
 	var errUserIncorrectData usecase.UserIncorrectDataError
 
