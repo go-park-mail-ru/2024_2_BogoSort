@@ -598,6 +598,53 @@
                 }
             }
         },
+        "/api/v1/cart/exists/{user_id}": {
+            "get": {
+                "description": "Проверяет, существует ли корзина для пользователя по его ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Cart"
+                ],
+                "summary": "Проверить существование корзины для пользователя",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Cart existence check result",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "boolean"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid user ID format",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/cart/{cart_id}": {
             "get": {
                 "description": "Retrieves detailed information about a cart using its unique identifier",

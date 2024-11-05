@@ -638,6 +638,37 @@ paths:
       summary: Удалить объявление из корзины
       tags:
       - Cart
+  /api/v1/cart/exists/{user_id}:
+    get:
+      consumes:
+      - application/json
+      description: Проверяет, существует ли корзина для пользователя по его ID
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Cart existence check result
+          schema:
+            additionalProperties:
+              type: boolean
+            type: object
+        "400":
+          description: Invalid user ID format
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Проверить существование корзины для пользователя
+      tags:
+      - Cart
   /api/v1/categories:
     get:
       consumes:
