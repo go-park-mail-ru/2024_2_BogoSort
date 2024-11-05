@@ -11,14 +11,16 @@ import (
 )
 
 type CartService struct {
-	cartRepo repository.Cart
-	logger   *zap.Logger
+	cartRepo   repository.Cart
+	advertRepo repository.AdvertRepository
+	logger     *zap.Logger
 }
 
-func NewCartService(cartRepo repository.Cart, logger *zap.Logger) *CartService {
+func NewCartService(cartRepo repository.Cart, advertRepo repository.AdvertRepository, logger *zap.Logger) *CartService {
 	return &CartService{
-		cartRepo: cartRepo,
-		logger:   logger,
+		cartRepo:   cartRepo,
+		advertRepo: advertRepo,
+		logger:     logger,
 	}
 }
 
@@ -33,6 +35,13 @@ func (c *CartService) AddAdvertToUserCart(userID uuid.UUID, AdvertID uuid.UUID) 
 		cartID, err := c.cartRepo.CreateCart(userID)
 		if err != nil {
 			return entity.PSQLWrap(errors.New("error creating cart"), err)
+		}
+		advert, err := c.advertRepo.GetAdvertById(AdvertID)
+		if err != nil {
+			return entity.PSQLWrap(errors.New("error getting advert by id"), err)
+		}
+		if advert.Status != entity.AdvertStatusActive {
+			return entity.UsecaseWrap(errors.New("advert is not active"), nil)
 		}
 		return c.cartRepo.AddAdvertToCart(cartID, AdvertID)
 	case err != nil:
