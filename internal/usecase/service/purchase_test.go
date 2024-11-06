@@ -77,4 +77,3 @@ func TestPurchaseService_GetPurchasesByUserID_Failure(t *testing.T) {
 	assert.Nil(t, resp)
 	assert.Contains(t, err.Error(), "failed to get purchases")
 }
-

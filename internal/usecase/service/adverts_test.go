@@ -1,8 +1,8 @@
 package service
 
 import (
-	"testing"
 	"errors"
+	"testing"
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
@@ -235,4 +235,20 @@ func TestAdvertService_GetAdvertsByUserId_NoAdverts(t *testing.T) {
 	adverts, err := service.GetAdvertsByUserId(sellerId)
 	assert.NoError(t, err)
 	assert.Len(t, adverts, 0)
+}
+
+func TestAdvertService_UploadImage_Failure(t *testing.T) {
+	service, ctrl, mockRepo, _, mockSellerRepo := setupAdvertTestService(t)
+	defer ctrl.Finish()
+
+	advertId := uuid.New()
+	imageId := uuid.New()
+	sellerId := uuid.New()
+
+	mockSellerRepo.EXPECT().GetSellerByUserID(sellerId).Return(&entity.Seller{ID: sellerId}, nil)
+	mockRepo.EXPECT().GetAdvertById(advertId).Return(&entity.Advert{ID: advertId, SellerId: sellerId}, nil)
+	mockRepo.EXPECT().UploadImage(advertId, imageId).Return(errors.New("upload failed"))
+
+	err := service.UploadImage(advertId, imageId, sellerId)
+	assert.Error(t, err)
 }

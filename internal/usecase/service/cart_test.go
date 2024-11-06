@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -9,6 +10,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository/mocks"
 )
@@ -118,5 +120,76 @@ func TestCartService_CheckCartExists_NotFound(t *testing.T) {
 	exists, err := service.CheckCartExists(userID)
 
 	assert.NoError(t, err)
+	assert.False(t, exists)
+}
+
+func TestCartService_AddAdvertToUserCart_CartNotExists(t *testing.T) {
+	service, cartRepo, advertRepo, ctrl := setupCartService(t)
+	defer ctrl.Finish()
+
+	userID := uuid.New()
+	advertID := uuid.New()
+	newCartID := uuid.New()
+
+	// Настройка ожидаемых вызовов
+	cartRepo.EXPECT().GetCartByUserID(userID).Return(entity.Cart{}, repository.ErrCartNotFound)
+	cartRepo.EXPECT().CreateCart(userID).Return(newCartID, nil)
+	advert := entity.Advert{
+		ID:     advertID,
+		Title:  "New Advert",
+		Price:  150,
+		Status: entity.AdvertStatusActive,
+	}
+	advertRepo.EXPECT().GetAdvertById(advertID).Return(&advert, nil)
+	cartRepo.EXPECT().AddAdvertToCart(newCartID, advertID).Return(nil)
+
+	// Выполнение действия
+	err := service.AddAdvertToUserCart(userID, advertID)
+
+	// Проверка результата
+	assert.NoError(t, err)
+}
+
+func TestCartService_GetCartByID_NotFound(t *testing.T) {
+	service, cartRepo, _, ctrl := setupCartService(t)
+	defer ctrl.Finish()
+
+	cartID := uuid.New()
+
+	cartRepo.EXPECT().GetAdvertsByCartID(cartID).Return(nil, repository.ErrCartNotFound)
+
+	cart, err := service.GetCartByID(cartID)
+
+	assert.Error(t, err)
+	assert.Equal(t, dto.Cart{}, cart)
+}
+
+func TestCartService_GetCartByUserID_ErrorGettingAdverts(t *testing.T) {
+	service, cartRepo, _, ctrl := setupCartService(t)
+	defer ctrl.Finish()
+
+	userID := uuid.New()
+	cartID := uuid.New()
+
+	cartRepo.EXPECT().GetCartByUserID(userID).Return(entity.Cart{ID: cartID}, nil)
+	cartRepo.EXPECT().GetAdvertsByCartID(cartID).Return(nil, errors.New("database error"))
+
+	cart, err := service.GetCartByUserID(userID)
+
+	assert.Error(t, err)
+	assert.Equal(t, dto.Cart{}, cart)
+}
+
+func TestCartService_CheckCartExists_Error(t *testing.T) {
+	service, cartRepo, _, ctrl := setupCartService(t)
+	defer ctrl.Finish()
+
+	userID := uuid.New()
+
+	cartRepo.EXPECT().GetCartByUserID(userID).Return(entity.Cart{}, errors.New("database error"))
+
+	exists, err := service.CheckCartExists(userID)
+
+	assert.Error(t, err)
 	assert.False(t, exists)
 }

@@ -6,9 +6,9 @@ import (
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository/mocks"
 	"github.com/golang/mock/gomock"
+	uuid "github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
-	uuid "github.com/google/uuid"
 )
 
 func setupCategoryTestService(t *testing.T) (*CategoryService, *gomock.Controller, *mocks.MockCategoryRepository) {

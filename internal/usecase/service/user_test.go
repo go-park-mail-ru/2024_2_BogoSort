@@ -396,3 +396,17 @@ func TestUserService_UploadImage_Success(t *testing.T) {
 
 	assert.NoError(t, err)
 }
+
+func TestUserService_UploadImage_Error(t *testing.T) {
+	service, ctrl, mockUserRepo, _ := setupUserTestService(t)
+	defer ctrl.Finish()
+
+	mockUserRepo.EXPECT().
+		UploadImage(gomock.Any(), gomock.Any()).
+		Return(errors.New("upload error")).
+		Times(1)
+
+	err := service.UploadImage(uuid.New(), uuid.New())
+
+	assert.Error(t, err)
+}
