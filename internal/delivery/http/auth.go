@@ -59,11 +59,7 @@ func (a *AuthEndpoints) Logout(w http.ResponseWriter, r *http.Request) {
 		a.handleError(w, err, "Logout", map[string]string{"userID": userID.String()})
 		return
 	}
-	err = a.sessionManager.DeleteSession(cookie.Value)
-	if err != nil {
-		a.handleError(w, err, "Logout", map[string]string{"userID": userID.String()})
-		return
-	}
+
 	a.logger.Info("user logged out", zap.String("userID", userID.String()))
 	utils.SendJSONResponse(w, http.StatusOK, "You have successfully logged out")
 }

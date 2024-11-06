@@ -248,9 +248,11 @@ func (u *UserEndpoints) GetProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	user, err := u.userUC.GetUser(userID)
-	if err != nil {
+	switch {
+	case errors.Is(err, usecase.ErrUserNotFound):
+		u.sendError(w, http.StatusNotFound, err, "user not found", nil)
+	case err != nil:
 		u.handleError(w, err, "GetProfile", map[string]string{"userID": userID.String()})
-		return
 	}
 
 	utils.SendJSONResponse(w, http.StatusOK, user)
