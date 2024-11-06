@@ -56,9 +56,9 @@ func (s *SessionManager) GetUserID(r *http.Request) (uuid.UUID, error) {
 		return uuid.Nil, err
 	}
 
-	userID, err := s.sessionUC.GetUserIdBySession(cookie.Value)
+	userID, err := s.SessionUC.GetUserIdBySession(cookie.Value)
 	if err != nil {
-		s.logger.Error("session expired or not found", zap.String("sessionID", cookie.Value))
+		s.Logger.Error("session expired or not found", zap.String("sessionID", cookie.Value))
 		s.DeleteSession(cookie.Value)
 		return uuid.Nil, ErrSessionExpired
 	}

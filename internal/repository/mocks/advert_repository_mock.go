@@ -10,6 +10,7 @@ import (
 	entity "github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	gomock "github.com/golang/mock/gomock"
 	uuid "github.com/google/uuid"
+	pgx "github.com/jackc/pgx/v5"
 )
 
 // MockAdvertRepository is a mock of AdvertRepository interface.
@@ -48,6 +49,21 @@ func (m *MockAdvertRepository) AddAdvert(advert *entity.Advert) (*entity.Advert,
 func (mr *MockAdvertRepositoryMockRecorder) AddAdvert(advert interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddAdvert", reflect.TypeOf((*MockAdvertRepository)(nil).AddAdvert), advert)
+}
+
+// BeginTransaction mocks base method.
+func (m *MockAdvertRepository) BeginTransaction() (pgx.Tx, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BeginTransaction")
+	ret0, _ := ret[0].(pgx.Tx)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// BeginTransaction indicates an expected call of BeginTransaction.
+func (mr *MockAdvertRepositoryMockRecorder) BeginTransaction() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BeginTransaction", reflect.TypeOf((*MockAdvertRepository)(nil).BeginTransaction))
 }
 
 // DeleteAdvertById mocks base method.
@@ -154,17 +170,17 @@ func (mr *MockAdvertRepositoryMockRecorder) UpdateAdvert(advert interface{}) *go
 }
 
 // UpdateAdvertStatus mocks base method.
-func (m *MockAdvertRepository) UpdateAdvertStatus(advertId uuid.UUID, status string) error {
+func (m *MockAdvertRepository) UpdateAdvertStatus(tx pgx.Tx, advertId uuid.UUID, status entity.AdvertStatus) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateAdvertStatus", advertId, status)
+	ret := m.ctrl.Call(m, "UpdateAdvertStatus", tx, advertId, status)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UpdateAdvertStatus indicates an expected call of UpdateAdvertStatus.
-func (mr *MockAdvertRepositoryMockRecorder) UpdateAdvertStatus(advertId, status interface{}) *gomock.Call {
+func (mr *MockAdvertRepositoryMockRecorder) UpdateAdvertStatus(tx, advertId, status interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAdvertStatus", reflect.TypeOf((*MockAdvertRepository)(nil).UpdateAdvertStatus), advertId, status)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAdvertStatus", reflect.TypeOf((*MockAdvertRepository)(nil).UpdateAdvertStatus), tx, advertId, status)
 }
 
 // UploadImage mocks base method.

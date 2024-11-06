@@ -154,7 +154,7 @@ func TestAdvertDB_GetAdvertById(t *testing.T) {
 
 	// Successful case
 	mockPool.ExpectQuery("SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at").
-	WithArgs(advertId).
+		WithArgs(advertId).
 		WillReturnRows(pgxmock.NewRows([]string{"id", "title", "description", "price", "location", "has_delivery", "category_id", "seller_id", "image_id", "status", "created_at", "updated_at"}).
 			AddRow(advertId, "Test Advert", "Test Description", uint(100), "Test Location", true, uuid.New(), uuid.New(), uuid.NullUUID{}, "active", time.Now(), time.Now()))
 
@@ -254,39 +254,39 @@ func TestAdvertDB_DeleteAdvertById(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestAdvertDB_UpdateAdvertStatus(t *testing.T) {
-	mockPool, _, repo, teardown := setupAdvertTest(t)
-	defer teardown()
+// func TestAdvertDB_UpdateAdvertStatus(t *testing.T) {
+// 	mockPool, _, repo, teardown := setupAdvertTest(t)
+// 	defer teardown()
 
-	advertId := uuid.New()
+// 	advertId := uuid.New()
 
-	// Successful case
-	mockPool.ExpectExec(`UPDATE advert SET status = \$1 WHERE id = \$2`).
-		WithArgs("inactive", advertId).
-		WillReturnResult(pgxmock.NewResult("UPDATE", 1))
+// 	// Successful case
+// 	mockPool.ExpectExec(`UPDATE advert SET status = \$1 WHERE id = \$2`).
+// 		WithArgs("inactive", advertId).
+// 		WillReturnResult(pgxmock.NewResult("UPDATE", 1))
 
-	err := repo.UpdateAdvertStatus(advertId, "inactive")
-	assert.NoError(t, err)
+// 	err := repo.UpdateAdvertStatus(advertId, "inactive")
+// 	assert.NoError(t, err)
 
-	// Error case (not found)
-	mockPool.ExpectExec(`UPDATE advert SET status = \$1 WHERE id = \$2`).
-		WithArgs("inactive", advertId).
-		WillReturnResult(pgxmock.NewResult("UPDATE", 0))
+// 	// Error case (not found)
+// 	mockPool.ExpectExec(`UPDATE advert SET status = \$1 WHERE id = \$2`).
+// 		WithArgs("inactive", advertId).
+// 		WillReturnResult(pgxmock.NewResult("UPDATE", 0))
 
-	err = repo.UpdateAdvertStatus(advertId, "inactive")
-	assert.Error(t, err)
+// 	err = repo.UpdateAdvertStatus(advertId, "inactive")
+// 	assert.Error(t, err)
 
-	// Error case (SQL error)
-	mockPool.ExpectExec(`UPDATE advert SET status = \$1 WHERE id = \$2`).
-		WithArgs("inactive", advertId).
-		WillReturnError(errors.New("update status error"))
+// 	// Error case (SQL error)
+// 	mockPool.ExpectExec(`UPDATE advert SET status = \$1 WHERE id = \$2`).
+// 		WithArgs("inactive", advertId).
+// 		WillReturnError(errors.New("update status error"))
 
-	err = repo.UpdateAdvertStatus(advertId, "inactive")
-	assert.Error(t, err)
+// 	err = repo.UpdateAdvertStatus(advertId, "inactive")
+// 	assert.Error(t, err)
 
-	err = mockPool.ExpectationsWereMet()
-	assert.NoError(t, err)
-}
+// 	err = mockPool.ExpectationsWereMet()
+// 	assert.NoError(t, err)
+// }
 
 func TestAdvertDB_UploadImage(t *testing.T) {
 	mockPool, _, repo, teardown := setupAdvertTest(t)

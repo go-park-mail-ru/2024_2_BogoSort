@@ -13,6 +13,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
+	"github.com/microcosm-cc/bluemonday"
 	"go.uber.org/zap"
 )
 
@@ -21,6 +22,7 @@ func setupUserEndpoints(t *testing.T) (*UserEndpoints, *mocks.MockUser, *mocks.M
 	mockUserUC := mocks.NewMockUser(ctrl)
 	mockAuthUC := mocks.NewMockAuth(ctrl)
 	logger, _ := zap.NewDevelopment()
+	policy := bluemonday.UGCPolicy()
 
 	sessionManager := &utils.SessionManager{
 		SessionUC:        mockAuthUC,
@@ -29,7 +31,7 @@ func setupUserEndpoints(t *testing.T) (*UserEndpoints, *mocks.MockUser, *mocks.M
 		Logger:           logger,
 	}
 
-	endpoints := NewUserEndpoints(mockUserUC, mockAuthUC, sessionManager, nil, logger)
+	endpoints := NewUserEndpoints(mockUserUC, mockAuthUC, sessionManager, nil, logger, policy)
 	return endpoints, mockUserUC, mockAuthUC, ctrl
 }
 

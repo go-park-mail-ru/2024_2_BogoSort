@@ -15,9 +15,10 @@ import (
 func setupCartTestService(t *testing.T) (*CartService, *gomock.Controller, *mocks.MockCart) {
 	ctrl := gomock.NewController(t)
 	mockCartRepo := mocks.NewMockCart(ctrl)
+	mockAdvertRepo := mocks.NewMockAdvertRepository(ctrl)
 	logger := zap.NewNop()
 
-	service := NewCartService(mockCartRepo, logger)
+	service := NewCartService(mockCartRepo, mockAdvertRepo, logger)
 
 	return service, ctrl, mockCartRepo
 }

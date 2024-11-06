@@ -7,13 +7,14 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"errors"
+
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase/mocks"
+	"github.com/golang/mock/gomock"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
-	"github.com/golang/mock/gomock"
-	"errors"
 )
 
 func TestAddPurchase_Success(t *testing.T) {
@@ -24,8 +25,8 @@ func TestAddPurchase_Success(t *testing.T) {
 
 	endpoints := NewPurchaseEndpoints(mockPurchaseUC, logger)
 
-	purchaseRequest := dto.PurchaseRequest{ }
-	purchaseResponse := dto.PurchaseResponse{ }
+	purchaseRequest := dto.PurchaseRequest{}
+	purchaseResponse := dto.PurchaseResponse{}
 
 	mockPurchaseUC.EXPECT().AddPurchase(purchaseRequest).Return(&purchaseResponse, nil)
 
@@ -76,7 +77,7 @@ func TestAddPurchase_AddPurchaseError(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	endpoints := NewPurchaseEndpoints(mockPurchaseUC, logger)
 
-	purchaseRequest := dto.PurchaseRequest{ }
+	purchaseRequest := dto.PurchaseRequest{}
 
 	mockPurchaseUC.EXPECT().AddPurchase(purchaseRequest).Return(&dto.PurchaseResponse{}, errors.New("some error"))
 

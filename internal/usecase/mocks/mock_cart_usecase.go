@@ -49,6 +49,21 @@ func (mr *MockCartMockRecorder) AddAdvertToUserCart(userID, AdvertID interface{}
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddAdvertToUserCart", reflect.TypeOf((*MockCart)(nil).AddAdvertToUserCart), userID, AdvertID)
 }
 
+// CheckCartExists mocks base method.
+func (m *MockCart) CheckCartExists(userID uuid.UUID) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CheckCartExists", userID)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CheckCartExists indicates an expected call of CheckCartExists.
+func (mr *MockCartMockRecorder) CheckCartExists(userID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckCartExists", reflect.TypeOf((*MockCart)(nil).CheckCartExists), userID)
+}
+
 // DeleteAdvertFromCart mocks base method.
 func (m *MockCart) DeleteAdvertFromCart(cartID, AdvertID uuid.UUID) error {
 	m.ctrl.T.Helper()

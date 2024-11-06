@@ -9,6 +9,7 @@ import (
 
 	dto "github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
 	gomock "github.com/golang/mock/gomock"
+	uuid "github.com/google/uuid"
 )
 
 // MockPurchase is a mock of Purchase interface.
@@ -47,4 +48,19 @@ func (m *MockPurchase) AddPurchase(purchaseRequest dto.PurchaseRequest) (*dto.Pu
 func (mr *MockPurchaseMockRecorder) AddPurchase(purchaseRequest interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddPurchase", reflect.TypeOf((*MockPurchase)(nil).AddPurchase), purchaseRequest)
+}
+
+// GetPurchasesByUserID mocks base method.
+func (m *MockPurchase) GetPurchasesByUserID(userID uuid.UUID) ([]*dto.PurchaseResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPurchasesByUserID", userID)
+	ret0, _ := ret[0].([]*dto.PurchaseResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPurchasesByUserID indicates an expected call of GetPurchasesByUserID.
+func (mr *MockPurchaseMockRecorder) GetPurchasesByUserID(userID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPurchasesByUserID", reflect.TypeOf((*MockPurchase)(nil).GetPurchasesByUserID), userID)
 }

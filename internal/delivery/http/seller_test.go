@@ -1,6 +1,8 @@
 package http
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -15,6 +17,10 @@ import (
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 )
+
+func parseJSONResponse(body *bytes.Buffer, v interface{}) error {
+	return json.NewDecoder(body).Decode(v)
+}
 
 func setupSellerEndpoints(t *testing.T) (*SellerEndpoints, *mocks.MockSeller, *gomock.Controller) {
 	ctrl := gomock.NewController(t)

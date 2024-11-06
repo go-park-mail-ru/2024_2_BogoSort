@@ -9,6 +9,7 @@ import (
 
 	entity "github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	gomock "github.com/golang/mock/gomock"
+	uuid "github.com/google/uuid"
 	pgx "github.com/jackc/pgx/v5"
 )
 
@@ -63,4 +64,19 @@ func (m *MockPurchaseRepository) BeginTransaction() (pgx.Tx, error) {
 func (mr *MockPurchaseRepositoryMockRecorder) BeginTransaction() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BeginTransaction", reflect.TypeOf((*MockPurchaseRepository)(nil).BeginTransaction))
+}
+
+// GetPurchasesByUserID mocks base method.
+func (m *MockPurchaseRepository) GetPurchasesByUserID(userID uuid.UUID) ([]*entity.Purchase, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPurchasesByUserID", userID)
+	ret0, _ := ret[0].([]*entity.Purchase)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPurchasesByUserID indicates an expected call of GetPurchasesByUserID.
+func (mr *MockPurchaseRepositoryMockRecorder) GetPurchasesByUserID(userID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPurchasesByUserID", reflect.TypeOf((*MockPurchaseRepository)(nil).GetPurchasesByUserID), userID)
 }
