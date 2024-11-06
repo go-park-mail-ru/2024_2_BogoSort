@@ -154,7 +154,7 @@ func (mr *MockAdvertUseCaseMockRecorder) UpdateAdvert(advert, userId, advertId i
 }
 
 // UpdateAdvertStatus mocks base method.
-func (m *MockAdvertUseCase) UpdateAdvertStatus(advertId uuid.UUID, status string, userId uuid.UUID) error {
+func (m *MockAdvertUseCase) UpdateAdvertStatus(advertId uuid.UUID, status dto.AdvertStatus, userId uuid.UUID) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateAdvertStatus", advertId, status, userId)
 	ret0, _ := ret[0].(error)

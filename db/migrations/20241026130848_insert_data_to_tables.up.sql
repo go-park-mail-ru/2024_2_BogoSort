@@ -137,3 +137,17 @@ VALUES
     (uuid_generate_v4(), 
         (SELECT id FROM cart WHERE user_id = (SELECT id FROM "user" WHERE username = 'dmitry_sokolov')), 
         'completed', 'ул. Тургенева, д. 5', 'card', 'delivery', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+
+INSERT INTO category (id, title, created_at)
+VALUES
+    ('d4d10f10-4f9a-4bd5-ab1e-d2fc3ed35748', 'Женский гардероб', CURRENT_TIMESTAMP),
+    ('d49a98a6-f041-4432-b255-f23d4a97edde', 'Мужской гардероб', CURRENT_TIMESTAMP),
+    ('f21963b7-fd2b-4770-97f0-8dfac77c6155', 'Детский гардероб', CURRENT_TIMESTAMP),
+    ('97f4f702-5412-4588-8e53-b682499df8c7', 'Детские товары', CURRENT_TIMESTAMP),
+    ('1a4f92f6-c6f5-4930-91e8-163ec679ed0d', 'Стройматериалы и инструменты', CURRENT_TIMESTAMP),
+    ('aeeb6c57-b428-450c-8049-fbb942aa0d1c', 'Компьютерная техника', CURRENT_TIMESTAMP),
+    ('e310f974-9ea8-4e78-ad86-4fb49c92842a', 'Для дома и дачи', CURRENT_TIMESTAMP),
+    ('c513af49-3189-49cf-aed5-6a23465b5056', 'Бытовая техника', CURRENT_TIMESTAMP),
+    ('cb905cad-0bd2-42fd-a3da-712ea07d8a8b', 'Спорт и отдых', CURRENT_TIMESTAMP),
+    ('fe767d7e-5754-45b3-9a35-7015ff103aee', 'Хобби и развлечения', CURRENT_TIMESTAMP),
+    ('4368d269-9710-448c-8d99-0f76b8e4eb30', 'Красота и здоровье', CURRENT_TIMESTAMP);
