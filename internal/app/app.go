@@ -38,7 +38,6 @@ func (server *Server) Run() error {
 		AllowedOrigins: []string{
 			"http://5.188.141.136:8008",
 			"https://two024-2-bogo-sort.onrender.com",
-			"*",
 		},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
 		AllowedHeaders:   []string{"Content-Type", "Authorization", "X-CSRF-Token"},
