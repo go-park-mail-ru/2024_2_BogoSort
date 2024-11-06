@@ -3,17 +3,18 @@ package postgres
 import (
 	"context"
 	"time"
-	"go.uber.org/zap"
-	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/jackc/pgx/v5"
+
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"go.uber.org/zap"
 )
 
 type PurchaseDB struct {
-	db DBExecutor
-	logger *zap.Logger
-	ctx context.Context
+	db      DBExecutor
+	logger  *zap.Logger
+	ctx     context.Context
 	timeout time.Duration
 }
 
