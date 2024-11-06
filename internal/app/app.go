@@ -35,7 +35,10 @@ func (server *Server) Run() error {
 	}
 
 	corsHandler := cors.New(cors.Options{
-		AllowedOrigins:   []string{"https://two024-2-bogo-sort.onrender.com"},
+		AllowedOrigins: []string{
+			"http://5.188.141.136:8008",
+			"https://two024-2-bogo-sort.onrender.com",
+		},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
 		AllowedHeaders:   []string{"Content-Type", "Authorization", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"X-Authenticated", "X-CSRF-Token"},

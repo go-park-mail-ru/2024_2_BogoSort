@@ -1,19 +1,20 @@
 package http
 
 import (
-	"net/http"
 	"encoding/json"
-	"github.com/google/uuid"
+	"net/http"
+
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/utils"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/utils"
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 )
 
 type PurchaseEndpoints struct {
 	purchaseUC usecase.Purchase
-	logger *zap.Logger
+	logger     *zap.Logger
 }
 
 func NewPurchaseEndpoints(purchaseUC usecase.Purchase, logger *zap.Logger) *PurchaseEndpoints {
