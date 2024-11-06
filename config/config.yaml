@@ -7,7 +7,7 @@ server:
 
 session:
   expiration_time: 12h
-  secure_cookie: true
+  secure_cookie: false
 
 pg_ip: "localhost"
 pg_port: 5432
