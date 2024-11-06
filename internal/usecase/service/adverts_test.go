@@ -2,6 +2,7 @@ package service
 
 import (
 	"testing"
+	"errors"
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
@@ -184,4 +185,54 @@ func TestAdvertService_UploadImage(t *testing.T) {
 
 	err := service.UploadImage(advertId, imageId, sellerId)
 	assert.NoError(t, err)
+}
+
+func TestAdvertService_UpdateAdvert_NotFound(t *testing.T) {
+	service, ctrl, mockRepo, _, mockSellerRepo := setupAdvertTestService(t)
+	defer ctrl.Finish()
+
+	advertRequest := &dto.AdvertRequest{
+		Title:       "Updated Advert",
+		Description: "Updated Description",
+		Price:       150,
+		Location:    "Updated Location",
+		HasDelivery: false,
+		CategoryId:  uuid.New(),
+		Status:      "inactive",
+	}
+	sellerId := uuid.New()
+	advertId := uuid.New()
+
+	mockSellerRepo.EXPECT().GetSellerByUserID(sellerId).Return(&entity.Seller{ID: sellerId}, nil)
+	mockRepo.EXPECT().GetAdvertById(advertId).Return(nil, errors.New("advert not found"))
+
+	err := service.UpdateAdvert(advertRequest, sellerId, advertId)
+	assert.Error(t, err)
+}
+
+func TestAdvertService_DeleteAdvertById_NotFound(t *testing.T) {
+	service, ctrl, mockRepo, _, mockSellerRepo := setupAdvertTestService(t)
+	defer ctrl.Finish()
+
+	advertId := uuid.New()
+	sellerId := uuid.New()
+
+	mockSellerRepo.EXPECT().GetSellerByUserID(sellerId).Return(&entity.Seller{ID: sellerId}, nil)
+	mockRepo.EXPECT().GetAdvertById(advertId).Return(nil, errors.New("advert not found"))
+
+	err := service.DeleteAdvertById(advertId, sellerId)
+	assert.Error(t, err)
+}
+
+func TestAdvertService_GetAdvertsByUserId_NoAdverts(t *testing.T) {
+	service, ctrl, mockRepo, _, mockSellerRepo := setupAdvertTestService(t)
+	defer ctrl.Finish()
+
+	sellerId := uuid.New()
+	mockSellerRepo.EXPECT().GetSellerByUserID(sellerId).Return(&entity.Seller{ID: sellerId}, nil)
+	mockRepo.EXPECT().GetAdvertsBySellerId(sellerId).Return([]*entity.Advert{}, nil)
+
+	adverts, err := service.GetAdvertsByUserId(sellerId)
+	assert.NoError(t, err)
+	assert.Len(t, adverts, 0)
 }
