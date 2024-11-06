@@ -50,10 +50,11 @@ const (
 	`
 )
 
-type UsersDB struct {
-	DB     *pgxpool.Pool
-	ctx    context.Context
-	logger *zap.Logger
+type UserDB struct {
+	DB      DBExecutor
+	ctx     context.Context
+	logger  *zap.Logger
+	timeout time.Duration
 }
 
 type DBUser struct {
@@ -69,14 +70,15 @@ type DBUser struct {
 	UpdatedAt    time.Time
 }
 
-func NewUserRepository(db *pgxpool.Pool, ctx context.Context, logger *zap.Logger) (repository.User, error) {
+func NewUserRepository(db *pgxpool.Pool, ctx context.Context, logger *zap.Logger, timeout time.Duration) (repository.User, error) {
 	if err := db.Ping(ctx); err != nil {
 		return nil, err
 	}
-	return &UsersDB{
-		DB:     db,
-		ctx:    ctx,
-		logger: logger,
+	return &UserDB{
+		DB:      db,
+		ctx:     ctx,
+		logger:  logger,
+		timeout: timeout,
 	}, nil
 }
 
@@ -95,7 +97,7 @@ func (us *DBUser) GetEntity() entity.User {
 	}
 }
 
-func (us *UsersDB) BeginTransaction() (pgx.Tx, error) {
+func (us *UserDB) BeginTransaction() (pgx.Tx, error) {
 	tx, err := us.DB.Begin(us.ctx)
 	if err != nil {
 		us.logger.Error("failed to begin transaction", zap.Error(err))
@@ -104,10 +106,13 @@ func (us *UsersDB) BeginTransaction() (pgx.Tx, error) {
 	return tx, nil
 }
 
-func (us *UsersDB) AddUser(tx pgx.Tx, email string, hash, salt []byte) (uuid.UUID, error) {
+func (us *UserDB) AddUser(tx pgx.Tx, email string, hash, salt []byte) (uuid.UUID, error) {
 	var dbUser DBUser
 
-	err := tx.QueryRow(us.ctx, queryAddUser, email, hash, salt).Scan(
+	ctx, cancel := context.WithTimeout(us.ctx, us.timeout)
+	defer cancel()
+
+	err := tx.QueryRow(ctx, queryAddUser, email, hash, salt).Scan(
 		&dbUser.ID,
 		&dbUser.Email,
 		&dbUser.PasswordHash,
@@ -130,9 +135,13 @@ func (us *UsersDB) AddUser(tx pgx.Tx, email string, hash, salt []byte) (uuid.UUI
 	return dbUser.ID, nil
 }
 
-func (us *UsersDB) GetUserByEmail(email string) (*entity.User, error) {
+func (us *UserDB) GetUserByEmail(email string) (*entity.User, error) {
 	var dbUser DBUser
-	err := us.DB.QueryRow(us.ctx, queryGetUserByEmail, email).Scan(
+
+	ctx, cancel := context.WithTimeout(us.ctx, us.timeout)
+	defer cancel()
+
+	err := us.DB.QueryRow(ctx, queryGetUserByEmail, email).Scan(
 		&dbUser.ID,
 		&dbUser.Email,
 		&dbUser.PasswordHash,
@@ -158,9 +167,13 @@ func (us *UsersDB) GetUserByEmail(email string) (*entity.User, error) {
 	return &user, nil
 }
 
-func (us *UsersDB) GetUserById(id uuid.UUID) (*entity.User, error) {
+func (us *UserDB) GetUserById(id uuid.UUID) (*entity.User, error) {
 	var dbUser DBUser
-	err := us.DB.QueryRow(us.ctx, queryGetUserById, id).Scan(
+
+	ctx, cancel := context.WithTimeout(us.ctx, us.timeout)
+	defer cancel()
+
+	err := us.DB.QueryRow(ctx, queryGetUserById, id).Scan(
 		&dbUser.ID,
 		&dbUser.Email,
 		&dbUser.PasswordHash,
@@ -186,36 +199,59 @@ func (us *UsersDB) GetUserById(id uuid.UUID) (*entity.User, error) {
 	return &user, nil
 }
 
-func (us *UsersDB) UpdateUser(user *entity.User) error {
-	_, err := us.DB.Exec(us.ctx, queryUpdateUser, user.Username, user.Phone, uuid.Nil, user.ID)
-	switch {
-	case errors.Is(err, pgx.ErrNoRows):
+func (us *UserDB) UpdateUser(user *entity.User) error {
+	ctx, cancel := context.WithTimeout(us.ctx, us.timeout)
+	defer cancel()
+
+	ctag, err := us.DB.Exec(ctx, queryUpdateUser, user.Username, user.Phone, uuid.Nil, user.ID)
+	if err != nil {
+		switch {
+		case errors.Is(err, pgx.ErrNoRows):
+			us.logger.Error("user not found", zap.String("id", user.ID.String()))
+			return repository.ErrUserNotFound
+		default:
+			us.logger.Error("error updating user", zap.String("id", user.ID.String()), zap.Error(err))
+			return entity.PSQLWrap(errors.New("error updating user"), err)
+		}
+	}
+
+	if ctag.RowsAffected() == 0 {
 		us.logger.Error("user not found", zap.String("id", user.ID.String()))
 		return repository.ErrUserNotFound
-	case err != nil:
-		us.logger.Error("error updating user", zap.String("id", user.ID.String()), zap.Error(err))
-		return entity.PSQLWrap(errors.New("error updating user"), err)
 	}
 
 	return nil
 }
 
-func (us *UsersDB) DeleteUser(userID uuid.UUID) error {
-	_, err := us.DB.Exec(us.ctx, queryDeleteUser, userID)
-	switch {
-	case errors.Is(err, pgx.ErrNoRows):
+func (us *UserDB) DeleteUser(userID uuid.UUID) error {
+	ctx, cancel := context.WithTimeout(us.ctx, us.timeout)
+	defer cancel()
+
+	ctag, err := us.DB.Exec(ctx, queryDeleteUser, userID)
+	if err != nil {
+		switch {
+		case errors.Is(err, pgx.ErrNoRows):
+			us.logger.Error("user not found", zap.String("id", userID.String()))
+			return repository.ErrUserNotFound
+		default:
+			us.logger.Error("error deleting user", zap.String("id", userID.String()), zap.Error(err))
+			return entity.PSQLWrap(errors.New("error deleting user"), err)
+		}
+	}
+
+	if ctag.RowsAffected() == 0 {
 		us.logger.Error("user not found", zap.String("id", userID.String()))
 		return repository.ErrUserNotFound
-	case err != nil:
-		us.logger.Error("error deleting user", zap.String("id", userID.String()), zap.Error(err))
-		return entity.PSQLWrap(errors.New("error deleting user"), err)
 	}
 
 	return nil
 }
 
-func (us *UsersDB) UploadImage(userID uuid.UUID, imageId uuid.UUID) error {
-	result, err := us.DB.Exec(us.ctx, uploadAvatarQuery, imageId, userID)
+func (us *UserDB) UploadImage(userID uuid.UUID, imageId uuid.UUID) error {
+	ctx, cancel := context.WithTimeout(us.ctx, us.timeout)
+	defer cancel()
+
+	result, err := us.DB.Exec(ctx, uploadAvatarQuery, imageId, userID)
 	if err != nil {
 		us.logger.Error("failed to upload image", zap.Error(err), zap.String("user_id", userID.String()))
 		return entity.PSQLWrap(err)

@@ -3,6 +3,7 @@ package postgres
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -25,191 +26,145 @@ func setupMockDB(t *testing.T) (pgxmock.PgxPoolIface, *postgres2.PgxMockAdapter)
 	return mockPool, adapter
 }
 
-func TestStaticDB_GetStatic_Success(t *testing.T) {
+func setupTest(t *testing.T) (pgxmock.PgxPoolIface, *postgres2.PgxMockAdapter, string, context.Context, *StaticDB, func()) {
 	tempDir := filepath.Join(os.TempDir(), "test_temp_dir")
 	err := os.MkdirAll(tempDir, os.ModePerm)
 	if err != nil {
 		t.Fatalf("failed to create temp directory: %v", err)
 	}
-	defer os.RemoveAll(tempDir) 
 
 	mockPool, adapter := setupMockDB(t)
-	defer mockPool.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	logger, _ := zap.NewDevelopment()
-	repo := StaticDB{
-		DB:        adapter,
-		Logger:    logger,
+	repo := &StaticDB{
+		DB:      adapter,
+		Logger:  zap.L(),
 		BasicPath: tempDir,
 		MaxSize:   10 * 1024 * 1024,
 		Ctx:       ctx,
+		timeout:   10 * time.Second,
 	}
 
-	staticID := uuid.New()
-	expectedPath := "test/path"
-	expectedName := "test.jpg"
-
-	rows := mockPool.NewRows([]string{"path", "name"}).AddRow(expectedPath, expectedName)
-	mockPool.ExpectQuery("SELECT path, name FROM static WHERE id = \\$1").
-		WithArgs(staticID).
-		WillReturnRows(rows)
-
-	path, err := repo.GetStatic(staticID)
-	assert.NoError(t, err, "unexpected error in GetStatic")
-
-	expectedResult := fmt.Sprintf("%s/%s", expectedPath, expectedName)
-	assert.Equal(t, expectedResult, path, "paths do not match")
-
-	err = mockPool.ExpectationsWereMet()
-	assert.NoError(t, err, "there were unfulfilled expectations")
+	return mockPool, adapter, tempDir, ctx, repo, func() {
+		os.RemoveAll(tempDir)
+		cancel()
+		mockPool.Close()
+	}
 }
 
-func TestStaticDB_GetStatic_NotFound(t *testing.T) {
-	tempDir := filepath.Join(os.TempDir(), "test_temp_dir")
-	err := os.MkdirAll(tempDir, os.ModePerm)
-	if err != nil {
-		t.Fatalf("failed to create temp directory: %v", err)
+func TestStaticDB_GetStatic(t *testing.T) {
+	mockPool, _, _, _, repo, teardown := setupTest(t)
+	defer teardown()
+
+	tests := []struct {
+		name          string
+		staticID      uuid.UUID
+		expectedPath  string
+		expectedName  string
+		expectedError error
+	}{
+		{
+			name:          "Success",
+			staticID:      uuid.New(),
+			expectedPath:  "test/path",
+			expectedName:  "test.jpg",
+			expectedError: nil,
+		},
+		{
+			name:          "NotFound",
+			staticID:      uuid.New(),
+			expectedPath:  "",
+			expectedName:  "",
+			expectedError: repository.ErrStaticNotFound,
+		},
 	}
-	defer os.RemoveAll(tempDir)
 
-	mockPool, adapter := setupMockDB(t)
-	defer mockPool.Close()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.expectedError == nil {
+				rows := mockPool.NewRows([]string{"path", "name"}).AddRow(tt.expectedPath, tt.expectedName)
+				mockPool.ExpectQuery("SELECT path, name FROM static WHERE id = \\$1").
+					WithArgs(tt.staticID).
+					WillReturnRows(rows)
+			} else {
+				mockPool.ExpectQuery("SELECT path, name FROM static WHERE id = \\$1").
+					WithArgs(tt.staticID).
+					WillReturnError(pgx.ErrNoRows)
+			}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+			path, err := repo.GetStatic(tt.staticID)
+			if tt.expectedError != nil {
+				assert.ErrorIs(t, err, tt.expectedError, "expected error in GetStatic")
+			} else {
+				assert.NoError(t, err, "unexpected error in GetStatic")
+				expectedResult := fmt.Sprintf("%s/%s", tt.expectedPath, tt.expectedName)
+				assert.Equal(t, expectedResult, path, "paths do not match")
+			}
 
-	logger, _ := zap.NewDevelopment()
-	repo := StaticDB{
-		DB:        adapter,
-		Logger:    logger,
-		BasicPath: tempDir,
-		MaxSize:   10 * 1024 * 1024,
-		Ctx:       ctx,
+			err = mockPool.ExpectationsWereMet()
+			assert.NoError(t, err, "there were unfulfilled expectations")
+		})
 	}
-
-	staticID := uuid.New()
-
-	mockPool.ExpectQuery("SELECT path, name FROM static WHERE id = \\$1").
-		WithArgs(staticID).
-		WillReturnError(pgx.ErrNoRows)
-
-	_, err = repo.GetStatic(staticID)
-	assert.ErrorIs(t, err, repository.ErrStaticNotFound, "expected ErrStaticNotFound in GetStatic")
-
-	err = mockPool.ExpectationsWereMet()
-	assert.NoError(t, err, "there were unfulfilled expectations")
 }
 
-func TestStaticDB_UploadStatic_Success(t *testing.T) {
-	tempDir := filepath.Join(os.TempDir(), "test_temp_dir")
-	err := os.MkdirAll(tempDir, os.ModePerm)
-	if err != nil {
-		t.Fatalf("failed to create temp directory: %v", err)
-	}
-	defer os.RemoveAll(tempDir)
+func TestStaticDB_UploadStatic(t *testing.T) {
+	mockPool, _, tempDir, _, repo, teardown := setupTest(t)
+	defer teardown()
 
-	mockPool, adapter := setupMockDB(t)
-	defer mockPool.Close()
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5)
-	defer cancel()
-
-	logger, _ := zap.NewDevelopment()
-	repo := StaticDB{
-		DB:        adapter,
-		Logger:    logger,
-		BasicPath: tempDir,
-		MaxSize:   10 * 1024 * 1024,
-		Ctx:       ctx,
-	}
-
-	path := "testing/staticfiles/test/path"
-	filename := "test.jpg"
-	data := []byte("test data")
-	staticID := uuid.New()
-
-	mockPool.ExpectQuery("INSERT INTO static \\(path, name\\) VALUES \\(\\$1, \\$2\\) RETURNING id").
-		WithArgs(tempDir + path, filename).
-		WillReturnRows(pgxmock.NewRows([]string{"id"}).AddRow(staticID))
-
-	_, err = repo.UploadStatic(path, filename, data)
-	assert.NoError(t, err, "unexpected error in UploadStatic")
-
-	err = mockPool.ExpectationsWereMet()
-	assert.NoError(t, err, "there were unfulfilled expectations")
-}
-
-func TestStaticDB_UploadStatic_FileTooLarge(t *testing.T) {
-	tempDir := filepath.Join(os.TempDir(), "test_temp_dir")
-	err := os.MkdirAll(tempDir, os.ModePerm)
-	if err != nil {
-		t.Fatalf("failed to create temp directory: %v", err)
-	}
-	defer os.RemoveAll(tempDir)
-
-	mockPool, adapter := setupMockDB(t)
-	defer mockPool.Close()
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5)
-	defer cancel()
-
-	logger, _ := zap.NewDevelopment()
-	repo := StaticDB{
-		DB:        adapter,
-		Logger:    logger,
-		BasicPath: tempDir,
-		MaxSize:   10,
-		Ctx:       ctx,
+	tests := []struct {
+		name          string
+		path          string
+		filename      string
+		data          []byte
+		expectedError error
+	}{
+		{
+			name:          "Success",
+			path:          "testing/staticfiles/test/path",
+			filename:      "test.jpg",
+			data:          []byte("test data"),
+			expectedError: nil,
+		},
+		{
+			name:          "FileTooLarge",
+			path:          "testing/staticfiles/test/path",
+			filename:      "test.jpg",
+			data:          bytes.Repeat([]byte("a"), 20),
+			expectedError: repository.ErrStaticTooLarge,
+		},
+		{
+			name:          "SQLError",
+			path:          "testing/staticfiles/test/path",
+			filename:      "test.jpg",
+			data:          []byte("test data"),
+			expectedError: errors.New("sql error"),
+		},
 	}
 
-	path := "testing/staticfiles/test/path"
-	filename := "test.jpg"
-	data := bytes.Repeat([]byte("a"), 20)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.expectedError == nil {
+				staticID := uuid.New()
+				mockPool.ExpectQuery("INSERT INTO static \\(path, name\\) VALUES \\(\\$1, \\$2\\) RETURNING id").
+					WithArgs(tempDir+tt.path, tt.filename).
+					WillReturnRows(pgxmock.NewRows([]string{"id"}).AddRow(staticID))
+			} else if errors.Is(tt.expectedError, repository.ErrStaticTooLarge) {
+				repo.MaxSize = 10
+			} else {
+				mockPool.ExpectQuery("INSERT INTO static \\(path, name\\) VALUES \\(\\$1, \\$2\\) RETURNING id").
+					WithArgs(tempDir+tt.path, tt.filename).
+					WillReturnError(errors.New("sql error"))
+			}
 
-	_, err = repo.UploadStatic(path, filename, data)
-	assert.ErrorIs(t, err, repository.ErrStaticTooLarge, "expected ErrStaticTooLarge in UploadStatic")
+			_, err := repo.UploadStatic(tt.path, tt.filename, tt.data)
+			if tt.expectedError != nil {
+				assert.ErrorContains(t, err, tt.expectedError.Error(), "expected error in UploadStatic")
+			} else {
+				assert.NoError(t, err, "unexpected error in UploadStatic")
+			}
 
-	err = mockPool.ExpectationsWereMet()
-	assert.NoError(t, err, "there were unfulfilled expectations")
-}
-
-func TestStaticDB_UploadStatic_SQL_Error(t *testing.T) {
-	tempDir := filepath.Join(os.TempDir(), "test_temp_dir")
-	err := os.MkdirAll(tempDir, os.ModePerm)
-	if err != nil {
-		t.Fatalf("failed to create temp directory: %v", err)
+			err = mockPool.ExpectationsWereMet()
+			assert.NoError(t, err, "there were unfulfilled expectations")
+		})
 	}
-	defer os.RemoveAll(tempDir)
-
-	mockPool, adapter := setupMockDB(t)
-	defer mockPool.Close()
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5)
-	defer cancel()
-
-	logger, _ := zap.NewDevelopment()
-	repo := StaticDB{
-		DB:        adapter,
-		Logger:    logger,
-		BasicPath: tempDir,
-		MaxSize:   10 * 1024 * 1024,
-		Ctx:       ctx,
-	}
-
-	path := "testing/staticfiles/test/path"
-	filename := "test.jpg"
-	data := []byte("test data")
-
-	mockPool.ExpectQuery("INSERT INTO static \\(path, name\\) VALUES \\(\\$1, \\$2\\) RETURNING id").
-		WithArgs(tempDir + path, filename).
-		WillReturnError(fmt.Errorf("sql error"))
-
-	_, err = repo.UploadStatic(path, filename, data)
-	assert.Error(t, err, "expected error in UploadStatic")
-
-	err = mockPool.ExpectationsWereMet()
-	assert.NoError(t, err, "there were unfulfilled expectations")
 }

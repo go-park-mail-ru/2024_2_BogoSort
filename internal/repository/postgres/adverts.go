@@ -14,7 +14,7 @@ import (
 )
 
 type AdvertDB struct {
-	DB      *pgxpool.Pool
+	DB      DBExecutor
 	logger  *zap.Logger
 	ctx     context.Context
 	timeout time.Duration
@@ -112,7 +112,7 @@ func (r *AdvertDB) AddAdvert(a *entity.Advert) (*entity.Advert, error) {
 		a.CategoryId,
 		a.SellerId,
 		a.ImageURL,
-		a.Status).Scan(
+		string(a.Status)).Scan(
 		&dbAdvert.ID,
 		&dbAdvert.Title,
 		&dbAdvert.Description,

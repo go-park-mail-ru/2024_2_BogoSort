@@ -61,6 +61,11 @@ func (h *CartEndpoints) GetCartByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cart, err := h.cartUC.GetCartByID(cartID)
+	if errors.Is(err, repository.ErrCartNotFound) {
+		h.logger.Error("cart not found", zap.Error(err))
+		utils.SendErrorResponse(w, http.StatusNotFound, "cart not found")
+		return
+	}
 	if err != nil {
 		h.logger.Error("failed to get cart", zap.Error(err))
 		utils.SendErrorResponse(w, http.StatusInternalServerError, "failed to get adverts from cart")
@@ -98,6 +103,11 @@ func (h *CartEndpoints) GetCartByUserID(w http.ResponseWriter, r *http.Request) 
 	}
 
 	cart, err := h.cartUC.GetCartByUserID(userID)
+	if errors.Is(err, repository.ErrCartNotFound) {
+		h.logger.Error("cart not found", zap.Error(err))
+		utils.SendErrorResponse(w, http.StatusNotFound, "cart not found")
+		return
+	}
 	if err != nil {
 		h.logger.Error("failed to get cart", zap.Error(err))
 		utils.SendErrorResponse(w, http.StatusInternalServerError, "failed to get cart")

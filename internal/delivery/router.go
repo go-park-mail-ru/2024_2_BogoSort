@@ -65,7 +65,7 @@ func NewRouter(cfg config.Config) (*mux.Router, error) {
 	if err != nil {
 		return nil, handleRepoError(err, "unable to create session repository")
 	}
-	userRepo, err := postgres.NewUserRepository(dbPool, ctx, zap.L())
+	userRepo, err := postgres.NewUserRepository(dbPool, ctx, zap.L(), cfg.PGTimeout)
 	if err != nil {
 		return nil, handleRepoError(err, "unable to create user repository")
 	}

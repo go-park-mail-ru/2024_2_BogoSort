@@ -40,7 +40,7 @@ var (
 )
 
 type CartDB struct {
-	DB     *pgxpool.Pool
+	DB     DBExecutor
 	ctx    context.Context
 	logger *zap.Logger
 }
@@ -96,13 +96,17 @@ func (c *CartDB) AddAdvertToCart(cartID uuid.UUID, AdvertID uuid.UUID) error {
 }
 
 func (c *CartDB) DeleteAdvertFromCart(cartID uuid.UUID, AdvertID uuid.UUID) error {
-	_, err := c.DB.Exec(c.ctx, queryDeleteAdvertFromCart, cartID, AdvertID)
+	cmdTag, err := c.DB.Exec(c.ctx, queryDeleteAdvertFromCart, cartID, AdvertID)
 	switch {
 	case errors.Is(err, pgx.ErrNoRows):
 		return repository.ErrCartOrAdvertNotFound
 	case err != nil:
 		c.logger.Error("error deleting Advert from cart", zap.String("cart_id", cartID.String()), zap.String("Advert_id", AdvertID.String()), zap.Error(err))
 		return entity.PSQLWrap(errors.New("error deleting Advert from cart"), err)
+	}
+
+	if cmdTag.RowsAffected() == 0 {
+		return repository.ErrCartOrAdvertNotFound
 	}
 	return nil
 }

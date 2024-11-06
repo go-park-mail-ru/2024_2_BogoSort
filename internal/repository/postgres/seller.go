@@ -35,7 +35,7 @@ const (
 )
 
 type SellerDB struct {
-	DB     *pgxpool.Pool
+	DB     DBExecutor
 	ctx    context.Context
 	logger *zap.Logger
 }
@@ -57,6 +57,14 @@ func NewSellerRepository(db *pgxpool.Pool, ctx context.Context, logger *zap.Logg
 		ctx:    ctx,
 		logger: logger,
 	}, nil
+}
+
+func (dbSeller *DBSeller) GetEntity() entity.Seller {
+	return entity.Seller{
+		ID:          dbSeller.ID,
+		UserID:      dbSeller.UserID,
+		Description: dbSeller.Description.String,
+	}
 }
 
 func (s *SellerDB) AddSeller(tx pgx.Tx, userID uuid.UUID) (uuid.UUID, error) {
@@ -97,7 +105,7 @@ func (s *SellerDB) GetSellerByID(sellerID uuid.UUID) (*entity.Seller, error) {
 		return nil, repository.ErrSellerNotFound
 	case err != nil:
 		s.logger.Error("error getting seller by ID", zap.String("seller_id", sellerID.String()), zap.Error(err))
-		return nil, err
+		return nil, entity.PSQLWrap(errors.New("error getting seller by ID"), err)
 	}
 
 	s.logger.Info("seller found", zap.String("seller_id", sellerID.String()))
@@ -121,17 +129,9 @@ func (s *SellerDB) GetSellerByUserID(userID uuid.UUID) (*entity.Seller, error) {
 		return nil, repository.ErrSellerNotFound
 	case err != nil:
 		s.logger.Error("error getting seller by user_id", zap.String("user_id", userID.String()), zap.Error(err))
-		return nil, err
+		return nil, entity.PSQLWrap(errors.New("error getting seller by user_id"), err)
 	}
 
 	seller := dbSeller.GetEntity()
 	return &seller, nil
-}
-
-func (dbSeller *DBSeller) GetEntity() entity.Seller {
-	return entity.Seller{
-		ID:          dbSeller.ID,
-		UserID:      dbSeller.UserID,
-		Description: dbSeller.Description.String,
-	}
 }
