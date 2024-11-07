@@ -9,7 +9,7 @@ session:
   expiration_time: 12h
   secure_cookie: false
 
-pg_ip: "localhost"
+pg_ip: "5.188.141.136"
 pg_port: 5432
 pg_user: "postgres"
 pg_password: "postgres"
