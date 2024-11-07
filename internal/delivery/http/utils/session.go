@@ -43,7 +43,7 @@ func (s *SessionManager) SetSession(value string) (*http.Cookie, error) {
 		HttpOnly: true,
 		Secure:   s.SecureCookie,
 		Path:     "/",
-		SameSite: http.SameSiteNoneMode,
+		SameSite: http.SameSiteLaxMode,
 	}
 
 	return cookie, nil
