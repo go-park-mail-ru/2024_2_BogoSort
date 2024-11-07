@@ -1,11 +1,11 @@
 -- Заполнение таблицы "static"
 INSERT INTO static (id, name, path, created_at)
 VALUES
-    (uuid_generate_v4(), 'image1.jpg', 'static/', CURRENT_TIMESTAMP),
-    (uuid_generate_v4(), 'image2.jpg', 'static/', CURRENT_TIMESTAMP),
-    (uuid_generate_v4(), 'image3.jpg', 'static/', CURRENT_TIMESTAMP),
-    (uuid_generate_v4(), 'image4.jpg', 'static/', CURRENT_TIMESTAMP),
-    (uuid_generate_v4(), 'image5.jpg', 'static/', CURRENT_TIMESTAMP);
+    (uuid_generate_v4(), 'image1.jpg', 'static/images', CURRENT_TIMESTAMP),
+    (uuid_generate_v4(), 'image2.jpg', 'static/images', CURRENT_TIMESTAMP),
+    (uuid_generate_v4(), 'image3.jpg', 'static/images', CURRENT_TIMESTAMP),
+    (uuid_generate_v4(), 'image4.jpg', 'static/images', CURRENT_TIMESTAMP),
+    (uuid_generate_v4(), 'image5.jpg', 'static/images', CURRENT_TIMESTAMP);
 
 -- Заполнение таблицы "user"
 INSERT INTO "user" (id, username, email, password_hash, password_salt, phone_number, image_id, status, created_at, updated_at)
