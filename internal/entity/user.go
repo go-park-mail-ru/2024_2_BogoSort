@@ -25,7 +25,7 @@ type User struct {
 	PasswordSalt []byte    `db:"password_salt"`
 	Username     string    `db:"username"`
 	Phone        string    `db:"phone"`
-	AvatarId     uuid.UUID `db:"avatar_id" default:"00000000-0000-0000-0000-000000000000"`
+	AvatarId     uuid.UUID `db:"avatar_id"`
 	Status       string    `db:"status" default:"active"`
 	CreatedAt    time.Time `db:"created_at"`
 	UpdatedAt    time.Time `db:"updated_at"`
