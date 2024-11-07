@@ -69,7 +69,7 @@ func (s StaticDB) GetStatic(staticID uuid.UUID) (string, error) {
 		return "", entity.PSQLWrap(err, errors.New("error executing SQL query GetStatic"))
 	}
 
-	return fmt.Sprintf("%s/%s", path, name), nil
+	return fmt.Sprintf("%s%s", path, name), nil
 }
 
 func (s StaticDB) UploadStatic(path, filename string, data []byte) (uuid.UUID, error) {
