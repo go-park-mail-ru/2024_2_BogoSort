@@ -91,7 +91,7 @@ func (s StaticDB) UploadStatic(path, filename string, data []byte) (uuid.UUID, e
 		)
 	}
 
-	dst, err := os.Create(fmt.Sprintf("%s/%s/%s", s.BasicPath, path, filename))
+	dst, err := os.Create(fmt.Sprintf("%s/%s", path, filename))
 	if err != nil {
 		s.Logger.Error("error creating static file", zap.String("path", fmt.Sprintf("%s/%s/%s", s.BasicPath, path, filename)), zap.Error(err))
 		return uuid.UUID{}, entity.PSQLWrap(
