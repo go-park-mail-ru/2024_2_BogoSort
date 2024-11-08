@@ -39,3 +39,9 @@ func SanitizeResponseUser(user *dto.User, policy *bluemonday.Policy) {
 	user.Username = policy.Sanitize(user.Username)
 	user.Phone = policy.Sanitize(user.Phone)
 }
+
+func SanitizeRequestUserUpdate(user *dto.UserUpdate, policy *bluemonday.Policy) {
+	user.Email = policy.Sanitize(user.Email)
+	user.Username = policy.Sanitize(user.Username)
+	user.Phone = policy.Sanitize(user.Phone)
+}

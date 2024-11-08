@@ -37,8 +37,8 @@ const (
 
 	queryUpdateUser = `
 		UPDATE "user" 
-		SET username = $1, phone_number = $2, image_id = $3 
-		WHERE id = $4
+		SET username = $1, phone_number = $2
+		WHERE id = $3
 	`
 
 	queryDeleteUser = `
@@ -203,7 +203,7 @@ func (us *UserDB) UpdateUser(user *entity.User) error {
 	ctx, cancel := context.WithTimeout(us.ctx, us.timeout)
 	defer cancel()
 
-	ctag, err := us.DB.Exec(ctx, queryUpdateUser, user.Username, user.Phone, uuid.Nil, user.ID)
+	ctag, err := us.DB.Exec(ctx, queryUpdateUser, user.Username, user.Phone, user.ID)
 	if err != nil {
 		switch {
 		case errors.Is(err, pgx.ErrNoRows):

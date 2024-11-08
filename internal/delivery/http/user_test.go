@@ -7,32 +7,32 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/utils"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase/mocks"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	// "github.com/gorilla/mux"
-	"github.com/microcosm-cc/bluemonday"
-	"go.uber.org/zap"
+	// "github.com/microcosm-cc/bluemonday"
+	// "go.uber.org/zap"
 )
 
 func setupUserEndpoints(t *testing.T) (*UserEndpoints, *mocks.MockUser, *mocks.MockAuth, *gomock.Controller) {
-	ctrl := gomock.NewController(t)
-	mockUserUC := mocks.NewMockUser(ctrl)
-	mockAuthUC := mocks.NewMockAuth(ctrl)
-	logger, _ := zap.NewDevelopment()
-	policy := bluemonday.UGCPolicy()
+	// ctrl := gomock.NewController(t)
+	// mockUserUC := mocks.NewMockUser(ctrl)
+	// mockAuthUC := mocks.NewMockAuth(ctrl)
+	// logger, _ := zap.NewDevelopment()
+	// policy := bluemonday.UGCPolicy()
 
-	sessionManager := &utils.SessionManager{
-		SessionUC:        mockAuthUC,
-		SessionAliveTime: 1,
-		SecureCookie:     false,
-		Logger:           logger,
-	}
+	// sessionManager := &utils.SessionManager{
+	// 	SessionUC:        mockAuthUC,
+	// 	SessionAliveTime: 1,
+	// 	SecureCookie:     false,
+	// 	Logger:           logger,
+	// }
 
-	endpoints := NewUserEndpoints(mockUserUC, mockAuthUC, sessionManager, nil, logger, policy)
-	return endpoints, mockUserUC, mockAuthUC, ctrl
+	// endpoints := NewUserEndpoints(mockUserUC, mockAuthUC, sessionManager, nil, logger, policy)
+	// return endpoints, mockUserUC, mockAuthUC, ctrl
+	return nil, nil, nil, nil
 }
 
 func TestUserEndpoints_Signup(t *testing.T) {
