@@ -3,16 +3,17 @@ package service
 import (
 	"bytes"
 	"fmt"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
-	"github.com/google/uuid"
-	"github.com/pkg/errors"
-	"go.uber.org/zap"
 	"image"
 	"image/draw"
 	"image/jpeg"
 	_ "image/png"
 	"net/http"
+
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
+	"github.com/google/uuid"
+	"github.com/pkg/errors"
+	"go.uber.org/zap"
 )
 
 type StaticService struct {
@@ -87,7 +88,7 @@ func (s *StaticService) UploadFile(data []byte) (uuid.UUID, error) {
 		)
 	}
 
-	id, err := s.staticRepo.UploadStatic("images", uuid.New().String()+".jpg", out.Bytes())
+	id, err := s.staticRepo.UploadStatic("", uuid.New().String()+".jpg", out.Bytes())
 	if err != nil {
 		s.logger.Error("error uploading static", zap.Error(err))
 		return uuid.Nil, err
