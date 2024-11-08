@@ -29,22 +29,26 @@ const (
 	selectAdvertsQuery = `
 		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at
 		FROM advert
-		LIMIT $1 OFFSET $2`
+		LIMIT $1 OFFSET $2
+		ORDER BY created_at DESC`
 
 	selectAdvertsByUserIdQuery = `
 		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at
 		FROM advert
-		WHERE seller_id = $1`
+		WHERE seller_id = $1
+		ORDER BY created_at DESC`
 
 	selectAdvertsByCartIdQuery = `
 		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at
 		FROM advert
-		WHERE id IN (SELECT advert_id FROM cart_advert WHERE cart_id = $1)`
+		WHERE id IN (SELECT advert_id FROM cart_advert WHERE cart_id = $1)
+		ORDER BY created_at DESC`
 
 	selectAdvertByIdQuery = `
 		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at
 		FROM advert
-		WHERE id = $1`
+		WHERE id = $1
+		ORDER BY created_at DESC`
 
 	updateAdvertQuery = `
 		UPDATE advert
@@ -62,7 +66,8 @@ const (
 	selectAdvertsByCategoryIdQuery = `
 		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at
 		FROM advert
-		WHERE category_id = $1`
+		WHERE category_id = $1
+		ORDER BY created_at DESC`
 
 	uploadImageQuery = `
 		UPDATE advert
