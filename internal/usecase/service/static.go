@@ -88,10 +88,21 @@ func (s *StaticService) UploadFile(data []byte) (uuid.UUID, error) {
 		)
 	}
 
-	id, err := s.staticRepo.UploadStatic("images", uuid.New().String()+".jpg", out.Bytes())
-	if err != nil {
-		s.logger.Error("error uploading static", zap.Error(err))
-		return uuid.Nil, err
+	fileName := uuid.New().String()
+	var id uuid.UUID
+
+	if contentType != "image/jpeg" {
+		id, err = s.staticRepo.UploadStatic("images", fileName+".jpg", out.Bytes())
+		if err != nil {
+			s.logger.Error("error uploading static", zap.Error(err))
+			return uuid.Nil, err
+		}
+	} else {
+		id, err = s.staticRepo.UploadStatic("images", fileName+".png", out.Bytes())
+		if err != nil {
+			s.logger.Error("error uploading static", zap.Error(err))
+			return uuid.Nil, err
+		}
 	}
 
 	return id, nil
