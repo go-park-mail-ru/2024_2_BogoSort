@@ -55,7 +55,6 @@ func (s *SessionDB) CreateSession(userID uuid.UUID) (string, error) {
 		s.logger.Error("error adding session to user", zap.String("sessionID", sessionID), zap.String("userID", userID.String()), zap.Error(err))
 		return "", entity.RedisWrap(repository.ErrSessionCreationFailed, err)
 	}
-	s.logger.Info("session created", zap.String("sessionID", sessionID), zap.String("userID", userID.String()))
 	return sessionID, nil
 }
 
@@ -75,7 +74,6 @@ func (s *SessionDB) GetSession(sessionID string) (uuid.UUID, error) {
 		s.logger.Error("error parsing userID", zap.String("userID", userID), zap.Error(err))
 		return uuid.Nil, entity.RedisWrap(repository.ErrIncorrectID, err)
 	}
-	s.logger.Info("session found", zap.String("sessionID", sessionID), zap.String("userID", id.String()))
 	return id, nil
 }
 

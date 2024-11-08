@@ -110,14 +110,12 @@ func (u *UserService) Login(loginInfo *dto.Login) (uuid.UUID, error) {
 	return user.ID, nil
 }
 
-func (u *UserService) UpdateInfo(user *dto.User) error {
+func (u *UserService) UpdateInfo(user *dto.UserUpdate) error {
 	entityUser := &entity.User{
 		ID:       user.ID,
 		Email:    user.Email,
 		Username: user.Username,
 		Phone:    user.Phone,
-		AvatarId: user.AvatarId,
-		Status:   user.Status,
 	}
 
 	err := u.userRepo.UpdateUser(entityUser)

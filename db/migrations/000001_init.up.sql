@@ -1,12 +1,47 @@
 -- Создание расширения для генерации UUID, если оно еще не существует
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
-CREATE TYPE user_status AS ENUM ('active', 'inactive', 'banned');
-CREATE TYPE payment_method AS ENUM ('cash', 'card');
-CREATE TYPE delivery_method AS ENUM ('pickup', 'delivery');
-CREATE TYPE purchase_status AS ENUM ('pending', 'in_progress', 'completed', 'cancelled');
-CREATE TYPE cart_status AS ENUM ('active', 'inactive', 'deleted');
-CREATE TYPE advert_status AS ENUM ('active', 'inactive', 'reserved');
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_status') THEN
+        CREATE TYPE user_status AS ENUM ('active', 'inactive', 'banned');
+    END IF;
+END $$;
+
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'payment_method') THEN
+        CREATE TYPE payment_method AS ENUM ('cash', 'card');
+    END IF;
+END $$;
+
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'delivery_method') THEN
+        CREATE TYPE delivery_method AS ENUM ('pickup', 'delivery');
+    END IF;
+END $$;
+
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'purchase_status') THEN
+        CREATE TYPE purchase_status AS ENUM ('pending', 'in_progress', 'completed', 'cancelled');
+    END IF;
+END $$;
+
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'cart_status') THEN
+        CREATE TYPE cart_status AS ENUM ('active', 'inactive', 'deleted');
+    END IF;
+END $$;
+
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'advert_status') THEN
+        CREATE TYPE advert_status AS ENUM ('active', 'inactive', 'reserved');
+    END IF;
+END $$;
 
 -- Таблица для хранения статических файлов
 CREATE TABLE IF NOT EXISTS static (
@@ -161,3 +196,24 @@ FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_purchase_updated_at
 BEFORE UPDATE ON purchase
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Создание триггерной функции для установки image_id по умолчанию
+CREATE OR REPLACE FUNCTION set_default_image_id()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.image_id IS NULL THEN
+        SELECT id INTO NEW.image_id FROM static WHERE name = 'default.jpg' LIMIT 1;
+        
+        IF NEW.image_id IS NULL THEN
+            RAISE EXCEPTION 'Изображение "default.jpg" не найдено в таблице "static". Пожалуйста, добавьте его перед созданием пользователя.';
+        END IF;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Создание триггера для таблицы "user"
+CREATE TRIGGER trg_set_default_image_id
+BEFORE INSERT ON "user"
+FOR EACH ROW
+EXECUTE FUNCTION set_default_image_id();

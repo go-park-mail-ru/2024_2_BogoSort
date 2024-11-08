@@ -202,29 +202,25 @@ func TestUserService_UpdateInfo_Success(t *testing.T) {
 	service, ctrl, mockUserRepo, _ := setupUserTestService(t)
 	defer ctrl.Finish()
 
-	userDTO := &dto.User{
+	userUpdateDTO := &dto.UserUpdate{
 		ID:       uuid.MustParse("c7d1f50c-2ce7-4a07-b777-8f21bd9912cb"),
 		Email:    "updated@example.com",
 		Username: "updateduser",
 		Phone:    "0987654321",
-		AvatarId: uuid.MustParse("6b7badc9-d8f9-438f-983f-a2de27c2dc08"),
-		Status:   "active",
 	}
 
 	mockUserRepo.EXPECT().
 		UpdateUser(gomock.Any()).
 		DoAndReturn(func(user *entity.User) error {
-			assert.Equal(t, userDTO.ID, user.ID)
-			assert.Equal(t, userDTO.Email, user.Email)
-			assert.Equal(t, userDTO.Username, user.Username)
-			assert.Equal(t, userDTO.Phone, user.Phone)
-			assert.Equal(t, userDTO.AvatarId, user.AvatarId)
-			assert.Equal(t, userDTO.Status, user.Status)
+			assert.Equal(t, userUpdateDTO.ID, user.ID)
+			assert.Equal(t, userUpdateDTO.Email, user.Email)
+			assert.Equal(t, userUpdateDTO.Username, user.Username)
+			assert.Equal(t, userUpdateDTO.Phone, user.Phone)
 			return nil
 		}).
 		Times(1)
 
-	err := service.UpdateInfo(userDTO)
+	err := service.UpdateInfo(userUpdateDTO)
 
 	assert.NoError(t, err)
 }

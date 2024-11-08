@@ -181,6 +181,17 @@ definitions:
       username:
         type: string
     type: object
+  dto.UserUpdate:
+    properties:
+      email:
+        type: string
+      id:
+        type: string
+      phone:
+        type: string
+      username:
+        type: string
+    type: object
   entity.CartStatus:
     enum:
     - active
@@ -882,7 +893,7 @@ paths:
         name: profile
         required: true
         schema:
-          $ref: '#/definitions/dto.User'
+          $ref: '#/definitions/dto.UserUpdate'
       produces:
       - application/json
       responses:

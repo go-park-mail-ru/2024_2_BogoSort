@@ -13,7 +13,7 @@ type User interface {
 	// Login авторизация пользователя
 	Login(*dto.Login) (uuid.UUID, error)
 	// UpdateInfo обновление данных пользователя
-	UpdateInfo(*dto.User) error
+	UpdateInfo(*dto.UserUpdate) error
 	// ChangePassword изменение пароля
 	ChangePassword(userID uuid.UUID, password *dto.UpdatePassword) error
 	// GetUser получение данных пользователя

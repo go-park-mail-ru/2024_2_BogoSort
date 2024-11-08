@@ -220,7 +220,7 @@ func (u *UserEndpoints) ChangePassword(w http.ResponseWriter, r *http.Request) {
 // @Tags Users
 // @Accept json
 // @Produce json
-// @Param profile body dto.User true "Profile data"
+// @Param profile body dto.UserUpdate true "Profile data"
 // @Success 200 {string} string "Profile updated successfully"
 // @Failure 400 {object} utils.ErrResponse "Invalid data"
 // @Failure 401 {object} utils.ErrResponse "Unauthorized access"
@@ -228,12 +228,12 @@ func (u *UserEndpoints) ChangePassword(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} utils.ErrResponse "Internal server error"
 // @Router /api/v1/profile [put]
 func (u *UserEndpoints) UpdateProfile(w http.ResponseWriter, r *http.Request) {
-	var user dto.User
+	var user dto.UserUpdate
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		u.sendError(w, http.StatusBadRequest, err, "error decoding update profile request", nil)
 		return
 	}
-	utils.SanitizeRequestUser(&user, u.policy)
+	utils.SanitizeRequestUserUpdate(&user, u.policy)
 	userID, err := u.sessionManager.GetUserID(r)
 	if err != nil {
 		u.handleError(w, err, "UpdateProfile", nil)

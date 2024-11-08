@@ -13,8 +13,12 @@ DROP TRIGGER IF EXISTS update_advert_updated_at ON advert;
 DROP TRIGGER IF EXISTS update_cart_updated_at ON cart;
 DROP TRIGGER IF EXISTS update_purchase_updated_at ON purchase;  
 
+-- Удаление триггера для установки image_id по умолчанию
+DROP TRIGGER IF EXISTS trg_set_default_image_id ON "user";
+
 -- Удаление функции обновления updated_at
 DROP FUNCTION IF EXISTS update_updated_at_column();
+DROP FUNCTION IF EXISTS set_default_image_id();
 
 -- Удаление таблиц в обратном порядке
 DROP TABLE IF EXISTS purchase CASCADE;
