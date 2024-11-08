@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
@@ -81,6 +82,10 @@ func (s StaticDB) UploadStatic(path, filename string, data []byte) (uuid.UUID, e
 		return uuid.UUID{}, entity.PSQLWrap(repository.ErrStaticTooLarge)
 	}
 
+	if !strings.HasSuffix(path, "/") {
+		path += "/"
+	}
+
 	dir := filepath.Dir(fmt.Sprintf("%s/%s/", s.BasicPath, path))
 	err := os.MkdirAll(dir, 0755)
 	if err != nil {
@@ -117,7 +122,7 @@ func (s StaticDB) UploadStatic(path, filename string, data []byte) (uuid.UUID, e
 
 	var id uuid.UUID
 	if err = s.DB.QueryRow(ctx, uploadStaticQuery, s.BasicPath+path, filename).Scan(&id); err != nil {
-		s.Logger.Error("error uploading static", zap.String("path", fmt.Sprintf("%s/%s", path, filename)), zap.Error(err))
+		s.Logger.Error("error uploading static", zap.String("path", fmt.Sprintf("%s/%s/%s", s.BasicPath, path, filename)), zap.Error(err))
 		return uuid.UUID{}, entity.PSQLWrap(err, errors.New("error executing SQL query UploadStatic"))
 	}
 
