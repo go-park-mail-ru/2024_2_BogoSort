@@ -35,7 +35,8 @@ const (
 			p.delivery_method
 		FROM purchase p
 		INNER JOIN cart c ON p.cart_id = c.id
-		WHERE c.user_id = $1`
+		WHERE c.user_id = $1 
+		ORDER BY p.created_at DESC`
 )
 
 func NewPurchaseRepository(db *pgxpool.Pool, logger *zap.Logger, ctx context.Context, timeout time.Duration) (repository.PurchaseRepository, error) {
