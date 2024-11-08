@@ -24,4 +24,4 @@ csrf_secret: "2b7e151628aed2a6abf7158809cf4f3c"
 
 static:
   path: "static/"
-  max_size: 1048576
+  max_size: 10485760
