@@ -29,8 +29,8 @@ const (
 	selectAdvertsQuery = `
 		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at
 		FROM advert
-		LIMIT $1 OFFSET $2
-		ORDER BY created_at DESC`
+		ORDER BY created_at DESC
+		LIMIT $1 OFFSET $2`
 
 	selectAdvertsByUserIdQuery = `
 		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at
