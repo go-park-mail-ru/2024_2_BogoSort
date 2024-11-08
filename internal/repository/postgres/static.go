@@ -117,7 +117,7 @@ func (s StaticDB) UploadStatic(path, filename string, data []byte) (uuid.UUID, e
 
 	var id uuid.UUID
 	if err = s.DB.QueryRow(ctx, uploadStaticQuery, s.BasicPath+path, filename).Scan(&id); err != nil {
-		s.Logger.Error("error uploading static", zap.String("path", fmt.Sprintf("%s/%s", s.BasicPath, filename)), zap.Error(err))
+		s.Logger.Error("error uploading static", zap.String("path", fmt.Sprintf("%s/%s", path, filename)), zap.Error(err))
 		return uuid.UUID{}, entity.PSQLWrap(err, errors.New("error executing SQL query UploadStatic"))
 	}
 
