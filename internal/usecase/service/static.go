@@ -91,7 +91,7 @@ func (s *StaticService) UploadFile(data []byte) (uuid.UUID, error) {
 	fileName := uuid.New().String()
 	var id uuid.UUID
 
-	if contentType != "image/jpeg" {
+	if contentType == "image/jpeg" {
 		id, err = s.staticRepo.UploadStatic("images", fileName+".jpg", out.Bytes())
 		if err != nil {
 			s.logger.Error("error uploading static", zap.Error(err))
