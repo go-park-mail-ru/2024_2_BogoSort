@@ -120,7 +120,7 @@ func NewRouter(cfg config.Config) (*mux.Router, error) {
 	cartHandler.Configure(authRouter)
 	staticHandler.ConfigureRoutes(authRouter)
 	purchaseHandler.ConfigureRoutes(authRouter)
-	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static/images"))))
+	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
 	return router, nil
 }

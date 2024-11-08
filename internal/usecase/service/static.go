@@ -3,16 +3,17 @@ package service
 import (
 	"bytes"
 	"fmt"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
-	"github.com/google/uuid"
-	"github.com/pkg/errors"
-	"go.uber.org/zap"
 	"image"
 	"image/draw"
 	"image/jpeg"
 	_ "image/png"
 	"net/http"
+
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
+	"github.com/google/uuid"
+	"github.com/pkg/errors"
+	"go.uber.org/zap"
 )
 
 type StaticService struct {
