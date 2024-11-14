@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"bytes"
 
 	"github.com/google/uuid"
 	"github.com/microcosm-cc/bluemonday"
@@ -339,7 +340,7 @@ func (h *UserEndpoints) UploadImage(writer http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	imageId, err := h.staticUseCase.UploadFile(data)
+	imageId, err := h.staticUseCase.UploadStatic(bytes.NewReader(data))
 	if err != nil {
 		h.sendError(writer, http.StatusInternalServerError, err, "failed to upload image", nil)
 		return

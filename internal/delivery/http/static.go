@@ -51,7 +51,7 @@ func (h *StaticEndpoints) GetStaticById(writer http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	staticURL, err := h.StaticUseCase.GetStaticURL(staticId)
+	staticURL, err := h.StaticUseCase.GetStatic(staticId)
 	if err != nil {
 		if errors.Is(err, ErrStaticFileNotFound) {
 			h.sendError(writer, http.StatusNotFound, err, "static file not found", nil)

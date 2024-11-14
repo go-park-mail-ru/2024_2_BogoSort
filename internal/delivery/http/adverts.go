@@ -6,7 +6,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
-
+	"bytes"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/utils"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -413,7 +413,7 @@ func (h *AdvertEndpoints) UploadImage(writer http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	imageId, err := h.staticUseCase.UploadFile(data)
+	imageId, err := h.staticUseCase.UploadStatic(bytes.NewReader(data))
 	if err != nil {
 		h.sendError(writer, http.StatusInternalServerError, ErrFailedToUploadFile, "failed to upload image", nil)
 		return

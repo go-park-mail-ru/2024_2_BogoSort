@@ -8,6 +8,9 @@ github.com/aymerick/douceur/parser
 # github.com/cespare/xxhash/v2 v2.3.0
 ## explicit; go 1.11
 github.com/cespare/xxhash/v2
+# github.com/chai2010/webp v1.1.1
+## explicit; go 1.17
+github.com/chai2010/webp
 # github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 ## explicit
 github.com/davecgh/go-spew/spew
@@ -74,8 +77,6 @@ github.com/mailru/easyjson/jwriter
 ## explicit; go 1.19
 github.com/microcosm-cc/bluemonday
 github.com/microcosm-cc/bluemonday/css
-# github.com/pashagolub/pgxmock/v2 v2.12.0
-## explicit; go 1.20
 # github.com/pashagolub/pgxmock/v4 v4.3.0
 ## explicit; go 1.22.0
 github.com/pashagolub/pgxmock/v4
@@ -226,8 +227,8 @@ google.golang.org/grpc/serviceconfig
 google.golang.org/grpc/stats
 google.golang.org/grpc/status
 google.golang.org/grpc/tap
-# google.golang.org/protobuf v1.34.2
-## explicit; go 1.20
+# google.golang.org/protobuf v1.35.2
+## explicit; go 1.21
 google.golang.org/protobuf/encoding/protojson
 google.golang.org/protobuf/encoding/prototext
 google.golang.org/protobuf/encoding/protowire

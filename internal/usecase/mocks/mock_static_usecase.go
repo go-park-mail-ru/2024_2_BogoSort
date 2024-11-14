@@ -49,19 +49,19 @@ func (mr *MockStaticUseCaseMockRecorder) GetAvatar(staticID interface{}) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAvatar", reflect.TypeOf((*MockStaticUseCase)(nil).GetAvatar), staticID)
 }
 
-// GetStaticURL mocks base method.
-func (m *MockStaticUseCase) GetStaticURL(id uuid.UUID) (string, error) {
+// GetStatic mocks base method.
+func (m *MockStaticUseCase) GetStatic(id uuid.UUID) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetStaticURL", id)
+	ret := m.ctrl.Call(m, "GetStatic", id)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetStaticURL indicates an expected call of GetStaticURL.
-func (mr *MockStaticUseCaseMockRecorder) GetStaticURL(id interface{}) *gomock.Call {
+// GetStatic indicates an expected call of GetStatic.
+func (mr *MockStaticUseCaseMockRecorder) GetStatic(id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStaticURL", reflect.TypeOf((*MockStaticUseCase)(nil).GetStaticURL), id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStatic", reflect.TypeOf((*MockStaticUseCase)(nil).GetStatic), id)
 }
 
 // UploadFile mocks base method.

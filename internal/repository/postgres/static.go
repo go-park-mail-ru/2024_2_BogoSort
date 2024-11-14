@@ -40,6 +40,10 @@ type StaticDB struct {
 	timeout   time.Duration
 }
 
+func (s StaticDB) GetMaxSize() int {
+	return s.MaxSize
+}
+
 func NewStaticRepository(ctx context.Context, dbpool *pgxpool.Pool, basicPath string, maxSize int, logger *zap.Logger, timeout time.Duration) (repository.StaticRepository, error) {
 	if err := dbpool.Ping(ctx); err != nil {
 		return nil, err
