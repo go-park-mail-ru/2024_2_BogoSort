@@ -5,11 +5,12 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/microcosm-cc/bluemonday"
 
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/middleware"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/auth"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/utils"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase"
@@ -28,29 +29,38 @@ var (
 )
 
 type UserEndpoints struct {
-	userUC         usecase.User
-	authUC         usecase.Auth
-	sessionManager *utils.SessionManager
-	staticUseCase  usecase.StaticUseCase
-	logger         *zap.Logger
-	policy         *bluemonday.Policy
+	userUC           usecase.User
+	grpcClient       *auth.GrpcClient
+	staticUseCase    usecase.StaticUseCase
+	logger           *zap.Logger
+	policy           *bluemonday.Policy
+	sessionAliveTime int
+	secureCookie     bool
 }
 
-func NewUserEndpoints(userUC usecase.User, authUC usecase.Auth, sessionManager *utils.SessionManager, staticUseCase usecase.StaticUseCase, logger *zap.Logger, policy *bluemonday.Policy) *UserEndpoints {
+func NewUserEndpoints(userUC usecase.User,
+	grpcClient *auth.GrpcClient,
+	staticUseCase usecase.StaticUseCase,
+	logger *zap.Logger,
+	policy *bluemonday.Policy,
+	sessionAliveTime int,
+	secureCookie bool,
+) *UserEndpoints {
 	return &UserEndpoints{
-		userUC:         userUC,
-		authUC:         authUC,
-		sessionManager: sessionManager,
-		staticUseCase:  staticUseCase,
-		logger:         logger,
-		policy:         policy,
+		userUC:           userUC,
+		grpcClient:       grpcClient,
+		staticUseCase:    staticUseCase,
+		logger:           logger,
+		policy:           policy,
+		sessionAliveTime: sessionAliveTime,
+		secureCookie:     secureCookie,
 	}
 }
 
 func (u *UserEndpoints) ConfigureProtectedRoutes(router *mux.Router) {
 	protected := router.PathPrefix("/api/v1").Subrouter()
-	sessionMiddleware := middleware.NewAuthMiddleware(u.sessionManager)
-	protected.Use(sessionMiddleware.SessionMiddleware)
+	// sessionMiddleware := middleware.NewAuthMiddleware(u.grpcClient)
+	// protected.Use(sessionMiddleware.SessionMiddleware)
 
 	protected.HandleFunc("/password", u.ChangePassword).Methods(http.MethodPost)
 	protected.HandleFunc("/profile", u.UpdateProfile).Methods(http.MethodPut)
@@ -88,6 +98,29 @@ func (u *UserEndpoints) sendError(w http.ResponseWriter, statusCode int, err err
 	utils.SendErrorResponse(w, statusCode, err.Error())
 }
 
+func (u *UserEndpoints) SetCookie(value string) (*http.Cookie, error) {
+	expires := time.Now().Add(time.Duration(u.sessionAliveTime) * time.Second)
+	cookie := &http.Cookie{
+		Name:     "session_id",
+		Value:    value,
+		Expires:  expires,
+		HttpOnly: true,
+		Secure:   u.secureCookie,
+		Path:     "/",
+		SameSite: http.SameSiteLaxMode,
+	}
+
+	return cookie, nil
+}
+
+func (u *UserEndpoints) GetCookie(r *http.Request) (string, error) {
+	cookie, err := r.Cookie("session_id")
+	if err != nil {
+		return "", err
+	}
+	return cookie.Value, nil
+}
+
 // Signup
 // @Summary User registration
 // @Description Creates a new user in the system
@@ -115,14 +148,14 @@ func (u *UserEndpoints) Signup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sessionID, err := u.sessionManager.CreateSession(userID)
+	sessionID, err := u.grpcClient.CreateSession(userID)
 	if err != nil {
 		u.sendError(w, http.StatusInternalServerError, err, "error creating session", map[string]string{"userID": userID.String()})
 		return
 	}
 	u.logger.Info("session created", zap.String("sessionID", sessionID), zap.String("userID", userID.String()))
 
-	cookie, err := u.sessionManager.SetSession(sessionID)
+	cookie, err := u.SetCookie(sessionID)
 	if err != nil {
 		u.logger.Error("error setting session cookie", zap.Error(err))
 		u.sendError(w, http.StatusInternalServerError, err, "error setting session cookie", nil)
@@ -161,14 +194,14 @@ func (u *UserEndpoints) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sessionID, err := u.sessionManager.CreateSession(userID)
+	sessionID, err := u.grpcClient.CreateSession(userID)
 	if err != nil {
 		u.sendError(w, http.StatusInternalServerError, err, "error creating session", map[string]string{"userID": userID.String()})
 		return
 	}
 	u.logger.Info("session created", zap.String("sessionID", sessionID), zap.String("userID", userID.String()))
 
-	cookie, err := u.sessionManager.SetSession(sessionID)
+	cookie, err := u.SetCookie(sessionID)
 	if err != nil {
 		u.sendError(w, http.StatusInternalServerError, err, "error setting session cookie", nil)
 		return
@@ -198,19 +231,24 @@ func (u *UserEndpoints) ChangePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	utils.SanitizeRequestChangePassword(&updatePassword, u.policy)
+	sessionID, err := u.GetCookie(r)
+	if err != nil {
+		u.sendError(w, http.StatusBadRequest, err, "error getting session cookie", nil)
+		return
+	}
 
-	userID, err := u.sessionManager.GetUserID(r)
+	userID, err := u.grpcClient.GetUserIDBySession(sessionID)
 	if err != nil {
 		u.sendError(w, http.StatusUnauthorized, err, "unauthorized request", nil)
 		return
 	}
-	err = u.userUC.ChangePassword(userID, &updatePassword)
+	err = u.userUC.ChangePassword(uuid.MustParse(userID), &updatePassword)
 	if err != nil {
-		u.handleError(w, err, "ChangePassword", map[string]string{"userID": userID.String()})
+		u.handleError(w, err, "ChangePassword", map[string]string{"userID": userID})
 		return
 	}
 
-	u.logger.Info("password changed", zap.String("userID", userID.String()))
+	u.logger.Info("password changed", zap.String("userID", userID))
 	utils.SendJSONResponse(w, http.StatusOK, "Пароль изменен успешно")
 }
 
@@ -234,7 +272,12 @@ func (u *UserEndpoints) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	utils.SanitizeRequestUserUpdate(&user, u.policy)
-	userID, err := u.sessionManager.GetUserID(r)
+	sessionID, err := u.GetCookie(r)
+	if err != nil {
+		u.sendError(w, http.StatusBadRequest, err, "error getting session cookie", nil)
+		return
+	}
+	userID, err := u.grpcClient.GetUserIDBySession(sessionID)
 	if err != nil {
 		u.handleError(w, err, "UpdateProfile", nil)
 		return
@@ -242,11 +285,11 @@ func (u *UserEndpoints) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 
 	err = u.userUC.UpdateInfo(&user)
 	if err != nil {
-		u.handleError(w, err, "UpdateProfile", map[string]string{"userID": userID.String()})
+		u.handleError(w, err, "UpdateProfile", map[string]string{"userID": userID})
 		return
 	}
 
-	u.logger.Info("profile updated", zap.String("userID", userID.String()))
+	u.logger.Info("profile updated", zap.String("userID", userID))
 	utils.SendJSONResponse(w, http.StatusOK, "Профиль обновлен успешно")
 }
 
@@ -290,14 +333,19 @@ func (u *UserEndpoints) GetProfile(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} utils.ErrResponse "Internal server error"
 // @Router /api/v1/me [get]
 func (u *UserEndpoints) GetMe(w http.ResponseWriter, r *http.Request) {
-	userID, err := u.sessionManager.GetUserID(r)
+	sessionID, err := u.GetCookie(r)
+	if err != nil {
+		u.sendError(w, http.StatusBadRequest, err, "error getting session cookie", nil)
+		return
+	}
+	userID, err := u.grpcClient.GetUserIDBySession(sessionID)
 	if err != nil {
 		u.sendError(w, http.StatusUnauthorized, err, "unauthorized request", nil)
 		return
 	}
-	user, err := u.userUC.GetUser(userID)
+	user, err := u.userUC.GetUser(uuid.MustParse(userID))
 	if err != nil {
-		u.handleError(w, err, "GetMe", map[string]string{"userID": userID.String()})
+		u.handleError(w, err, "GetMe", map[string]string{"userID": userID})
 		return
 	}
 	utils.SanitizeResponseUser(user, u.policy)

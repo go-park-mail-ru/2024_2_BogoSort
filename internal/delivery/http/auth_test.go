@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/auth"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/utils"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase/mocks"
 	"github.com/golang/mock/gomock"
@@ -17,10 +18,13 @@ import (
 func setupAuthEndpoints(t *testing.T) (*AuthEndpoints, *mocks.MockAuth, *utils.SessionManager, *gomock.Controller) {
 	ctrl := gomock.NewController(t)
 	mockAuthUC := mocks.NewMockAuth(ctrl)
-	sessionManager := utils.NewSessionManager(mockAuthUC, 10, true, zap.NewNop())
+	grpcClient, err := auth.NewGrpcClient("localhost:50051")
+	if err != nil {
+		t.Fatalf("Failed to create gRPC client: %v", err)
+	}
 	logger := zap.NewNop()
 
-	return NewAuthEndpoints(mockAuthUC, sessionManager, logger), mockAuthUC, sessionManager, ctrl
+	return NewAuthEndpoints(mockAuthUC, grpcClient, logger), mockAuthUC, nil, ctrl
 }
 
 func TestAuthEndpoints_Logout(t *testing.T) {

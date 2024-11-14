@@ -3,7 +3,7 @@ package http
 import (
 	"net/http"
 
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/middleware"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/auth"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/utils"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase"
 	"github.com/gorilla/mux"
@@ -11,23 +11,23 @@ import (
 )
 
 type AuthEndpoints struct {
-	authUC         usecase.Auth
-	sessionManager *utils.SessionManager
-	logger         *zap.Logger
+	authUC     usecase.Auth
+	grpcClient *auth.GrpcClient
+	logger     *zap.Logger
 }
 
-func NewAuthEndpoints(authUC usecase.Auth, sessionManager *utils.SessionManager, logger *zap.Logger) *AuthEndpoints {
+func NewAuthEndpoints(authUC usecase.Auth, grpcClient *auth.GrpcClient, logger *zap.Logger) *AuthEndpoints {
 	return &AuthEndpoints{
-		authUC:         authUC,
-		sessionManager: sessionManager,
-		logger:         logger,
+		authUC:     authUC,
+		grpcClient: grpcClient,
+		logger:     logger,
 	}
 }
 
 func (a *AuthEndpoints) Configure(router *mux.Router) {
 	protected := router.PathPrefix("/api/v1").Subrouter()
-	sessionMiddleware := middleware.NewAuthMiddleware(a.sessionManager)
-	protected.Use(sessionMiddleware.SessionMiddleware)
+	// sessionMiddleware := middleware.NewAuthMiddleware(a.sessionManager)
+	// protected.Use(sessionMiddleware.SessionMiddleware)
 
 	protected.HandleFunc("/logout", a.Logout).Methods(http.MethodPost)
 }
@@ -49,23 +49,24 @@ func (a *AuthEndpoints) handleError(w http.ResponseWriter, err error, method str
 // @Failure 500 {object} utils.ErrResponse "Internal server error"
 // @Router /api/v1/logout [post]
 func (a *AuthEndpoints) Logout(w http.ResponseWriter, r *http.Request) {
-	userID, err := a.sessionManager.GetUserID(r)
-	if err != nil {
-		a.handleError(w, err, "Logout", nil)
-		return
-	}
 	cookie, err := r.Cookie("session_id")
 	if err != nil {
 		a.handleError(w, err, "Logout", nil)
 		return
 	}
-	err = a.authUC.Logout(cookie.Value)
+	userID, err := a.grpcClient.GetUserIDBySession(cookie.Value)
 	if err != nil {
-		a.handleError(w, err, "Logout", map[string]string{"userID": userID.String()})
+		a.handleError(w, err, "Logout", nil)
 		return
 	}
 
-	a.logger.Info("user logged out", zap.String("userID", userID.String()))
+	err = a.grpcClient.DeleteSession(cookie.Value)
+	if err != nil {
+		a.handleError(w, err, "Logout", map[string]string{"userID": userID})
+		return
+	}
+
+	a.logger.Info("user logged out", zap.String("userID", userID))
 	w.Header().Set("X-authenticated", "false")
 	utils.SendJSONResponse(w, http.StatusOK, "You have successfully logged out")
 }

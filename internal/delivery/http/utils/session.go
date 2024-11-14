@@ -52,7 +52,6 @@ func (s *SessionManager) SetSession(value string) (*http.Cookie, error) {
 func (s *SessionManager) GetUserID(r *http.Request) (uuid.UUID, error) {
 	cookie, err := r.Cookie("session_id")
 	if err != nil {
-		// s.Logger.Error("error getting cookie", zap.Error(err))
 		return uuid.Nil, err
 	}
 
