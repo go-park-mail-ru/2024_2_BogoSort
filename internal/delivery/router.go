@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/config"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/auth"
 	http3 "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/middleware"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/utils"
@@ -94,12 +95,16 @@ func NewRouter(cfg config.Config) (*mux.Router, error) {
 	userUC := service.NewUserService(userRepo, sellerRepo, zap.L())
 	sessionUC := service.NewAuthService(sessionRepo, zap.L())
 	sessionManager := utils.NewSessionManager(sessionUC, int(cfg.Session.ExpirationTime.Seconds()), cfg.Session.SecureCookie, zap.L())
+	grpcClient, err := auth.NewGrpcClient(cfg.AuthAddr)
+	if err != nil {
+		return nil, handleRepoError(err, "unable to create grpc client")
+	}
 
 	router.Use(middleware.NewAuthMiddleware(sessionManager).AuthMiddleware)
 
 	advertsHandler := http3.NewAdvertEndpoints(advertsUseCase, staticUseCase, sessionManager, zap.L(), policy)
-	authHandler := http3.NewAuthEndpoints(sessionUC, sessionManager, zap.L())
-	userHandler := http3.NewUserEndpoints(userUC, sessionUC, sessionManager, staticUseCase, zap.L(), policy)
+	authHandler := http3.NewAuthEndpoints(sessionUC, grpcClient, zap.L())
+	userHandler := http3.NewUserEndpoints(userUC, grpcClient, staticUseCase, zap.L(), policy, int(cfg.Session.ExpirationTime.Seconds()), cfg.Session.SecureCookie)
 	sellerHandler := http3.NewSellerEndpoints(sellerRepo, zap.L())
 	purchaseHandler := http3.NewPurchaseEndpoints(purchaseUseCase, zap.L())
 	cartHandler := http3.NewCartEndpoints(cartUC, zap.L())
