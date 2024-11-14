@@ -11,15 +11,12 @@ message Session {
 
 message User {
     string id = 1;
-
 }
 
 message NoContent {}
 
 service AuthService {
-    rpc Logout(Session) returns (NoContent) {}
     rpc GetUserIDBySession(Session) returns (User) {}
-    rpc GetSessionByUserID(User) returns (Session) {}
     rpc CreateSession(User) returns (Session) {}
     rpc DeleteSession(Session) returns (NoContent) {}
     rpc Ping(NoContent) returns (NoContent) {}
