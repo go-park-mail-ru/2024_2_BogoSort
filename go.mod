@@ -1,6 +1,8 @@
 module github.com/go-park-mail-ru/2024_2_BogoSort
 
-go 1.22.0
+go 1.22.7
+
+toolchain go1.23.0
 
 require (
 	github.com/gorilla/mux v1.8.1
@@ -16,10 +18,11 @@ require (
 	github.com/golang/mock v1.6.0
 	github.com/jackc/pgx/v5 v5.7.1
 	github.com/microcosm-cc/bluemonday v1.0.27
-	github.com/pashagolub/pgxmock/v2 v2.12.0
 	github.com/pashagolub/pgxmock/v4 v4.3.0
 	github.com/rs/cors v1.11.1
 	go.uber.org/zap v1.27.0
+	google.golang.org/grpc v1.68.0
+	google.golang.org/protobuf v1.34.2
 )
 
 require (
@@ -38,6 +41,7 @@ require (
 	github.com/gorilla/css v1.0.1 // indirect
 	golang.org/x/net v0.30.0 // indirect
 	golang.org/x/sys v0.26.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240903143218-8af14fe29dc1 // indirect
 )
 
 require (
