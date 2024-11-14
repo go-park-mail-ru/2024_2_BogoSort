@@ -5,6 +5,7 @@ import (
 	"os"
 	"strconv"
 	"time"
+
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
@@ -23,24 +24,25 @@ type SessionConfig struct {
 }
 
 type Config struct {
-	Server  ServerConfig  `yaml:"server"`
-	Session SessionConfig `yaml:"session"`
-	PGIP    string        `yaml:"pg_ip"`
-	PGPort  int           `yaml:"pg_port"`
-	PGUser  string        `yaml:"pg_user"`
-	PGPass  string        `yaml:"pg_password"`
-	PGTimeout time.Duration `yaml:"pg_timeout" default:"5s"`
-	PGDB    string        `yaml:"pg_db"`
-	RdAddr  string        `yaml:"rd_addr"`
-	RdPass  string        `yaml:"rd_password"`
-	RdDB    int           `yaml:"rd_db"`
-	Static StaticConfig   `yaml:"static"`
-	CSRFSecret string      `yaml:"csrf_secret"`
+	Server     ServerConfig  `yaml:"server"`
+	Session    SessionConfig `yaml:"session"`
+	PGIP       string        `yaml:"pg_ip"`
+	PGPort     int           `yaml:"pg_port"`
+	PGUser     string        `yaml:"pg_user"`
+	PGPass     string        `yaml:"pg_password"`
+	PGTimeout  time.Duration `yaml:"pg_timeout" default:"5s"`
+	PGDB       string        `yaml:"pg_db"`
+	RdAddr     string        `yaml:"rd_addr"`
+	RdPass     string        `yaml:"rd_password"`
+	RdDB       int           `yaml:"rd_db"`
+	Static     StaticConfig  `yaml:"static"`
+	CSRFSecret string        `yaml:"csrf_secret"`
+	AuthAddr   string        `yaml:"auth_addr"`
 }
 
 type StaticConfig struct {
-	Path string `yaml:"path"`
-	MaxSize int `yaml:"max_size"`
+	Path    string `yaml:"path"`
+	MaxSize int    `yaml:"max_size"`
 }
 
 var cfg Config
