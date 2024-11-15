@@ -1,4 +1,4 @@
-package grpc
+package static
 
 import (
 	"bytes"
@@ -15,7 +15,7 @@ type Grpc struct {
 	staticUC usecase.StaticUseCase
 }
 
-func NewGrpc(staticUC usecase.StaticUseCase) *Grpc {
+func NewStaticGrpc(staticUC usecase.StaticUseCase) *Grpc {
 	return &Grpc{staticUC: staticUC}
 }
 

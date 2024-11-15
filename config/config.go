@@ -10,8 +10,8 @@ import (
 )
 
 type ServerConfig struct {
+	IP              string        `yaml:"ip" default:"0.0.0.0"`
 	Port            int           `yaml:"port" default:"8080"`
-	Host            string        `yaml:"host" default:"localhost"`
 	ReadTimeout     time.Duration `yaml:"read_timeout" default:"10s"`
 	WriteTimeout    time.Duration `yaml:"write_timeout" default:"10s"`
 	ShutdownTimeout time.Duration `yaml:"shutdown_timeout" default:"10s"`
@@ -39,6 +39,8 @@ type Config struct {
 }
 
 type StaticConfig struct {
+	IP          string `yaml:"ip"            default:"0.0.0.0"`
+	Port        int    `yaml:"port"          default:"8082"`
 	Path string `yaml:"path"`
 	MaxSize int `yaml:"max_size"`
 }
@@ -103,6 +105,10 @@ func GetWriteTimeout() time.Duration {
 
 func GetShutdownTimeout() time.Duration {
 	return cfg.Server.ShutdownTimeout
+}
+
+func (cfg *Config) GetServerAddr() string {
+	return fmt.Sprintf("%s:%d", cfg.Server.IP, cfg.Server.Port)
 }
 
 func GetStaticConfig() StaticConfig {
