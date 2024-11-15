@@ -86,6 +86,10 @@ func NewRouter(cfg config.Config) (*mux.Router, error) {
 	if err != nil {
 		return nil, handleRepoError(err, "unable to create csrf token")
 	}
+	grpcClient, err := auth.NewGrpcClient(cfg.AuthAddr)
+	if err != nil {
+		return nil, handleRepoError(err, "unable to create grpc client")
+	}
 
 	advertsUseCase := service.NewAdvertService(advertsRepo, staticRepo, sellerRepo, zap.L())
 	staticUseCase := service.NewStaticService(staticRepo, zap.L())
@@ -94,17 +98,13 @@ func NewRouter(cfg config.Config) (*mux.Router, error) {
 	cartUC := service.NewCartService(cartRepo, advertsRepo, zap.L())
 	userUC := service.NewUserService(userRepo, sellerRepo, zap.L())
 	sessionUC := service.NewAuthService(sessionRepo, zap.L())
-	sessionManager := utils.NewSessionManager(sessionUC, int(cfg.Session.ExpirationTime.Seconds()), cfg.Session.SecureCookie, zap.L())
-	grpcClient, err := auth.NewGrpcClient(cfg.AuthAddr)
-	if err != nil {
-		return nil, handleRepoError(err, "unable to create grpc client")
-	}
+	sessionManager := utils.NewSessionManager(grpcClient, int(cfg.Session.ExpirationTime.Seconds()), cfg.Session.SecureCookie, zap.L())
 
 	router.Use(middleware.NewAuthMiddleware(sessionManager).AuthMiddleware)
 
 	advertsHandler := http3.NewAdvertEndpoints(advertsUseCase, staticUseCase, sessionManager, zap.L(), policy)
-	authHandler := http3.NewAuthEndpoints(sessionUC, grpcClient, zap.L())
-	userHandler := http3.NewUserEndpoints(userUC, grpcClient, staticUseCase, zap.L(), policy, int(cfg.Session.ExpirationTime.Seconds()), cfg.Session.SecureCookie)
+	authHandler := http3.NewAuthEndpoints(sessionUC, sessionManager, zap.L())
+	userHandler := http3.NewUserEndpoints(userUC, sessionManager, staticUseCase, zap.L(), policy)
 	sellerHandler := http3.NewSellerEndpoints(sellerRepo, zap.L())
 	purchaseHandler := http3.NewPurchaseEndpoints(purchaseUseCase, zap.L())
 	cartHandler := http3.NewCartEndpoints(cartUC, zap.L())
