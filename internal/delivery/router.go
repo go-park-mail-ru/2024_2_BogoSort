@@ -16,6 +16,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/microcosm-cc/bluemonday"
 	"go.uber.org/zap"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/static"
 
 	"github.com/pkg/errors"
 )
@@ -86,8 +87,14 @@ func NewRouter(cfg config.Config) (*mux.Router, error) {
 		return nil, handleRepoError(err, "unable to create csrf token")
 	}
 
-	advertsUseCase := service.NewAdvertService(advertsRepo, staticRepo, sellerRepo, zap.L())
 	staticUseCase := service.NewStaticService(staticRepo, zap.L())
+	staticGRPC, err := static.NewStaticGrpcClient(cfg.GetServerAddr())
+	if err != nil {
+		return nil, handleRepoError(err, "unable to create static grpc")
+	}
+
+	advertsUseCase := service.NewAdvertService(advertsRepo, *staticGRPC, sellerRepo, zap.L())
+	//staticUseCase := service.NewStaticService(staticRepo, zap.L())
 	categoryUseCase := service.NewCategoryService(categoryRepo, zap.L())
 	purchaseUseCase := service.NewPurchaseService(purchaseRepo, advertsRepo, cartRepo, zap.L())
 	cartUC := service.NewCartService(cartRepo, advertsRepo, zap.L())

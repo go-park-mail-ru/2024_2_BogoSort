@@ -2,7 +2,6 @@ package static
 
 import (
 	"context"
-	"strconv"
 	static "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/static/proto"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase"
@@ -17,11 +16,11 @@ const (
 	bufSize = 1024
 )
 
-type Gateway struct {
+type StaticGrpcClient struct {
 	staticManager static.StaticServiceClient
 }
 
-func NewGateway(connectAddr string) (*Gateway, error) {
+func NewStaticGrpcClient(connectAddr string) (*StaticGrpcClient, error) {
 	grpcConn, err := grpc.Dial(
 		connectAddr,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
@@ -37,11 +36,11 @@ func NewGateway(connectAddr string) (*Gateway, error) {
 		return nil, err
 	}
 
-	return &Gateway{staticManager: staticManager}, nil
+	return &StaticGrpcClient{staticManager: staticManager}, nil
 }
 
-func (gate *Gateway) GetStatic(staticID int) (string, error) {
-	staticFile, err := gate.staticManager.GetStatic(context.Background(), &static.Static{Id: strconv.Itoa(staticID)})
+func (gate *StaticGrpcClient) GetStatic(staticID uuid.UUID) (string, error) {
+	staticFile, err := gate.staticManager.GetStatic(context.Background(), &static.Static{Id: staticID.String()})
 	if err != nil {
 		if strings.Contains(err.Error(), repository.ErrStaticNotFound.Error()) {
 			return "", usecase.ErrStaticNotFound
@@ -51,7 +50,7 @@ func (gate *Gateway) GetStatic(staticID int) (string, error) {
 	return staticFile.Uri, nil
 }
 
-func (gate *Gateway) UploadStatic(reader io.ReadSeeker) (uuid.UUID, error) {
+func (gate *StaticGrpcClient) UploadStatic(reader io.ReadSeeker) (uuid.UUID, error) {
 	stream, err := gate.staticManager.UploadStatic(context.Background())
 	if err != nil {
 		return uuid.Nil, err

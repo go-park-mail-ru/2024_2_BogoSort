@@ -8,6 +8,7 @@ import (
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/static"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
@@ -21,18 +22,18 @@ var (
 
 type AdvertService struct {
 	advertRepo repository.AdvertRepository
-	staticRepo repository.StaticRepository
+	staticClient static.StaticGrpcClient
 	sellerRepo repository.Seller
 	logger     *zap.Logger
 }
 
 func NewAdvertService(advertRepo repository.AdvertRepository,
-	staticRepo repository.StaticRepository,
+	staticClient static.StaticGrpcClient,
 	sellerRepo repository.Seller,
 	logger *zap.Logger) *AdvertService {
 	return &AdvertService{
 		advertRepo: advertRepo,
-		staticRepo: staticRepo,
+		staticClient: staticClient,
 		sellerRepo: sellerRepo,
 	}
 }
@@ -43,10 +44,12 @@ func (s *AdvertService) advertEntityToDTO(advert *entity.Advert) (*dto.AdvertRes
 	if !advert.ImageURL.Valid {
 		posterURL = ""
 	} else {
-		var err error
-		posterURL, err = s.staticRepo.GetStatic(advert.ImageURL.UUID)
+		response, err := s.staticClient.GetStatic(advert.ImageURL.UUID)
 		if err != nil {
+			zap.L().Error("Error getting static URL", zap.Error(err))
 			posterURL = ""
+		} else {
+			posterURL = response
 		}
 	}
 
