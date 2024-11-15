@@ -50,11 +50,3 @@ func (c *GrpcClient) DeleteSession(sessionID string) error {
 	_, err := c.authManager.DeleteSession(context.Background(), &authProto.Session{Id: sessionID})
 	return err
 }
-
-func (c *GrpcClient) SetSession(sessionID string, sessionAliveTime int, secureCookie bool) (string, error) {
-	cookie, err := c.authManager.SetSession(context.Background(), &authProto.Session{Id: sessionID}, sessionAliveTime, secureCookie)
-	if err != nil {
-		return "", err
-	}
-	return cookie.Value, nil
-}
