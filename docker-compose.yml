@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  auth:
+    build:
+      context: .
+      dockerfile: cmd/auth/Dockerfile
+    ports:
+      - "8081:50051" # Host Port : Container Port
+    environment:
+      - ENV=production
+      - LOG_LEVEL=info
+      - CONFIG_PATH=/config/config.yaml
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - app-network
+    volumes:
+      - ./config/config.yaml:/config/config.yaml
+      - ./static/:/static/
+
+  app:
+    build:
+      context: .
+      dockerfile: cmd/app/Dockerfile
+    ports:
+      - "8080:8080" # Host Port : Container Port
+    environment:
+      - ENV=production
+      - CONFIG_PATH=/config/config.yaml
+    depends_on:
+      - auth
+      - postgres
+      - redis
+    networks:
+      - app-network
+    volumes:
+      - ./config/config.yaml:/config/config.yaml
+      - ./static/:/static/
+
+  postgres:
+    image: postgres:13
+    ports:
+      - "8001:8001" # Host Port : Container Port
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=emporiumdb
+      - PGHOST=postgres
+      - PGPORT=8001
+      - PGPASSWORD=postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  redis:
+    image: redis:6
+    ports:
+      - "6379:6379" # Host Port : Container Port
+    environment:
+      - REDIS_PASSWORD=
+      - REDIS_DB=0
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  pgdata:
