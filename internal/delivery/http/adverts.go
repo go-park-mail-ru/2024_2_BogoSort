@@ -16,6 +16,8 @@ import (
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/static"
 	"github.com/gorilla/mux"
 	"github.com/microcosm-cc/bluemonday"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 var (
@@ -37,25 +39,28 @@ var (
 
 type AdvertEndpoints struct {
 	advertUseCase  usecase.AdvertUseCase
-	staticUseCase  static.StaticGrpcClient
+	staticGrpcClient static.StaticGrpcClient
 	sessionManager *utils.SessionManager
 	logger         *zap.Logger
 	policy         *bluemonday.Policy
 }
 
 func NewAdvertEndpoints(advertUseCase usecase.AdvertUseCase,
-	staticUseCase static.StaticGrpcClient,
+	staticGrpcClient static.StaticGrpcClient,
 	sessionManager *utils.SessionManager,
 	logger *zap.Logger,
 	policy *bluemonday.Policy) *AdvertEndpoints {
 	return &AdvertEndpoints{
 		advertUseCase:  advertUseCase,
-		staticUseCase:  staticUseCase,
+		staticGrpcClient: staticGrpcClient,
 		sessionManager: sessionManager,
 		logger:         logger,
 		policy:         policy,
 	}
 }
+
+var ErrTimeout = errors.New("timeout exceeded")
+var ErrTooLargeFile = errors.New("file size exceeds limit")
 
 func (h *AdvertEndpoints) ConfigureRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/adverts/{advertId}", h.GetAdvertById).Methods("GET")
@@ -399,7 +404,7 @@ func (h *AdvertEndpoints) UploadImage(writer http.ResponseWriter, r *http.Reques
 
 	fileHeader, _, err := r.FormFile("image")
 	if err != nil {
-		h.sendError(writer, http.StatusBadRequest, ErrFileNotAttached, "file not attached", nil)
+		h.sendError(writer, http.StatusBadRequest, ErrFileNotAttached, "file not attached or size too large", nil)
 		return
 	}
 
@@ -414,9 +419,20 @@ func (h *AdvertEndpoints) UploadImage(writer http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	imageId, err := h.staticUseCase.UploadStatic(bytes.NewReader(data))
+	imageId, err := h.staticGrpcClient.UploadStatic(bytes.NewReader(data))
 	if err != nil {
-		h.sendError(writer, http.StatusInternalServerError, ErrFailedToUploadFile, "failed to upload image", nil)
+		if status, ok := status.FromError(err); ok {
+			switch status.Code() {
+			case codes.DeadlineExceeded:
+				h.sendError(writer, http.StatusGatewayTimeout, ErrTimeout, "upload image timeout deadline exceeded", nil)
+			case codes.ResourceExhausted:
+				h.sendError(writer, http.StatusRequestEntityTooLarge, ErrTooLargeFile, "file size exceeds limit", nil)
+			default:
+				h.sendError(writer, http.StatusInternalServerError, ErrFailedToUploadFile, "failed to upload image", nil)
+			}
+		} else {
+			h.sendError(writer, http.StatusInternalServerError, ErrFailedToUploadFile, "failed to upload image", nil)
+		}
 		return
 	}
 

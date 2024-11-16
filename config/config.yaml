@@ -1,7 +1,7 @@
 server:
   port: 8080
   grpc_port: 8081
-  host: "localhost"
+  host: "0.0.0.0"
   read_timeout: 10s
   write_timeout: 10s
   shutdown_timeout: 10s
@@ -26,3 +26,4 @@ csrf_secret: "2b7e151628aed2a6abf7158809cf4f3c"
 static:
   path: "static/"
   max_size: 10485760
+  timeout: 5s

@@ -12,6 +12,8 @@ import (
 	"bytes"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
+	"time"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -19,13 +21,15 @@ const (
 )
 
 type StaticGrpcClient struct {
+	timeout time.Duration
 	staticManager static.StaticServiceClient
 }
 
-func NewStaticGrpcClient(connectAddr string) (*StaticGrpcClient, error) {
+func NewStaticGrpcClient(connectAddr string, timeout time.Duration) (*StaticGrpcClient, error) {
 	grpcConn, err := grpc.Dial(
 		connectAddr,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithTimeout(timeout),
 	)
 	if err != nil {
 		return nil, err
@@ -38,7 +42,7 @@ func NewStaticGrpcClient(connectAddr string) (*StaticGrpcClient, error) {
 		return nil, err
 	}
 
-	return &StaticGrpcClient{staticManager: staticManager}, nil
+	return &StaticGrpcClient{staticManager: staticManager, timeout: timeout}, nil
 }
 
 func (gate *StaticGrpcClient) GetStatic(staticID uuid.UUID) (string, error) {
@@ -89,8 +93,11 @@ func (gate *StaticGrpcClient) UploadStatic(reader io.ReadSeeker) (uuid.UUID, err
 			return uuid.Nil, usecase.ErrStaticNotImage
 		case strings.Contains(err.Error(), usecase.ErrStaticImageDimensions.Error()):
 			return uuid.Nil, usecase.ErrStaticImageDimensions
+		case strings.Contains(err.Error(), "context deadline exceeded"):
+			return uuid.Nil, errors.New("context deadline exceeded")
+		default:
+			return uuid.Nil, err
 		}
-		return uuid.Nil, err
 	}
 	zap.L().Info("Static uploaded", zap.String("id", response.Id))
 	return uuid.MustParse(response.Id), nil

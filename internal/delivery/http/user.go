@@ -14,8 +14,11 @@ import (
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/utils"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/static"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 var (
@@ -32,17 +35,17 @@ type UserEndpoints struct {
 	userUC         usecase.User
 	authUC         usecase.Auth
 	sessionManager *utils.SessionManager
-	staticUseCase  usecase.StaticUseCase
+	staticGrpcClient static.StaticGrpcClient
 	logger         *zap.Logger
 	policy         *bluemonday.Policy
 }
 
-func NewUserEndpoints(userUC usecase.User, authUC usecase.Auth, sessionManager *utils.SessionManager, staticUseCase usecase.StaticUseCase, logger *zap.Logger, policy *bluemonday.Policy) *UserEndpoints {
+func NewUserEndpoints(userUC usecase.User, authUC usecase.Auth, sessionManager *utils.SessionManager, staticGrpcClient static.StaticGrpcClient, logger *zap.Logger, policy *bluemonday.Policy) *UserEndpoints {
 	return &UserEndpoints{
 		userUC:         userUC,
 		authUC:         authUC,
 		sessionManager: sessionManager,
-		staticUseCase:  staticUseCase,
+		staticGrpcClient: staticGrpcClient,
 		logger:         logger,
 		policy:         policy,
 	}
@@ -340,9 +343,20 @@ func (h *UserEndpoints) UploadImage(writer http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	imageId, err := h.staticUseCase.UploadStatic(bytes.NewReader(data))
+	imageId, err := h.staticGrpcClient.UploadStatic(bytes.NewReader(data))
 	if err != nil {
-		h.sendError(writer, http.StatusInternalServerError, err, "failed to upload image", nil)
+		if status, ok := status.FromError(err); ok {
+			switch status.Code() {
+			case codes.DeadlineExceeded:
+				h.sendError(writer, http.StatusGatewayTimeout, ErrTimeout, "upload image timeout deadline exceeded", nil)
+			case codes.ResourceExhausted:
+				h.sendError(writer, http.StatusRequestEntityTooLarge, ErrTooLargeFile, "file size exceeds limit", nil)
+			default:
+				h.sendError(writer, http.StatusInternalServerError, ErrFailedToUploadFile, "failed to upload image", nil)
+			}
+		} else {
+			h.sendError(writer, http.StatusInternalServerError, ErrFailedToUploadFile, "failed to upload image", nil)
+		}
 		return
 	}
 

@@ -44,6 +44,7 @@ type StaticConfig struct {
 	Port        int    `yaml:"port"          default:"8082"`
 	Path string `yaml:"path"`
 	MaxSize int `yaml:"max_size"`
+	Timeout time.Duration `yaml:"timeout"`
 }
 
 var cfg Config

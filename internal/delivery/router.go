@@ -88,12 +88,12 @@ func NewRouter(cfg config.Config) (*mux.Router, error) {
 	}
 
 	staticUseCase := service.NewStaticService(staticRepo, zap.L())
-	staticGRPC, err := static.NewStaticGrpcClient(cfg.GetGrpcServerAddr())
+	staticGRPC, err := static.NewStaticGrpcClient(cfg.GetGrpcServerAddr(), cfg.Static.Timeout)
 	if err != nil {
 		return nil, handleRepoError(err, "unable to create static grpc")
 	}
 
-	advertsUseCase := service.NewAdvertService(advertsRepo, *staticGRPC, sellerRepo, zap.L())
+	advertsUseCase := service.NewAdvertService(advertsRepo, sellerRepo, zap.L())
 	//staticUseCase := service.NewStaticService(staticRepo, zap.L())
 	categoryUseCase := service.NewCategoryService(categoryRepo, zap.L())
 	purchaseUseCase := service.NewPurchaseService(purchaseRepo, advertsRepo, cartRepo, zap.L())
@@ -106,7 +106,7 @@ func NewRouter(cfg config.Config) (*mux.Router, error) {
 
 	advertsHandler := http3.NewAdvertEndpoints(advertsUseCase, *staticGRPC, sessionManager, zap.L(), policy)
 	authHandler := http3.NewAuthEndpoints(sessionUC, sessionManager, zap.L())
-	userHandler := http3.NewUserEndpoints(userUC, sessionUC, sessionManager, staticUseCase, zap.L(), policy)
+	userHandler := http3.NewUserEndpoints(userUC, sessionUC, sessionManager, *staticGRPC, zap.L(), policy)
 	sellerHandler := http3.NewSellerEndpoints(sellerRepo, zap.L())
 	purchaseHandler := http3.NewPurchaseEndpoints(purchaseUseCase, zap.L())
 	cartHandler := http3.NewCartEndpoints(cartUC, zap.L())

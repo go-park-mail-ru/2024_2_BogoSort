@@ -8,7 +8,6 @@ import (
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/static"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
@@ -22,18 +21,15 @@ var (
 
 type AdvertService struct {
 	advertRepo repository.AdvertRepository
-	staticClient static.StaticGrpcClient
 	sellerRepo repository.Seller
 	logger     *zap.Logger
 }
 
 func NewAdvertService(advertRepo repository.AdvertRepository,
-	staticClient static.StaticGrpcClient,
 	sellerRepo repository.Seller,
 	logger *zap.Logger) *AdvertService {
 	return &AdvertService{
 		advertRepo: advertRepo,
-		staticClient: staticClient,
 		sellerRepo: sellerRepo,
 	}
 }
