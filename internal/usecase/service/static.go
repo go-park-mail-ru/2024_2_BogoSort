@@ -9,6 +9,8 @@ import (
 	"io"
 	"net/http"
 	"github.com/chai2010/webp"
+	"os"
+	"path/filepath"
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
@@ -42,20 +44,20 @@ func (s *StaticService) GetAvatar(staticID uuid.UUID) (string, error) {
 func (s *StaticService) UploadStatic(reader io.ReadSeeker) (uuid.UUID, error) {
 	size, err := reader.Seek(0, io.SeekEnd)
 	if err != nil {
-		return uuid.Nil, entity.UsecaseWrap(err, errors.New("ошибка при определении размера файла"))
+		return uuid.Nil, entity.UsecaseWrap(err, errors.New("error determining file size"))
 	}
 	if size > int64(s.staticRepo.GetMaxSize()) {
 		return uuid.Nil, usecase.ErrStaticTooBigFile
 	}
 	_, err = reader.Seek(0, io.SeekStart)
 	if err != nil {
-		return uuid.Nil, entity.UsecaseWrap(err, errors.New("ошибка при возвращении io.ReadSeeker в начало файла"))
+		return uuid.Nil, entity.UsecaseWrap(err, errors.New("error returning io.ReadSeeker to the start of the file"))
 	}
 
 	headerBytes := make([]byte, 512)
 	_, err = reader.Read(headerBytes)
 	if err != nil {
-		return uuid.Nil, entity.UsecaseWrap(err, errors.New("ошибка при чтении заголовка файла"))
+		return uuid.Nil, entity.UsecaseWrap(err, errors.New("error reading file header"))
 	}
 	contentType := http.DetectContentType(headerBytes)
 	if contentType != "image/jpeg" && contentType != "image/png" && contentType != "image/gif" {
@@ -63,7 +65,7 @@ func (s *StaticService) UploadStatic(reader io.ReadSeeker) (uuid.UUID, error) {
 	}
 	_, err = reader.Seek(0, io.SeekStart) 
 	if err != nil {
-		return uuid.Nil, entity.UsecaseWrap(err, errors.New("ошибка при возвращении io.ReadSeeker в начало файла"))
+		return uuid.Nil, entity.UsecaseWrap(err, errors.New("error returning io.ReadSeeker to the start of the file"))
 	}
 
 	img, _, err := image.Decode(reader)
@@ -76,7 +78,7 @@ func (s *StaticService) UploadStatic(reader io.ReadSeeker) (uuid.UUID, error) {
 		return uuid.Nil, entity.UsecaseWrap(
 			usecase.ErrStaticImageDimensions,
 			fmt.Errorf(
-				"изображение имеет размеры %dx%d, а должно быть как минимум %dx%d",
+				"image dimensions are %dx%d, but must be at least %dx%d",
 				img.Bounds().Dx(), img.Bounds().Dy(), minImageWidth, minImageHeight,
 			),
 		)
@@ -101,14 +103,31 @@ func (s *StaticService) UploadStatic(reader io.ReadSeeker) (uuid.UUID, error) {
 	opts.Lossless = false
 	opts.Quality = 60
 	if err = webp.Encode(&out, squareImage, &opts); err != nil {
-		return uuid.Nil, errors.Wrap(err, "ошибка при конвертации изображения в формат WEBP")
+		return uuid.Nil, errors.Wrap(err, "error converting image to WEBP format")
 	}
 
-	id, err := s.staticRepo.UploadStatic("avatars", uuid.New().String()+".webp", out.Bytes())
+	id, err := s.staticRepo.UploadStatic("images", uuid.New().String()+".webp", out.Bytes())
 	if err != nil {
 		return uuid.Nil, err
 	}
 	return id, nil
+}
+
+func (s *StaticService) GetStaticFile(staticURI string) (io.ReadSeeker, error) {
+	absolutePath, err := filepath.Abs(staticURI)
+	if err != nil {
+		return nil, entity.UsecaseWrap(err, errors.New("error determining absolute path"))
+	}
+
+	if _, err := os.Stat(absolutePath); os.IsNotExist(err) {
+		return nil, usecase.ErrStaticNotFound
+	}
+
+	file, err := os.Open(absolutePath)
+	if err != nil {
+		return nil, entity.UsecaseWrap(err, errors.New("error opening file"))
+	}
+	return file, nil
 }
 
 func (s *StaticService) GetStatic(id uuid.UUID) (string, error) {

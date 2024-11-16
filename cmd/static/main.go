@@ -20,6 +20,8 @@ func main() {
 	zap.ReplaceGlobals(zap.Must(zap.NewProduction()))
 	defer zap.L().Sync()
 
+	zap.L().Info("Starting static server")
+
 	cfg, err := config.Init()
 	if err != nil {
 		zap.L().Error("Failed to init config", zap.Error(err))
@@ -39,7 +41,7 @@ func main() {
 	staticService := static.NewStaticGrpc(staticUseCase)
 	server := grpc.NewServer()
 	staticProto.RegisterStaticServiceServer(server, staticService)
-	addr := cfg.GetServerAddr()
+	addr := cfg.GetGrpcServerAddr()
 
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {

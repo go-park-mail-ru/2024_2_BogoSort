@@ -16,6 +16,9 @@ type StaticUseCase interface {
 
 	// GetStatic возвращает url статики по id
 	GetStatic(id uuid.UUID) (string, error)
+
+	// GetStaticFile возвращает файл по uri
+	GetStaticFile(uri string) (io.ReadSeeker, error)
 }
 
 var ErrStaticFileNotFound = errors.New("static file not found")

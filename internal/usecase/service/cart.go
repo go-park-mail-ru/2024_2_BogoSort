@@ -25,7 +25,7 @@ func NewCartService(cartRepo repository.Cart, advertRepo repository.AdvertReposi
 }
 
 func ConvertAdvertToResponse(advert entity.Advert) dto.AdvertResponse {
-	return dto.AdvertResponse{ID: advert.ID, Title: advert.Title, Price: advert.Price, ImageURL: advert.ImageURL.UUID.String()}
+	return dto.AdvertResponse{ID: advert.ID, Title: advert.Title, Price: advert.Price, ImageId: advert.ImageId}
 }
 
 func (c *CartService) AddAdvertToUserCart(userID uuid.UUID, AdvertID uuid.UUID) error {

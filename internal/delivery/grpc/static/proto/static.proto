@@ -8,6 +8,7 @@ package static;
 message Static{
   string id = 1;
   string uri = 2;
+  string error = 3;
 }
 
 message StaticUpload {
@@ -21,5 +22,6 @@ message Nothing {
 service StaticService {
   rpc GetStatic(Static) returns (Static) {}
   rpc UploadStatic(stream StaticUpload) returns (Static) {}
+  rpc GetStaticFile(Static) returns (stream StaticUpload) {}
   rpc Ping(Nothing) returns (Nothing) {}
 }

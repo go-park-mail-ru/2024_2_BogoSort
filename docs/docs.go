@@ -767,6 +767,53 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/files/stream/{fileId}": {
+            "get": {
+                "description": "Get a static file as a byte stream by its ID",
+                "produces": [
+                    "application/octet-stream"
+                ],
+                "tags": [
+                    "static"
+                ],
+                "summary": "Get static file stream by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "File ID",
+                        "name": "fileId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Static file content",
+                        "schema": {
+                            "type": "binary"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid file ID",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Static file not found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to get static file",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/files/{fileId}": {
             "get": {
                 "description": "Get a file by its ID",
@@ -1499,7 +1546,7 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
-                "image_url": {
+                "image_id": {
                     "type": "string"
                 },
                 "location": {

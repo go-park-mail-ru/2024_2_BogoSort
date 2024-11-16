@@ -13,6 +13,7 @@ import (
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/static"
 	"github.com/gorilla/mux"
 	"github.com/microcosm-cc/bluemonday"
 )
@@ -36,14 +37,14 @@ var (
 
 type AdvertEndpoints struct {
 	advertUseCase  usecase.AdvertUseCase
-	staticUseCase  usecase.StaticUseCase
+	staticUseCase  static.StaticGrpcClient
 	sessionManager *utils.SessionManager
 	logger         *zap.Logger
 	policy         *bluemonday.Policy
 }
 
 func NewAdvertEndpoints(advertUseCase usecase.AdvertUseCase,
-	staticUseCase usecase.StaticUseCase,
+	staticUseCase static.StaticGrpcClient,
 	sessionManager *utils.SessionManager,
 	logger *zap.Logger,
 	policy *bluemonday.Policy) *AdvertEndpoints {

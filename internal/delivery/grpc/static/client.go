@@ -9,7 +9,9 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"io"
 	"strings"
+	"bytes"
 	"github.com/google/uuid"
+	"go.uber.org/zap"
 )
 
 const (
@@ -56,6 +58,8 @@ func (gate *StaticGrpcClient) UploadStatic(reader io.ReadSeeker) (uuid.UUID, err
 		return uuid.Nil, err
 	}
 
+	zap.L().Info("Uploading static")
+
 	buffer := make([]byte, bufSize)
 
 	for {
@@ -88,5 +92,40 @@ func (gate *StaticGrpcClient) UploadStatic(reader io.ReadSeeker) (uuid.UUID, err
 		}
 		return uuid.Nil, err
 	}
+	zap.L().Info("Static uploaded", zap.String("id", response.Id))
 	return uuid.MustParse(response.Id), nil
+}
+
+func (gate *StaticGrpcClient) GetStaticFile(staticURI string) (io.ReadSeeker, error) {
+	stream, err := gate.staticManager.GetStaticFile(context.Background(), &static.Static{Uri: staticURI})
+	if err != nil {
+		if strings.Contains(err.Error(), repository.ErrStaticNotFound.Error()) {
+			return nil, usecase.ErrStaticNotFound
+		}
+		return nil, err
+	}
+
+	var buffer []byte
+	for {
+		chunk, err := stream.Recv()
+
+		if err == io.EOF {
+			break
+		}
+
+		if err != nil {
+			if strings.Contains(err.Error(), repository.ErrStaticNotFound.Error()) {
+				return nil, usecase.ErrStaticNotFound
+			}
+			return nil, err
+		}
+		buffer = append(buffer, chunk.Chunk...)
+	}
+
+	err = stream.CloseSend()
+	if err != nil {
+		return nil, err
+	}
+
+	return io.ReadSeeker(bytes.NewReader(buffer)), nil
 }

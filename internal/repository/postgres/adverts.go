@@ -82,7 +82,7 @@ type AdvertRepoModel struct {
 	Title       string
 	Description string
 	Price       uint
-	ImageURL    uuid.NullUUID
+	ImageId     uuid.UUID
 	Status      string
 	HasDelivery bool
 	Location    string
@@ -116,7 +116,7 @@ func (r *AdvertDB) AddAdvert(a *entity.Advert) (*entity.Advert, error) {
 		a.HasDelivery,
 		a.CategoryId,
 		a.SellerId,
-		a.ImageURL,
+		a.ImageId,
 		string(a.Status)).Scan(
 		&dbAdvert.ID,
 		&dbAdvert.Title,
@@ -126,7 +126,7 @@ func (r *AdvertDB) AddAdvert(a *entity.Advert) (*entity.Advert, error) {
 		&dbAdvert.HasDelivery,
 		&dbAdvert.CategoryId,
 		&dbAdvert.SellerId,
-		&dbAdvert.ImageURL,
+		&dbAdvert.ImageId,
 		&dbAdvert.Status,
 	)
 
@@ -146,7 +146,7 @@ func (r *AdvertDB) AddAdvert(a *entity.Advert) (*entity.Advert, error) {
 		HasDelivery: dbAdvert.HasDelivery,
 		CategoryId:  dbAdvert.CategoryId,
 		SellerId:    dbAdvert.SellerId,
-		ImageURL:    dbAdvert.ImageURL,
+		ImageId:     dbAdvert.ImageId,
 		Status:      entity.AdvertStatus(dbAdvert.Status),
 	}, nil
 }
@@ -174,7 +174,7 @@ func (r *AdvertDB) GetAdverts(limit, offset int) ([]*entity.Advert, error) {
 			&dbAdvert.HasDelivery,
 			&dbAdvert.CategoryId,
 			&dbAdvert.SellerId,
-			&dbAdvert.ImageURL,
+			&dbAdvert.ImageId,
 			&dbAdvert.Status,
 			&dbAdvert.CreatedAt,
 			&dbAdvert.UpdatedAt,
@@ -191,7 +191,7 @@ func (r *AdvertDB) GetAdverts(limit, offset int) ([]*entity.Advert, error) {
 			HasDelivery: dbAdvert.HasDelivery,
 			CategoryId:  dbAdvert.CategoryId,
 			SellerId:    dbAdvert.SellerId,
-			ImageURL:    dbAdvert.ImageURL,
+			ImageId:     dbAdvert.ImageId,
 			Status:      entity.AdvertStatus(dbAdvert.Status),
 			CreatedAt:   dbAdvert.CreatedAt,
 			UpdatedAt:   dbAdvert.UpdatedAt,
@@ -229,7 +229,7 @@ func (r *AdvertDB) GetAdvertsByCategoryId(categoryId uuid.UUID) ([]*entity.Adver
 			&dbAdvert.HasDelivery,
 			&dbAdvert.CategoryId,
 			&dbAdvert.SellerId,
-			&dbAdvert.ImageURL,
+			&dbAdvert.ImageId,
 			&dbAdvert.Status,
 			&dbAdvert.CreatedAt,
 			&dbAdvert.UpdatedAt,
@@ -246,7 +246,7 @@ func (r *AdvertDB) GetAdvertsByCategoryId(categoryId uuid.UUID) ([]*entity.Adver
 			HasDelivery: dbAdvert.HasDelivery,
 			CategoryId:  dbAdvert.CategoryId,
 			SellerId:    dbAdvert.SellerId,
-			ImageURL:    dbAdvert.ImageURL,
+			ImageId:     dbAdvert.ImageId,
 			Status:      entity.AdvertStatus(dbAdvert.Status),
 			CreatedAt:   dbAdvert.CreatedAt,
 			UpdatedAt:   dbAdvert.UpdatedAt,
@@ -285,7 +285,7 @@ func (r *AdvertDB) GetAdvertsBySellerId(sellerId uuid.UUID) ([]*entity.Advert, e
 			&dbAdvert.HasDelivery,
 			&dbAdvert.CategoryId,
 			&dbAdvert.SellerId,
-			&dbAdvert.ImageURL,
+			&dbAdvert.ImageId,
 			&dbAdvert.Status,
 			&dbAdvert.CreatedAt,
 			&dbAdvert.UpdatedAt,
@@ -302,7 +302,7 @@ func (r *AdvertDB) GetAdvertsBySellerId(sellerId uuid.UUID) ([]*entity.Advert, e
 			HasDelivery: dbAdvert.HasDelivery,
 			CategoryId:  dbAdvert.CategoryId,
 			SellerId:    dbAdvert.SellerId,
-			ImageURL:    dbAdvert.ImageURL,
+			ImageId:     dbAdvert.ImageId,
 			Status:      entity.AdvertStatus(dbAdvert.Status),
 			CreatedAt:   dbAdvert.CreatedAt,
 			UpdatedAt:   dbAdvert.UpdatedAt,
@@ -341,7 +341,7 @@ func (r *AdvertDB) GetAdvertsByCartId(cartId uuid.UUID) ([]*entity.Advert, error
 			&dbAdvert.HasDelivery,
 			&dbAdvert.CategoryId,
 			&dbAdvert.SellerId,
-			&dbAdvert.ImageURL,
+			&dbAdvert.ImageId,
 			&dbAdvert.Status,
 			&dbAdvert.CreatedAt,
 			&dbAdvert.UpdatedAt,
@@ -358,7 +358,7 @@ func (r *AdvertDB) GetAdvertsByCartId(cartId uuid.UUID) ([]*entity.Advert, error
 			HasDelivery: dbAdvert.HasDelivery,
 			CategoryId:  dbAdvert.CategoryId,
 			SellerId:    dbAdvert.SellerId,
-			ImageURL:    dbAdvert.ImageURL,
+			ImageId:     dbAdvert.ImageId,
 			Status:      entity.AdvertStatus(dbAdvert.Status),
 			CreatedAt:   dbAdvert.CreatedAt,
 			UpdatedAt:   dbAdvert.UpdatedAt,
@@ -397,7 +397,7 @@ func (r *AdvertDB) GetAdvertById(advertId uuid.UUID) (*entity.Advert, error) {
 		&dbAdvert.HasDelivery,
 		&dbAdvert.CategoryId,
 		&dbAdvert.SellerId,
-		&dbAdvert.ImageURL,
+		&dbAdvert.ImageId,
 		&dbAdvert.Status,
 		&dbAdvert.CreatedAt,
 		&dbAdvert.UpdatedAt,
@@ -420,7 +420,7 @@ func (r *AdvertDB) GetAdvertById(advertId uuid.UUID) (*entity.Advert, error) {
 		HasDelivery: dbAdvert.HasDelivery,
 		CategoryId:  dbAdvert.CategoryId,
 		SellerId:    dbAdvert.SellerId,
-		ImageURL:    dbAdvert.ImageURL,
+		ImageId:     dbAdvert.ImageId,
 		Status:      entity.AdvertStatus(dbAdvert.Status),
 		CreatedAt:   dbAdvert.CreatedAt,
 		UpdatedAt:   dbAdvert.UpdatedAt,

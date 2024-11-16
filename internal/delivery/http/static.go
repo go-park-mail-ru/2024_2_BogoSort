@@ -4,10 +4,12 @@ import (
 	"errors"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/utils"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/static"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 	"net/http"
+	"io"
 )
 
 var (
@@ -17,19 +19,24 @@ var (
 )
 
 type StaticEndpoints struct {
-	StaticUseCase usecase.StaticUseCase
+	staticGrpcClient  static.StaticGrpcClient
+	staticUseCase usecase.StaticUseCase
 	logger        *zap.Logger
 }
 
-func NewStaticEndpoints(staticUseCase usecase.StaticUseCase, logger *zap.Logger) *StaticEndpoints {
+func NewStaticEndpoints(staticGrpcClient static.StaticGrpcClient, 
+	staticUseCase usecase.StaticUseCase,
+	logger *zap.Logger) *StaticEndpoints {
 	return &StaticEndpoints{
-		StaticUseCase: staticUseCase,
+		staticGrpcClient: staticGrpcClient,
+		staticUseCase: staticUseCase,
 		logger:        logger,
 	}
 }
 
 func (h *StaticEndpoints) ConfigureRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/files/{fileId}", h.GetStaticById).Methods("GET")
+	router.HandleFunc("/api/v1/files/stream/{fileId}", h.GetFileStream).Methods("GET")
 }
 
 // GetStaticById godoc
@@ -51,7 +58,7 @@ func (h *StaticEndpoints) GetStaticById(writer http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	staticURL, err := h.StaticUseCase.GetStatic(staticId)
+	staticURL, err := h.staticUseCase.GetStatic(staticId)
 	if err != nil {
 		if errors.Is(err, ErrStaticFileNotFound) {
 			h.sendError(writer, http.StatusNotFound, err, "static file not found", nil)
@@ -62,6 +69,50 @@ func (h *StaticEndpoints) GetStaticById(writer http.ResponseWriter, r *http.Requ
 	}
 
 	utils.SendJSONResponse(writer, http.StatusOK, staticURL)
+}
+
+// GetFileStream godoc
+// @Summary Get static file stream by ID
+// @Description Get a static file as a byte stream by its ID
+// @Tags static
+// @Produce octet-stream
+// @Param fileId path string true "File ID"
+// @Success 200 {binary} []byte "Static file content"
+// @Failure 400 {object} utils.ErrResponse "Invalid file ID"
+// @Failure 404 {object} utils.ErrResponse "Static file not found"
+// @Failure 500 {object} utils.ErrResponse "Failed to get static file"
+// @Router /api/v1/files/stream/{fileId} [get]
+func (h *StaticEndpoints) GetFileStream(writer http.ResponseWriter, r *http.Request) {
+	fileIdStr := mux.Vars(r)["fileId"]
+	fileId, err := uuid.Parse(fileIdStr)
+	if err != nil {
+		h.sendError(writer, http.StatusBadRequest, err, "invalid file ID", nil)
+		return
+	}
+
+	filePath, err := h.staticUseCase.GetStatic(fileId)
+	if err != nil {
+		h.sendError(writer, http.StatusInternalServerError, err, "failed to get static file path", nil)
+		return
+	}
+
+	fileStream, err := h.staticGrpcClient.GetStaticFile(filePath)
+	if err != nil {
+		if errors.Is(err, ErrStaticFileNotFound) {
+			h.sendError(writer, http.StatusNotFound, err, "static file not found", nil)
+		} else {
+			h.sendError(writer, http.StatusInternalServerError, err, "failed to get static file", nil)
+		}
+		return
+	}
+
+	writer.Header().Set("Content-Type", "image/webp")
+	writer.WriteHeader(http.StatusOK)
+
+	_, err = io.Copy(writer, fileStream) 
+	if err != nil {
+		h.sendError(writer, http.StatusInternalServerError, err, "failed to write file stream", nil)
+	}
 }
 
 func (e *StaticEndpoints) sendError(w http.ResponseWriter, statusCode int, err error, context string, additionalInfo map[string]string) {

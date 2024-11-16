@@ -39,20 +39,6 @@ func NewAdvertService(advertRepo repository.AdvertRepository,
 }
 
 func (s *AdvertService) advertEntityToDTO(advert *entity.Advert) (*dto.AdvertResponse, error) {
-	var posterURL string
-
-	if !advert.ImageURL.Valid {
-		posterURL = ""
-	} else {
-		response, err := s.staticClient.GetStatic(advert.ImageURL.UUID)
-		if err != nil {
-			zap.L().Error("Error getting static URL", zap.Error(err))
-			posterURL = ""
-		} else {
-			posterURL = response
-		}
-	}
-
 	advertDTO := dto.AdvertResponse{
 		ID:          advert.ID,
 		SellerId:    advert.SellerId,
@@ -60,7 +46,7 @@ func (s *AdvertService) advertEntityToDTO(advert *entity.Advert) (*dto.AdvertRes
 		Title:       advert.Title,
 		Description: advert.Description,
 		Price:       advert.Price,
-		ImageURL:    posterURL,
+		ImageId:    advert.ImageId,
 		Status:      dto.AdvertStatus(advert.Status),
 		HasDelivery: advert.HasDelivery,
 		Location:    advert.Location,

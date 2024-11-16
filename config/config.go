@@ -12,6 +12,7 @@ import (
 type ServerConfig struct {
 	IP              string        `yaml:"ip" default:"0.0.0.0"`
 	Port            int           `yaml:"port" default:"8080"`
+	GrpcPort        int           `yaml:"grpc_port" default:"8081"`
 	ReadTimeout     time.Duration `yaml:"read_timeout" default:"10s"`
 	WriteTimeout    time.Duration `yaml:"write_timeout" default:"10s"`
 	ShutdownTimeout time.Duration `yaml:"shutdown_timeout" default:"10s"`
@@ -117,4 +118,8 @@ func GetStaticConfig() StaticConfig {
 
 func GetCSRFSecret() string {
 	return cfg.CSRFSecret
+}
+
+func (cfg *Config) GetGrpcServerAddr() string {
+	return fmt.Sprintf("%s:%d", cfg.Server.IP, cfg.Server.GrpcPort)
 }

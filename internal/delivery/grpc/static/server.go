@@ -5,6 +5,8 @@ import (
 	"context"
 	"io"
 	"github.com/google/uuid"
+	"errors"
+	"net/url"
 
 	staticProto "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/static/proto"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase"
@@ -50,19 +52,48 @@ func (service *Grpc) UploadStatic(stream staticProto.StaticService_UploadStaticS
 	if err != nil {
 		return err
 	}
-	return stream.SendAndClose(&staticProto.Static{Id: staticID.String()})
-	// switch {
-	// case errors.Is(err, usecase.ErrStaticTooBigFile):
-	// 	return stream.SendAndClose(&staticProto.Static{Error: "ErrStaticTooBigFile"})
-	// case errors.Is(err, usecase.ErrStaticNotImage):
-	// 	return stream.SendAndClose(&staticProto.Static{Error: "ErrStaticNotImage"})
-	// case errors.Is(err, usecase.ErrStaticImageDimensions):
-	// 	return stream.SendAndClose(&staticProto.Static{Error: "ErrStaticImageDimensions"})
-	// case err != nil:
-	// 	return err
-	// default:
-	// 	return stream.SendAndClose(&staticProto.Static{Id: staticID.String()})
-	// }
+
+	switch {
+	case errors.Is(err, usecase.ErrStaticTooBigFile):
+		return stream.SendAndClose(&staticProto.Static{Error: "ErrStaticTooBigFile"})
+	case errors.Is(err, usecase.ErrStaticNotImage):
+		return stream.SendAndClose(&staticProto.Static{Error: "ErrStaticNotImage"})
+	case errors.Is(err, usecase.ErrStaticImageDimensions):
+		return stream.SendAndClose(&staticProto.Static{Error: "ErrStaticImageDimensions"})
+	case err != nil:
+		return err
+	default:
+		return stream.SendAndClose(&staticProto.Static{Id: staticID.String()})
+	}
+}
+
+func (service *Grpc) GetStaticFile(
+	static *staticProto.Static,
+	stream staticProto.StaticService_GetStaticFileServer,
+) error {
+	uri, err := url.QueryUnescape(static.GetUri())
+	if err != nil {
+		return err
+	}
+	file, err := service.staticUC.GetStaticFile(uri)
+	if err != nil {
+		return err
+	}
+	buffer := make([]byte, 1024)
+	for {
+		bytesCount, err := file.Read(buffer)
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+		err = stream.Send(&staticProto.StaticUpload{Chunk: buffer[:bytesCount]})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (service *Grpc) Ping(context.Context, *staticProto.Nothing) (*staticProto.Nothing, error) {

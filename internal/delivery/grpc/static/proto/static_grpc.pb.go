@@ -19,9 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	StaticService_GetStatic_FullMethodName    = "/static.StaticService/GetStatic"
-	StaticService_UploadStatic_FullMethodName = "/static.StaticService/UploadStatic"
-	StaticService_Ping_FullMethodName         = "/static.StaticService/Ping"
+	StaticService_GetStatic_FullMethodName     = "/static.StaticService/GetStatic"
+	StaticService_UploadStatic_FullMethodName  = "/static.StaticService/UploadStatic"
+	StaticService_GetStaticFile_FullMethodName = "/static.StaticService/GetStaticFile"
+	StaticService_Ping_FullMethodName          = "/static.StaticService/Ping"
 )
 
 // StaticServiceClient is the client API for StaticService service.
@@ -30,6 +31,7 @@ const (
 type StaticServiceClient interface {
 	GetStatic(ctx context.Context, in *Static, opts ...grpc.CallOption) (*Static, error)
 	UploadStatic(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[StaticUpload, Static], error)
+	GetStaticFile(ctx context.Context, in *Static, opts ...grpc.CallOption) (grpc.ServerStreamingClient[StaticUpload], error)
 	Ping(ctx context.Context, in *Nothing, opts ...grpc.CallOption) (*Nothing, error)
 }
 
@@ -64,6 +66,25 @@ func (c *staticServiceClient) UploadStatic(ctx context.Context, opts ...grpc.Cal
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type StaticService_UploadStaticClient = grpc.ClientStreamingClient[StaticUpload, Static]
 
+func (c *staticServiceClient) GetStaticFile(ctx context.Context, in *Static, opts ...grpc.CallOption) (grpc.ServerStreamingClient[StaticUpload], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &StaticService_ServiceDesc.Streams[1], StaticService_GetStaticFile_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[Static, StaticUpload]{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type StaticService_GetStaticFileClient = grpc.ServerStreamingClient[StaticUpload]
+
 func (c *staticServiceClient) Ping(ctx context.Context, in *Nothing, opts ...grpc.CallOption) (*Nothing, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(Nothing)
@@ -80,6 +101,7 @@ func (c *staticServiceClient) Ping(ctx context.Context, in *Nothing, opts ...grp
 type StaticServiceServer interface {
 	GetStatic(context.Context, *Static) (*Static, error)
 	UploadStatic(grpc.ClientStreamingServer[StaticUpload, Static]) error
+	GetStaticFile(*Static, grpc.ServerStreamingServer[StaticUpload]) error
 	Ping(context.Context, *Nothing) (*Nothing, error)
 	mustEmbedUnimplementedStaticServiceServer()
 }
@@ -96,6 +118,9 @@ func (UnimplementedStaticServiceServer) GetStatic(context.Context, *Static) (*St
 }
 func (UnimplementedStaticServiceServer) UploadStatic(grpc.ClientStreamingServer[StaticUpload, Static]) error {
 	return status.Errorf(codes.Unimplemented, "method UploadStatic not implemented")
+}
+func (UnimplementedStaticServiceServer) GetStaticFile(*Static, grpc.ServerStreamingServer[StaticUpload]) error {
+	return status.Errorf(codes.Unimplemented, "method GetStaticFile not implemented")
 }
 func (UnimplementedStaticServiceServer) Ping(context.Context, *Nothing) (*Nothing, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
@@ -146,6 +171,17 @@ func _StaticService_UploadStatic_Handler(srv interface{}, stream grpc.ServerStre
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type StaticService_UploadStaticServer = grpc.ClientStreamingServer[StaticUpload, Static]
 
+func _StaticService_GetStaticFile_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(Static)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(StaticServiceServer).GetStaticFile(m, &grpc.GenericServerStream[Static, StaticUpload]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type StaticService_GetStaticFileServer = grpc.ServerStreamingServer[StaticUpload]
+
 func _StaticService_Ping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Nothing)
 	if err := dec(in); err != nil {
@@ -185,6 +221,11 @@ var StaticService_ServiceDesc = grpc.ServiceDesc{
 			StreamName:    "UploadStatic",
 			Handler:       _StaticService_UploadStatic_Handler,
 			ClientStreams: true,
+		},
+		{
+			StreamName:    "GetStaticFile",
+			Handler:       _StaticService_GetStaticFile_Handler,
+			ServerStreams: true,
 		},
 	},
 	Metadata: "static.proto",
