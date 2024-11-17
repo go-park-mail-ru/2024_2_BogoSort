@@ -9,11 +9,11 @@ session:
   expiration_time: 12h
   secure_cookie: false
 
-auth:
-  addr: "auth:8081"
+auth_port: 50051
+auth_host: "0.0.0.0"
 
 pg_ip: "postgres"
-pg_port: 5432
+pg_port: 8002
 pg_user: "postgres"
 pg_password: "postgres"
 pg_db: "emporiumdb"

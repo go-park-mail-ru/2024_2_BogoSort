@@ -37,7 +37,8 @@ type Config struct {
 	RdDB       int           `yaml:"rd_db"`
 	Static     StaticConfig  `yaml:"static"`
 	CSRFSecret string        `yaml:"csrf_secret"`
-	AuthAddr   string        `yaml:"auth_addr"`
+	AuthPort   int           `yaml:"auth_port"`
+	AuthHost   string        `yaml:"auth_host"`
 }
 
 type StaticConfig struct {
@@ -82,11 +83,21 @@ func Init() (Config, error) {
 		cfg.Server.Port, _ = strconv.Atoi(port)
 	}
 
+	if port := os.Getenv("AUTH_PORT"); port != "" {
+		cfg.AuthPort, _ = strconv.Atoi(port)
+	}
+	if host := os.Getenv("AUTH_HOST"); host != "" {
+		cfg.AuthHost = host
+	}
 	return cfg, nil
 }
 
 func GetServerAddress() string {
 	return fmt.Sprintf(":%d", cfg.Server.Port)
+}
+
+func GetAuthAddress() string {
+	return fmt.Sprintf("%s:%d", cfg.AuthHost, cfg.AuthPort)
 }
 
 func (cfg *Config) GetConnectURL() string {

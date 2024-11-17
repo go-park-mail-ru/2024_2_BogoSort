@@ -1,12 +1,10 @@
-version: '3.8'
-
 services:
   auth:
     build:
       context: .
       dockerfile: cmd/auth/Dockerfile
     ports:
-      - "8081:50051"
+      - "50051:50051"
     environment:
       - ENV=production
       - LOG_LEVEL=info
@@ -22,7 +20,7 @@ services:
       - ./config/config.yaml:/config/config.yaml
       - ./static/:/static/
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:50051/health"]
+      test: ["CMD", "grpc_health_probe", "-addr=:50051"]
       interval: 30s
       timeout: 10s
       retries: 3
