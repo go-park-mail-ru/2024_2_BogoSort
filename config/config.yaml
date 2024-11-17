@@ -1,6 +1,5 @@
 server:
   port: 8080
-  grpc_port: 8081
   host: "0.0.0.0"
   read_timeout: 10s
   write_timeout: 10s
@@ -27,3 +26,4 @@ static:
   path: "static/"
   max_size: 10485760
   timeout: 5s
+  port: 8081
