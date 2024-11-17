@@ -60,7 +60,7 @@ func (c *PurchaseDB) BeginTransaction() (pgx.Tx, error) {
 	return tx, nil
 }
 
-func (r *PurchaseDB) AddPurchase(tx pgx.Tx, purchase *entity.Purchase) (*entity.Purchase, error) {
+func (r *PurchaseDB) Add(tx pgx.Tx, purchase *entity.Purchase) (*entity.Purchase, error) {
 	var entityPurchase entity.Purchase
 
 	err := tx.QueryRow(r.ctx, addPurchaseQuery, purchase.CartID, purchase.Address, purchase.Status, purchase.PaymentMethod, purchase.DeliveryMethod).
@@ -73,7 +73,7 @@ func (r *PurchaseDB) AddPurchase(tx pgx.Tx, purchase *entity.Purchase) (*entity.
 	return &entityPurchase, nil
 }
 
-func (r *PurchaseDB) GetPurchasesByUserID(userID uuid.UUID) ([]*entity.Purchase, error) {
+func (r *PurchaseDB) GetByUserId(userID uuid.UUID) ([]*entity.Purchase, error) {
 	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
 	defer cancel()
 

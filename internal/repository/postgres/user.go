@@ -106,7 +106,7 @@ func (us *UserDB) BeginTransaction() (pgx.Tx, error) {
 	return tx, nil
 }
 
-func (us *UserDB) AddUser(tx pgx.Tx, email string, hash, salt []byte) (uuid.UUID, error) {
+func (us *UserDB) Add(tx pgx.Tx, email string, hash, salt []byte) (uuid.UUID, error) {
 	var dbUser DBUser
 
 	ctx, cancel := context.WithTimeout(us.ctx, us.timeout)
@@ -135,7 +135,7 @@ func (us *UserDB) AddUser(tx pgx.Tx, email string, hash, salt []byte) (uuid.UUID
 	return dbUser.ID, nil
 }
 
-func (us *UserDB) GetUserByEmail(email string) (*entity.User, error) {
+func (us *UserDB) GetByEmail(email string) (*entity.User, error) {
 	var dbUser DBUser
 
 	ctx, cancel := context.WithTimeout(us.ctx, us.timeout)
@@ -167,7 +167,7 @@ func (us *UserDB) GetUserByEmail(email string) (*entity.User, error) {
 	return &user, nil
 }
 
-func (us *UserDB) GetUserById(id uuid.UUID) (*entity.User, error) {
+func (us *UserDB) GetById(id uuid.UUID) (*entity.User, error) {
 	var dbUser DBUser
 
 	ctx, cancel := context.WithTimeout(us.ctx, us.timeout)
@@ -199,7 +199,7 @@ func (us *UserDB) GetUserById(id uuid.UUID) (*entity.User, error) {
 	return &user, nil
 }
 
-func (us *UserDB) UpdateUser(user *entity.User) error {
+func (us *UserDB) Update(user *entity.User) error {
 	ctx, cancel := context.WithTimeout(us.ctx, us.timeout)
 	defer cancel()
 
@@ -223,7 +223,7 @@ func (us *UserDB) UpdateUser(user *entity.User) error {
 	return nil
 }
 
-func (us *UserDB) DeleteUser(userID uuid.UUID) error {
+func (us *UserDB) Delete(userID uuid.UUID) error {
 	ctx, cancel := context.WithTimeout(us.ctx, us.timeout)
 	defer cancel()
 

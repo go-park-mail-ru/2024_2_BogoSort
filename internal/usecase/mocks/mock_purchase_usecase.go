@@ -35,32 +35,32 @@ func (m *MockPurchase) EXPECT() *MockPurchaseMockRecorder {
 	return m.recorder
 }
 
-// AddPurchase mocks base method.
-func (m *MockPurchase) AddPurchase(purchaseRequest dto.PurchaseRequest) (*dto.PurchaseResponse, error) {
+// Add mocks base method.
+func (m *MockPurchase) Add(purchaseRequest dto.PurchaseRequest) (*dto.PurchaseResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddPurchase", purchaseRequest)
+	ret := m.ctrl.Call(m, "Add", purchaseRequest)
 	ret0, _ := ret[0].(*dto.PurchaseResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// AddPurchase indicates an expected call of AddPurchase.
-func (mr *MockPurchaseMockRecorder) AddPurchase(purchaseRequest interface{}) *gomock.Call {
+// Add indicates an expected call of Add.
+func (mr *MockPurchaseMockRecorder) Add(purchaseRequest interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddPurchase", reflect.TypeOf((*MockPurchase)(nil).AddPurchase), purchaseRequest)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Add", reflect.TypeOf((*MockPurchase)(nil).Add), purchaseRequest)
 }
 
-// GetPurchasesByUserID mocks base method.
-func (m *MockPurchase) GetPurchasesByUserID(userID uuid.UUID) ([]*dto.PurchaseResponse, error) {
+// GetByUserId mocks base method.
+func (m *MockPurchase) GetByUserId(userID uuid.UUID) ([]*dto.PurchaseResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPurchasesByUserID", userID)
+	ret := m.ctrl.Call(m, "GetByUserId", userID)
 	ret0, _ := ret[0].([]*dto.PurchaseResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetPurchasesByUserID indicates an expected call of GetPurchasesByUserID.
-func (mr *MockPurchaseMockRecorder) GetPurchasesByUserID(userID interface{}) *gomock.Call {
+// GetByUserId indicates an expected call of GetByUserId.
+func (mr *MockPurchaseMockRecorder) GetByUserId(userID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPurchasesByUserID", reflect.TypeOf((*MockPurchase)(nil).GetPurchasesByUserID), userID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByUserId", reflect.TypeOf((*MockPurchase)(nil).GetByUserId), userID)
 }

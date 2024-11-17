@@ -92,7 +92,7 @@ func TestStaticDB_GetStatic(t *testing.T) {
 					WillReturnError(pgx.ErrNoRows)
 			}
 
-			path, err := repo.GetStatic(tt.staticID)
+			path, err := repo.Get(tt.staticID)
 			if tt.expectedError != nil {
 				assert.ErrorIs(t, err, tt.expectedError, "expected error in GetStatic")
 			} else {
@@ -156,7 +156,7 @@ func TestStaticDB_UploadStatic(t *testing.T) {
 					WillReturnError(errors.New("sql error"))
 			}
 
-			_, err := repo.UploadStatic(tt.path, tt.filename, tt.data)
+			_, err := repo.Upload(tt.path, tt.filename, tt.data)
 			if tt.expectedError != nil {
 				assert.ErrorContains(t, err, tt.expectedError.Error(), "expected error in UploadStatic")
 			} else {

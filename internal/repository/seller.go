@@ -9,14 +9,14 @@ import (
 )
 
 type Seller interface {
-	// AddSeller добавляет нового продавца в бд в рамках транзакции
-	AddSeller(tx pgx.Tx, userID uuid.UUID) (uuid.UUID, error)
+	// Add добавляет нового продавца в бд в рамках транзакции
+	Add(tx pgx.Tx, userID uuid.UUID) (uuid.UUID, error)
 
-	// GetSellerByID возвращает продавца по его ID
-	GetSellerByID(sellerID uuid.UUID) (*entity.Seller, error)
+	// GetById возвращает продавца по его ID
+	GetById(sellerID uuid.UUID) (*entity.Seller, error)
 
-	// GetSellerByUserID возвращает продавца по ID пользователя
-	GetSellerByUserID(userID uuid.UUID) (*entity.Seller, error)
+	// GetByUserId возвращает продавца по ID пользователя
+	GetByUserId(userID uuid.UUID) (*entity.Seller, error)
 }
 
 var (

@@ -20,7 +20,7 @@ func NewAuthService(authRepo repository.Session, logger *zap.Logger) *AuthServic
 }
 
 func (a *AuthService) Logout(session string) error {
-	err := a.sessionRepo.DeleteSession(session)
+	err := a.sessionRepo.Delete(session)
 	switch {
 	case errors.Is(err, repository.ErrSessionNotFound):
 		return usecase.ErrUserNotFound
@@ -32,7 +32,7 @@ func (a *AuthService) Logout(session string) error {
 }
 
 func (a *AuthService) CreateSession(userId uuid.UUID) (string, error) {
-	session, err := a.sessionRepo.CreateSession(userId)
+	session, err := a.sessionRepo.Create(userId)
 	if err != nil {
 		return "", entity.UsecaseWrap(errors.New("error creating session"), err)
 	}
@@ -40,7 +40,7 @@ func (a *AuthService) CreateSession(userId uuid.UUID) (string, error) {
 }
 
 func (a *AuthService) GetUserIdBySession(session string) (uuid.UUID, error) {
-	userID, err := a.sessionRepo.GetSession(session)
+	userID, err := a.sessionRepo.Get(session)
 	switch {
 	case errors.Is(err, repository.ErrSessionNotFound):
 		return uuid.Nil, usecase.ErrUserNotFound

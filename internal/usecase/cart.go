@@ -6,14 +6,14 @@ import (
 )
 
 type Cart interface {
-	// AddAdvertToUserCart добавляет товар в корзину юзера по его ID
-	AddAdvertToUserCart(userID uuid.UUID, AdvertID uuid.UUID) error
-	// GetAdvertsByCartID возвращает корзину по ID корзины
-	GetCartByID(cartID uuid.UUID) (dto.Cart, error)
-	// GetCartByUserID возвращает корзину по ID юзера
-	GetCartByUserID(userID uuid.UUID) (dto.Cart, error)
-	// DeleteAdvertFromCart удаляет товар из корзины по ID корзины и ID товара
-	DeleteAdvertFromCart(cartID uuid.UUID, AdvertID uuid.UUID) error
-	// CheckCartExists проверяет, существует ли корзина для пользователя
-	CheckCartExists(userID uuid.UUID) (bool, error)
+	// AddAdvert добавляет товар в корзину юзера по его ID
+	AddAdvert(userID uuid.UUID, AdvertID uuid.UUID) error
+	// GetByID возвращает корзину по ID корзины
+	GetById(cartID uuid.UUID) (dto.Cart, error)
+	// GetByUserID возвращает корзину по ID юзера
+	GetByUserId(userID uuid.UUID) (dto.Cart, error)
+	// DeleteAdvert удаляет товар из корзины по ID корзины и ID товара
+	DeleteAdvert(cartID uuid.UUID, AdvertID uuid.UUID) error
+	// CheckExists проверяет, существует ли корзина для пользователя
+	CheckExists(userID uuid.UUID) (bool, error)
 }

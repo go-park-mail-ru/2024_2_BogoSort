@@ -50,7 +50,7 @@ func TestStaticService_GetAvatar_Success(t *testing.T) {
 	staticID := uuid.New()
 	expectedPath := "/path/to/avatar.jpg"
 
-	mockStaticRepo.EXPECT().GetStatic(staticID).Return(expectedPath, nil)
+	mockStaticRepo.EXPECT().Get(staticID).Return(expectedPath, nil)
 
 	path, err := service.GetAvatar(staticID)
 
@@ -65,7 +65,7 @@ func TestStaticService_GetAvatar_Error(t *testing.T) {
 	staticID := uuid.New()
 	expectedError := errors.New("static not found")
 
-	mockStaticRepo.EXPECT().GetStatic(staticID).Return("", expectedError)
+	mockStaticRepo.EXPECT().Get(staticID).Return("", expectedError)
 
 	path, err := service.GetAvatar(staticID)
 
@@ -81,7 +81,7 @@ func TestStaticService_UploadFile_SuccessJPEG(t *testing.T) {
 
 	expectedID := uuid.New()
 
-	mockStaticRepo.EXPECT().UploadStatic("images", gomock.Any(), gomock.Any()).Return(expectedID, nil)
+	mockStaticRepo.EXPECT().Upload(gomock.Any(), gomock.Any(), gomock.Any()).Return(expectedID, nil)
 
 	id, err := service.UploadFile(data)
 
@@ -97,7 +97,7 @@ func TestStaticService_UploadFile_SuccessPNG(t *testing.T) {
 
 	expectedID := uuid.New()
 
-	mockStaticRepo.EXPECT().UploadStatic("images", gomock.Any(), gomock.Any()).Return(expectedID, nil)
+		mockStaticRepo.EXPECT().Upload(gomock.Any(), gomock.Any(), gomock.Any()).Return(expectedID, nil)
 
 	id, err := service.UploadFile(data)
 
@@ -154,7 +154,7 @@ func TestStaticService_UploadFile_UploadStaticError(t *testing.T) {
 
 	data := generateJPEGImage(200, 200)
 
-	mockStaticRepo.EXPECT().UploadStatic("images", gomock.Any(), gomock.Any()).Return(uuid.Nil, errors.New("upload failed"))
+	mockStaticRepo.EXPECT().Upload(gomock.Any(), gomock.Any(), gomock.Any()).Return(uuid.Nil, errors.New("upload failed"))
 
 	id, err := service.UploadFile(data)
 
@@ -169,7 +169,7 @@ func TestStaticService_GetStaticURL_Success(t *testing.T) {
 	staticID := uuid.New()
 	expectedURL := "https://example.com/images/avatar.jpg"
 
-	mockStaticRepo.EXPECT().GetStatic(staticID).Return(expectedURL, nil)
+	mockStaticRepo.EXPECT().Get(staticID).Return(expectedURL, nil)
 
 	url, err := service.GetStaticURL(staticID)
 
@@ -184,7 +184,7 @@ func TestStaticService_GetStaticURL_Error(t *testing.T) {
 	staticID := uuid.New()
 	expectedError := errors.New("static not found")
 
-	mockStaticRepo.EXPECT().GetStatic(staticID).Return("", expectedError)
+	mockStaticRepo.EXPECT().Get(staticID).Return("", expectedError)
 
 	url, err := service.GetStaticURL(staticID)
 

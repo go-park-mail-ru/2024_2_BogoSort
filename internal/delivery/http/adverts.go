@@ -93,7 +93,7 @@ func (h *AdvertEndpoint) Get(writer http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	adverts, err := h.advertUC.GetAdverts(limit, offset)
+	adverts, err := h.advertUC.Get(limit, offset)
 	if err != nil {
 		h.sendError(writer, http.StatusInternalServerError, err, "failed to get adverts", nil)
 		return
@@ -124,7 +124,7 @@ func (h *AdvertEndpoint) GetBySellerId(writer http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	adverts, err := h.advertUC.GetAdvertsByUserId(sellerId)
+	adverts, err := h.advertUC.GetByUserId(sellerId)
 	if err != nil {
 		h.sendError(writer, http.StatusInternalServerError, err, "failed to get adverts by seller ID", nil)
 		return
@@ -155,7 +155,7 @@ func (h *AdvertEndpoint) GetByCartId(writer http.ResponseWriter, r *http.Request
 		return
 	}
 
-	adverts, err := h.advertUC.GetAdvertsByCartId(cartId)
+	adverts, err := h.advertUC.GetByCartId(cartId)
 	if err != nil {
 		h.sendError(writer, http.StatusInternalServerError, err, "failed to get adverts by cart ID", nil)
 		return
@@ -186,7 +186,7 @@ func (h *AdvertEndpoint) GetById(writer http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	advert, err := h.advertUC.GetAdvertById(advertId)
+	advert, err := h.advertUC.GetById(advertId)
 	if err != nil {
 		h.handleError(writer, err, "failed to get advert by ID")
 		return
@@ -222,7 +222,7 @@ func (h *AdvertEndpoint) Add(writer http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	newAdvert, err := h.advertUC.AddAdvert(&advert, userID)
+	newAdvert, err := h.advertUC.Add(&advert, userID)
 	if err != nil {
 		h.sendError(writer, http.StatusInternalServerError, err, "failed to add advert", nil)
 		return
@@ -267,7 +267,7 @@ func (h *AdvertEndpoint) Update(writer http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.advertUC.UpdateAdvert(&advert, userID, advertId); err != nil {
+	if err := h.advertUC.Update(&advert, userID, advertId); err != nil {
 		h.handleError(writer, err, "failed to update advert")
 		return
 	}
@@ -300,7 +300,7 @@ func (h *AdvertEndpoint) Delete(writer http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.advertUC.DeleteAdvertById(advertId, userID); err != nil {
+	if err := h.advertUC.DeleteById(advertId, userID); err != nil {
 		h.handleError(writer, err, "failed to delete advert")
 		return
 	}
@@ -340,7 +340,7 @@ func (h *AdvertEndpoint) UpdateStatus(writer http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	if err := h.advertUC.UpdateAdvertStatus(advertId, dto.AdvertStatus(status), userID); err != nil {
+	if err := h.advertUC.UpdateStatus(advertId, dto.AdvertStatus(status), userID); err != nil {
 		h.handleError(writer, err, "failed to update advert status")
 		return
 	}
@@ -366,7 +366,7 @@ func (h *AdvertEndpoint) GetByCategoryId(writer http.ResponseWriter, r *http.Req
 		return
 	}
 
-	adverts, err := h.advertUC.GetAdvertsByCategoryId(categoryId)
+	adverts, err := h.advertUC.GetByCategoryId(categoryId)
 	if err != nil {
 		h.sendError(writer, http.StatusInternalServerError, err, "failed to get adverts by category ID", nil)
 		return

@@ -28,7 +28,7 @@ func TestAddPurchase_Success(t *testing.T) {
 	purchaseRequest := dto.PurchaseRequest{}
 	purchaseResponse := dto.PurchaseResponse{}
 
-	mockPurchaseUC.EXPECT().AddPurchase(purchaseRequest).Return(&purchaseResponse, nil)
+	mockPurchaseUC.EXPECT().Add(purchaseRequest).Return(&purchaseResponse, nil)
 
 	body, _ := json.Marshal(purchaseRequest)
 	req, err := http.NewRequest("POST", "/api/v1/purchase", bytes.NewBuffer(body))
@@ -79,7 +79,7 @@ func TestAddPurchase_AddPurchaseError(t *testing.T) {
 
 	purchaseRequest := dto.PurchaseRequest{}
 
-	mockPurchaseUC.EXPECT().AddPurchase(purchaseRequest).Return(&dto.PurchaseResponse{}, errors.New("some error"))
+	mockPurchaseUC.EXPECT().Add(purchaseRequest).Return(&dto.PurchaseResponse{}, errors.New("some error"))
 
 	body, _ := json.Marshal(purchaseRequest)
 	req, err := http.NewRequest("POST", "/api/v1/purchase", bytes.NewBuffer(body))

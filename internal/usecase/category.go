@@ -5,6 +5,6 @@ import (
 )
 
 type CategoryUseCase interface {
-	// GetCategories возвращает все категории
-	GetCategories() ([]*entity.Category, error)
+	// Get возвращает все категории
+	Get() ([]*entity.Category, error)
 }

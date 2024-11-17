@@ -29,7 +29,7 @@ func NewStaticService(staticRepo repository.StaticRepository, logger *zap.Logger
 }
 
 func (s *StaticService) GetAvatar(staticID uuid.UUID) (string, error) {
-	path, err := s.staticRepo.GetStatic(staticID)
+	path, err := s.staticRepo.Get(staticID)
 	if err != nil {
 		s.logger.Error("failed to get static", zap.Error(err), zap.String("static_id", staticID.String()))
 		return "", err
@@ -92,13 +92,13 @@ func (s *StaticService) UploadFile(data []byte) (uuid.UUID, error) {
 	var id uuid.UUID
 
 	if contentType == "image/jpeg" {
-		id, err = s.staticRepo.UploadStatic("images", fileName+".jpg", out.Bytes())
+		id, err = s.staticRepo.Upload("images", fileName+".jpg", out.Bytes())
 		if err != nil {
 			s.logger.Error("error uploading static", zap.Error(err))
 			return uuid.Nil, err
 		}
 	} else {
-		id, err = s.staticRepo.UploadStatic("images", fileName+".png", out.Bytes())
+		id, err = s.staticRepo.Upload("images", fileName+".png", out.Bytes())
 		if err != nil {
 			s.logger.Error("error uploading static", zap.Error(err))
 			return uuid.Nil, err
@@ -109,5 +109,5 @@ func (s *StaticService) UploadFile(data []byte) (uuid.UUID, error) {
 }
 
 func (s *StaticService) GetStaticURL(id uuid.UUID) (string, error) {
-	return s.staticRepo.GetStatic(id)
+	return s.staticRepo.Get(id)
 }

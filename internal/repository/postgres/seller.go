@@ -67,7 +67,7 @@ func (dbSeller *DBSeller) GetEntity() entity.Seller {
 	}
 }
 
-func (s *SellerDB) AddSeller(tx pgx.Tx, userID uuid.UUID) (uuid.UUID, error) {
+func (s *SellerDB) Add(tx pgx.Tx, userID uuid.UUID) (uuid.UUID, error) {
 	var dbSeller DBSeller
 	err := tx.QueryRow(s.ctx, queryAddSeller, userID).Scan(
 		&dbSeller.ID,
@@ -89,7 +89,7 @@ func (s *SellerDB) AddSeller(tx pgx.Tx, userID uuid.UUID) (uuid.UUID, error) {
 	return dbSeller.ID, nil
 }
 
-func (s *SellerDB) GetSellerByID(sellerID uuid.UUID) (*entity.Seller, error) {
+func (s *SellerDB) GetById(sellerID uuid.UUID) (*entity.Seller, error) {
 	var dbSeller DBSeller
 	err := s.DB.QueryRow(s.ctx, queryGetSellerByID, sellerID).Scan(
 		&dbSeller.ID,
@@ -113,7 +113,7 @@ func (s *SellerDB) GetSellerByID(sellerID uuid.UUID) (*entity.Seller, error) {
 	return &seller, nil
 }
 
-func (s *SellerDB) GetSellerByUserID(userID uuid.UUID) (*entity.Seller, error) {
+func (s *SellerDB) GetByUserId(userID uuid.UUID) (*entity.Seller, error) {
 	var dbSeller DBSeller
 	err := s.DB.QueryRow(s.ctx, queryGetSellerByUserID, userID).Scan(
 		&dbSeller.ID,

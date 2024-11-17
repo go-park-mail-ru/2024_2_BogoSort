@@ -47,7 +47,7 @@ func TestSellerEndpoints_GetSellerByID(t *testing.T) {
 
 		mockSellerRepo.
 			EXPECT().
-			GetSellerByID(sellerID).
+			GetById(sellerID).
 			Return(&seller, nil)
 
 		req := httptest.NewRequest("GET", "/api/v1/seller/"+sellerID.String(), nil)
@@ -96,7 +96,7 @@ func TestSellerEndpoints_GetSellerByID(t *testing.T) {
 
 		mockSellerRepo.
 			EXPECT().
-			GetSellerByID(sellerID).
+			GetById(sellerID).
 			Return(nil, repository.ErrSellerNotFound)
 
 		req := httptest.NewRequest("GET", "/api/v1/seller/"+sellerID.String(), nil)
@@ -122,7 +122,7 @@ func TestSellerEndpoints_GetSellerByID(t *testing.T) {
 
 		mockSellerRepo.
 			EXPECT().
-			GetSellerByID(sellerID).
+			GetById(sellerID).
 			Return(nil, errors.New("database error"))
 
 		req := httptest.NewRequest("GET", "/api/v1/seller/"+sellerID.String(), nil)
@@ -158,7 +158,7 @@ func TestSellerEndpoints_GetSellerByUserID(t *testing.T) {
 
 		mockSellerRepo.
 			EXPECT().
-			GetSellerByUserID(userID).
+			GetByUserId(userID).
 			Return(&seller, nil)
 
 		req := httptest.NewRequest("GET", "/api/v1/seller/user/"+userID.String(), nil)
@@ -207,7 +207,7 @@ func TestSellerEndpoints_GetSellerByUserID(t *testing.T) {
 
 		mockSellerRepo.
 			EXPECT().
-			GetSellerByUserID(userID).
+			GetByUserId(userID).
 			Return(nil, repository.ErrSellerNotFound)
 
 		req := httptest.NewRequest("GET", "/api/v1/seller/user/"+userID.String(), nil)
@@ -233,7 +233,7 @@ func TestSellerEndpoints_GetSellerByUserID(t *testing.T) {
 
 		mockSellerRepo.
 			EXPECT().
-			GetSellerByUserID(userID).
+			GetByUserId(userID).
 			Return(nil, errors.New("database error"))
 
 		req := httptest.NewRequest("GET", "/api/v1/seller/user/"+userID.String(), nil)

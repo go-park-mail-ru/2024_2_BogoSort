@@ -45,7 +45,7 @@ func (h *PurchaseEndpoint) Add(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	purchaseResponse, err := h.purchaseUC.AddPurchase(purchase)
+	purchaseResponse, err := h.purchaseUC.Add(purchase)
 	if err != nil {
 		h.logger.Error("failed to add purchase", zap.Error(err))
 		utils.SendErrorResponse(w, http.StatusInternalServerError, "internal server error")
@@ -74,7 +74,7 @@ func (h *PurchaseEndpoint) GetByUserID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	purchases, err := h.purchaseUC.GetPurchasesByUserID(userID)
+	purchases, err := h.purchaseUC.GetByUserId(userID)
 	if err != nil {
 		h.handleError(w, err, "failed to get purchases")
 		return

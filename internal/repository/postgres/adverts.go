@@ -102,7 +102,7 @@ func NewAdvertRepository(db *pgxpool.Pool, logger *zap.Logger, ctx context.Conte
 	}, nil
 }
 
-func (r *AdvertDB) AddAdvert(a *entity.Advert) (*entity.Advert, error) {
+func (r *AdvertDB) Add(a *entity.Advert) (*entity.Advert, error) {
 	var dbAdvert AdvertRepoModel
 
 	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
@@ -151,7 +151,7 @@ func (r *AdvertDB) AddAdvert(a *entity.Advert) (*entity.Advert, error) {
 	}, nil
 }
 
-func (r *AdvertDB) GetAdverts(limit, offset int) ([]*entity.Advert, error) {
+func (r *AdvertDB) Get(limit, offset int) ([]*entity.Advert, error) {
 	var adverts []*entity.Advert
 
 	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
@@ -206,7 +206,7 @@ func (r *AdvertDB) GetAdverts(limit, offset int) ([]*entity.Advert, error) {
 	return adverts, nil
 }
 
-func (r *AdvertDB) GetAdvertsByCategoryId(categoryId uuid.UUID) ([]*entity.Advert, error) {
+func (r *AdvertDB) GetByCategoryId(categoryId uuid.UUID) ([]*entity.Advert, error) {
 	var adverts []*entity.Advert
 
 	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
@@ -261,7 +261,7 @@ func (r *AdvertDB) GetAdvertsByCategoryId(categoryId uuid.UUID) ([]*entity.Adver
 	return adverts, nil
 }
 
-func (r *AdvertDB) GetAdvertsBySellerId(sellerId uuid.UUID) ([]*entity.Advert, error) {
+func (r *AdvertDB) GetBySellerId(sellerId uuid.UUID) ([]*entity.Advert, error) {
 	var adverts []*entity.Advert
 
 	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
@@ -317,7 +317,7 @@ func (r *AdvertDB) GetAdvertsBySellerId(sellerId uuid.UUID) ([]*entity.Advert, e
 	return adverts, nil
 }
 
-func (r *AdvertDB) GetAdvertsByCartId(cartId uuid.UUID) ([]*entity.Advert, error) {
+func (r *AdvertDB) GetByCartId(cartId uuid.UUID) ([]*entity.Advert, error) {
 	var adverts []*entity.Advert
 
 	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
@@ -382,7 +382,7 @@ func (r *AdvertDB) BeginTransaction() (pgx.Tx, error) {
 	return tx, nil
 }
 
-func (r *AdvertDB) GetAdvertById(advertId uuid.UUID) (*entity.Advert, error) {
+func (r *AdvertDB) GetById(advertId uuid.UUID) (*entity.Advert, error) {
 	var dbAdvert AdvertRepoModel
 
 	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
@@ -427,7 +427,7 @@ func (r *AdvertDB) GetAdvertById(advertId uuid.UUID) (*entity.Advert, error) {
 	}, nil
 }
 
-func (r *AdvertDB) UpdateAdvert(advert *entity.Advert) error {
+func (r *AdvertDB) Update(advert *entity.Advert) error {
 	ctx, cancel := context.WithTimeout(r.ctx, 5*time.Minute)
 	defer cancel()
 
@@ -455,7 +455,7 @@ func (r *AdvertDB) UpdateAdvert(advert *entity.Advert) error {
 	return nil
 }
 
-func (r *AdvertDB) DeleteAdvertById(advertId uuid.UUID) error {
+func (r *AdvertDB) DeleteById(advertId uuid.UUID) error {
 	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
 	defer cancel()
 
@@ -474,7 +474,7 @@ func (r *AdvertDB) DeleteAdvertById(advertId uuid.UUID) error {
 	return nil
 }
 
-func (r *AdvertDB) UpdateAdvertStatus(tx pgx.Tx, advertId uuid.UUID, status entity.AdvertStatus) error {
+func (r *AdvertDB) UpdateStatus(tx pgx.Tx, advertId uuid.UUID, status entity.AdvertStatus) error {
 	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
 	defer cancel()
 

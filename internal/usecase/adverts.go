@@ -6,47 +6,47 @@ import (
 )	
 
 type AdvertUseCase interface {
-	// GetAdverts возвращает массив объявлений в соответствии с offset и limit
-	GetAdverts(limit, offset int) ([]*dto.AdvertResponse, error)
+	// Get возвращает массив объявлений в соответствии с offset и limit
+	Get(limit, offset int) ([]*dto.AdvertResponse, error)
 
-	// GetAdvertsByUserId возвращает массив объявлений в соответствии с userId
-	GetAdvertsByUserId(userId uuid.UUID) ([]*dto.AdvertResponse, error)
+	// GetByUserId возвращает массив объявлений в соответствии с userId
+	GetByUserId(userId uuid.UUID) ([]*dto.AdvertResponse, error)
 
-	// GetAdvertsByCartId возвращает массив объявлений, которые находятся в корзине
-	GetAdvertsByCartId(cartId uuid.UUID) ([]*dto.AdvertResponse, error)
+	// GetByCartId возвращает массив объявлений, которые находятся в корзине
+	GetByCartId(cartId uuid.UUID) ([]*dto.AdvertResponse, error)
 
-	// GetAdvertById возвращает объявление по его идентификатору
+	// GetById возвращает объявление по его идентификатору
 	// Если объявление не найдено, возвращает ErrAdvertNotFound
-	GetAdvertById(advertId uuid.UUID) (*dto.AdvertResponse, error)
+	GetById(advertId uuid.UUID) (*dto.AdvertResponse, error)
 
-	// AddAdvert добавляет объявление
+	// Add добавляет объявление
 	// Возможные ошибки:
 	// ErrAdvertBadRequest - некорректные данные для создания объявления
 	// ErrAdvertAlreadyExists - объявление уже существует
-	AddAdvert(advert *dto.AdvertRequest, userId uuid.UUID) (*dto.AdvertResponse, error)
+	Add(advert *dto.AdvertRequest, userId uuid.UUID) (*dto.AdvertResponse, error)
 
-	// UpdateAdvert обновляет объявление
+	// Update обновляет объявление
 	// Возможные ошибки:
 	// ErrAdvertBadRequest - некорректные данные для обновления объявления
 	// ErrAdvertNotFound - объявление не найдено
 	// ErrForbidden - нет прав на обновление объявления
-	UpdateAdvert(advert *dto.AdvertRequest, userId uuid.UUID, advertId uuid.UUID) error
+	Update(advert *dto.AdvertRequest, userId uuid.UUID, advertId uuid.UUID) error
 
-	// UpdateAdvertStatus обновляет статус объявления
+	// UpdateStatus обновляет статус объявления
 	// Возможные ошибки:
 	// ErrAdvertBadRequest - некорректные данные для обновления статуса объявления
 	// ErrAdvertNotFound - объявление не найдено
 	// ErrForbidden - нет прав на обновление статуса объявления
-	UpdateAdvertStatus(advertId uuid.UUID, status dto.AdvertStatus, userId uuid.UUID) error
+	UpdateStatus(advertId uuid.UUID, status dto.AdvertStatus, userId uuid.UUID) error
 
-	// DeleteAdvertById удаляет объявление по Id
+	// DeleteById удаляет объявление по Id
 	// Возможные ошибки:
 	// ErrAdvertNotFound - объявление не найдено
 	// ErrForbidden - нет прав на удаление объявления
-	DeleteAdvertById(advertId uuid.UUID, userId uuid.UUID) error
+	DeleteById(advertId uuid.UUID, userId uuid.UUID) error
 
-	// GetAdvertsByCategoryId возвращает массив объявлений по categoryId
-	GetAdvertsByCategoryId(categoryId uuid.UUID) ([]*dto.AdvertResponse, error)
+	// GetByCategoryId возвращает массив объявлений по categoryId
+	GetByCategoryId(categoryId uuid.UUID) ([]*dto.AdvertResponse, error)
 
 	// UploadImage загружает изображение в объявление
 	// Возможные ошибки:

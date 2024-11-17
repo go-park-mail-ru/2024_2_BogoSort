@@ -35,136 +35,136 @@ func (m *MockAdvertUseCase) EXPECT() *MockAdvertUseCaseMockRecorder {
 	return m.recorder
 }
 
-// AddAdvert mocks base method.
-func (m *MockAdvertUseCase) AddAdvert(advert *dto.AdvertRequest, userId uuid.UUID) (*dto.AdvertResponse, error) {
+// Add mocks base method.
+func (m *MockAdvertUseCase) Add(advert *dto.AdvertRequest, userId uuid.UUID) (*dto.AdvertResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddAdvert", advert, userId)
+	ret := m.ctrl.Call(m, "Add", advert, userId)
 	ret0, _ := ret[0].(*dto.AdvertResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// AddAdvert indicates an expected call of AddAdvert.
-func (mr *MockAdvertUseCaseMockRecorder) AddAdvert(advert, userId interface{}) *gomock.Call {
+// Add indicates an expected call of Add.
+func (mr *MockAdvertUseCaseMockRecorder) Add(advert, userId interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddAdvert", reflect.TypeOf((*MockAdvertUseCase)(nil).AddAdvert), advert, userId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Add", reflect.TypeOf((*MockAdvertUseCase)(nil).Add), advert, userId)
 }
 
-// DeleteAdvertById mocks base method.
-func (m *MockAdvertUseCase) DeleteAdvertById(advertId, userId uuid.UUID) error {
+// DeleteById mocks base method.
+func (m *MockAdvertUseCase) DeleteById(advertId, userId uuid.UUID) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteAdvertById", advertId, userId)
+	ret := m.ctrl.Call(m, "DeleteById", advertId, userId)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// DeleteAdvertById indicates an expected call of DeleteAdvertById.
-func (mr *MockAdvertUseCaseMockRecorder) DeleteAdvertById(advertId, userId interface{}) *gomock.Call {
+// DeleteById indicates an expected call of DeleteById.
+func (mr *MockAdvertUseCaseMockRecorder) DeleteById(advertId, userId interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAdvertById", reflect.TypeOf((*MockAdvertUseCase)(nil).DeleteAdvertById), advertId, userId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteById", reflect.TypeOf((*MockAdvertUseCase)(nil).DeleteById), advertId, userId)
 }
 
-// GetAdvertById mocks base method.
-func (m *MockAdvertUseCase) GetAdvertById(advertId uuid.UUID) (*dto.AdvertResponse, error) {
+// Get mocks base method.
+func (m *MockAdvertUseCase) Get(limit, offset int) ([]*dto.AdvertResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAdvertById", advertId)
+	ret := m.ctrl.Call(m, "Get", limit, offset)
+	ret0, _ := ret[0].([]*dto.AdvertResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Get indicates an expected call of Get.
+func (mr *MockAdvertUseCaseMockRecorder) Get(limit, offset interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockAdvertUseCase)(nil).Get), limit, offset)
+}
+
+// GetByCartId mocks base method.
+func (m *MockAdvertUseCase) GetByCartId(cartId uuid.UUID) ([]*dto.AdvertResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetByCartId", cartId)
+	ret0, _ := ret[0].([]*dto.AdvertResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetByCartId indicates an expected call of GetByCartId.
+func (mr *MockAdvertUseCaseMockRecorder) GetByCartId(cartId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByCartId", reflect.TypeOf((*MockAdvertUseCase)(nil).GetByCartId), cartId)
+}
+
+// GetByCategoryId mocks base method.
+func (m *MockAdvertUseCase) GetByCategoryId(categoryId uuid.UUID) ([]*dto.AdvertResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetByCategoryId", categoryId)
+	ret0, _ := ret[0].([]*dto.AdvertResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetByCategoryId indicates an expected call of GetByCategoryId.
+func (mr *MockAdvertUseCaseMockRecorder) GetByCategoryId(categoryId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByCategoryId", reflect.TypeOf((*MockAdvertUseCase)(nil).GetByCategoryId), categoryId)
+}
+
+// GetById mocks base method.
+func (m *MockAdvertUseCase) GetById(advertId uuid.UUID) (*dto.AdvertResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetById", advertId)
 	ret0, _ := ret[0].(*dto.AdvertResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetAdvertById indicates an expected call of GetAdvertById.
-func (mr *MockAdvertUseCaseMockRecorder) GetAdvertById(advertId interface{}) *gomock.Call {
+// GetById indicates an expected call of GetById.
+func (mr *MockAdvertUseCaseMockRecorder) GetById(advertId interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAdvertById", reflect.TypeOf((*MockAdvertUseCase)(nil).GetAdvertById), advertId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetById", reflect.TypeOf((*MockAdvertUseCase)(nil).GetById), advertId)
 }
 
-// GetAdverts mocks base method.
-func (m *MockAdvertUseCase) GetAdverts(limit, offset int) ([]*dto.AdvertResponse, error) {
+// GetByUserId mocks base method.
+func (m *MockAdvertUseCase) GetByUserId(userId uuid.UUID) ([]*dto.AdvertResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAdverts", limit, offset)
+	ret := m.ctrl.Call(m, "GetByUserId", userId)
 	ret0, _ := ret[0].([]*dto.AdvertResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetAdverts indicates an expected call of GetAdverts.
-func (mr *MockAdvertUseCaseMockRecorder) GetAdverts(limit, offset interface{}) *gomock.Call {
+// GetByUserId indicates an expected call of GetByUserId.
+func (mr *MockAdvertUseCaseMockRecorder) GetByUserId(userId interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAdverts", reflect.TypeOf((*MockAdvertUseCase)(nil).GetAdverts), limit, offset)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByUserId", reflect.TypeOf((*MockAdvertUseCase)(nil).GetByUserId), userId)
 }
 
-// GetAdvertsByCartId mocks base method.
-func (m *MockAdvertUseCase) GetAdvertsByCartId(cartId uuid.UUID) ([]*dto.AdvertResponse, error) {
+// Update mocks base method.
+func (m *MockAdvertUseCase) Update(advert *dto.AdvertRequest, userId, advertId uuid.UUID) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAdvertsByCartId", cartId)
-	ret0, _ := ret[0].([]*dto.AdvertResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetAdvertsByCartId indicates an expected call of GetAdvertsByCartId.
-func (mr *MockAdvertUseCaseMockRecorder) GetAdvertsByCartId(cartId interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAdvertsByCartId", reflect.TypeOf((*MockAdvertUseCase)(nil).GetAdvertsByCartId), cartId)
-}
-
-// GetAdvertsByCategoryId mocks base method.
-func (m *MockAdvertUseCase) GetAdvertsByCategoryId(categoryId uuid.UUID) ([]*dto.AdvertResponse, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAdvertsByCategoryId", categoryId)
-	ret0, _ := ret[0].([]*dto.AdvertResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetAdvertsByCategoryId indicates an expected call of GetAdvertsByCategoryId.
-func (mr *MockAdvertUseCaseMockRecorder) GetAdvertsByCategoryId(categoryId interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAdvertsByCategoryId", reflect.TypeOf((*MockAdvertUseCase)(nil).GetAdvertsByCategoryId), categoryId)
-}
-
-// GetAdvertsByUserId mocks base method.
-func (m *MockAdvertUseCase) GetAdvertsByUserId(userId uuid.UUID) ([]*dto.AdvertResponse, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAdvertsByUserId", userId)
-	ret0, _ := ret[0].([]*dto.AdvertResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetAdvertsByUserId indicates an expected call of GetAdvertsByUserId.
-func (mr *MockAdvertUseCaseMockRecorder) GetAdvertsByUserId(userId interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAdvertsByUserId", reflect.TypeOf((*MockAdvertUseCase)(nil).GetAdvertsByUserId), userId)
-}
-
-// UpdateAdvert mocks base method.
-func (m *MockAdvertUseCase) UpdateAdvert(advert *dto.AdvertRequest, userId, advertId uuid.UUID) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateAdvert", advert, userId, advertId)
+	ret := m.ctrl.Call(m, "Update", advert, userId, advertId)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// UpdateAdvert indicates an expected call of UpdateAdvert.
-func (mr *MockAdvertUseCaseMockRecorder) UpdateAdvert(advert, userId, advertId interface{}) *gomock.Call {
+// Update indicates an expected call of Update.
+func (mr *MockAdvertUseCaseMockRecorder) Update(advert, userId, advertId interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAdvert", reflect.TypeOf((*MockAdvertUseCase)(nil).UpdateAdvert), advert, userId, advertId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockAdvertUseCase)(nil).Update), advert, userId, advertId)
 }
 
-// UpdateAdvertStatus mocks base method.
-func (m *MockAdvertUseCase) UpdateAdvertStatus(advertId uuid.UUID, status dto.AdvertStatus, userId uuid.UUID) error {
+// UpdateStatus mocks base method.
+func (m *MockAdvertUseCase) UpdateStatus(advertId uuid.UUID, status dto.AdvertStatus, userId uuid.UUID) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateAdvertStatus", advertId, status, userId)
+	ret := m.ctrl.Call(m, "UpdateStatus", advertId, status, userId)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// UpdateAdvertStatus indicates an expected call of UpdateAdvertStatus.
-func (mr *MockAdvertUseCaseMockRecorder) UpdateAdvertStatus(advertId, status, userId interface{}) *gomock.Call {
+// UpdateStatus indicates an expected call of UpdateStatus.
+func (mr *MockAdvertUseCaseMockRecorder) UpdateStatus(advertId, status, userId interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAdvertStatus", reflect.TypeOf((*MockAdvertUseCase)(nil).UpdateAdvertStatus), advertId, status, userId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateStatus", reflect.TypeOf((*MockAdvertUseCase)(nil).UpdateStatus), advertId, status, userId)
 }
 
 // UploadImage mocks base method.

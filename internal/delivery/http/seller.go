@@ -55,7 +55,7 @@ func (s *SellerEndpoint) GetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	seller, err := s.sellerRepo.GetSellerByID(sellerID)
+	seller, err := s.sellerRepo.GetById(sellerID)
 	switch {
 	case errors.Is(err, repository.ErrSellerNotFound):
 		s.handleError(w, err, "error getting seller by id")
@@ -87,7 +87,7 @@ func (s *SellerEndpoint) GetByUserID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	seller, err := s.sellerRepo.GetSellerByUserID(userID)
+	seller, err := s.sellerRepo.GetByUserId(userID)
 	switch {
 	case errors.Is(err, repository.ErrSellerNotFound):
 		s.handleError(w, err, "error getting seller by user_id")

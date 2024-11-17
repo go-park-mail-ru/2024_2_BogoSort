@@ -59,7 +59,7 @@ func TestUserDB_AddUser(t *testing.T) {
 		WillReturnRows(pgxmock.NewRows([]string{"id", "email", "password_hash", "password_salt", "username", "phone_number", "image_id", "status"}).
 			AddRow(uuid.New(), email, hash, salt, sql.NullString{Valid: false}, sql.NullString{Valid: false}, uuid.Nil, "active"))
 
-	id, err := repo.AddUser(tx, email, hash, salt)
+	id, err := repo.Add(tx, email, hash, salt)
 	assert.NoError(t, err)
 	assert.NotEqual(t, uuid.Nil, id)
 
@@ -67,7 +67,7 @@ func TestUserDB_AddUser(t *testing.T) {
 		WithArgs(email, hash, salt).
 		WillReturnError(errors.New("insert error"))
 
-	_, err = repo.AddUser(tx, email, hash, salt)
+	_, err = repo.Add(tx, email, hash, salt)
 	assert.Error(t, err)
 
 	mockPool.ExpectRollback()
@@ -88,7 +88,7 @@ func TestUserDB_GetUserById(t *testing.T) {
 		WillReturnRows(pgxmock.NewRows([]string{"id", "email", "password_hash", "password_salt", "username", "phone_number", "image_id", "status", "created_at", "updated_at"}).
 			AddRow(userId, "test@example.com", []byte("hash"), []byte("salt"), sql.NullString{String: "Test User", Valid: true}, sql.NullString{String: "1234567890", Valid: true}, uuid.Nil, sql.NullString{String: "active", Valid: true}, time.Now(), time.Now()))
 
-	user, err := repo.GetUserById(userId)
+	user, err := repo.GetById(userId)
 	assert.NoError(t, err)
 	assert.Equal(t, "Test User", user.Username)
 
@@ -96,7 +96,7 @@ func TestUserDB_GetUserById(t *testing.T) {
 		WithArgs(userId).
 		WillReturnError(pgx.ErrNoRows)
 
-	user, err = repo.GetUserById(userId)
+	user, err = repo.GetById(userId)
 	assert.Error(t, err)
 	assert.Nil(t, user)
 
@@ -120,7 +120,7 @@ func TestUserDB_UpdateUser(t *testing.T) {
 		WithArgs(user.Username, user.Phone, uuid.Nil, user.ID).
 		WillReturnResult(pgxmock.NewResult("UPDATE", 1))
 
-	err := repo.UpdateUser(user)
+	err := repo.Update(user)
 	assert.NoError(t, err)
 
 	// Ожидаем, что строка не будет найдена
@@ -128,7 +128,7 @@ func TestUserDB_UpdateUser(t *testing.T) {
 		WithArgs(user.Username, user.Phone, uuid.Nil, user.ID).
 		WillReturnResult(pgxmock.NewResult("UPDATE", 0))
 
-	err = repo.UpdateUser(user)
+	err = repo.Update(user)
 	assert.Error(t, err)
 	assert.Equal(t, repository.ErrUserNotFound, err)
 
@@ -137,7 +137,7 @@ func TestUserDB_UpdateUser(t *testing.T) {
 		WithArgs(user.Username, user.Phone, uuid.Nil, user.ID).
 		WillReturnError(errors.New("update error"))
 
-	err = repo.UpdateUser(user)
+	err = repo.Update(user)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "error updating user")
 
@@ -156,7 +156,7 @@ func TestUserDB_DeleteUser(t *testing.T) {
 		WithArgs(userId).
 		WillReturnResult(pgxmock.NewResult("DELETE", 1))
 
-	err := repo.DeleteUser(userId)
+	err := repo.Delete(userId)
 	assert.NoError(t, err)
 
 	// Ожидаем, что строка не будет найдена
@@ -164,7 +164,7 @@ func TestUserDB_DeleteUser(t *testing.T) {
 		WithArgs(userId).
 		WillReturnResult(pgxmock.NewResult("DELETE", 0))
 
-	err = repo.DeleteUser(userId)
+	err = repo.Delete(userId)
 	assert.Error(t, err)
 	assert.Equal(t, repository.ErrUserNotFound, err)
 
@@ -173,7 +173,7 @@ func TestUserDB_DeleteUser(t *testing.T) {
 		WithArgs(userId).
 		WillReturnError(errors.New("delete error"))
 
-	err = repo.DeleteUser(userId)
+	err = repo.Delete(userId)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "error deleting user")
 

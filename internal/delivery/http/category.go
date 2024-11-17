@@ -34,8 +34,8 @@ func (e *CategoryEndpoint) ConfigureRoutes(router *mux.Router) {
 // @Failure 500 {object} utils.ErrResponse
 // @Router /api/v1/categories [get]
 func (e *CategoryEndpoint) Get(w http.ResponseWriter, r *http.Request) {
-	categories, err := e.categoryUC.GetCategories()
-	if err != nil {
+	categories, err := e.categoryUC.Get()
+	if err != nil {	
 		e.sendError(w, http.StatusInternalServerError, err, "error getting categories", nil)
 		return
 	}

@@ -36,47 +36,47 @@ func (m *MockSeller) EXPECT() *MockSellerMockRecorder {
 	return m.recorder
 }
 
-// AddSeller mocks base method.
-func (m *MockSeller) AddSeller(tx pgx.Tx, userID uuid.UUID) (uuid.UUID, error) {
+// Add mocks base method.
+func (m *MockSeller) Add(tx pgx.Tx, userID uuid.UUID) (uuid.UUID, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddSeller", tx, userID)
+	ret := m.ctrl.Call(m, "Add", tx, userID)
 	ret0, _ := ret[0].(uuid.UUID)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// AddSeller indicates an expected call of AddSeller.
-func (mr *MockSellerMockRecorder) AddSeller(tx, userID interface{}) *gomock.Call {
+// Add indicates an expected call of Add.
+func (mr *MockSellerMockRecorder) Add(tx, userID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddSeller", reflect.TypeOf((*MockSeller)(nil).AddSeller), tx, userID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Add", reflect.TypeOf((*MockSeller)(nil).Add), tx, userID)
 }
 
-// GetSellerByID mocks base method.
-func (m *MockSeller) GetSellerByID(sellerID uuid.UUID) (*entity.Seller, error) {
+// GetById mocks base method.
+func (m *MockSeller) GetById(sellerID uuid.UUID) (*entity.Seller, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetSellerByID", sellerID)
+	ret := m.ctrl.Call(m, "GetById", sellerID)
 	ret0, _ := ret[0].(*entity.Seller)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetSellerByID indicates an expected call of GetSellerByID.
-func (mr *MockSellerMockRecorder) GetSellerByID(sellerID interface{}) *gomock.Call {
+// GetById indicates an expected call of GetById.
+func (mr *MockSellerMockRecorder) GetById(sellerID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSellerByID", reflect.TypeOf((*MockSeller)(nil).GetSellerByID), sellerID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetById", reflect.TypeOf((*MockSeller)(nil).GetById), sellerID)
 }
 
-// GetSellerByUserID mocks base method.
-func (m *MockSeller) GetSellerByUserID(userID uuid.UUID) (*entity.Seller, error) {
+// GetByUserId mocks base method.
+func (m *MockSeller) GetByUserId(userID uuid.UUID) (*entity.Seller, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetSellerByUserID", userID)
+	ret := m.ctrl.Call(m, "GetByUserId", userID)
 	ret0, _ := ret[0].(*entity.Seller)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetSellerByUserID indicates an expected call of GetSellerByUserID.
-func (mr *MockSellerMockRecorder) GetSellerByUserID(userID interface{}) *gomock.Call {
+// GetByUserId indicates an expected call of GetByUserId.
+func (mr *MockSellerMockRecorder) GetByUserId(userID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSellerByUserID", reflect.TypeOf((*MockSeller)(nil).GetSellerByUserID), userID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByUserId", reflect.TypeOf((*MockSeller)(nil).GetByUserId), userID)
 }

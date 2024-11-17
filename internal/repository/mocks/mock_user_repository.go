@@ -36,19 +36,19 @@ func (m *MockUser) EXPECT() *MockUserMockRecorder {
 	return m.recorder
 }
 
-// AddUser mocks base method.
-func (m *MockUser) AddUser(tx pgx.Tx, email string, hash, salt []byte) (uuid.UUID, error) {
+// Add mocks base method.
+func (m *MockUser) Add(tx pgx.Tx, email string, hash, salt []byte) (uuid.UUID, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddUser", tx, email, hash, salt)
+	ret := m.ctrl.Call(m, "Add", tx, email, hash, salt)
 	ret0, _ := ret[0].(uuid.UUID)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// AddUser indicates an expected call of AddUser.
-func (mr *MockUserMockRecorder) AddUser(tx, email, hash, salt interface{}) *gomock.Call {
+// Add indicates an expected call of Add.
+func (mr *MockUserMockRecorder) Add(tx, email, hash, salt interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddUser", reflect.TypeOf((*MockUser)(nil).AddUser), tx, email, hash, salt)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Add", reflect.TypeOf((*MockUser)(nil).Add), tx, email, hash, salt)
 }
 
 // BeginTransaction mocks base method.
@@ -66,62 +66,62 @@ func (mr *MockUserMockRecorder) BeginTransaction() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BeginTransaction", reflect.TypeOf((*MockUser)(nil).BeginTransaction))
 }
 
-// DeleteUser mocks base method.
-func (m *MockUser) DeleteUser(userID uuid.UUID) error {
+// Delete mocks base method.
+func (m *MockUser) Delete(userID uuid.UUID) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteUser", userID)
+	ret := m.ctrl.Call(m, "Delete", userID)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// DeleteUser indicates an expected call of DeleteUser.
-func (mr *MockUserMockRecorder) DeleteUser(userID interface{}) *gomock.Call {
+// Delete indicates an expected call of Delete.
+func (mr *MockUserMockRecorder) Delete(userID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteUser", reflect.TypeOf((*MockUser)(nil).DeleteUser), userID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockUser)(nil).Delete), userID)
 }
 
-// GetUserByEmail mocks base method.
-func (m *MockUser) GetUserByEmail(email string) (*entity.User, error) {
+// GetByEmail mocks base method.
+func (m *MockUser) GetByEmail(email string) (*entity.User, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUserByEmail", email)
+	ret := m.ctrl.Call(m, "GetByEmail", email)
 	ret0, _ := ret[0].(*entity.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetUserByEmail indicates an expected call of GetUserByEmail.
-func (mr *MockUserMockRecorder) GetUserByEmail(email interface{}) *gomock.Call {
+// GetByEmail indicates an expected call of GetByEmail.
+func (mr *MockUserMockRecorder) GetByEmail(email interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByEmail", reflect.TypeOf((*MockUser)(nil).GetUserByEmail), email)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByEmail", reflect.TypeOf((*MockUser)(nil).GetByEmail), email)
 }
 
-// GetUserById mocks base method.
-func (m *MockUser) GetUserById(userId uuid.UUID) (*entity.User, error) {
+// GetById mocks base method.
+func (m *MockUser) GetById(userId uuid.UUID) (*entity.User, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUserById", userId)
+	ret := m.ctrl.Call(m, "GetById", userId)
 	ret0, _ := ret[0].(*entity.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetUserById indicates an expected call of GetUserById.
-func (mr *MockUserMockRecorder) GetUserById(userId interface{}) *gomock.Call {
+// GetById indicates an expected call of GetById.
+func (mr *MockUserMockRecorder) GetById(userId interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserById", reflect.TypeOf((*MockUser)(nil).GetUserById), userId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetById", reflect.TypeOf((*MockUser)(nil).GetById), userId)
 }
 
-// UpdateUser mocks base method.
-func (m *MockUser) UpdateUser(user *entity.User) error {
+// Update mocks base method.
+func (m *MockUser) Update(user *entity.User) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateUser", user)
+	ret := m.ctrl.Call(m, "Update", user)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// UpdateUser indicates an expected call of UpdateUser.
-func (mr *MockUserMockRecorder) UpdateUser(user interface{}) *gomock.Call {
+// Update indicates an expected call of Update.
+func (mr *MockUserMockRecorder) Update(user interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUser", reflect.TypeOf((*MockUser)(nil).UpdateUser), user)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockUser)(nil).Update), user)
 }
 
 // UploadImage mocks base method.

@@ -33,7 +33,7 @@ func NewSessionRepository(rdb *redis.Client, sessionAliveTime int, ctx context.C
 	}, nil
 }
 
-func (s *SessionDB) CreateSession(userID uuid.UUID) (string, error) {
+func (s *SessionDB) Create(userID uuid.UUID) (string, error) {
 	sessionID := uuid.NewString()
 
 	for {
@@ -58,7 +58,7 @@ func (s *SessionDB) CreateSession(userID uuid.UUID) (string, error) {
 	return sessionID, nil
 }
 
-func (s *SessionDB) GetSession(sessionID string) (uuid.UUID, error) {
+func (s *SessionDB) Get(sessionID string) (uuid.UUID, error) {
 	userID, err := s.rdb.Get(s.ctx, sessionID).Result()
 	if errors.Is(err, redis.Nil) {
 		s.logger.Error("session not found", zap.String("sessionID", sessionID))
@@ -77,7 +77,7 @@ func (s *SessionDB) GetSession(sessionID string) (uuid.UUID, error) {
 	return id, nil
 }
 
-func (s *SessionDB) DeleteSession(sessionID string) error {
+func (s *SessionDB) Delete(sessionID string) error {
 	userID, err := s.rdb.Get(s.ctx, sessionID).Result()
 	if errors.Is(err, redis.Nil) {
 		s.logger.Info("session not found", zap.String("sessionID", sessionID))

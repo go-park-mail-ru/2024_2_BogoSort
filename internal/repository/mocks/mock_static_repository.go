@@ -34,32 +34,32 @@ func (m *MockStaticRepository) EXPECT() *MockStaticRepositoryMockRecorder {
 	return m.recorder
 }
 
-// GetStatic mocks base method.
-func (m *MockStaticRepository) GetStatic(staticID uuid.UUID) (string, error) {
+// Get mocks base method.
+func (m *MockStaticRepository) Get(staticID uuid.UUID) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetStatic", staticID)
+	ret := m.ctrl.Call(m, "Get", staticID)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetStatic indicates an expected call of GetStatic.
-func (mr *MockStaticRepositoryMockRecorder) GetStatic(staticID interface{}) *gomock.Call {
+// Get indicates an expected call of Get.
+func (mr *MockStaticRepositoryMockRecorder) Get(staticID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStatic", reflect.TypeOf((*MockStaticRepository)(nil).GetStatic), staticID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockStaticRepository)(nil).Get), staticID)
 }
 
-// UploadStatic mocks base method.
-func (m *MockStaticRepository) UploadStatic(path, filename string, data []byte) (uuid.UUID, error) {
+// Upload mocks base method.
+func (m *MockStaticRepository) Upload(path, filename string, data []byte) (uuid.UUID, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UploadStatic", path, filename, data)
+	ret := m.ctrl.Call(m, "Upload", path, filename, data)
 	ret0, _ := ret[0].(uuid.UUID)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// UploadStatic indicates an expected call of UploadStatic.
-func (mr *MockStaticRepositoryMockRecorder) UploadStatic(path, filename, data interface{}) *gomock.Call {
+// Upload indicates an expected call of Upload.
+func (mr *MockStaticRepositoryMockRecorder) Upload(path, filename, data interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UploadStatic", reflect.TypeOf((*MockStaticRepository)(nil).UploadStatic), path, filename, data)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upload", reflect.TypeOf((*MockStaticRepository)(nil).Upload), path, filename, data)
 }

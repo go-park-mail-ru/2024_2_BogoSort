@@ -32,10 +32,10 @@ func TestCartService_AddAdvertToUserCart_CartExists(t *testing.T) {
 	advertID := uuid.New()
 	cartID := uuid.New()
 
-	cartRepo.EXPECT().GetCartByUserID(userID).Return(entity.Cart{ID: cartID}, nil)
-	cartRepo.EXPECT().AddAdvertToCart(cartID, advertID).Return(nil)
+	cartRepo.EXPECT().GetByUserId(userID).Return(entity.Cart{ID: cartID}, nil)
+	cartRepo.EXPECT().AddAdvert(cartID, advertID).Return(nil)
 
-	err := service.AddAdvertToUserCart(userID, advertID)
+	err := service.AddAdvert(userID, advertID)
 
 	assert.NoError(t, err)
 }
@@ -47,9 +47,9 @@ func TestCartService_DeleteAdvertFromCart(t *testing.T) {
 	cartID := uuid.New()
 	advertID := uuid.New()
 
-	cartRepo.EXPECT().DeleteAdvertFromCart(cartID, advertID).Return(nil)
+	cartRepo.EXPECT().DeleteAdvert(cartID, advertID).Return(nil)
 
-	err := service.DeleteAdvertFromCart(cartID, advertID)
+	err := service.DeleteAdvert(cartID, advertID)
 
 	assert.NoError(t, err)
 }
@@ -65,10 +65,10 @@ func TestCartService_GetCartByID_Success(t *testing.T) {
 		{ID: uuid.New(), Title: "Advert 2", Price: 200},
 	}
 
-	cartRepo.EXPECT().GetAdvertsByCartID(cartID).Return(adverts, nil)
-	cartRepo.EXPECT().GetCartByID(cartID).Return(entity.Cart{ID: cartID, UserID: userID, Status: entity.CartStatusActive}, nil)
+	cartRepo.EXPECT().GetAdvertsByCartId(cartID).Return(adverts, nil)
+	cartRepo.EXPECT().GetById(cartID).Return(entity.Cart{ID: cartID, UserID: userID, Status: entity.CartStatusActive}, nil)
 
-	cart, err := service.GetCartByID(cartID)
+	cart, err := service.GetById(cartID)
 
 	assert.NoError(t, err)
 	assert.Equal(t, cartID, cart.ID)
@@ -83,13 +83,13 @@ func TestCartService_GetCartByUserID_Success(t *testing.T) {
 	userID := uuid.New()
 	cartID := uuid.New()
 
-	cartRepo.EXPECT().GetCartByUserID(userID).Return(entity.Cart{ID: cartID}, nil)
-	cartRepo.EXPECT().GetAdvertsByCartID(cartID).Return([]entity.Advert{
+	cartRepo.EXPECT().GetByUserId(userID).Return(entity.Cart{ID: cartID}, nil)
+	cartRepo.EXPECT().GetAdvertsByCartId(cartID).Return([]entity.Advert{
 		{ID: uuid.New(), Title: "Advert 1", Price: 100},
 	}, nil)
-	cartRepo.EXPECT().GetCartByID(cartID).Return(entity.Cart{ID: cartID, UserID: userID, Status: entity.CartStatusActive}, nil)
+	cartRepo.EXPECT().GetById(cartID).Return(entity.Cart{ID: cartID, UserID: userID, Status: entity.CartStatusActive}, nil)
 
-	cart, err := service.GetCartByUserID(userID)
+	cart, err := service.GetByUserId(userID)
 
 	assert.NoError(t, err)
 	assert.Equal(t, cartID, cart.ID)
@@ -101,9 +101,9 @@ func TestCartService_CheckCartExists_Found(t *testing.T) {
 
 	userID := uuid.New()
 
-	cartRepo.EXPECT().GetCartByUserID(userID).Return(entity.Cart{ID: uuid.New()}, nil)
+	cartRepo.EXPECT().GetByUserId(userID).Return(entity.Cart{ID: uuid.New()}, nil)
 
-	exists, err := service.CheckCartExists(userID)
+	exists, err := service.CheckExists(userID)
 
 	assert.NoError(t, err)
 	assert.True(t, exists)
@@ -115,9 +115,9 @@ func TestCartService_CheckCartExists_NotFound(t *testing.T) {
 
 	userID := uuid.New()
 
-	cartRepo.EXPECT().GetCartByUserID(userID).Return(entity.Cart{}, repository.ErrCartNotFound)
+	cartRepo.EXPECT().GetByUserId(userID).Return(entity.Cart{}, repository.ErrCartNotFound)
 
-	exists, err := service.CheckCartExists(userID)
+	exists, err := service.CheckExists(userID)
 
 	assert.NoError(t, err)
 	assert.False(t, exists)
@@ -132,19 +132,19 @@ func TestCartService_AddAdvertToUserCart_CartNotExists(t *testing.T) {
 	newCartID := uuid.New()
 
 	// Настройка ожидаемых вызовов
-	cartRepo.EXPECT().GetCartByUserID(userID).Return(entity.Cart{}, repository.ErrCartNotFound)
-	cartRepo.EXPECT().CreateCart(userID).Return(newCartID, nil)
+	cartRepo.EXPECT().GetByUserId(userID).Return(entity.Cart{}, repository.ErrCartNotFound)
+	cartRepo.EXPECT().Create(userID).Return(newCartID, nil)
 	advert := entity.Advert{
 		ID:     advertID,
 		Title:  "New Advert",
 		Price:  150,
 		Status: entity.AdvertStatusActive,
 	}
-	advertRepo.EXPECT().GetAdvertById(advertID).Return(&advert, nil)
-	cartRepo.EXPECT().AddAdvertToCart(newCartID, advertID).Return(nil)
+	advertRepo.EXPECT().GetById(advertID).Return(&advert, nil)
+	cartRepo.EXPECT().AddAdvert(newCartID, advertID).Return(nil)
 
 	// Выполнение действия
-	err := service.AddAdvertToUserCart(userID, advertID)
+	err := service.AddAdvert(userID, advertID)
 
 	// Проверка результата
 	assert.NoError(t, err)
@@ -156,9 +156,9 @@ func TestCartService_GetCartByID_NotFound(t *testing.T) {
 
 	cartID := uuid.New()
 
-	cartRepo.EXPECT().GetAdvertsByCartID(cartID).Return(nil, repository.ErrCartNotFound)
+	cartRepo.EXPECT().GetAdvertsByCartId(cartID).Return(nil, repository.ErrCartNotFound)
 
-	cart, err := service.GetCartByID(cartID)
+	cart, err := service.GetById(cartID)
 
 	assert.Error(t, err)
 	assert.Equal(t, dto.Cart{}, cart)
@@ -171,10 +171,10 @@ func TestCartService_GetCartByUserID_ErrorGettingAdverts(t *testing.T) {
 	userID := uuid.New()
 	cartID := uuid.New()
 
-	cartRepo.EXPECT().GetCartByUserID(userID).Return(entity.Cart{ID: cartID}, nil)
-	cartRepo.EXPECT().GetAdvertsByCartID(cartID).Return(nil, errors.New("database error"))
+	cartRepo.EXPECT().GetByUserId(userID).Return(entity.Cart{ID: cartID}, nil)
+	cartRepo.EXPECT().GetAdvertsByCartId(cartID).Return(nil, errors.New("database error"))
 
-	cart, err := service.GetCartByUserID(userID)
+	cart, err := service.cartRepo.GetByUserId(userID)
 
 	assert.Error(t, err)
 	assert.Equal(t, dto.Cart{}, cart)
@@ -186,9 +186,9 @@ func TestCartService_CheckCartExists_Error(t *testing.T) {
 
 	userID := uuid.New()
 
-	cartRepo.EXPECT().GetCartByUserID(userID).Return(entity.Cart{}, errors.New("database error"))
+	cartRepo.EXPECT().GetByUserId(userID).Return(entity.Cart{}, errors.New("database error"))
 
-	exists, err := service.CheckCartExists(userID)
+	exists, err := service.CheckExists(userID)
 
 	assert.Error(t, err)
 	assert.False(t, exists)

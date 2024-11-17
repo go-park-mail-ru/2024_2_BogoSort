@@ -92,7 +92,7 @@ func TestUserService_Login_Success(t *testing.T) {
 	assert.NoError(t, err)
 
 	mockUserRepo.EXPECT().
-		GetUserByEmail(loginInfo.Email).
+		GetByEmail(loginInfo.Email).
 		Return(user, nil).
 		Times(1)
 
@@ -115,7 +115,7 @@ func TestUserService_Login_InvalidPassword(t *testing.T) {
 	assert.NoError(t, err)
 
 	mockUserRepo.EXPECT().
-		GetUserByEmail(loginInfo.Email).
+		GetByEmail(loginInfo.Email).
 		Return(user, nil).
 		Times(1)
 
@@ -136,7 +136,7 @@ func TestUserService_Login_UserNotFound(t *testing.T) {
 	}
 
 	mockUserRepo.EXPECT().
-		GetUserByEmail(loginInfo.Email).
+		GetByEmail(loginInfo.Email).
 		Return(nil, repository.ErrUserNotFound).
 		Times(1)
 
@@ -164,11 +164,11 @@ func TestUserService_GetUser_Success(t *testing.T) {
 	}
 
 	mockUserRepo.EXPECT().
-		GetUserById(userID).
+		GetById(userID).
 		Return(user, nil).
 		Times(1)
 
-	result, err := service.GetUser(userID)
+	result, err := service.Get(userID)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
@@ -187,11 +187,11 @@ func TestUserService_GetUser_UserNotFound(t *testing.T) {
 	userID := uuid.New()
 
 	mockUserRepo.EXPECT().
-		GetUserById(userID).
+		GetById(userID).
 		Return(nil, repository.ErrUserNotFound).
 		Times(1)
 
-	result, err := service.GetUser(userID)
+	result, err := service.Get(userID)
 
 	assert.Error(t, err)
 	assert.Nil(t, result)
@@ -210,7 +210,7 @@ func TestUserService_UpdateInfo_Success(t *testing.T) {
 	}
 
 	mockUserRepo.EXPECT().
-		UpdateUser(gomock.Any()).
+		Update(gomock.Any()).
 		DoAndReturn(func(user *entity.User) error {
 			assert.Equal(t, userUpdateDTO.ID, user.ID)
 			assert.Equal(t, userUpdateDTO.Email, user.Email)
@@ -232,11 +232,11 @@ func TestUserService_DeleteUser_Success(t *testing.T) {
 	userID := uuid.New()
 
 	mockUserRepo.EXPECT().
-		DeleteUser(userID).
+		Delete(userID).
 		Return(nil).
 		Times(1)
 
-	err := service.DeleteUser(userID)
+	err := service.Delete(userID)
 
 	assert.NoError(t, err)
 }
@@ -248,11 +248,11 @@ func TestUserService_DeleteUser_Error(t *testing.T) {
 	userID := uuid.New()
 
 	mockUserRepo.EXPECT().
-		DeleteUser(userID).
+		Delete(userID).
 		Return(errors.New("delete error")).
 		Times(1)
 
-	err := service.DeleteUser(userID)
+	err := service.Delete(userID)
 
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "repository error")
@@ -276,12 +276,12 @@ func TestUserService_ChangePassword_Success(t *testing.T) {
 	}
 
 	mockUserRepo.EXPECT().
-		GetUserById(userID).
+		GetById(userID).
 		Return(user, nil).
 		Times(1)
 
 	mockUserRepo.EXPECT().
-		UpdateUser(gomock.Any()).
+		Update(gomock.Any()).
 		Return(nil).
 		Times(1)
 
@@ -309,7 +309,7 @@ func TestUserService_ChangePassword_InvalidOldPassword(t *testing.T) {
 	}
 
 	mockUserRepo.EXPECT().
-		GetUserById(userID).
+		GetById(userID).
 		Return(user, nil).
 		Times(1)
 
@@ -333,7 +333,7 @@ func TestUserService_ChangePassword_GetUserError(t *testing.T) {
 	}
 
 	mockUserRepo.EXPECT().
-		GetUserById(userID).
+		GetById(userID).
 		Return(nil, repository.ErrUserNotFound).
 		Times(1)
 
@@ -361,12 +361,12 @@ func TestUserService_ChangePassword_UpdateUserError(t *testing.T) {
 	}
 
 	mockUserRepo.EXPECT().
-		GetUserById(userID).
+		GetById(userID).
 		Return(user, nil).
 		Times(1)
 
 	mockUserRepo.EXPECT().
-		UpdateUser(gomock.Any()).
+		Update(gomock.Any()).
 		Return(errors.New("update error")).
 		Times(1)
 

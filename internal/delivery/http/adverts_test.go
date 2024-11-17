@@ -54,7 +54,7 @@ func TestAdvertEndpoints(t *testing.T) {
 
 			mockAdvertUseCase.
 				EXPECT().
-				GetAdverts(limit, offset).
+				Get(limit, offset).
 				Return(adverts, nil)
 
 			req := httptest.NewRequest("GET", "/api/v1/adverts?limit=10&offset=5", nil)
@@ -114,7 +114,7 @@ func TestAdvertEndpoints(t *testing.T) {
 
 			mockAdvertUseCase.
 				EXPECT().
-				GetAdverts(limit, offset).
+				Get(limit, offset).
 				Return(nil, errors.New("database error"))
 
 			req := httptest.NewRequest("GET", "/api/v1/adverts?limit=10&offset=5", nil)
@@ -147,7 +147,7 @@ func TestAdvertEndpoints(t *testing.T) {
 
 			mockAdvertUseCase.
 				EXPECT().
-				GetAdvertsByUserId(sellerID).
+				GetByUserId(sellerID).
 				Return(adverts, nil)
 
 			req := httptest.NewRequest("GET", "/api/v1/adverts/seller/"+sellerID.String(), nil)
@@ -196,7 +196,7 @@ func TestAdvertEndpoints(t *testing.T) {
 
 			mockAdvertUseCase.
 				EXPECT().
-				GetAdvertsByUserId(sellerID).
+				GetByUserId(sellerID).
 				Return(nil, errors.New("database error"))
 
 			req := httptest.NewRequest("GET", "/api/v1/adverts/seller/"+sellerID.String(), nil)
@@ -232,7 +232,7 @@ func TestAdvertEndpoints(t *testing.T) {
 
 			mockAdvertUseCase.
 				EXPECT().
-				GetAdvertsByCartId(cartID).
+				GetByCartId(cartID).
 				Return(adverts, nil)
 
 			req := httptest.NewRequest("GET", "/api/v1/adverts/cart/"+cartID.String(), nil)
@@ -281,7 +281,7 @@ func TestAdvertEndpoints(t *testing.T) {
 
 			mockAdvertUseCase.
 				EXPECT().
-				GetAdvertsByCartId(cartID).
+				GetByCartId(cartID).
 				Return(nil, errors.New("database error"))
 
 			req := httptest.NewRequest("GET", "/api/v1/adverts/cart/"+cartID.String(), nil)
@@ -315,7 +315,7 @@ func TestAdvertEndpoints(t *testing.T) {
 
 			mockAdvertUseCase.
 				EXPECT().
-				GetAdvertById(advertID).
+				GetById(advertID).
 				Return(&advert, nil)
 
 			req := httptest.NewRequest("GET", "/api/v1/adverts/"+advertID.String(), nil)
@@ -364,7 +364,7 @@ func TestAdvertEndpoints(t *testing.T) {
 
 			mockAdvertUseCase.
 				EXPECT().
-				GetAdvertById(advertID).
+				GetById(advertID).
 				Return(nil, ErrAdvertNotFound)
 
 			req := httptest.NewRequest("GET", "/api/v1/adverts/"+advertID.String(), nil)
@@ -390,7 +390,7 @@ func TestAdvertEndpoints(t *testing.T) {
 
 			mockAdvertUseCase.
 				EXPECT().
-				GetAdvertById(advertID).
+				GetById(advertID).
 				Return(nil, errors.New("database error"))
 
 			req := httptest.NewRequest("GET", "/api/v1/adverts/"+advertID.String(), nil)
@@ -516,7 +516,7 @@ func TestAdvertEndpoints(t *testing.T) {
 
 			mockAdvertUseCase.
 				EXPECT().
-				GetAdvertsByCategoryId(categoryID).
+				GetByCategoryId(categoryID).
 				Return(adverts, nil)
 
 			req := httptest.NewRequest("GET", "/api/v1/adverts/category/"+categoryID.String(), nil)
@@ -565,7 +565,7 @@ func TestAdvertEndpoints(t *testing.T) {
 
 			mockAdvertUseCase.
 				EXPECT().
-				GetAdvertsByCategoryId(categoryID).
+				GetByCategoryId(categoryID).
 				Return(nil, errors.New("database error"))
 
 			req := httptest.NewRequest("GET", "/api/v1/adverts/category/"+categoryID.String(), nil)

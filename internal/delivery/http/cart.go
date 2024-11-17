@@ -60,7 +60,7 @@ func (h *CartEndpoint) GetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cart, err := h.cartUC.GetCartByID(cartID)
+	cart, err := h.cartUC.GetById(cartID)
 	if errors.Is(err, repository.ErrCartNotFound) {
 		h.logger.Error("cart not found", zap.Error(err))
 		utils.SendErrorResponse(w, http.StatusNotFound, "cart not found")
@@ -102,7 +102,7 @@ func (h *CartEndpoint) GetByUserID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cart, err := h.cartUC.GetCartByUserID(userID)
+	cart, err := h.cartUC.GetByUserId(userID)
 	if errors.Is(err, repository.ErrCartNotFound) {
 		h.logger.Error("cart not found", zap.Error(err))
 		utils.SendErrorResponse(w, http.StatusNotFound, "cart not found")
@@ -134,7 +134,7 @@ func (h *CartEndpoint) AddToCart(w http.ResponseWriter, r *http.Request) {
 		utils.SendErrorResponse(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
-	err := h.cartUC.AddAdvertToUserCart(req.UserID, req.AdvertID)
+	err := h.cartUC.AddAdvert(req.UserID, req.AdvertID)
 
 	switch {
 	case errors.Is(err, repository.ErrCartNotFound):
@@ -167,7 +167,7 @@ func (h *CartEndpoint) DeleteFromCart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.cartUC.DeleteAdvertFromCart(req.CartID, req.AdvertID)
+	err := h.cartUC.DeleteAdvert(req.CartID, req.AdvertID)
 	switch {
 	case errors.Is(err, repository.ErrCartOrAdvertNotFound):
 		utils.SendErrorResponse(w, http.StatusNotFound, "cart or advert not found")
@@ -203,7 +203,7 @@ func (h *CartEndpoint) CheckExists(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	exists, err := h.cartUC.CheckCartExists(userID)
+	exists, err := h.cartUC.CheckExists(userID)
 	if err != nil {
 		utils.SendErrorResponse(w, http.StatusInternalServerError, "failed to check cart existence")
 		return

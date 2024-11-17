@@ -268,7 +268,7 @@ func (u *UserEndpoint) GetProfile(w http.ResponseWriter, r *http.Request) {
 		u.sendError(w, http.StatusBadRequest, err, "error parsing userID", nil)
 		return
 	}
-	user, err := u.userUC.GetUser(userID)
+	user, err := u.userUC.Get(userID)
 	switch {
 	case errors.Is(err, usecase.ErrUserNotFound):
 		u.sendError(w, http.StatusNotFound, err, "user not found", nil)
@@ -295,7 +295,7 @@ func (u *UserEndpoint) GetMe(w http.ResponseWriter, r *http.Request) {
 		u.sendError(w, http.StatusUnauthorized, err, "unauthorized request", nil)
 		return
 	}
-	user, err := u.userUC.GetUser(userID)
+	user, err := u.userUC.Get(userID)
 	if err != nil {
 		u.handleError(w, err, "GetMe", map[string]string{"userID": userID.String()})
 		return

@@ -22,7 +22,7 @@ func TestGetCategories_Success(t *testing.T) {
 	mockUseCase := mocks.NewMockCategoryUseCase(ctrl)
 	logger, _ := zap.NewDevelopment()
 
-	mockUseCase.EXPECT().GetCategories().Return([]*entity.Category{{ID: uuid.New(), Title: "Category1"}}, nil)
+	mockUseCase.EXPECT().Get().Return([]*entity.Category{{ID: uuid.New(), Title: "Category1"}}, nil)
 
 	endpoints := NewCategoryEndpoint(mockUseCase, logger)
 
@@ -47,7 +47,7 @@ func TestGetCategories_Error(t *testing.T) {
 	mockUseCase := mocks.NewMockCategoryUseCase(ctrl)
 	logger, _ := zap.NewDevelopment()
 
-	mockUseCase.EXPECT().GetCategories().Return(nil, errors.New("some error"))
+	mockUseCase.EXPECT().Get().Return(nil, errors.New("some error"))
 
 	endpoints := NewCategoryEndpoint(mockUseCase, logger)
 

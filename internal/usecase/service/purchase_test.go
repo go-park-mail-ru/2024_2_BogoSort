@@ -37,7 +37,7 @@ func TestPurchaseService_AddPurchase_FailureInBeginTransaction(t *testing.T) {
 		DeliveryMethod: dto.DeliveryMethodPickup,
 	}
 
-	resp, err := service.AddPurchase(purchaseRequest)
+	resp, err := service.Add(purchaseRequest)
 
 	assert.Error(t, err)
 	assert.Nil(t, resp)
@@ -53,9 +53,9 @@ func TestPurchaseService_GetPurchasesByUserID_Success(t *testing.T) {
 		{ID: uuid.New(), CartID: uuid.New(), Status: entity.StatusCompleted},
 	}
 
-	purchaseRepo.EXPECT().GetPurchasesByUserID(userID).Return(mockPurchases, nil)
+	purchaseRepo.EXPECT().GetByUserId(userID).Return(mockPurchases, nil)
 
-	resp, err := service.GetPurchasesByUserID(userID)
+	resp, err := service.GetByUserId(userID)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, resp)
@@ -69,9 +69,9 @@ func TestPurchaseService_GetPurchasesByUserID_Failure(t *testing.T) {
 
 	userID := uuid.New()
 
-	purchaseRepo.EXPECT().GetPurchasesByUserID(userID).Return(nil, errors.New("database error"))
+	purchaseRepo.EXPECT().GetByUserId(userID).Return(nil, errors.New("database error"))
 
-	resp, err := service.GetPurchasesByUserID(userID)
+	resp, err := service.GetByUserId(userID)
 
 	assert.Error(t, err)
 	assert.Nil(t, resp)

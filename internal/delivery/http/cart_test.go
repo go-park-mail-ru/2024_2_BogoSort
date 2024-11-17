@@ -57,8 +57,8 @@ func TestCartEndpoints_GetCartByID(t *testing.T) {
 
 		mockCartUC.
 			EXPECT().
-			GetCartByID(cartID).
-			Return(dto.Cart{}, repository.ErrCartNotFound) // Изменено: возвращаем пустую структуру
+			GetById(cartID).
+			Return(dto.Cart{}, repository.ErrCartNotFound) 
 
 		req := httptest.NewRequest("GET", "/api/v1/cart/"+cartID.String(), nil)
 		req = mux.SetURLVars(req, map[string]string{
@@ -83,8 +83,8 @@ func TestCartEndpoints_GetCartByID(t *testing.T) {
 
 		mockCartUC.
 			EXPECT().
-			GetCartByID(cartID).
-			Return(dto.Cart{}, errors.New("database error")) // Изменено: возвращаем пустую структуру
+			GetById(cartID).
+			Return(dto.Cart{}, errors.New("database error")) 
 
 		req := httptest.NewRequest("GET", "/api/v1/cart/"+cartID.String(), nil)
 		req = mux.SetURLVars(req, map[string]string{
@@ -133,8 +133,8 @@ func TestCartEndpoints_GetCartByUserID(t *testing.T) {
 
 		mockCartUC.
 			EXPECT().
-			GetCartByUserID(userID).
-			Return(dto.Cart{}, repository.ErrCartNotFound) // Изменено: возвращаем пустую структуру
+			GetByUserId(userID).
+			Return(dto.Cart{}, repository.ErrCartNotFound) 
 
 		req := httptest.NewRequest("GET", "/api/v1/cart/user/"+userID.String(), nil)
 		req = mux.SetURLVars(req, map[string]string{
@@ -159,7 +159,7 @@ func TestCartEndpoints_GetCartByUserID(t *testing.T) {
 
 		mockCartUC.
 			EXPECT().
-			GetCartByUserID(userID).
+			GetByUserId(userID).
 			Return(dto.Cart{}, errors.New("database error"))
 
 		req := httptest.NewRequest("GET", "/api/v1/cart/user/"+userID.String(), nil)
@@ -193,7 +193,7 @@ func TestCartEndpoints_AddAdvertToCart(t *testing.T) {
 
 		mockCartUC.
 			EXPECT().
-			AddAdvertToUserCart(reqBody.UserID, reqBody.AdvertID).
+			AddAdvert(reqBody.UserID, reqBody.AdvertID).
 			Return(nil)
 
 		body, _ := json.Marshal(reqBody)
@@ -240,7 +240,7 @@ func TestCartEndpoints_AddAdvertToCart(t *testing.T) {
 
 		mockCartUC.
 			EXPECT().
-			AddAdvertToUserCart(reqBody.UserID, reqBody.AdvertID).
+			AddAdvert(reqBody.UserID, reqBody.AdvertID).
 			Return(repository.ErrCartNotFound)
 
 		body, _ := json.Marshal(reqBody)
@@ -267,7 +267,7 @@ func TestCartEndpoints_AddAdvertToCart(t *testing.T) {
 
 		mockCartUC.
 			EXPECT().
-			AddAdvertToUserCart(reqBody.UserID, reqBody.AdvertID).
+			AddAdvert(reqBody.UserID, reqBody.AdvertID).
 			Return(errors.New("database error"))
 
 		body, _ := json.Marshal(reqBody)
@@ -299,7 +299,7 @@ func TestCartEndpoints_DeleteAdvertFromCart(t *testing.T) {
 
 		mockCartUC.
 			EXPECT().
-			DeleteAdvertFromCart(reqBody.CartID, reqBody.AdvertID).
+			DeleteAdvert(reqBody.CartID, reqBody.AdvertID).
 			Return(nil)
 
 		body, _ := json.Marshal(reqBody)
@@ -346,7 +346,7 @@ func TestCartEndpoints_DeleteAdvertFromCart(t *testing.T) {
 
 		mockCartUC.
 			EXPECT().
-			DeleteAdvertFromCart(reqBody.CartID, reqBody.AdvertID).
+			DeleteAdvert(reqBody.CartID, reqBody.AdvertID).
 			Return(repository.ErrCartOrAdvertNotFound)
 
 		body, _ := json.Marshal(reqBody)
@@ -373,7 +373,7 @@ func TestCartEndpoints_DeleteAdvertFromCart(t *testing.T) {
 
 		mockCartUC.
 			EXPECT().
-			DeleteAdvertFromCart(reqBody.CartID, reqBody.AdvertID).
+			DeleteAdvert(reqBody.CartID, reqBody.AdvertID).
 			Return(errors.New("database error"))
 
 		body, _ := json.Marshal(reqBody)

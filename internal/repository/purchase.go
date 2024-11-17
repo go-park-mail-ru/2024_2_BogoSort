@@ -12,8 +12,8 @@ type PurchaseRepository interface {
 	BeginTransaction() (pgx.Tx, error)
 
 	// AddPurchase создает запись о покупке
-	AddPurchase(tx pgx.Tx, purchase *entity.Purchase) (*entity.Purchase, error)
+	Add(tx pgx.Tx, purchase *entity.Purchase) (*entity.Purchase, error)
 
 	// GetPurchasesByUserID получает покупки по UserID
-	GetPurchasesByUserID(userID uuid.UUID) ([]*entity.Purchase, error)
+	GetByUserId(userID uuid.UUID) ([]*entity.Purchase, error)
 }

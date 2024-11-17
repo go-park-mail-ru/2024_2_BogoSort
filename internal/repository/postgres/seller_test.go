@@ -56,7 +56,7 @@ func TestSellerDB_AddSeller(t *testing.T) {
 		WillReturnRows(pgxmock.NewRows([]string{"id", "user_id", "description", "created_at", "updated_at"}).
 			AddRow(sellerID, userID, sql.NullString{Valid: false}, time.Now(), time.Now()))
 
-	id, err := repo.AddSeller(tx, userID)
+	id, err := repo.Add(tx, userID)
 	assert.NoError(t, err)
 	assert.Equal(t, sellerID, id)
 
@@ -73,7 +73,7 @@ func TestSellerDB_AddSeller(t *testing.T) {
 		WithArgs(userID).
 		WillReturnError(pgx.ErrNoRows)
 
-	_, err = repo.AddSeller(tx2, userID)
+	_, err = repo.Add(tx2, userID)
 	assert.Error(t, err)
 	assert.Equal(t, repository.ErrSellerAlreadyExists, err)
 
@@ -89,7 +89,7 @@ func TestSellerDB_AddSeller(t *testing.T) {
 		WithArgs(userID).
 		WillReturnError(errors.New("insertion error"))
 
-	_, err = repo.AddSeller(tx3, userID)
+	_, err = repo.Add(tx3, userID)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "error adding seller")
 
@@ -120,17 +120,17 @@ func TestSellerDB_GetSellerByID(t *testing.T) {
 		WithArgs(sellerID).
 		WillReturnError(errors.New("query error"))
 
-	seller, err := repo.GetSellerByID(sellerID)
+	seller, err := repo.GetById(sellerID)
 	assert.NoError(t, err)
 	assert.NotNil(t, seller)
 	assert.Equal(t, "A great seller", seller.Description)
 
-	seller, err = repo.GetSellerByID(sellerID)
+	seller, err = repo.GetById(sellerID)
 	assert.Error(t, err)
 	assert.Nil(t, seller)
 	assert.Equal(t, repository.ErrSellerNotFound, err)
 
-	seller, err = repo.GetSellerByID(sellerID)
+	seller, err = repo.GetById(sellerID)
 	assert.Error(t, err)
 	assert.Nil(t, seller)
 	assert.Contains(t, err.Error(), "error getting seller by ID")
@@ -158,17 +158,17 @@ func TestSellerDB_GetSellerByUserID(t *testing.T) {
 		WithArgs(userID).
 		WillReturnError(errors.New("query error"))
 
-	seller, err := repo.GetSellerByUserID(userID)
+	seller, err := repo.GetByUserId(userID)
 	assert.NoError(t, err)
 	assert.NotNil(t, seller)
 	assert.Equal(t, "Another great seller", seller.Description)
 
-	seller, err = repo.GetSellerByUserID(userID)
+	seller, err = repo.GetByUserId(userID)
 	assert.Error(t, err)
 	assert.Nil(t, seller)
 	assert.Equal(t, repository.ErrSellerNotFound, err)
 
-	seller, err = repo.GetSellerByUserID(userID)
+	seller, err = repo.GetByUserId(userID)
 	assert.Error(t, err)
 	assert.Nil(t, seller)
 	assert.Contains(t, err.Error(), "error getting seller by user_id")
