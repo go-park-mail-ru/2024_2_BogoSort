@@ -1,20 +1,20 @@
 package http
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
-	"bytes"
 
 	"github.com/google/uuid"
 	"github.com/microcosm-cc/bluemonday"
 
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/static"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/middleware"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/utils"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/static"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
@@ -32,22 +32,22 @@ var (
 )
 
 type UserEndpoints struct {
-	userUC         usecase.User
-	authUC         usecase.Auth
-	sessionManager *utils.SessionManager
+	userUC           usecase.User
+	authUC           usecase.Auth
+	sessionManager   *utils.SessionManager
 	staticGrpcClient static.StaticGrpcClient
-	logger         *zap.Logger
-	policy         *bluemonday.Policy
+	logger           *zap.Logger
+	policy           *bluemonday.Policy
 }
 
 func NewUserEndpoints(userUC usecase.User, authUC usecase.Auth, sessionManager *utils.SessionManager, staticGrpcClient static.StaticGrpcClient, logger *zap.Logger, policy *bluemonday.Policy) *UserEndpoints {
 	return &UserEndpoints{
-		userUC:         userUC,
-		authUC:         authUC,
-		sessionManager: sessionManager,
+		userUC:           userUC,
+		authUC:           authUC,
+		sessionManager:   sessionManager,
 		staticGrpcClient: staticGrpcClient,
-		logger:         logger,
-		policy:         policy,
+		logger:           logger,
+		policy:           policy,
 	}
 }
 

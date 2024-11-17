@@ -23,7 +23,7 @@ type AdvertResponse struct {
 	Title       string       `json:"title"`
 	Description string       `json:"description"`
 	Price       uint         `json:"price"`
-	ImageId     uuid.UUID    `json:"image_id"`
+	ImageId     uuid.UUID    `json:"image_id" default:"11111111-1111-1111-1111-111111111111"`
 	Status      AdvertStatus `json:"status"`
 	HasDelivery bool         `json:"has_delivery"`
 	Location    string       `json:"location"`

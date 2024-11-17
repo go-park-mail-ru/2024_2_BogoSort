@@ -22,8 +22,8 @@ type AdvertDB struct {
 
 const (
 	insertAdvertQuery = `
-		INSERT INTO advert (title, description, price, location, has_delivery, category_id, seller_id, image_id, status) 
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
+		INSERT INTO advert (title, description, price, location, has_delivery, category_id, seller_id, status) 
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
 		RETURNING id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status`
 
 	selectAdvertsQuery = `
@@ -116,7 +116,6 @@ func (r *AdvertDB) AddAdvert(a *entity.Advert) (*entity.Advert, error) {
 		a.HasDelivery,
 		a.CategoryId,
 		a.SellerId,
-		a.ImageId,
 		string(a.Status)).Scan(
 		&dbAdvert.ID,
 		&dbAdvert.Title,
