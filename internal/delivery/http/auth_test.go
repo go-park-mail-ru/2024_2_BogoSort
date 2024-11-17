@@ -14,13 +14,13 @@ import (
 	"go.uber.org/zap"
 )
 
-func setupAuthEndpoints(t *testing.T) (*AuthEndpoints, *mocks.MockAuth, *utils.SessionManager, *gomock.Controller) {
+func setupAuthEndpoints(t *testing.T) (*AuthEndpoint, *mocks.MockAuth, *utils.SessionManager, *gomock.Controller) {
 	ctrl := gomock.NewController(t)
 	mockAuthUC := mocks.NewMockAuth(ctrl)
 	sessionManager := utils.NewSessionManager(mockAuthUC, 10, true, zap.NewNop())
 	logger := zap.NewNop()
 
-	return NewAuthEndpoints(mockAuthUC, sessionManager, logger), mockAuthUC, sessionManager, ctrl
+	return NewAuthEndpoint(mockAuthUC, sessionManager, logger), mockAuthUC, sessionManager, ctrl
 }
 
 func TestAuthEndpoints_Logout(t *testing.T) {

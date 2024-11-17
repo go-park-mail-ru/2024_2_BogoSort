@@ -16,7 +16,7 @@ import (
 	// "go.uber.org/zap"
 )
 
-func setupUserEndpoints(t *testing.T) (*UserEndpoints, *mocks.MockUser, *mocks.MockAuth, *gomock.Controller) {
+func setupUserEndpoint(t *testing.T) (*UserEndpoint, *mocks.MockUser, *mocks.MockAuth, *gomock.Controller) {
 	// ctrl := gomock.NewController(t)
 	// mockUserUC := mocks.NewMockUser(ctrl)
 	// mockAuthUC := mocks.NewMockAuth(ctrl)
@@ -35,8 +35,8 @@ func setupUserEndpoints(t *testing.T) (*UserEndpoints, *mocks.MockUser, *mocks.M
 	return nil, nil, nil, nil
 }
 
-func TestUserEndpoints_Signup(t *testing.T) {
-	endpoints, mockUserUC, mockAuthUC, ctrl := setupUserEndpoints(t)
+func TestUserEndpoint_Signup(t *testing.T) {
+	endpoints, mockUserUC, mockAuthUC, ctrl := setupUserEndpoint(t)
 	defer ctrl.Finish()
 
 	t.Run("Success", func(t *testing.T) {
@@ -72,8 +72,8 @@ func TestUserEndpoints_Signup(t *testing.T) {
 	})
 }
 
-func TestUserEndpoints_Login(t *testing.T) {
-	endpoints, mockUserUC, mockAuthUC, ctrl := setupUserEndpoints(t)
+func TestUserEndpoint_Login(t *testing.T) {
+	endpoints, mockUserUC, mockAuthUC, ctrl := setupUserEndpoint(t)
 	defer ctrl.Finish()
 
 	t.Run("Success", func(t *testing.T) {

@@ -18,14 +18,14 @@ import (
 	"go.uber.org/zap"
 )
 
-func setupCartEndpoints(t *testing.T) (*CartEndpoints, *mocks.MockCart, *gomock.Controller) {
+func setupCartEndpoints(t *testing.T) (*CartEndpoint, *mocks.MockCart, *gomock.Controller) {
 	ctrl := gomock.NewController(t)
 	mockCartUC := mocks.NewMockCart(ctrl)
 	logger, err := zap.NewDevelopment()
 	if err != nil {
 		t.Fatalf("failed to create logger: %v", err)
 	}
-	endpoints := NewCartEndpoints(mockCartUC, logger)
+	endpoints := NewCartEndpoint(mockCartUC, logger)
 	return endpoints, mockCartUC, ctrl
 }
 
@@ -40,7 +40,7 @@ func TestCartEndpoints_GetCartByID(t *testing.T) {
 		})
 		rr := httptest.NewRecorder()
 
-		endpoints.GetCartByID(rr, req)
+		endpoints.GetByID(rr, req)
 
 		if status := rr.Code; status != http.StatusBadRequest {
 			t.Errorf("Expected status %v, got %v", http.StatusBadRequest, status)
@@ -66,7 +66,7 @@ func TestCartEndpoints_GetCartByID(t *testing.T) {
 		})
 		rr := httptest.NewRecorder()
 
-		endpoints.GetCartByID(rr, req)
+		endpoints.GetByID(rr, req)
 
 		if status := rr.Code; status != http.StatusNotFound {
 			t.Errorf("Expected status %v, got %v", http.StatusNotFound, status)
@@ -92,7 +92,7 @@ func TestCartEndpoints_GetCartByID(t *testing.T) {
 		})
 		rr := httptest.NewRecorder()
 
-		endpoints.GetCartByID(rr, req)
+		endpoints.GetByID(rr, req)
 
 		if status := rr.Code; status != http.StatusInternalServerError {
 			t.Errorf("Expected status %v, got %v", http.StatusInternalServerError, status)
@@ -116,7 +116,7 @@ func TestCartEndpoints_GetCartByUserID(t *testing.T) {
 		})
 		rr := httptest.NewRecorder()
 
-		endpoints.GetCartByUserID(rr, req)
+		endpoints.GetByUserID(rr, req)
 
 		if status := rr.Code; status != http.StatusBadRequest {
 			t.Errorf("Expected status %v, got %v", http.StatusBadRequest, status)
@@ -142,7 +142,7 @@ func TestCartEndpoints_GetCartByUserID(t *testing.T) {
 		})
 		rr := httptest.NewRecorder()
 
-		endpoints.GetCartByUserID(rr, req)
+		endpoints.GetByUserID(rr, req)
 
 		if status := rr.Code; status != http.StatusNotFound {
 			t.Errorf("Expected status %v, got %v", http.StatusNotFound, status)
@@ -160,7 +160,7 @@ func TestCartEndpoints_GetCartByUserID(t *testing.T) {
 		mockCartUC.
 			EXPECT().
 			GetCartByUserID(userID).
-			Return(dto.Cart{}, errors.New("database error")) // Изменено: возвращаем пустую структуру
+			Return(dto.Cart{}, errors.New("database error"))
 
 		req := httptest.NewRequest("GET", "/api/v1/cart/user/"+userID.String(), nil)
 		req = mux.SetURLVars(req, map[string]string{
@@ -168,7 +168,7 @@ func TestCartEndpoints_GetCartByUserID(t *testing.T) {
 		})
 		rr := httptest.NewRecorder()
 
-		endpoints.GetCartByUserID(rr, req)
+		endpoints.GetByUserID(rr, req)
 
 		if status := rr.Code; status != http.StatusInternalServerError {
 			t.Errorf("Expected status %v, got %v", http.StatusInternalServerError, status)
@@ -200,7 +200,7 @@ func TestCartEndpoints_AddAdvertToCart(t *testing.T) {
 		req := httptest.NewRequest("POST", "/api/v1/cart/add", bytes.NewBuffer(body))
 		rr := httptest.NewRecorder()
 
-		endpoints.AddAdvertToCart(rr, req)
+		endpoints.AddToCart(rr, req)
 
 		if status := rr.Code; status != http.StatusOK {
 			t.Errorf("Expected status %v, got %v", http.StatusOK, status)
@@ -220,7 +220,7 @@ func TestCartEndpoints_AddAdvertToCart(t *testing.T) {
 		req := httptest.NewRequest("POST", "/api/v1/cart/add", bytes.NewBuffer([]byte("invalid body")))
 		rr := httptest.NewRecorder()
 
-		endpoints.AddAdvertToCart(rr, req)
+		endpoints.AddToCart(rr, req)
 
 		if status := rr.Code; status != http.StatusBadRequest {
 			t.Errorf("Expected status %v, got %v", http.StatusBadRequest, status)
@@ -247,7 +247,7 @@ func TestCartEndpoints_AddAdvertToCart(t *testing.T) {
 		req := httptest.NewRequest("POST", "/api/v1/cart/add", bytes.NewBuffer(body))
 		rr := httptest.NewRecorder()
 
-		endpoints.AddAdvertToCart(rr, req)
+		endpoints.AddToCart(rr, req)
 
 		if status := rr.Code; status != http.StatusNotFound {
 			t.Errorf("Expected status %v, got %v", http.StatusNotFound, status)
@@ -274,7 +274,7 @@ func TestCartEndpoints_AddAdvertToCart(t *testing.T) {
 		req := httptest.NewRequest("POST", "/api/v1/cart/add", bytes.NewBuffer(body))
 		rr := httptest.NewRecorder()
 
-		endpoints.AddAdvertToCart(rr, req)
+		endpoints.AddToCart(rr, req)
 
 		if status := rr.Code; status != http.StatusInternalServerError {
 			t.Errorf("Expected status %v, got %v", http.StatusInternalServerError, status)
@@ -306,7 +306,7 @@ func TestCartEndpoints_DeleteAdvertFromCart(t *testing.T) {
 		req := httptest.NewRequest("DELETE", "/api/v1/cart/delete", bytes.NewBuffer(body))
 		rr := httptest.NewRecorder()
 
-		endpoints.DeleteAdvertFromCart(rr, req)
+		endpoints.DeleteFromCart(rr, req)
 
 		if status := rr.Code; status != http.StatusOK {
 			t.Errorf("Expected status %v, got %v", http.StatusOK, status)
@@ -326,7 +326,7 @@ func TestCartEndpoints_DeleteAdvertFromCart(t *testing.T) {
 		req := httptest.NewRequest("DELETE", "/api/v1/cart/delete", bytes.NewBuffer([]byte("invalid body")))
 		rr := httptest.NewRecorder()
 
-		endpoints.DeleteAdvertFromCart(rr, req)
+		endpoints.DeleteFromCart(rr, req)
 
 		if status := rr.Code; status != http.StatusBadRequest {
 			t.Errorf("Expected status %v, got %v", http.StatusBadRequest, status)
@@ -353,7 +353,7 @@ func TestCartEndpoints_DeleteAdvertFromCart(t *testing.T) {
 		req := httptest.NewRequest("DELETE", "/api/v1/cart/delete", bytes.NewBuffer(body))
 		rr := httptest.NewRecorder()
 
-		endpoints.DeleteAdvertFromCart(rr, req)
+		endpoints.DeleteFromCart(rr, req)
 
 		if status := rr.Code; status != http.StatusNotFound {
 			t.Errorf("Expected status %v, got %v", http.StatusNotFound, status)
@@ -380,7 +380,7 @@ func TestCartEndpoints_DeleteAdvertFromCart(t *testing.T) {
 		req := httptest.NewRequest("DELETE", "/api/v1/cart/delete", bytes.NewBuffer(body))
 		rr := httptest.NewRecorder()
 
-		endpoints.DeleteAdvertFromCart(rr, req)
+		endpoints.DeleteFromCart(rr, req)
 
 		if status := rr.Code; status != http.StatusInternalServerError {
 			t.Errorf("Expected status %v, got %v", http.StatusInternalServerError, status)

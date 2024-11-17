@@ -97,16 +97,16 @@ func NewRouter(cfg config.Config) (*mux.Router, error) {
 
 	router.Use(middleware.NewAuthMiddleware(sessionManager).AuthMiddleware)
 
-	advertsHandler := http3.NewAdvertEndpoints(advertsUC, staticUC, sessionManager, log, policy)
-	authHandler := http3.NewAuthEndpoints(sessionUC, sessionManager, log)
-	userHandler := http3.NewUserEndpoints(userUC, sessionUC, sessionManager, staticUC, log, policy)
-	sellerHandler := http3.NewSellerEndpoints(sellerRepo, log)
-	purchaseHandler := http3.NewPurchaseEndpoints(purchaseUC, log)
-	cartHandler := http3.NewCartEndpoints(cartUC, log)
-	categoryHandler := http3.NewCategoryEndpoints(categoryUC, log)
-	staticHandler := http3.NewStaticEndpoints(staticUC, log)
+	advertsHandler := http3.NewAdvertEndpoint(advertsUC, staticUC, sessionManager, log, policy)
+	authHandler := http3.NewAuthEndpoint(sessionUC, sessionManager, log)
+	userHandler := http3.NewUserEndpoint(userUC, sessionUC, sessionManager, staticUC, log, policy)
+	sellerHandler := http3.NewSellerEndpoint(sellerRepo, log)
+	purchaseHandler := http3.NewPurchaseEndpoint(purchaseUC, log)
+	cartHandler := http3.NewCartEndpoint(cartUC, log)
+	categoryHandler := http3.NewCategoryEndpoint(categoryUC, log)
+	staticHandler := http3.NewStaticEndpoint(staticUC, log)
 
-	csrfEndpoints := http3.NewCSRFEndpoints(csrfToken, sessionManager)
+	csrfEndpoints := http3.NewCSRFEndpoint(csrfToken, sessionManager)
 	csrfEndpoints.Configure(router)
 	userHandler.ConfigureUnprotectedRoutes(router)
 

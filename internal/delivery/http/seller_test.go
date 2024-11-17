@@ -22,14 +22,14 @@ func parseJSONResponse(body *bytes.Buffer, v interface{}) error {
 	return json.NewDecoder(body).Decode(v)
 }
 
-func setupSellerEndpoints(t *testing.T) (*SellerEndpoints, *mocks.MockSeller, *gomock.Controller) {
+func setupSellerEndpoints(t *testing.T) (*SellerEndpoint, *mocks.MockSeller, *gomock.Controller) {
 	ctrl := gomock.NewController(t)
 	mockSellerRepo := mocks.NewMockSeller(ctrl)
 	logger, err := zap.NewDevelopment()
 	if err != nil {
 		t.Fatalf("failed to create logger: %v", err)
 	}
-	endpoints := NewSellerEndpoints(mockSellerRepo, logger)
+	endpoints := NewSellerEndpoint(mockSellerRepo, logger)
 	return endpoints, mockSellerRepo, ctrl
 }
 
@@ -56,7 +56,7 @@ func TestSellerEndpoints_GetSellerByID(t *testing.T) {
 		})
 		rr := httptest.NewRecorder()
 
-		endpoints.GetSellerByID(rr, req)
+		endpoints.GetByID(rr, req)
 
 		if status := rr.Code; status != http.StatusOK {
 			t.Errorf("Expected status %v, got %v", http.StatusOK, status)
@@ -79,7 +79,7 @@ func TestSellerEndpoints_GetSellerByID(t *testing.T) {
 		})
 		rr := httptest.NewRecorder()
 
-		endpoints.GetSellerByID(rr, req)
+		endpoints.GetByID(rr, req)
 
 		if status := rr.Code; status != http.StatusInternalServerError {
 			t.Errorf("Expected status %v, got %v", http.StatusInternalServerError, status)
@@ -105,7 +105,7 @@ func TestSellerEndpoints_GetSellerByID(t *testing.T) {
 		})
 		rr := httptest.NewRecorder()
 
-		endpoints.GetSellerByID(rr, req)
+		endpoints.GetByID(rr, req)
 
 		if status := rr.Code; status != http.StatusNotFound {
 			t.Errorf("Expected status %v, got %v", http.StatusNotFound, status)
@@ -131,7 +131,7 @@ func TestSellerEndpoints_GetSellerByID(t *testing.T) {
 		})
 		rr := httptest.NewRecorder()
 
-		endpoints.GetSellerByID(rr, req)
+		endpoints.GetByID(rr, req)
 
 		if status := rr.Code; status != http.StatusInternalServerError {
 			t.Errorf("Expected status %v, got %v", http.StatusInternalServerError, status)
@@ -167,7 +167,7 @@ func TestSellerEndpoints_GetSellerByUserID(t *testing.T) {
 		})
 		rr := httptest.NewRecorder()
 
-		endpoints.GetSellerByUserID(rr, req)
+		endpoints.GetByUserID(rr, req)
 
 		if status := rr.Code; status != http.StatusOK {
 			t.Errorf("Expected status %v, got %v", http.StatusOK, status)
@@ -190,7 +190,7 @@ func TestSellerEndpoints_GetSellerByUserID(t *testing.T) {
 		})
 		rr := httptest.NewRecorder()
 
-		endpoints.GetSellerByUserID(rr, req)
+		endpoints.GetByUserID(rr, req)
 
 		if status := rr.Code; status != http.StatusInternalServerError {
 			t.Errorf("Expected status %v, got %v", http.StatusInternalServerError, status)
@@ -216,7 +216,7 @@ func TestSellerEndpoints_GetSellerByUserID(t *testing.T) {
 		})
 		rr := httptest.NewRecorder()
 
-		endpoints.GetSellerByUserID(rr, req)
+		endpoints.GetByUserID(rr, req)
 
 		if status := rr.Code; status != http.StatusNotFound {
 			t.Errorf("Expected status %v, got %v", http.StatusNotFound, status)
@@ -242,7 +242,7 @@ func TestSellerEndpoints_GetSellerByUserID(t *testing.T) {
 		})
 		rr := httptest.NewRecorder()
 
-		endpoints.GetSellerByUserID(rr, req)
+		endpoints.GetByUserID(rr, req)
 
 		if status := rr.Code; status != http.StatusInternalServerError {
 			t.Errorf("Expected status %v, got %v", http.StatusInternalServerError, status)

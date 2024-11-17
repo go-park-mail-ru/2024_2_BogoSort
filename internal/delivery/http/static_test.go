@@ -20,7 +20,7 @@ func TestGetStaticById_Success(t *testing.T) {
 	mockStaticUC := mocks.NewMockStaticUseCase(ctrl)
 	logger, _ := zap.NewDevelopment()
 
-	endpoints := NewStaticEndpoints(mockStaticUC, logger)
+	endpoints := NewStaticEndpoint(mockStaticUC, logger)
 
 	staticID := uuid.New()
 	mockStaticUC.EXPECT().GetStaticURL(staticID).Return("http://example.com/staticfile", nil)
@@ -45,7 +45,7 @@ func TestGetStaticById_InvalidID(t *testing.T) {
 	defer ctrl.Finish()
 	mockStaticUC := mocks.NewMockStaticUseCase(ctrl)
 	logger, _ := zap.NewDevelopment()
-	endpoints := NewStaticEndpoints(mockStaticUC, logger)
+	endpoints := NewStaticEndpoint(mockStaticUC, logger)
 
 	req, err := http.NewRequest("GET", "/api/v1/files/invalid-id", nil)
 	if err != nil {
@@ -66,7 +66,7 @@ func TestGetStaticById_NotFound(t *testing.T) {
 	defer ctrl.Finish()
 	mockStaticUC := mocks.NewMockStaticUseCase(ctrl)
 	logger, _ := zap.NewDevelopment()
-	endpoints := NewStaticEndpoints(mockStaticUC, logger)
+	endpoints := NewStaticEndpoint(mockStaticUC, logger)
 
 	staticID := uuid.New()
 	mockStaticUC.EXPECT().GetStaticURL(staticID).Return("", ErrStaticFileNotFound)
@@ -90,7 +90,7 @@ func TestGetStaticById_InternalError(t *testing.T) {
 	defer ctrl.Finish()
 	mockStaticUC := mocks.NewMockStaticUseCase(ctrl)
 	logger, _ := zap.NewDevelopment()
-	endpoints := NewStaticEndpoints(mockStaticUC, logger)
+	endpoints := NewStaticEndpoint(mockStaticUC, logger)
 
 	staticID := uuid.New()
 	mockStaticUC.EXPECT().GetStaticURL(staticID).Return("", errors.New("internal error"))

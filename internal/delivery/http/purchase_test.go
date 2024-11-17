@@ -23,7 +23,7 @@ func TestAddPurchase_Success(t *testing.T) {
 	mockPurchaseUC := mocks.NewMockPurchase(ctrl)
 	logger, _ := zap.NewDevelopment()
 
-	endpoints := NewPurchaseEndpoints(mockPurchaseUC, logger)
+	endpoints := NewPurchaseEndpoint(mockPurchaseUC, logger)
 
 	purchaseRequest := dto.PurchaseRequest{}
 	purchaseResponse := dto.PurchaseResponse{}
@@ -54,7 +54,7 @@ func TestAddPurchase_DecodeError(t *testing.T) {
 	defer ctrl.Finish()
 	mockPurchaseUC := mocks.NewMockPurchase(ctrl)
 	logger, _ := zap.NewDevelopment()
-	endpoints := NewPurchaseEndpoints(mockPurchaseUC, logger)
+	endpoints := NewPurchaseEndpoint(mockPurchaseUC, logger)
 
 	req, err := http.NewRequest("POST", "/api/v1/purchase", bytes.NewBuffer([]byte("invalid json")))
 	if err != nil {
@@ -75,7 +75,7 @@ func TestAddPurchase_AddPurchaseError(t *testing.T) {
 	defer ctrl.Finish()
 	mockPurchaseUC := mocks.NewMockPurchase(ctrl)
 	logger, _ := zap.NewDevelopment()
-	endpoints := NewPurchaseEndpoints(mockPurchaseUC, logger)
+	endpoints := NewPurchaseEndpoint(mockPurchaseUC, logger)
 
 	purchaseRequest := dto.PurchaseRequest{}
 

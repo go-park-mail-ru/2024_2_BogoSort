@@ -21,7 +21,7 @@ func NewTestSessionManager() *utils.SessionManager {
 	return utils.NewSessionManager(nil, 0, false, nil)
 }
 
-func setupAdvertEndpoints(t *testing.T) (*AdvertEndpoints, *mocks.MockAdvertUseCase, *mocks.MockStaticUseCase, *utils.SessionManager, *zap.Logger) {
+func setupAdvertEndpoints(t *testing.T) (*AdvertEndpoint, *mocks.MockAdvertUseCase, *mocks.MockStaticUseCase, *utils.SessionManager, *zap.Logger) {
 	ctrl := gomock.NewController(t)
 	mockAdvertUseCase := mocks.NewMockAdvertUseCase(ctrl)
 	mockStaticUseCase := mocks.NewMockStaticUseCase(ctrl)
@@ -31,7 +31,7 @@ func setupAdvertEndpoints(t *testing.T) (*AdvertEndpoints, *mocks.MockAdvertUseC
 	if err != nil {
 		t.Fatalf("failed to create logger: %v", err)
 	}
-	endpoints := NewAdvertEndpoints(mockAdvertUseCase, mockStaticUseCase, sessionManager, logger, policy)
+	endpoints := NewAdvertEndpoint(mockAdvertUseCase, mockStaticUseCase, sessionManager, logger, policy)
 	return endpoints, mockAdvertUseCase, mockStaticUseCase, sessionManager, logger
 }
 
@@ -60,7 +60,7 @@ func TestAdvertEndpoints(t *testing.T) {
 			req := httptest.NewRequest("GET", "/api/v1/adverts?limit=10&offset=5", nil)
 			rr := httptest.NewRecorder()
 
-			endpoints.GetAdverts(rr, req)
+			endpoints.Get(rr, req)
 
 			if status := rr.Code; status != http.StatusOK {
 				t.Errorf("Expected status %v, got %v", http.StatusOK, status)
@@ -80,7 +80,7 @@ func TestAdvertEndpoints(t *testing.T) {
 			req := httptest.NewRequest("GET", "/api/v1/adverts?limit=-1&offset=5", nil)
 			rr := httptest.NewRecorder()
 
-			endpoints.GetAdverts(rr, req)
+				endpoints.Get(rr, req)
 
 			if status := rr.Code; status != http.StatusBadRequest {
 				t.Errorf("Expected status %v, got %v", http.StatusBadRequest, status)
@@ -96,7 +96,7 @@ func TestAdvertEndpoints(t *testing.T) {
 			req := httptest.NewRequest("GET", "/api/v1/adverts?limit=10&offset=-5", nil)
 			rr := httptest.NewRecorder()
 
-			endpoints.GetAdverts(rr, req)
+			endpoints.Get(rr, req)
 
 			if status := rr.Code; status != http.StatusBadRequest {
 				t.Errorf("Expected status %v, got %v", http.StatusBadRequest, status)
@@ -120,7 +120,7 @@ func TestAdvertEndpoints(t *testing.T) {
 			req := httptest.NewRequest("GET", "/api/v1/adverts?limit=10&offset=5", nil)
 			rr := httptest.NewRecorder()
 
-			endpoints.GetAdverts(rr, req)
+			endpoints.Get(rr, req)
 
 			if status := rr.Code; status != http.StatusInternalServerError {
 				t.Errorf("Expected status %v, got %v", http.StatusInternalServerError, status)
@@ -156,7 +156,7 @@ func TestAdvertEndpoints(t *testing.T) {
 			})
 			rr := httptest.NewRecorder()
 
-			endpoints.GetAdvertsBySellerId(rr, req)
+			endpoints.GetBySellerId(rr, req)
 
 			if status := rr.Code; status != http.StatusOK {
 				t.Errorf("Expected status %v, got %v", http.StatusOK, status)
@@ -179,7 +179,7 @@ func TestAdvertEndpoints(t *testing.T) {
 			})
 			rr := httptest.NewRecorder()
 
-			endpoints.GetAdvertsBySellerId(rr, req)
+			endpoints.GetBySellerId(rr, req)
 
 			if status := rr.Code; status != http.StatusBadRequest {
 				t.Errorf("Expected status %v, got %v", http.StatusBadRequest, status)
@@ -205,7 +205,7 @@ func TestAdvertEndpoints(t *testing.T) {
 			})
 			rr := httptest.NewRecorder()
 
-			endpoints.GetAdvertsBySellerId(rr, req)
+			endpoints.GetBySellerId(rr, req)
 
 			if status := rr.Code; status != http.StatusInternalServerError {
 				t.Errorf("Expected status %v, got %v", http.StatusInternalServerError, status)
@@ -241,7 +241,7 @@ func TestAdvertEndpoints(t *testing.T) {
 			})
 			rr := httptest.NewRecorder()
 
-			endpoints.GetAdvertsByCartId(rr, req)
+			endpoints.GetByCartId(rr, req)
 
 			if status := rr.Code; status != http.StatusOK {
 				t.Errorf("Expected status %v, got %v", http.StatusOK, status)
@@ -264,7 +264,7 @@ func TestAdvertEndpoints(t *testing.T) {
 			})
 			rr := httptest.NewRecorder()
 
-			endpoints.GetAdvertsByCartId(rr, req)
+			endpoints.GetByCartId(rr, req)
 
 			if status := rr.Code; status != http.StatusBadRequest {
 				t.Errorf("Expected status %v, got %v", http.StatusBadRequest, status)
@@ -290,7 +290,7 @@ func TestAdvertEndpoints(t *testing.T) {
 			})
 			rr := httptest.NewRecorder()
 
-			endpoints.GetAdvertsByCartId(rr, req)
+			endpoints.GetByCartId(rr, req)
 
 			if status := rr.Code; status != http.StatusInternalServerError {
 				t.Errorf("Expected status %v, got %v", http.StatusInternalServerError, status)
@@ -324,7 +324,7 @@ func TestAdvertEndpoints(t *testing.T) {
 			})
 			rr := httptest.NewRecorder()
 
-			endpoints.GetAdvertById(rr, req)
+			endpoints.GetById(rr, req)
 
 			if status := rr.Code; status != http.StatusOK {
 				t.Errorf("Expected status %v, got %v", http.StatusOK, status)
@@ -347,7 +347,7 @@ func TestAdvertEndpoints(t *testing.T) {
 			})
 			rr := httptest.NewRecorder()
 
-			endpoints.GetAdvertById(rr, req)
+			endpoints.GetById(rr, req)
 
 			if status := rr.Code; status != http.StatusBadRequest {
 				t.Errorf("Expected status %v, got %v", http.StatusBadRequest, status)
@@ -373,7 +373,7 @@ func TestAdvertEndpoints(t *testing.T) {
 			})
 			rr := httptest.NewRecorder()
 
-			endpoints.GetAdvertById(rr, req)
+			endpoints.GetById(rr, req)
 
 			if status := rr.Code; status != http.StatusNotFound {
 				t.Errorf("Expected status %v, got %v", http.StatusNotFound, status)
@@ -399,7 +399,7 @@ func TestAdvertEndpoints(t *testing.T) {
 			})
 			rr := httptest.NewRecorder()
 
-			endpoints.GetAdvertById(rr, req)
+			endpoints.GetById(rr, req)
 
 			if status := rr.Code; status != http.StatusInternalServerError {
 				t.Errorf("Expected status %v, got %v", http.StatusInternalServerError, status)
@@ -423,7 +423,7 @@ func TestAdvertEndpoints(t *testing.T) {
 			})
 			rr := httptest.NewRecorder()
 
-			endpoints.UpdateAdvert(rr, req)
+			endpoints.Update(rr, req)
 
 			if status := rr.Code; status != http.StatusBadRequest {
 				t.Errorf("Expected status %v, got %v", http.StatusBadRequest, status)
@@ -444,7 +444,7 @@ func TestAdvertEndpoints(t *testing.T) {
 			})
 			rr := httptest.NewRecorder()
 
-			endpoints.DeleteAdvertById(rr, req)
+			endpoints.Delete(rr, req)
 
 			if status := rr.Code; status != http.StatusBadRequest {
 				t.Errorf("Expected status %v, got %v", http.StatusBadRequest, status)
@@ -486,7 +486,7 @@ func TestAdvertEndpoints(t *testing.T) {
 				})
 				rr := httptest.NewRecorder()
 
-				endpoints.UpdateAdvertStatus(rr, req)
+				endpoints.UpdateStatus(rr, req)
 
 				if status := rr.Code; status != tc.expectedCode {
 					t.Errorf("Expected status %v, got %v", tc.expectedCode, status)
@@ -525,7 +525,7 @@ func TestAdvertEndpoints(t *testing.T) {
 			})
 			rr := httptest.NewRecorder()
 
-			endpoints.GetAdvertsByCategoryId(rr, req)
+			endpoints.GetByCategoryId(rr, req)
 
 			if status := rr.Code; status != http.StatusOK {
 				t.Errorf("Expected status %v, got %v", http.StatusOK, status)
@@ -548,7 +548,7 @@ func TestAdvertEndpoints(t *testing.T) {
 			})
 			rr := httptest.NewRecorder()
 
-			endpoints.GetAdvertsByCategoryId(rr, req)
+			endpoints.GetByCategoryId(rr, req)
 
 			if status := rr.Code; status != http.StatusBadRequest {
 				t.Errorf("Expected status %v, got %v", http.StatusBadRequest, status)
@@ -574,7 +574,7 @@ func TestAdvertEndpoints(t *testing.T) {
 			})
 			rr := httptest.NewRecorder()
 
-			endpoints.GetAdvertsByCategoryId(rr, req)
+			endpoints.GetByCategoryId(rr, req)
 
 			if status := rr.Code; status != http.StatusInternalServerError {
 				t.Errorf("Expected status %v, got %v", http.StatusInternalServerError, status)

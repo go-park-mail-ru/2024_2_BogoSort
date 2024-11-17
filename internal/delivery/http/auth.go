@@ -10,21 +10,21 @@ import (
 	"go.uber.org/zap"
 )
 
-type AuthEndpoints struct {
+type AuthEndpoint struct {
 	authUC         usecase.Auth
 	sessionManager *utils.SessionManager
 	logger         *zap.Logger
 }
 
-func NewAuthEndpoints(authUC usecase.Auth, sessionManager *utils.SessionManager, logger *zap.Logger) *AuthEndpoints {
-	return &AuthEndpoints{
+func NewAuthEndpoint(authUC usecase.Auth, sessionManager *utils.SessionManager, logger *zap.Logger) *AuthEndpoint {
+	return &AuthEndpoint{
 		authUC:         authUC,
 		sessionManager: sessionManager,
 		logger:         logger,
 	}
 }
 
-func (a *AuthEndpoints) Configure(router *mux.Router) {
+func (a *AuthEndpoint) Configure(router *mux.Router) {
 	protected := router.PathPrefix("/api/v1").Subrouter()
 	sessionMiddleware := middleware.NewAuthMiddleware(a.sessionManager)
 	protected.Use(sessionMiddleware.SessionMiddleware)
@@ -32,7 +32,7 @@ func (a *AuthEndpoints) Configure(router *mux.Router) {
 	protected.HandleFunc("/logout", a.Logout).Methods(http.MethodPost)
 }
 
-func (a *AuthEndpoints) handleError(w http.ResponseWriter, err error, method string, data map[string]string) {
+func (a *AuthEndpoint) handleError(w http.ResponseWriter, err error, method string, data map[string]string) {
 	a.logger.Error(method+" error", zap.Error(err), zap.Any("data", data))
 	utils.SendErrorResponse(w, http.StatusInternalServerError, err.Error())
 }
@@ -48,7 +48,7 @@ func (a *AuthEndpoints) handleError(w http.ResponseWriter, err error, method str
 // @Failure 401 {object} utils.ErrResponse "Unauthorized access"
 // @Failure 500 {object} utils.ErrResponse "Internal server error"
 // @Router /api/v1/logout [post]
-func (a *AuthEndpoints) Logout(w http.ResponseWriter, r *http.Request) {
+func (a *AuthEndpoint) Logout(w http.ResponseWriter, r *http.Request) {
 	userID, err := a.sessionManager.GetUserID(r)
 	if err != nil {
 		a.handleError(w, err, "Logout", nil)
