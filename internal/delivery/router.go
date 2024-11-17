@@ -86,7 +86,7 @@ func NewRouter(cfg config.Config) (*mux.Router, error) {
 	if err != nil {
 		return nil, handleRepoError(err, "unable to create csrf token")
 	}
-	grpcClient, err := auth.NewGrpcClient(cfg.AuthAddr)
+	grpcClient, err := auth.NewGrpcClient(config.GetAuthAddress())
 	if err != nil {
 		return nil, handleRepoError(err, "unable to create grpc client")
 	}

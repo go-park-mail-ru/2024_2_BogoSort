@@ -10,16 +10,16 @@ import (
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase"
 )
 
-type GrpsServer struct {
+type GrpcServer struct {
 	authProto.UnimplementedAuthServiceServer
 	AuthUC usecase.Auth
 }
 
-func NewGrpsServer(authUC usecase.Auth) *GrpsServer {
-	return &GrpsServer{AuthUC: authUC}
+func NewGrpcServer(authUC usecase.Auth) *GrpcServer {
+	return &GrpcServer{AuthUC: authUC}
 }
 
-func (s *GrpsServer) GetUserIDBySession(_ context.Context, in *authProto.Session) (*authProto.User, error) {
+func (s *GrpcServer) GetUserIDBySession(_ context.Context, in *authProto.Session) (*authProto.User, error) {
 	userID, err := s.AuthUC.GetUserIdBySession(in.Id)
 	if err != nil {
 		return nil, err
@@ -27,7 +27,7 @@ func (s *GrpsServer) GetUserIDBySession(_ context.Context, in *authProto.Session
 	return &authProto.User{Id: userID.String()}, nil
 }
 
-func (s *GrpsServer) CreateSession(_ context.Context, in *authProto.User) (*authProto.Session, error) {
+func (s *GrpcServer) CreateSession(_ context.Context, in *authProto.User) (*authProto.Session, error) {
 	userID, err := uuid.Parse(in.Id)
 	if err != nil {
 		return nil, err
@@ -39,7 +39,7 @@ func (s *GrpsServer) CreateSession(_ context.Context, in *authProto.User) (*auth
 	return &authProto.Session{Id: sessionID}, nil
 }
 
-func (s *GrpsServer) DeleteSession(_ context.Context, in *authProto.Session) (*authProto.NoContent, error) {
+func (s *GrpcServer) DeleteSession(_ context.Context, in *authProto.Session) (*authProto.NoContent, error) {
 	err := s.AuthUC.Logout(in.Id)
 	if err != nil {
 		return nil, err
@@ -47,6 +47,6 @@ func (s *GrpsServer) DeleteSession(_ context.Context, in *authProto.Session) (*a
 	return &authProto.NoContent{}, nil
 }
 
-func (s *GrpsServer) Ping(_ context.Context, _ *authProto.NoContent) (*authProto.NoContent, error) {
+func (s *GrpcServer) Ping(_ context.Context, _ *authProto.NoContent) (*authProto.NoContent, error) {
 	return &authProto.NoContent{}, nil
 }
