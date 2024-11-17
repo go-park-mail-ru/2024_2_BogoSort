@@ -26,8 +26,8 @@ func handleRepoError(err error, message string) error {
 }
 
 func NewRouter(cfg config.Config) (*mux.Router, error) {
-	zap.ReplaceGlobals(zap.Must(zap.NewProduction()))
-	defer zap.L().Sync()
+	log := zap.Must(zap.NewProduction())
+	defer log.Sync()
 
 	router := mux.NewRouter()
 	router.Use(recoveryMiddleware)
@@ -38,73 +38,73 @@ func NewRouter(cfg config.Config) (*mux.Router, error) {
 
 	dbPool, err := connector.GetPostgresConnector(cfg.GetConnectURL())
 	if err != nil {
-		zap.L().Error("Failed to connect to Postgres", zap.Error(err))
+		log.Error("Failed to connect to Postgres", zap.Error(err))
 		return nil, errors.Wrap(err, "failed to connect to Postgres")
 	}
 	rdb, err := connector.GetRedisConnector(cfg.RdAddr, cfg.RdPass, cfg.RdDB)
 	if err != nil {
-		zap.L().Error("Failed to connect to Redis", zap.Error(err))
+		log.Error("Failed to connect to Redis", zap.Error(err))
 		return nil, errors.Wrap(err, "failed to connect to Redis")
 	}
 
 	ctx := context.Background()
 
-	advertsRepo, err := postgres.NewAdvertRepository(dbPool, zap.L(), ctx, cfg.PGTimeout)
+	advertsRepo, err := postgres.NewAdvertRepository(dbPool, log, ctx, cfg.PGTimeout)
 	if err != nil {
 		return nil, handleRepoError(err, "unable to create advert repository")
 	}
-	staticRepo, err := postgres.NewStaticRepository(ctx, dbPool, cfg.Static.Path, cfg.Static.MaxSize, zap.L(), cfg.PGTimeout)
+	staticRepo, err := postgres.NewStaticRepository(ctx, dbPool, cfg.Static.Path, cfg.Static.MaxSize, log, cfg.PGTimeout)
 	if err != nil {
 		return nil, handleRepoError(err, "unable to create static repository")
 	}
-	categoryRepo, err := postgres.NewCategoryRepository(dbPool, zap.L(), ctx, cfg.PGTimeout)
+	categoryRepo, err := postgres.NewCategoryRepository(dbPool, log, ctx, cfg.PGTimeout)
 	if err != nil {
 		return nil, handleRepoError(err, "unable to create category repository")
 	}
-	sessionRepo, err := redis.NewSessionRepository(rdb, int(cfg.Session.ExpirationTime.Seconds()), ctx, zap.L())
+	sessionRepo, err := redis.NewSessionRepository(rdb, int(cfg.Session.ExpirationTime.Seconds()), ctx, log)
 	if err != nil {
 		return nil, handleRepoError(err, "unable to create session repository")
 	}
-	userRepo, err := postgres.NewUserRepository(dbPool, ctx, zap.L(), cfg.PGTimeout)
+	userRepo, err := postgres.NewUserRepository(dbPool, ctx, log, cfg.PGTimeout)
 	if err != nil {
 		return nil, handleRepoError(err, "unable to create user repository")
 	}
-	sellerRepo, err := postgres.NewSellerRepository(dbPool, ctx, zap.L())
+	sellerRepo, err := postgres.NewSellerRepository(dbPool, ctx, log)
 	if err != nil {
 		return nil, handleRepoError(err, "unable to create seller repository")
 	}
-	cartRepo, err := postgres.NewCartRepository(dbPool, ctx, zap.L())
+	cartRepo, err := postgres.NewCartRepository(dbPool, ctx, log)
 	if err != nil {
 		return nil, handleRepoError(err, "unable to create cart repository")
 	}
-	purchaseRepo, err := postgres.NewPurchaseRepository(dbPool, zap.L(), ctx, cfg.PGTimeout)
+	purchaseRepo, err := postgres.NewPurchaseRepository(dbPool, log, ctx, cfg.PGTimeout)
 	if err != nil {
 		return nil, handleRepoError(err, "unable to create purchase repository")
 	}
-	csrfToken, err := utils.NewAesCryptHashToken(zap.L())
+	csrfToken, err := utils.NewAesCryptHashToken(log)
 	if err != nil {
 		return nil, handleRepoError(err, "unable to create csrf token")
 	}
 
-	advertsUseCase := service.NewAdvertService(advertsRepo, staticRepo, sellerRepo, zap.L())
-	staticUseCase := service.NewStaticService(staticRepo, zap.L())
-	categoryUseCase := service.NewCategoryService(categoryRepo, zap.L())
-	purchaseUseCase := service.NewPurchaseService(purchaseRepo, advertsRepo, cartRepo, zap.L())
-	cartUC := service.NewCartService(cartRepo, advertsRepo, zap.L())
-	userUC := service.NewUserService(userRepo, sellerRepo, zap.L())
-	sessionUC := service.NewAuthService(sessionRepo, zap.L())
-	sessionManager := utils.NewSessionManager(sessionUC, int(cfg.Session.ExpirationTime.Seconds()), cfg.Session.SecureCookie, zap.L())
+	advertsUC := service.NewAdvertService(advertsRepo, staticRepo, sellerRepo, log)
+	staticUC := service.NewStaticService(staticRepo, log)
+	categoryUC := service.NewCategoryService(categoryRepo, log)
+	purchaseUC := service.NewPurchaseService(purchaseRepo, advertsRepo, cartRepo, log)
+	cartUC := service.NewCartService(cartRepo, advertsRepo, log)
+	userUC := service.NewUserService(userRepo, sellerRepo, log)
+	sessionUC := service.NewAuthService(sessionRepo, log)
+	sessionManager := utils.NewSessionManager(sessionUC, int(cfg.Session.ExpirationTime.Seconds()), cfg.Session.SecureCookie, log)
 
 	router.Use(middleware.NewAuthMiddleware(sessionManager).AuthMiddleware)
 
-	advertsHandler := http3.NewAdvertEndpoints(advertsUseCase, staticUseCase, sessionManager, zap.L(), policy)
-	authHandler := http3.NewAuthEndpoints(sessionUC, sessionManager, zap.L())
-	userHandler := http3.NewUserEndpoints(userUC, sessionUC, sessionManager, staticUseCase, zap.L(), policy)
-	sellerHandler := http3.NewSellerEndpoints(sellerRepo, zap.L())
-	purchaseHandler := http3.NewPurchaseEndpoints(purchaseUseCase, zap.L())
-	cartHandler := http3.NewCartEndpoints(cartUC, zap.L())
-	categoryHandler := http3.NewCategoryEndpoints(categoryUseCase, zap.L())
-	staticHandler := http3.NewStaticEndpoints(staticUseCase, zap.L())
+	advertsHandler := http3.NewAdvertEndpoints(advertsUC, staticUC, sessionManager, log, policy)
+	authHandler := http3.NewAuthEndpoints(sessionUC, sessionManager, log)
+	userHandler := http3.NewUserEndpoints(userUC, sessionUC, sessionManager, staticUC, log, policy)
+	sellerHandler := http3.NewSellerEndpoints(sellerRepo, log)
+	purchaseHandler := http3.NewPurchaseEndpoints(purchaseUC, log)
+	cartHandler := http3.NewCartEndpoints(cartUC, log)
+	categoryHandler := http3.NewCategoryEndpoints(categoryUC, log)
+	staticHandler := http3.NewStaticEndpoints(staticUC, log)
 
 	csrfEndpoints := http3.NewCSRFEndpoints(csrfToken, sessionManager)
 	csrfEndpoints.Configure(router)

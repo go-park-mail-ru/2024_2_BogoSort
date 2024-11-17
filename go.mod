@@ -16,7 +16,6 @@ require (
 	github.com/golang/mock v1.6.0
 	github.com/jackc/pgx/v5 v5.7.1
 	github.com/microcosm-cc/bluemonday v1.0.27
-	github.com/pashagolub/pgxmock/v2 v2.12.0
 	github.com/pashagolub/pgxmock/v4 v4.3.0
 	github.com/rs/cors v1.11.1
 	go.uber.org/zap v1.27.0
