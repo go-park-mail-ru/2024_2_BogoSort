@@ -30,6 +30,8 @@ github.com/go-openapi/swag
 # github.com/golang/mock v1.6.0
 ## explicit; go 1.11
 github.com/golang/mock/gomock
+# github.com/golang/protobuf v1.5.4
+## explicit; go 1.17
 # github.com/google/uuid v1.6.0
 ## explicit
 github.com/google/uuid
@@ -74,8 +76,6 @@ github.com/mailru/easyjson/jwriter
 ## explicit; go 1.19
 github.com/microcosm-cc/bluemonday
 github.com/microcosm-cc/bluemonday/css
-# github.com/pashagolub/pgxmock/v2 v2.12.0
-## explicit; go 1.20
 # github.com/pashagolub/pgxmock/v4 v4.3.0
 ## explicit; go 1.22.0
 github.com/pashagolub/pgxmock/v4
@@ -190,6 +190,8 @@ google.golang.org/grpc/encoding/proto
 google.golang.org/grpc/experimental/stats
 google.golang.org/grpc/grpclog
 google.golang.org/grpc/grpclog/internal
+google.golang.org/grpc/health
+google.golang.org/grpc/health/grpc_health_v1
 google.golang.org/grpc/internal
 google.golang.org/grpc/internal/backoff
 google.golang.org/grpc/internal/balancer/gracefulswitch
