@@ -29,17 +29,15 @@ var (
 
 type UserEndpoint struct {
 	userUC         usecase.User
-	authUC         usecase.Auth
 	sessionManager *utils.SessionManager
 	staticUseCase  usecase.StaticUseCase
 	logger         *zap.Logger
 	policy         *bluemonday.Policy
 }
 
-func NewUserEndpoint(userUC usecase.User, authUC usecase.Auth, sessionManager *utils.SessionManager, staticUseCase usecase.StaticUseCase, logger *zap.Logger, policy *bluemonday.Policy) *UserEndpoint {
+func NewUserEndpoint(userUC usecase.User, sessionManager *utils.SessionManager, staticUseCase usecase.StaticUseCase, logger *zap.Logger, policy *bluemonday.Policy) *UserEndpoint {
 	return &UserEndpoint{
 		userUC:         userUC,
-		authUC:         authUC,
 		sessionManager: sessionManager,
 		staticUseCase:  staticUseCase,
 		logger:         logger,

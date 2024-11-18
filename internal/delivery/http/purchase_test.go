@@ -6,9 +6,23 @@ package http
 // 	"net/http"
 // 	"net/http/httptest"
 // 	"testing"
+// import (
+// 	"bytes"
+// 	"encoding/json"
+// 	"net/http"
+// 	"net/http/httptest"
+// 	"testing"
 
 // 	"errors"
+// 	"errors"
 
+// 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
+// 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase/mocks"
+// 	"github.com/golang/mock/gomock"
+// 	"github.com/gorilla/mux"
+// 	"github.com/stretchr/testify/assert"
+// 	"go.uber.org/zap"
+// )
 // 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
 // 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase/mocks"
 // 	"github.com/golang/mock/gomock"
@@ -22,14 +36,26 @@ package http
 // 	defer ctrl.Finish()
 // 	mockPurchaseUC := mocks.NewMockPurchase(ctrl)
 // 	logger, _ := zap.NewDevelopment()
+// func TestAddPurchase_Success(t *testing.T) {
+// 	ctrl := gomock.NewController(t)
+// 	defer ctrl.Finish()
+// 	mockPurchaseUC := mocks.NewMockPurchase(ctrl)
+// 	logger, _ := zap.NewDevelopment()
 
-// 	endpoints := NewPurchaseEndpoint(mockPurchaseUC, logger)
+// 	endpoints := NewPurchaseEndpoints(mockPurchaseUC, logger)
 
 // 	purchaseRequest := dto.PurchaseRequest{}
 // 	purchaseResponse := dto.PurchaseResponse{}
+// 	purchaseRequest := dto.PurchaseRequest{}
+// 	purchaseResponse := dto.PurchaseResponse{}
 
-// 	mockPurchaseUC.EXPECT().Add(purchaseRequest).Return(&purchaseResponse, nil)
+// 	mockPurchaseUC.EXPECT().AddPurchase(purchaseRequest).Return(&purchaseResponse, nil)
 
+// 	body, _ := json.Marshal(purchaseRequest)
+// 	req, err := http.NewRequest("POST", "/api/v1/purchase", bytes.NewBuffer(body))
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
 // 	body, _ := json.Marshal(purchaseRequest)
 // 	req, err := http.NewRequest("POST", "/api/v1/purchase", bytes.NewBuffer(body))
 // 	if err != nil {
@@ -39,11 +65,20 @@ package http
 // 	rr := httptest.NewRecorder()
 // 	router := mux.NewRouter()
 // 	endpoints.ConfigureRoutes(router)
+// 	rr := httptest.NewRecorder()
+// 	router := mux.NewRouter()
+// 	endpoints.ConfigureRoutes(router)
 
+// 	router.ServeHTTP(rr, req)
 // 	router.ServeHTTP(rr, req)
 
 // 	assert.Equal(t, http.StatusCreated, rr.Code)
+// 	assert.Equal(t, http.StatusCreated, rr.Code)
 
+// 	var response dto.PurchaseResponse
+// 	json.NewDecoder(rr.Body).Decode(&response)
+// 	assert.Equal(t, &purchaseResponse, &response)
+// }
 // 	var response dto.PurchaseResponse
 // 	json.NewDecoder(rr.Body).Decode(&response)
 // 	assert.Equal(t, &purchaseResponse, &response)
@@ -54,8 +89,12 @@ package http
 // 	defer ctrl.Finish()
 // 	mockPurchaseUC := mocks.NewMockPurchase(ctrl)
 // 	logger, _ := zap.NewDevelopment()
-// 	endpoints := NewPurchaseEndpoint(mockPurchaseUC, logger)
+// 	endpoints := NewPurchaseEndpoints(mockPurchaseUC, logger)
 
+// 	req, err := http.NewRequest("POST", "/api/v1/purchase", bytes.NewBuffer([]byte("invalid json")))
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
 // 	req, err := http.NewRequest("POST", "/api/v1/purchase", bytes.NewBuffer([]byte("invalid json")))
 // 	if err != nil {
 // 		t.Fatal(err)
@@ -64,9 +103,15 @@ package http
 // 	rr := httptest.NewRecorder()
 // 	router := mux.NewRouter()
 // 	endpoints.ConfigureRoutes(router)
+// 	rr := httptest.NewRecorder()
+// 	router := mux.NewRouter()
+// 	endpoints.ConfigureRoutes(router)
 
 // 	router.ServeHTTP(rr, req)
+// 	router.ServeHTTP(rr, req)
 
+// 	assert.Equal(t, http.StatusBadRequest, rr.Code)
+// }
 // 	assert.Equal(t, http.StatusBadRequest, rr.Code)
 // }
 
@@ -75,12 +120,18 @@ package http
 // 	defer ctrl.Finish()
 // 	mockPurchaseUC := mocks.NewMockPurchase(ctrl)
 // 	logger, _ := zap.NewDevelopment()
-// 	endpoints := NewPurchaseEndpoint(mockPurchaseUC, logger)
+// 	endpoints := NewPurchaseEndpoints(mockPurchaseUC, logger)
 
 // 	purchaseRequest := dto.PurchaseRequest{}
+// 	purchaseRequest := dto.PurchaseRequest{}
 
-// 	mockPurchaseUC.EXPECT().Add(purchaseRequest).Return(&dto.PurchaseResponse{}, errors.New("some error"))
+// 	mockPurchaseUC.EXPECT().AddPurchase(purchaseRequest).Return(&dto.PurchaseResponse{}, errors.New("some error"))
 
+// 	body, _ := json.Marshal(purchaseRequest)
+// 	req, err := http.NewRequest("POST", "/api/v1/purchase", bytes.NewBuffer(body))
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
 // 	body, _ := json.Marshal(purchaseRequest)
 // 	req, err := http.NewRequest("POST", "/api/v1/purchase", bytes.NewBuffer(body))
 // 	if err != nil {
@@ -90,8 +141,14 @@ package http
 // 	rr := httptest.NewRecorder()
 // 	router := mux.NewRouter()
 // 	endpoints.ConfigureRoutes(router)
+// 	rr := httptest.NewRecorder()
+// 	router := mux.NewRouter()
+// 	endpoints.ConfigureRoutes(router)
 
 // 	router.ServeHTTP(rr, req)
+// 	router.ServeHTTP(rr, req)
 
+// 	assert.Equal(t, http.StatusInternalServerError, rr.Code)
+// }
 // 	assert.Equal(t, http.StatusInternalServerError, rr.Code)
 // }

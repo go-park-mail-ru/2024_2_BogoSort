@@ -1,0 +1,148 @@
+syntax = "proto3";
+
+option go_package = "./;cart_purchase";
+
+package cart_purchase;
+// protoc --go_out=. *.proto --go-grpc_out=.
+
+service CartPurchaseService {
+  rpc AddPurchase(AddPurchaseRequest) returns (AddPurchaseResponse);
+  rpc GetPurchasesByUserID(GetPurchasesByUserIDRequest) returns (GetPurchasesByUserIDResponse);
+  rpc GetCartByID(GetCartByIDRequest) returns (GetCartByIDResponse);
+  rpc GetCartByUserID(GetCartByUserIDRequest) returns (GetCartByUserIDResponse);
+  rpc AddAdvertToCart(AddAdvertToCartRequest) returns (AddAdvertToCartResponse);
+  rpc DeleteAdvertFromCart(DeleteAdvertFromCartRequest) returns (DeleteAdvertFromCartResponse);
+  rpc CheckCartExists(CheckCartExistsRequest) returns (CheckCartExistsResponse);
+  rpc Ping(NoContent) returns (NoContent);  
+}
+
+message NoContent {}
+
+message AddAdvertToCartRequest {
+  string user_id = 1;
+  string advert_id = 2;
+}
+
+message AddAdvertToCartResponse {
+  string message = 1;
+}
+
+message DeleteAdvertFromCartRequest {
+  string cart_id = 1;
+  string advert_id = 2;
+}
+
+message DeleteAdvertFromCartResponse {
+  string message = 1;
+}
+
+message CheckCartExistsRequest {
+  string user_id = 1;
+}
+
+message CheckCartExistsResponse {
+  bool exists = 1;
+}
+
+message AddPurchaseRequest {
+  string cart_id = 1;
+  string address = 2;
+  PaymentMethod payment_method = 3;
+  DeliveryMethod delivery_method = 4;
+  string user_id = 5;
+}
+
+message AddPurchaseResponse {
+  string id = 1;
+  string cart_id = 2;
+  string address = 3;
+  PurchaseStatus status = 4;
+  PaymentMethod payment_method = 5;
+  DeliveryMethod delivery_method = 6;
+}
+
+message GetPurchasesByUserIDRequest {
+  string user_id = 1;
+}
+
+message GetPurchasesByUserIDResponse {
+  repeated PurchaseResponse purchases = 1;
+}
+
+message GetCartByIDRequest {
+  string cart_id = 1;
+}
+
+message GetCartByIDResponse {
+  Cart cart = 1;
+}
+
+message GetCartByUserIDRequest {
+  string user_id = 1;
+}
+
+message GetCartByUserIDResponse {
+  Cart cart = 1;
+}
+
+message PreviewAdvert {
+  string advert_id = 1;
+  string seller_id = 2;
+  string category_id = 3;
+  string title = 4;
+  uint64 price = 5;
+  string image_url = 6;
+  AdvertStatus status = 7;
+  string location = 8;
+  bool has_delivery = 9;
+}
+
+message PreviewAdvertCard {
+  PreviewAdvert preview = 1;
+  bool is_saved = 2;
+  bool is_viewed = 3;
+}
+
+message Cart {
+  string id = 1;
+  string user_id = 2;
+  repeated PreviewAdvertCard adverts = 3;
+  CartStatus status = 4;
+}
+
+message PurchaseResponse {
+  string id = 1;
+  string cart_id = 2;
+  string address = 3;
+  PurchaseStatus status = 4;
+  PaymentMethod payment_method = 5;
+  DeliveryMethod delivery_method = 6;
+}
+
+enum PurchaseStatus {
+  PENDING = 0;
+  COMPLETED = 1;
+  FAILED = 2;
+  CANCELED = 3;
+}
+
+enum PaymentMethod {
+  CARD = 0;
+  CASH = 1;
+}
+
+enum DeliveryMethod {
+  PICKUP = 0;
+  DELIVERY = 1;
+}
+
+enum CartStatus {
+  ACTIVE = 0;
+  CLOSED = 1;
+}
+
+enum AdvertStatus {
+  ADVERT_ACTIVE = 0;
+  ADVERT_PENDING = 1;
+  ADVERT_INACTIVE = 2;
+}

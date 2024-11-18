@@ -1,24 +1,26 @@
 package http
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
+	"time"
 
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/cart_purchase"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/utils"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 )
 
 type PurchaseEndpoint struct {
-	purchaseUC usecase.Purchase
-	logger     *zap.Logger
+	purchaseClient *cart_purchase.CartPurchaseClient
+	logger         *zap.Logger
 }
 
-func NewPurchaseEndpoint(purchaseUC usecase.Purchase, logger *zap.Logger) *PurchaseEndpoint {
-	return &PurchaseEndpoint{purchaseUC: purchaseUC, logger: logger}
+func NewPurchaseEndpoint(purchaseClient *cart_purchase.CartPurchaseClient, logger *zap.Logger) *PurchaseEndpoint {
+	return &PurchaseEndpoint{purchaseClient: purchaseClient, logger: logger}
 }
 
 func (h *PurchaseEndpoint) ConfigureRoutes(router *mux.Router) {
@@ -40,7 +42,7 @@ func (h *PurchaseEndpoint) ConfigureRoutes(router *mux.Router) {
 func (h *PurchaseEndpoint) Add(w http.ResponseWriter, r *http.Request) {
 	var purchase dto.PurchaseRequest
 
-	userId, ok := r.Context().Value("userId").(string)
+	_, ok := r.Context().Value("user_id").(string)
 	if !ok {
 		utils.SendErrorResponse(w, http.StatusBadRequest, "user id not found")
 		return
@@ -52,7 +54,10 @@ func (h *PurchaseEndpoint) Add(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	purchaseResponse, err := h.purchaseUC.Add(purchase, uuid.MustParse(userId))
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	purchaseResponse, err := h.purchaseClient.AddPurchase(ctx, purchase)
 	if err != nil {
 		h.logger.Error("failed to add purchase", zap.Error(err))
 		utils.SendErrorResponse(w, http.StatusInternalServerError, "internal server error")
@@ -77,21 +82,20 @@ func (h *PurchaseEndpoint) GetByUserID(w http.ResponseWriter, r *http.Request) {
 	userIDStr := mux.Vars(r)["user_id"]
 	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
-		h.sendError(w, http.StatusBadRequest, err, "invalid user ID", nil)
+		h.handleError(w, err, "invalid user ID")
 		return
 	}
 
-	purchases, err := h.purchaseUC.GetByUserId(userID)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	purchases, err := h.purchaseClient.GetPurchasesByUserID(ctx, userID)
 	if err != nil {
 		h.handleError(w, err, "failed to get purchases")
 		return
 	}
 
 	utils.SendJSONResponse(w, http.StatusOK, purchases)
-}
-
-func (h *PurchaseEndpoint) sendError(w http.ResponseWriter, status int, err error, message string, data interface{}) {
-	utils.SendErrorResponse(w, status, message)
 }
 
 func (h *PurchaseEndpoint) handleError(w http.ResponseWriter, err error, message string) {

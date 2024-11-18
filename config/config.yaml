@@ -9,8 +9,14 @@ session:
   expiration_time: 12h
   secure_cookie: false
 
+auth_port: 50051
+auth_host: "localhost"
+
+cart_purchase_host: "localhost"
+cart_purchase_port: 50052
+
 pg_ip: "localhost"
-pg_port: 5432
+pg_port: 8001
 pg_user: "postgres"
 pg_password: "postgres"
 pg_db: "emporiumdb"
