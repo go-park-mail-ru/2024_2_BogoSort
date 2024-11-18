@@ -202,6 +202,38 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/adverts/my": {
+            "get": {
+                "description": "Fetch a list of adverts associated with a specific user ID.",
+                "tags": [
+                    "adverts"
+                ],
+                "summary": "Retrieve adverts by user ID",
+                "responses": {
+                    "200": {
+                        "description": "List of adverts by user ID",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.MyPreviewAdvertCard"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid user ID",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to retrieve adverts by user ID",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/adverts/saved": {
             "get": {
                 "description": "Fetch a list of adverts saved by the specified user ID.",
@@ -332,7 +364,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/adverts/seller": {
+        "/api/v1/adverts/seller/{sellerId}": {
             "get": {
                 "description": "Fetch a list of adverts associated with a specific seller ID.",
                 "produces": [
@@ -357,7 +389,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dto.MyPreviewAdvertCard"
+                                "$ref": "#/definitions/dto.PreviewAdvertCard"
                             }
                         }
                     },

@@ -86,7 +86,7 @@ func NewRouter(cfg config.Config) (*mux.Router, error) {
 		return nil, handleRepoError(err, "unable to create csrf token")
 	}
 
-	advertsUC := service.NewAdvertService(advertsRepo, staticRepo, sellerRepo, log)
+	advertsUC := service.NewAdvertService(advertsRepo, staticRepo, sellerRepo, userRepo, log)
 	staticUC := service.NewStaticService(staticRepo, log)
 	categoryUC := service.NewCategoryService(categoryRepo, log)
 	purchaseUC := service.NewPurchaseService(purchaseRepo, advertsRepo, cartRepo, log)
@@ -109,10 +109,11 @@ func NewRouter(cfg config.Config) (*mux.Router, error) {
 	csrfEndpoints := http3.NewCSRFEndpoint(csrfToken, sessionManager)
 	csrfEndpoints.Configure(router)
 	userHandler.ConfigureUnprotectedRoutes(router)
+	advertsHandler.ConfigureRoutes(router)
 
 	authRouter.Use(middleware.CSRFMiddleware(csrfToken, sessionManager))
 
-	advertsHandler.ConfigureRoutes(authRouter)
+	advertsHandler.ConfigureProtectedRoutes(authRouter)
 	categoryHandler.ConfigureRoutes(authRouter)
 	authHandler.Configure(authRouter)
 	userHandler.ConfigureProtectedRoutes(authRouter)

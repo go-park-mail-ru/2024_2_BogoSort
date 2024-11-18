@@ -571,6 +571,27 @@ paths:
       summary: Retrieve adverts by category ID
       tags:
       - adverts
+  /api/v1/adverts/my:
+    get:
+      description: Fetch a list of adverts associated with a specific user ID.
+      responses:
+        "200":
+          description: List of adverts by user ID
+          schema:
+            items:
+              $ref: '#/definitions/dto.MyPreviewAdvertCard'
+            type: array
+        "400":
+          description: Invalid user ID
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Failed to retrieve adverts by user ID
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Retrieve adverts by user ID
+      tags:
+      - adverts
   /api/v1/adverts/saved:
     get:
       description: Fetch a list of adverts saved by the specified user ID.
@@ -657,7 +678,7 @@ paths:
       summary: Add an advert to saved
       tags:
       - adverts
-  /api/v1/adverts/seller:
+  /api/v1/adverts/seller/{sellerId}:
     get:
       description: Fetch a list of adverts associated with a specific seller ID.
       parameters:
@@ -673,7 +694,7 @@ paths:
           description: List of adverts
           schema:
             items:
-              $ref: '#/definitions/dto.MyPreviewAdvertCard'
+              $ref: '#/definitions/dto.PreviewAdvertCard'
             type: array
         "400":
           description: Invalid seller ID

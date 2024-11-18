@@ -60,6 +60,12 @@ type AdvertUseCase interface {
 	// AddToSaved добавляет объявление в сохраненные
 	AddToSaved(advertId, userId uuid.UUID) error
 
+	// AddViewed добавляет просмотренное объявление
+	AddViewed(advertId, userId uuid.UUID) error
+
 	// RemoveFromSaved удаляет объявление из сохраненных
 	RemoveFromSaved(advertId, userId uuid.UUID) error
+
+	// GetBySellerId возвращает массив объявлений по sellerId
+	GetBySellerId(userId, sellerId uuid.UUID) ([]*dto.PreviewAdvertCard, error)
 }

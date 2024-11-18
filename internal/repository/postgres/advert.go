@@ -94,13 +94,16 @@ const (
 		FROM saved_advert WHERE advert_id = $1`
 
 	insertViewedAdvertQuery = `
-		INSERT INTO viewed_advert (user_id, advert_id)
+		INSERT INTO viewed_advert (advert_id, user_id)
 		VALUES ($1, $2)
 		RETURNING id, user_id, advert_id, created_at`
 
 	selectViewedCountAndIsViewedQuery = `
 		SELECT COUNT(*), EXISTS(SELECT 1 FROM viewed_advert WHERE advert_id = $1 AND user_id = $2) 
 		FROM viewed_advert WHERE advert_id = $1`
+
+	checkIfExistsQuery = `
+		SELECT EXISTS(SELECT 1 FROM advert WHERE id = $1)`
 )
 
 type AdvertRepoModel struct {
@@ -119,9 +122,9 @@ type AdvertRepoModel struct {
 }
 
 type SavedAdvertRepoModel struct {
-	ID       uuid.UUID
-	AdvertId uuid.UUID
-	UserId   uuid.UUID
+	ID        uuid.UUID
+	AdvertId  uuid.UUID
+	UserId    uuid.UUID
 	CreatedAt time.Time
 }
 
@@ -146,8 +149,8 @@ func (r *AdvertDB) getSavedCount(advertId uuid.UUID, userId uuid.UUID) (int, boo
 
 	err := r.DB.QueryRow(ctx, selectSavedCountAndIsSavedQuery, advertId, userId).Scan(&savedCount, &isSaved)
 	if err != nil {
-			r.logger.Error("failed to execute query", zap.Error(err), zap.String("advert_id", advertId.String()), zap.String("user_id", userId.String()))
-			return 0, false, err
+		r.logger.Error("failed to execute query", zap.Error(err), zap.String("advert_id", advertId.String()), zap.String("user_id", userId.String()))
+		return 0, false, err
 	}
 
 	return savedCount, isSaved, nil
@@ -176,6 +179,12 @@ func (r *AdvertDB) convertToEntityAdvert(dbAdvert AdvertRepoModel, userId uuid.U
 		return nil
 	}
 
+	viewedCount, isViewed, err := r.getViewedCount(dbAdvert.ID, userId)
+	if err != nil {
+		r.logger.Error("failed to get viewed count", zap.Error(err), zap.String("advert_id", dbAdvert.ID.String()), zap.String("user_id", userId.String()))
+		return nil
+	}
+
 	return &entity.Advert{
 		ID:          dbAdvert.ID,
 		Title:       dbAdvert.Title,
@@ -190,8 +199,8 @@ func (r *AdvertDB) convertToEntityAdvert(dbAdvert AdvertRepoModel, userId uuid.U
 		CreatedAt:   dbAdvert.CreatedAt,
 		UpdatedAt:   dbAdvert.UpdatedAt,
 		IsSaved:     isSaved,
-		IsViewed:    false,
-		ViewsNumber: 0,
+		IsViewed:    isViewed,
+		ViewsNumber: uint(viewedCount),
 		SavesNumber: uint(savedCount),
 	}
 }
@@ -615,15 +624,35 @@ func (r *AdvertDB) DeleteFromSaved(userId uuid.UUID, advertId uuid.UUID) error {
 	return nil
 }
 
-func (r *AdvertDB) AddViewed(userId uuid.UUID, advertId uuid.UUID) error {
+func (r *AdvertDB) AddViewed(userId, advertId uuid.UUID) error {
 	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
 	defer cancel()
 
-	_, err := r.DB.Exec(ctx, insertViewedAdvertQuery, advertId, userId)
+	var userIdToInsert interface{}
+	if userId == uuid.Nil {
+		userIdToInsert = nil
+	} else {
+		userIdToInsert = userId
+	}
+
+	_, err := r.DB.Exec(ctx, insertViewedAdvertQuery, advertId, userIdToInsert)
 	if err != nil {
 		r.logger.Error("failed to add viewed advert", zap.Error(err), zap.String("advert_id", advertId.String()))
 		return entity.PSQLWrap(err)
 	}
 
 	return nil
+}
+
+func (r *AdvertDB) CheckIfExists(advertId uuid.UUID) (bool, error) {
+	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
+	defer cancel()
+
+	var exists bool
+	err := r.DB.QueryRow(ctx, checkIfExistsQuery, advertId).Scan(&exists)
+	if err != nil {
+		return false, err
+	}
+
+	return exists, nil
 }

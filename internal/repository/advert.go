@@ -64,6 +64,9 @@ type AdvertRepository interface {
 
 	// BeginTransaction начинает транзакцию
 	BeginTransaction() (pgx.Tx, error)
+
+	// CheckIfExists проверяет, существует ли объявление
+	CheckIfExists(advertId uuid.UUID) (bool, error)
 }
 
 var (

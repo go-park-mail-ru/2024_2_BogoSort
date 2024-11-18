@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/middleware"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase"
 	"github.com/gorilla/mux"
@@ -18,20 +19,16 @@ import (
 )
 
 var (
-	ErrFailedToGetAdverts   = errors.New("failed to get adverts")
-	ErrInvalidID            = errors.New("invalid ID")
-	ErrAdvertNotFound       = errors.New("advert not found")
-	ErrFailedToAddAdvert    = errors.New("failed to add advert")
-	ErrFailedToUpdateAdvert = errors.New("failed to update advert")
-	ErrFailedToDeleteAdvert = errors.New("failed to delete advert")
-	ErrForbidden            = errors.New("forbidden")
-	ErrBadRequest           = errors.New("bad request")
-	ErrInvalidAdvertData    = errors.New("invalid advert data")
-	ErrInvalidAdvertStatus  = errors.New("invalid advert status")
-	ErrFileNotAttached      = errors.New("file not attached")
-	ErrFailedToReadFile     = errors.New("failed to read file")
-	ErrFailedToCloseFile    = errors.New("failed to close file")
-	ErrFailedToUploadFile   = errors.New("failed to upload file")
+	ErrInvalidID           = errors.New("invalid ID")
+	ErrAdvertNotFound      = errors.New("advert not found")
+	ErrForbidden           = errors.New("forbidden")
+	ErrBadRequest          = errors.New("bad request")
+	ErrInvalidAdvertData   = errors.New("invalid advert data")
+	ErrInvalidAdvertStatus = errors.New("invalid advert status")
+	ErrFileNotAttached     = errors.New("file not attached")
+	ErrFailedToReadFile    = errors.New("failed to read file")
+	ErrFailedToCloseFile   = errors.New("failed to close file")
+	ErrFailedToUploadFile  = errors.New("failed to upload file")
 )
 
 type AdvertEndpoint struct {
@@ -57,19 +54,28 @@ func NewAdvertEndpoint(advertUC usecase.AdvertUseCase,
 }
 
 func (h *AdvertEndpoint) ConfigureRoutes(router *mux.Router) {
-	router.HandleFunc("/api/v1/adverts/seller", h.GetBySellerId).Methods("GET")
-	router.HandleFunc("/api/v1/adverts/saved", h.GetSavedByUserId).Methods("GET")
+	router.HandleFunc("/api/v1/adverts/seller/{sellerId}", h.GetBySellerId).Methods("GET")
 	router.HandleFunc("/api/v1/adverts/{advertId}", h.GetById).Methods("GET")
-	router.HandleFunc("/api/v1/adverts/cart/{cartId}", h.GetByCartId).Methods("GET")
-	router.HandleFunc("/api/v1/adverts", h.Add).Methods("POST")
-	router.HandleFunc("/api/v1/adverts/{advertId}", h.Update).Methods("PUT")
-	router.HandleFunc("/api/v1/adverts/{advertId}", h.Delete).Methods("DELETE")
-	router.HandleFunc("/api/v1/adverts/{advertId}/status", h.UpdateStatus).Methods("PUT")
 	router.HandleFunc("/api/v1/adverts/category/{categoryId}", h.GetByCategoryId).Methods("GET")
-	router.HandleFunc("/api/v1/adverts/{advertId}/image", h.UploadImage).Methods("PUT")
 	router.HandleFunc("/api/v1/adverts", h.Get).Methods("GET")
-	router.HandleFunc("/api/v1/adverts/saved/{advertId}", h.AddToSaved).Methods("POST")
-	router.HandleFunc("/api/v1/adverts/saved/{advertId}", h.RemoveFromSaved).Methods("DELETE")
+	router.HandleFunc("/api/v1/adverts/viewed/{advertId}", h.AddToViewed).Methods("POST")
+}
+
+func (h *AdvertEndpoint) ConfigureProtectedRoutes(router *mux.Router) {
+	protected := router.PathPrefix("/api/v1").Subrouter()
+	sessionMiddleware := middleware.NewAuthMiddleware(h.sessionManager)
+	protected.Use(sessionMiddleware.SessionMiddleware)
+
+	protected.HandleFunc("/api/v1/adverts/my", h.GetByUserId).Methods("GET")
+	protected.HandleFunc("/api/v1/adverts/saved", h.GetSavedByUserId).Methods("GET")
+	protected.HandleFunc("/api/v1/adverts/cart/{cartId}", h.GetByCartId).Methods("GET")
+	protected.HandleFunc("/api/v1/adverts", h.Add).Methods("POST")
+	protected.HandleFunc("/api/v1/adverts/{advertId}", h.Update).Methods("PUT")
+	protected.HandleFunc("/api/v1/adverts/{advertId}", h.Delete).Methods("DELETE")
+	protected.HandleFunc("/api/v1/adverts/{advertId}/status", h.UpdateStatus).Methods("PUT")
+	protected.HandleFunc("/api/v1/adverts/{advertId}/image", h.UploadImage).Methods("PUT")
+	protected.HandleFunc("/api/v1/adverts/saved/{advertId}", h.AddToSaved).Methods("POST")
+	protected.HandleFunc("/api/v1/adverts/saved/{advertId}", h.RemoveFromSaved).Methods("DELETE")
 }
 
 // Get godoc
@@ -120,11 +126,11 @@ func (h *AdvertEndpoint) Get(writer http.ResponseWriter, r *http.Request) {
 // @Tags adverts
 // @Produce json
 // @Param sellerId path string true "Seller ID"
-// @Success 200 {array} dto.MyPreviewAdvertCard "List of adverts"
+// @Success 200 {array} dto.PreviewAdvertCard "List of adverts"
 // @Failure 400 {object} utils.ErrResponse "Invalid seller ID"
 // @Failure 403 {object} utils.ErrResponse "Forbidden"
 // @Failure 500 {object} utils.ErrResponse "Failed to retrieve adverts by seller ID"
-// @Router /api/v1/adverts/seller [get]
+// @Router /api/v1/adverts/seller/{sellerId} [get]
 func (h *AdvertEndpoint) GetBySellerId(writer http.ResponseWriter, r *http.Request) {
 	userId, err := h.sessionManager.GetUserID(r)
 	if err != nil {
@@ -132,7 +138,14 @@ func (h *AdvertEndpoint) GetBySellerId(writer http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	adverts, err := h.advertUC.GetByUserId(userId)
+	sellerIdStr := mux.Vars(r)["sellerId"]
+	sellerId, err := uuid.Parse(sellerIdStr)
+	if err != nil {
+		h.sendError(writer, http.StatusBadRequest, ErrInvalidID, "invalid seller ID", nil)
+		return
+	}
+
+	adverts, err := h.advertUC.GetBySellerId(userId, sellerId)
 	if err != nil {
 		h.sendError(writer, http.StatusInternalServerError, err, "failed to get adverts by seller ID", nil)
 		return
@@ -571,4 +584,53 @@ func (h *AdvertEndpoint) handleError(writer http.ResponseWriter, err error, cont
 	default:
 		h.sendError(writer, http.StatusInternalServerError, err, context, nil)
 	}
+}
+
+func (h *AdvertEndpoint) AddToViewed(writer http.ResponseWriter, r *http.Request) {
+	userId, err := h.sessionManager.GetUserID(r)
+	if err != nil {
+		userId = uuid.Nil
+	}
+
+	advertIdStr := mux.Vars(r)["advertId"]
+	advertId, err := uuid.Parse(advertIdStr)
+	if err != nil {
+		h.sendError(writer, http.StatusBadRequest, ErrInvalidID, "invalid advert ID", nil)
+		return
+	}
+
+	if err := h.advertUC.AddViewed(advertId, userId); err != nil {
+		h.handleError(writer, err, "failed to add advert to viewed")
+		return
+	}
+
+	utils.SendJSONResponse(writer, http.StatusOK, "Advert added to viewed")
+}
+
+// GetByUserId godoc
+// @Summary Retrieve adverts by user ID
+// @Description Fetch a list of adverts associated with a specific user ID.
+// @Tags adverts
+// @Success 200 {array} dto.MyPreviewAdvertCard "List of adverts by user ID"
+// @Failure 400 {object} utils.ErrResponse "Invalid user ID"
+// @Failure 500 {object} utils.ErrResponse "Failed to retrieve adverts by user ID"
+// @Router /api/v1/adverts/my [get]
+func (h *AdvertEndpoint) GetByUserId(writer http.ResponseWriter, r *http.Request) {
+	userId, err := h.sessionManager.GetUserID(r)
+	if err != nil {
+		h.sendError(writer, http.StatusUnauthorized, ErrInvalidCredentials, "user not found", nil)
+		return
+	}
+
+	adverts, err := h.advertUC.GetByUserId(userId)
+	if err != nil {
+		h.handleError(writer, err, "failed to get adverts by user ID")
+		return
+	}
+
+	for _, advert := range adverts {
+		utils.SanitizePreviewAdvert(&advert.Preview, h.policy)
+	}
+
+	utils.SendJSONResponse(writer, http.StatusOK, adverts)
 }

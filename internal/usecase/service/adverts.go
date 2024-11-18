@@ -1,9 +1,9 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"strings"
-	"context"
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
@@ -23,17 +23,20 @@ type AdvertService struct {
 	advertRepo repository.AdvertRepository
 	staticRepo repository.StaticRepository
 	sellerRepo repository.Seller
+	userRepo   repository.User
 	logger     *zap.Logger
 }
 
 func NewAdvertService(advertRepo repository.AdvertRepository,
 	staticRepo repository.StaticRepository,
 	sellerRepo repository.Seller,
+	userRepo repository.User,
 	logger *zap.Logger) *AdvertService {
 	return &AdvertService{
 		advertRepo: advertRepo,
 		staticRepo: staticRepo,
 		sellerRepo: sellerRepo,
+		userRepo:   userRepo,
 	}
 }
 
@@ -57,7 +60,7 @@ func (s *AdvertService) Get(limit, offset int, userId uuid.UUID) ([]*dto.Preview
 				HasDelivery: advert.HasDelivery,
 				Location:    advert.Location,
 			},
-			IsSaved: advert.IsSaved,
+			IsSaved:  advert.IsSaved,
 			IsViewed: advert.IsViewed,
 		}
 		dtoAdverts = append(dtoAdverts, &advertDTO)
@@ -76,7 +79,7 @@ func (s *AdvertService) GetByUserId(userId uuid.UUID) ([]*dto.MyPreviewAdvertCar
 	if err != nil {
 		return nil, entity.UsecaseWrap(err, err)
 	}
-	
+
 	dtoAdverts := make([]*dto.MyPreviewAdvertCard, 0, len(adverts))
 	for _, advert := range adverts {
 		advertDTO := dto.MyPreviewAdvertCard{
@@ -119,13 +122,13 @@ func (s *AdvertService) GetByCartId(cartId, userId uuid.UUID) ([]*dto.PreviewAdv
 				HasDelivery: advert.HasDelivery,
 				Location:    advert.Location,
 			},
-			IsSaved: advert.IsSaved,
+			IsSaved:  advert.IsSaved,
 			IsViewed: advert.IsViewed,
 		}
 		dtoAdverts = append(dtoAdverts, &advertDTO)
 	}
 
-	return dtoAdverts, nil	
+	return dtoAdverts, nil
 }
 
 func (s *AdvertService) GetById(advertId, userId uuid.UUID) (*dto.AdvertCard, error) {
@@ -154,7 +157,7 @@ func (s *AdvertService) GetById(advertId, userId uuid.UUID) (*dto.AdvertCard, er
 			ViewsNumber: advert.ViewsNumber,
 			SavesNumber: advert.SavesNumber,
 		},
-		IsSaved: advert.IsSaved,
+		IsSaved:  advert.IsSaved,
 		IsViewed: advert.IsViewed,
 	}
 	return &advertDTO, nil
@@ -189,18 +192,18 @@ func (s *AdvertService) Add(advert *dto.AdvertRequest, userId uuid.UUID) (*dto.A
 	}
 
 	advertDTO := dto.Advert{
-		ID: entityAdvert.ID,
-		CategoryId: entityAdvert.CategoryId,
-		SellerId: entityAdvert.SellerId,
-		Title: entityAdvert.Title,
+		ID:          entityAdvert.ID,
+		CategoryId:  entityAdvert.CategoryId,
+		SellerId:    entityAdvert.SellerId,
+		Title:       entityAdvert.Title,
 		Description: entityAdvert.Description,
-		Price: entityAdvert.Price,
-		Status: dto.AdvertStatus(entityAdvert.Status),
+		Price:       entityAdvert.Price,
+		Status:      dto.AdvertStatus(entityAdvert.Status),
 		HasDelivery: entityAdvert.HasDelivery,
-		Location: entityAdvert.Location,
-		ImageURL: entityAdvert.ImageURL.UUID.String(),
-		CreatedAt: entityAdvert.CreatedAt,
-		UpdatedAt: entityAdvert.UpdatedAt,
+		Location:    entityAdvert.Location,
+		ImageURL:    entityAdvert.ImageURL.UUID.String(),
+		CreatedAt:   entityAdvert.CreatedAt,
+		UpdatedAt:   entityAdvert.UpdatedAt,
 		ViewsNumber: entityAdvert.ViewsNumber,
 		SavesNumber: entityAdvert.SavesNumber,
 	}
@@ -332,7 +335,7 @@ func (s *AdvertService) GetByCategoryId(categoryId, userId uuid.UUID) ([]*dto.Pr
 				HasDelivery: advert.HasDelivery,
 				Location:    advert.Location,
 			},
-			IsSaved: advert.IsSaved,
+			IsSaved:  advert.IsSaved,
 			IsViewed: advert.IsViewed,
 		}
 		dtoAdverts = append(dtoAdverts, &advertDTO)
@@ -382,7 +385,7 @@ func (s *AdvertService) GetSavedByUserId(userId uuid.UUID) ([]*dto.PreviewAdvert
 				HasDelivery: advert.HasDelivery,
 				Location:    advert.Location,
 			},
-			IsSaved: advert.IsSaved,
+			IsSaved:  advert.IsSaved,
 			IsViewed: advert.IsViewed,
 		}
 		dtoAdverts = append(dtoAdverts, &advertDTO)
@@ -392,7 +395,23 @@ func (s *AdvertService) GetSavedByUserId(userId uuid.UUID) ([]*dto.PreviewAdvert
 }
 
 func (s *AdvertService) AddToSaved(advertId, userId uuid.UUID) error {
-	err := s.advertRepo.AddToSaved(advertId, userId)
+	exists, err := s.advertRepo.CheckIfExists(advertId)
+	if err != nil {
+		return entity.UsecaseWrap(err, err)
+	}
+	if !exists {
+		return entity.UsecaseWrap(ErrAdvertNotFound, ErrAdvertNotFound)
+	}
+
+	exists, err = s.userRepo.CheckIfExists(userId)
+	if err != nil {
+		return entity.UsecaseWrap(err, err)
+	}
+	if !exists {
+		return entity.UsecaseWrap(repository.ErrUserNotFound, repository.ErrUserNotFound)
+	}
+
+	err = s.advertRepo.AddToSaved(advertId, userId)
 	if err != nil {
 		return entity.UsecaseWrap(err, err)
 	}
@@ -401,10 +420,64 @@ func (s *AdvertService) AddToSaved(advertId, userId uuid.UUID) error {
 }
 
 func (s *AdvertService) RemoveFromSaved(advertId, userId uuid.UUID) error {
-	err := s.advertRepo.DeleteFromSaved(advertId, userId)
+	exists, err := s.advertRepo.CheckIfExists(advertId)
 	if err != nil {
 		return entity.UsecaseWrap(err, err)
 	}
-	
+	if !exists {
+		return entity.UsecaseWrap(ErrAdvertNotFound, ErrAdvertNotFound)
+	}
+
+	err = s.advertRepo.DeleteFromSaved(advertId, userId)
+	if err != nil {
+		return entity.UsecaseWrap(err, err)
+	}
+
 	return nil
+}
+
+func (s *AdvertService) AddViewed(advertId, userId uuid.UUID) error {
+	exists, err := s.advertRepo.CheckIfExists(advertId)
+	if err != nil {
+		return entity.UsecaseWrap(err, err)
+	}
+	if !exists {
+		return entity.UsecaseWrap(ErrAdvertNotFound, ErrAdvertNotFound)
+	}
+
+	err = s.advertRepo.AddViewed(userId, advertId)
+	if err != nil {
+		return entity.UsecaseWrap(err, err)
+	}
+
+	return nil
+}
+
+func (s *AdvertService) GetBySellerId(userId, sellerId uuid.UUID) ([]*dto.PreviewAdvertCard, error) {
+	adverts, err := s.advertRepo.GetBySellerId(sellerId, userId)
+	if err != nil {
+		return nil, entity.UsecaseWrap(err, err)
+	}
+
+	dtoAdverts := make([]*dto.PreviewAdvertCard, 0, len(adverts))
+	for _, advert := range adverts {
+		advertDTO := dto.PreviewAdvertCard{
+			Preview: dto.PreviewAdvert{
+				ID:          advert.ID,
+				SellerId:    advert.SellerId,
+				CategoryId:  advert.CategoryId,
+				Title:       advert.Title,
+				Price:       advert.Price,
+				ImageURL:    advert.ImageURL.UUID.String(),
+				Status:      dto.AdvertStatus(advert.Status),
+				HasDelivery: advert.HasDelivery,
+				Location:    advert.Location,
+			},
+			IsSaved:  advert.IsSaved,
+			IsViewed: advert.IsViewed,
+		}
+		dtoAdverts = append(dtoAdverts, &advertDTO)
+	}
+
+	return dtoAdverts, nil
 }
