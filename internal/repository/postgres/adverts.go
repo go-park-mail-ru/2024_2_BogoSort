@@ -32,6 +32,12 @@ const (
 		ORDER BY created_at DESC
 		LIMIT $1 OFFSET $2`
 
+	selectSavedAdvertsByUserIdQuery = `
+		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at
+		FROM advert
+		WHERE id IN (SELECT advert_id FROM saved_advert WHERE user_id = $1)
+		ORDER BY created_at DESC`
+
 	selectAdvertsByUserIdQuery = `
 		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at
 		FROM advert
@@ -425,6 +431,62 @@ func (r *AdvertDB) GetById(advertId uuid.UUID) (*entity.Advert, error) {
 		CreatedAt:   dbAdvert.CreatedAt,
 		UpdatedAt:   dbAdvert.UpdatedAt,
 	}, nil
+}
+
+func (r *AdvertDB) GetSavedByUserId(userId uuid.UUID) ([]*entity.Advert, error) {
+	var adverts []*entity.Advert
+
+	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
+	defer cancel()
+
+	rows, err := r.DB.Query(ctx, selectSavedAdvertsByUserIdQuery, userId)
+	if err != nil {
+		r.logger.Error("failed to execute query", zap.Error(err), zap.String("user_id", userId.String()))
+		return nil, entity.PSQLWrap(err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var dbAdvert AdvertRepoModel
+		if err := rows.Scan(
+			&dbAdvert.ID,
+			&dbAdvert.Title,
+			&dbAdvert.Description,
+			&dbAdvert.Price,
+			&dbAdvert.Location,
+			&dbAdvert.HasDelivery,
+			&dbAdvert.CategoryId,
+			&dbAdvert.SellerId,
+			&dbAdvert.ImageURL,
+			&dbAdvert.Status,
+			&dbAdvert.CreatedAt,
+			&dbAdvert.UpdatedAt,
+		); err != nil {
+			r.logger.Error("failed to scan row", zap.Error(err), zap.String("user_id", userId.String()))
+			return nil, entity.PSQLWrap(err)
+		}
+		adverts = append(adverts, &entity.Advert{
+			ID:          dbAdvert.ID,
+			Title:       dbAdvert.Title,
+			Description: dbAdvert.Description,
+			Price:       dbAdvert.Price,
+			Location:    dbAdvert.Location,
+			HasDelivery: dbAdvert.HasDelivery,
+			CategoryId:  dbAdvert.CategoryId,
+			SellerId:    dbAdvert.SellerId,
+			ImageURL:    dbAdvert.ImageURL,
+			Status:      entity.AdvertStatus(dbAdvert.Status),
+			CreatedAt:   dbAdvert.CreatedAt,
+			UpdatedAt:   dbAdvert.UpdatedAt,
+		})
+	}
+
+	if err := rows.Err(); err != nil {
+		r.logger.Error("error iterating over rows", zap.Error(err), zap.String("user_id", userId.String()))
+		return nil, entity.PSQLWrap(err)
+	}
+
+	return adverts, nil
 }
 
 func (r *AdvertDB) Update(advert *entity.Advert) error {

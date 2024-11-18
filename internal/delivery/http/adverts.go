@@ -67,6 +67,7 @@ func (h *AdvertEndpoint) ConfigureRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/adverts/category/{categoryId}", h.GetByCategoryId).Methods("GET")
 	router.HandleFunc("/api/v1/adverts/{advertId}/image", h.UploadImage).Methods("PUT")
 	router.HandleFunc("/api/v1/adverts", h.Get).Methods("GET")
+	router.HandleFunc("/api/v1/adverts/saved/{userId}", h.GetSavedByUserId).Methods("GET")
 }
 
 // Get godoc
@@ -158,6 +159,37 @@ func (h *AdvertEndpoint) GetByCartId(writer http.ResponseWriter, r *http.Request
 	adverts, err := h.advertUC.GetByCartId(cartId)
 	if err != nil {
 		h.sendError(writer, http.StatusInternalServerError, err, "failed to get adverts by cart ID", nil)
+		return
+	}
+
+	for _, advert := range adverts {
+		utils.SanitizeResponseAdvert(advert, h.policy)
+	}
+	utils.SendJSONResponse(writer, http.StatusOK, adverts)
+}
+
+// GetSavedByUserId godoc
+// @Summary Retrieve adverts by user ID
+// @Description Fetch a list of adverts saved by the specified user ID.
+// @Tags adverts
+// @Produce json
+// @Param userId path string true "User ID"
+// @Success 200 {array} dto.AdvertResponse "List of adverts saved by user"
+// @Failure 400 {object} utils.ErrResponse "Invalid user ID"
+// @Failure 403 {object} utils.ErrResponse "Forbidden"
+// @Failure 500 {object} utils.ErrResponse "Failed to retrieve adverts by user ID"
+// @Router /api/v1/adverts/saved/{userId} [get]
+func (h *AdvertEndpoint) GetSavedByUserId(writer http.ResponseWriter, r *http.Request) {
+	userIdStr := mux.Vars(r)["userId"]
+	userId, err := uuid.Parse(userIdStr)
+	if err != nil {
+		h.sendError(writer, http.StatusBadRequest, ErrInvalidID, "invalid user ID", nil)
+		return
+	}
+
+	adverts, err := h.advertUC.GetSavedByUserId(userId)
+	if err != nil {
+		h.sendError(writer, http.StatusInternalServerError, err, "failed to get adverts by user ID", nil)
 		return
 	}
 

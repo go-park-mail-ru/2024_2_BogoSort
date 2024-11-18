@@ -139,6 +139,21 @@ func (mr *MockAdvertUseCaseMockRecorder) GetByUserId(userId interface{}) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByUserId", reflect.TypeOf((*MockAdvertUseCase)(nil).GetByUserId), userId)
 }
 
+// GetSavedByUserId mocks base method.
+func (m *MockAdvertUseCase) GetSavedByUserId(userId uuid.UUID) ([]*dto.AdvertResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSavedByUserId", userId)
+	ret0, _ := ret[0].([]*dto.AdvertResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSavedByUserId indicates an expected call of GetSavedByUserId.
+func (mr *MockAdvertUseCaseMockRecorder) GetSavedByUserId(userId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSavedByUserId", reflect.TypeOf((*MockAdvertUseCase)(nil).GetSavedByUserId), userId)
+}
+
 // Update mocks base method.
 func (m *MockAdvertUseCase) Update(advert *dto.AdvertRequest, userId, advertId uuid.UUID) error {
 	m.ctrl.T.Helper()

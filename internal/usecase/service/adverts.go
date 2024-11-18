@@ -287,3 +287,12 @@ func (s *AdvertService) UploadImage(advertId uuid.UUID, imageId uuid.UUID, userI
 
 	return nil
 }
+
+func (s *AdvertService) GetSavedByUserId(userId uuid.UUID) ([]*dto.AdvertResponse, error) {
+	adverts, err := s.advertRepo.GetSavedByUserId(userId)
+	if err != nil {
+		return nil, entity.UsecaseWrap(err, err)
+	}
+
+	return s.advertEntitiesToDTO(adverts)
+}

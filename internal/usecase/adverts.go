@@ -19,6 +19,9 @@ type AdvertUseCase interface {
 	// Если объявление не найдено, возвращает ErrAdvertNotFound
 	GetById(advertId uuid.UUID) (*dto.AdvertResponse, error)
 
+	// GetSavedByUserId возвращает массив объявлений, которые находятся в сохраненных
+	GetSavedByUserId(userId uuid.UUID) ([]*dto.AdvertResponse, error)
+
 	// Add добавляет объявление
 	// Возможные ошибки:
 	// ErrAdvertBadRequest - некорректные данные для создания объявления
