@@ -24,21 +24,23 @@ type SessionConfig struct {
 }
 
 type Config struct {
-	Server     ServerConfig  `yaml:"server"`
-	Session    SessionConfig `yaml:"session"`
-	PGIP       string        `yaml:"pg_ip"`
-	PGPort     int           `yaml:"pg_port"`
-	PGUser     string        `yaml:"pg_user"`
-	PGPass     string        `yaml:"pg_password"`
-	PGTimeout  time.Duration `yaml:"pg_timeout" default:"5s"`
-	PGDB       string        `yaml:"pg_db"`
-	RdAddr     string        `yaml:"rd_addr"`
-	RdPass     string        `yaml:"rd_password"`
-	RdDB       int           `yaml:"rd_db"`
-	Static     StaticConfig  `yaml:"static"`
-	CSRFSecret string        `yaml:"csrf_secret"`
-	AuthPort   int           `yaml:"auth_port"`
-	AuthHost   string        `yaml:"auth_host"`
+	Server           ServerConfig  `yaml:"server"`
+	Session          SessionConfig `yaml:"session"`
+	PGIP             string        `yaml:"pg_ip"`
+	PGPort           int           `yaml:"pg_port"`
+	PGUser           string        `yaml:"pg_user"`
+	PGPass           string        `yaml:"pg_password"`
+	PGTimeout        time.Duration `yaml:"pg_timeout" default:"5s"`
+	PGDB             string        `yaml:"pg_db"`
+	RdAddr           string        `yaml:"rd_addr"`
+	RdPass           string        `yaml:"rd_password"`
+	RdDB             int           `yaml:"rd_db"`
+	Static           StaticConfig  `yaml:"static"`
+	CSRFSecret       string        `yaml:"csrf_secret"`
+	AuthPort         int           `yaml:"auth_port"`
+	AuthHost         string        `yaml:"auth_host"`
+	CartPurchaseHost string        `yaml:"cart_purchase_host"`
+	CartPurchasePort int           `yaml:"cart_purchase_port"`
 }
 
 type StaticConfig struct {
@@ -98,6 +100,10 @@ func GetServerAddress() string {
 
 func GetAuthAddress() string {
 	return fmt.Sprintf("%s:%d", cfg.AuthHost, cfg.AuthPort)
+}
+
+func GetCartPurchaseAddress() string {
+	return fmt.Sprintf("%s:%d", cfg.CartPurchaseHost, cfg.CartPurchasePort)
 }
 
 func (cfg *Config) GetConnectURL() string {

@@ -1,28 +1,29 @@
 package http
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
+	"time"
 
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/cart_purchase"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/utils"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 )
 
 type CartEndpoints struct {
-	cartUC usecase.Cart
-	logger *zap.Logger
+	cartClient *cart_purchase.CartPurchaseClient
+	logger     *zap.Logger
 }
 
-func NewCartEndpoints(cartUC usecase.Cart, logger *zap.Logger) *CartEndpoints {
+func NewCartEndpoints(cartClient *cart_purchase.CartPurchaseClient, logger *zap.Logger) *CartEndpoints {
 	return &CartEndpoints{
-		cartUC: cartUC,
-		logger: logger,
+		cartClient: cartClient,
+		logger:     logger,
 	}
 }
 
@@ -60,8 +61,10 @@ func (h *CartEndpoints) GetCartByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cart, err := h.cartUC.GetCartByID(cartID)
-	if errors.Is(err, repository.ErrCartNotFound) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	cart, err := h.cartClient.GetCartByID(ctx, cartID)
+	if errors.Is(err, cart_purchase.ErrCartNotFound) {
 		h.logger.Error("cart not found", zap.Error(err))
 		utils.SendErrorResponse(w, http.StatusNotFound, "cart not found")
 		return
@@ -102,8 +105,10 @@ func (h *CartEndpoints) GetCartByUserID(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	cart, err := h.cartUC.GetCartByUserID(userID)
-	if errors.Is(err, repository.ErrCartNotFound) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	cart, err := h.cartClient.GetCartByUserID(ctx, userID)
+	if errors.Is(err, cart_purchase.ErrCartNotFound) {
 		h.logger.Error("cart not found", zap.Error(err))
 		utils.SendErrorResponse(w, http.StatusNotFound, "cart not found")
 		return
@@ -134,13 +139,13 @@ func (h *CartEndpoints) AddAdvertToCart(w http.ResponseWriter, r *http.Request) 
 		utils.SendErrorResponse(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
-	err := h.cartUC.AddAdvertToUserCart(req.UserID, req.AdvertID)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	_, err := h.cartClient.AddAdvertToCart(ctx, req.UserID, req.AdvertID)
 
 	switch {
-	case errors.Is(err, repository.ErrCartNotFound):
+	case errors.Is(err, cart_purchase.ErrCartNotFound):
 		utils.SendErrorResponse(w, http.StatusNotFound, "cart not found")
-	case errors.Is(err, repository.ErrAdvertNotFound):
-		utils.SendErrorResponse(w, http.StatusNotFound, "advert not found")
 	case err != nil:
 		utils.SendErrorResponse(w, http.StatusInternalServerError, "failed to add advert to user cart")
 	}
@@ -167,9 +172,11 @@ func (h *CartEndpoints) DeleteAdvertFromCart(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	err := h.cartUC.DeleteAdvertFromCart(req.CartID, req.AdvertID)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	_, err := h.cartClient.DeleteAdvertFromCart(ctx, req.CartID, req.AdvertID)
 	switch {
-	case errors.Is(err, repository.ErrCartOrAdvertNotFound):
+	case errors.Is(err, cart_purchase.ErrCartNotFound):
 		utils.SendErrorResponse(w, http.StatusNotFound, "cart or advert not found")
 	case err != nil:
 		utils.SendErrorResponse(w, http.StatusInternalServerError, "failed to delete advert from user cart")
@@ -203,7 +210,9 @@ func (h *CartEndpoints) CheckCartExists(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	exists, err := h.cartUC.CheckCartExists(userID)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	exists, err := h.cartClient.CheckCartExists(ctx, userID)
 	if err != nil {
 		utils.SendErrorResponse(w, http.StatusInternalServerError, "failed to check cart existence")
 		return
