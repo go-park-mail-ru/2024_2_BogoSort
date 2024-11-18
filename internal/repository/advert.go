@@ -59,6 +59,9 @@ type AdvertRepository interface {
 	// UploadImage загружает изображение в объявление
 	UploadImage(advertId uuid.UUID, imageId uuid.UUID) error
 
+	// AddViewed добавляет просмотренное объявление
+	AddViewed(userId, advertId uuid.UUID) error
+
 	// BeginTransaction начинает транзакцию
 	BeginTransaction() (pgx.Tx, error)
 }

@@ -92,6 +92,15 @@ const (
 	selectSavedCountAndIsSavedQuery = `
 		SELECT COUNT(*), EXISTS(SELECT 1 FROM saved_advert WHERE advert_id = $1 AND user_id = $2) 
 		FROM saved_advert WHERE advert_id = $1`
+
+	insertViewedAdvertQuery = `
+		INSERT INTO viewed_advert (user_id, advert_id)
+		VALUES ($1, $2)
+		RETURNING id, user_id, advert_id, created_at`
+
+	selectViewedCountAndIsViewedQuery = `
+		SELECT COUNT(*), EXISTS(SELECT 1 FROM viewed_advert WHERE advert_id = $1 AND user_id = $2) 
+		FROM viewed_advert WHERE advert_id = $1`
 )
 
 type AdvertRepoModel struct {
@@ -142,6 +151,22 @@ func (r *AdvertDB) getSavedCount(advertId uuid.UUID, userId uuid.UUID) (int, boo
 	}
 
 	return savedCount, isSaved, nil
+}
+
+func (r *AdvertDB) getViewedCount(advertId uuid.UUID, userId uuid.UUID) (int, bool, error) {
+	var viewedCount int
+	isViewed := false
+
+	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
+	defer cancel()
+
+	err := r.DB.QueryRow(ctx, selectViewedCountAndIsViewedQuery, advertId, userId).Scan(&viewedCount, &isViewed)
+	if err != nil {
+		r.logger.Error("failed to execute query", zap.Error(err), zap.String("advert_id", advertId.String()), zap.String("user_id", userId.String()))
+		return 0, false, err
+	}
+
+	return viewedCount, isViewed, nil
 }
 
 func (r *AdvertDB) convertToEntityAdvert(dbAdvert AdvertRepoModel, userId uuid.UUID) *entity.Advert {
@@ -585,6 +610,19 @@ func (r *AdvertDB) DeleteFromSaved(userId uuid.UUID, advertId uuid.UUID) error {
 	if rowsAffected == 0 {
 		r.logger.Error("advert not found", zap.String("advert_id", advertId.String()))
 		return entity.PSQLWrap(repository.ErrAdvertNotFound)
+	}
+
+	return nil
+}
+
+func (r *AdvertDB) AddViewed(userId uuid.UUID, advertId uuid.UUID) error {
+	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
+	defer cancel()
+
+	_, err := r.DB.Exec(ctx, insertViewedAdvertQuery, advertId, userId)
+	if err != nil {
+		r.logger.Error("failed to add viewed advert", zap.Error(err), zap.String("advert_id", advertId.String()))
+		return entity.PSQLWrap(err)
 	}
 
 	return nil
