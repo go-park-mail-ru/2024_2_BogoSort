@@ -1,21 +1,24 @@
 package http
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/utils"
+	"github.com/google/uuid"
+	"go.uber.org/zap"
 	"io"
 	"net/http"
 	"strconv"
 
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/utils"
-	"github.com/google/uuid"
-	"go.uber.org/zap"
-
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/static"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/middleware"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase"
 	"github.com/gorilla/mux"
 	"github.com/microcosm-cc/bluemonday"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 var (
@@ -29,27 +32,29 @@ var (
 	ErrFailedToReadFile    = errors.New("failed to read file")
 	ErrFailedToCloseFile   = errors.New("failed to close file")
 	ErrFailedToUploadFile  = errors.New("failed to upload file")
+	ErrTimeout             = errors.New("timeout exceeded")
+	ErrTooLargeFile        = errors.New("file size exceeds limit")
 )
 
 type AdvertEndpoint struct {
-	advertUC       usecase.AdvertUseCase
-	staticUC       usecase.StaticUseCase
-	sessionManager *utils.SessionManager
-	logger         *zap.Logger
-	policy         *bluemonday.Policy
+	advertUC         usecase.AdvertUseCase
+	staticGrpcClient static.StaticGrpcClient
+	sessionManager   *utils.SessionManager
+	logger           *zap.Logger
+	policy           *bluemonday.Policy
 }
 
 func NewAdvertEndpoint(advertUC usecase.AdvertUseCase,
-	staticUC usecase.StaticUseCase,
+	staticGrpcClient static.StaticGrpcClient,
 	sessionManager *utils.SessionManager,
 	logger *zap.Logger,
 	policy *bluemonday.Policy) *AdvertEndpoint {
 	return &AdvertEndpoint{
-		advertUC:       advertUC,
-		staticUC:       staticUC,
-		sessionManager: sessionManager,
-		logger:         logger,
-		policy:         policy,
+		advertUC:         advertUC,
+		staticGrpcClient: staticGrpcClient,
+		sessionManager:   sessionManager,
+		logger:           logger,
+		policy:           policy,
 	}
 }
 
@@ -465,7 +470,7 @@ func (h *AdvertEndpoint) UploadImage(writer http.ResponseWriter, r *http.Request
 
 	fileHeader, _, err := r.FormFile("image")
 	if err != nil {
-		h.sendError(writer, http.StatusBadRequest, ErrFileNotAttached, "file not attached", nil)
+		h.sendError(writer, http.StatusBadRequest, ErrFileNotAttached, "file not attached or size too large", nil)
 		return
 	}
 
@@ -480,9 +485,20 @@ func (h *AdvertEndpoint) UploadImage(writer http.ResponseWriter, r *http.Request
 		return
 	}
 
-	imageId, err := h.staticUC.UploadFile(data)
+	imageId, err := h.staticGrpcClient.UploadStatic(bytes.NewReader(data))
 	if err != nil {
-		h.sendError(writer, http.StatusInternalServerError, ErrFailedToUploadFile, "failed to upload image", nil)
+		if status, ok := status.FromError(err); ok {
+			switch status.Code() {
+			case codes.DeadlineExceeded:
+				h.sendError(writer, http.StatusGatewayTimeout, ErrTimeout, "upload image timeout deadline exceeded", nil)
+			case codes.ResourceExhausted:
+				h.sendError(writer, http.StatusRequestEntityTooLarge, ErrTooLargeFile, "file size exceeds limit", nil)
+			default:
+				h.sendError(writer, http.StatusInternalServerError, ErrFailedToUploadFile, "failed to upload image", nil)
+			}
+		} else {
+			h.sendError(writer, http.StatusInternalServerError, ErrFailedToUploadFile, "failed to upload image", nil)
+		}
 		return
 	}
 

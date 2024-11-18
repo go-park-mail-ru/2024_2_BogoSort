@@ -1,6 +1,7 @@
 package http
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"io"
@@ -9,12 +10,15 @@ import (
 	"github.com/google/uuid"
 	"github.com/microcosm-cc/bluemonday"
 
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/static"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/middleware"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/utils"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 var (
@@ -28,18 +32,20 @@ var (
 )
 
 type UserEndpoint struct {
-	userUC         usecase.User
-	sessionManager *utils.SessionManager
-	staticUseCase  usecase.StaticUseCase
-	logger         *zap.Logger
-	policy         *bluemonday.Policy
+	userUC           usecase.User
+	authUC           usecase.Auth
+	sessionManager   *utils.SessionManager
+	staticGrpcClient static.StaticGrpcClient
+	logger           *zap.Logger
+	policy           *bluemonday.Policy
 }
 
-func NewUserEndpoint(userUC usecase.User, sessionManager *utils.SessionManager, staticUseCase usecase.StaticUseCase, logger *zap.Logger, policy *bluemonday.Policy) *UserEndpoint {
+func NewUserEndpoint(userUC usecase.User, authUC usecase.Auth, sessionManager *utils.SessionManager, staticGrpcClient static.StaticGrpcClient, logger *zap.Logger, policy *bluemonday.Policy) *UserEndpoint {
 	return &UserEndpoint{
 		userUC:         userUC,
+		authUC:         authUC,
 		sessionManager: sessionManager,
-		staticUseCase:  staticUseCase,
+		staticGrpcClient: staticGrpcClient,
 		logger:         logger,
 		policy:         policy,
 	}
@@ -337,9 +343,20 @@ func (u *UserEndpoint) UploadImage(writer http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	imageId, err := u.staticUseCase.UploadFile(data)
+	imageId, err := u.staticGrpcClient.UploadStatic(bytes.NewReader(data))
 	if err != nil {
-		u.sendError(writer, http.StatusInternalServerError, err, "failed to upload image", nil)
+		if status, ok := status.FromError(err); ok {
+			switch status.Code() {
+			case codes.DeadlineExceeded:
+				u.sendError(writer, http.StatusGatewayTimeout, ErrTimeout, "upload image timeout deadline exceeded", nil)
+			case codes.ResourceExhausted:
+				u.sendError(writer, http.StatusRequestEntityTooLarge, ErrTooLargeFile, "file size exceeds limit", nil)
+			default:
+				u.sendError(writer, http.StatusInternalServerError, ErrFailedToUploadFile, "failed to upload image", nil)
+			}
+		} else {
+			u.sendError(writer, http.StatusInternalServerError, ErrFailedToUploadFile, "failed to upload image", nil)
+		}
 		return
 	}
 

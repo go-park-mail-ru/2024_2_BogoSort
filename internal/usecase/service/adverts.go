@@ -21,20 +21,17 @@ var (
 
 type AdvertService struct {
 	advertRepo repository.AdvertRepository
-	staticRepo repository.StaticRepository
 	sellerRepo repository.Seller
 	userRepo   repository.User
 	logger     *zap.Logger
 }
 
 func NewAdvertService(advertRepo repository.AdvertRepository,
-	staticRepo repository.StaticRepository,
 	sellerRepo repository.Seller,
 	userRepo repository.User,
 	logger *zap.Logger) *AdvertService {
 	return &AdvertService{
 		advertRepo: advertRepo,
-		staticRepo: staticRepo,
 		sellerRepo: sellerRepo,
 		userRepo:   userRepo,
 	}
@@ -55,7 +52,7 @@ func (s *AdvertService) Get(limit, offset int, userId uuid.UUID) ([]*dto.Preview
 				CategoryId:  advert.CategoryId,
 				Title:       advert.Title,
 				Price:       advert.Price,
-				ImageURL:    advert.ImageURL.UUID.String(),
+				ImageId:     advert.ImageId,
 				Status:      dto.AdvertStatus(advert.Status),
 				HasDelivery: advert.HasDelivery,
 				Location:    advert.Location,
@@ -89,7 +86,7 @@ func (s *AdvertService) GetByUserId(userId uuid.UUID) ([]*dto.MyPreviewAdvertCar
 				CategoryId:  advert.CategoryId,
 				Title:       advert.Title,
 				Price:       advert.Price,
-				ImageURL:    advert.ImageURL.UUID.String(),
+				ImageId:     advert.ImageId,
 				Status:      dto.AdvertStatus(advert.Status),
 				HasDelivery: advert.HasDelivery,
 				Location:    advert.Location,
@@ -117,7 +114,7 @@ func (s *AdvertService) GetByCartId(cartId, userId uuid.UUID) ([]*dto.PreviewAdv
 				CategoryId:  advert.CategoryId,
 				Title:       advert.Title,
 				Price:       advert.Price,
-				ImageURL:    advert.ImageURL.UUID.String(),
+				ImageId:     advert.ImageId,
 				Status:      dto.AdvertStatus(advert.Status),
 				HasDelivery: advert.HasDelivery,
 				Location:    advert.Location,
@@ -148,7 +145,7 @@ func (s *AdvertService) GetById(advertId, userId uuid.UUID) (*dto.AdvertCard, er
 			CategoryId:  advert.CategoryId,
 			Title:       advert.Title,
 			Price:       advert.Price,
-			ImageURL:    advert.ImageURL.UUID.String(),
+			ImageId:     advert.ImageId,
 			Status:      dto.AdvertStatus(advert.Status),
 			HasDelivery: advert.HasDelivery,
 			Location:    advert.Location,
@@ -201,7 +198,7 @@ func (s *AdvertService) Add(advert *dto.AdvertRequest, userId uuid.UUID) (*dto.A
 		Status:      dto.AdvertStatus(entityAdvert.Status),
 		HasDelivery: entityAdvert.HasDelivery,
 		Location:    entityAdvert.Location,
-		ImageURL:    entityAdvert.ImageURL.UUID.String(),
+		ImageId:     entityAdvert.ImageId,
 		CreatedAt:   entityAdvert.CreatedAt,
 		UpdatedAt:   entityAdvert.UpdatedAt,
 		ViewsNumber: entityAdvert.ViewsNumber,
@@ -330,7 +327,7 @@ func (s *AdvertService) GetByCategoryId(categoryId, userId uuid.UUID) ([]*dto.Pr
 				CategoryId:  advert.CategoryId,
 				Title:       advert.Title,
 				Price:       advert.Price,
-				ImageURL:    advert.ImageURL.UUID.String(),
+				ImageId:     advert.ImageId,
 				Status:      dto.AdvertStatus(advert.Status),
 				HasDelivery: advert.HasDelivery,
 				Location:    advert.Location,
@@ -380,7 +377,7 @@ func (s *AdvertService) GetSavedByUserId(userId uuid.UUID) ([]*dto.PreviewAdvert
 				CategoryId:  advert.CategoryId,
 				Title:       advert.Title,
 				Price:       advert.Price,
-				ImageURL:    advert.ImageURL.UUID.String(),
+				ImageId:     advert.ImageId,
 				Status:      dto.AdvertStatus(advert.Status),
 				HasDelivery: advert.HasDelivery,
 				Location:    advert.Location,
@@ -468,7 +465,7 @@ func (s *AdvertService) GetBySellerId(userId, sellerId uuid.UUID) ([]*dto.Previe
 				CategoryId:  advert.CategoryId,
 				Title:       advert.Title,
 				Price:       advert.Price,
-				ImageURL:    advert.ImageURL.UUID.String(),
+				ImageId:     advert.ImageId,
 				Status:      dto.AdvertStatus(advert.Status),
 				HasDelivery: advert.HasDelivery,
 				Location:    advert.Location,

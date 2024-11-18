@@ -1,6 +1,6 @@
 server:
   port: 8080
-  host: "localhost"
+  host: "0.0.0.0"
   read_timeout: 10s
   write_timeout: 10s
   shutdown_timeout: 10s
@@ -15,8 +15,11 @@ auth_host: "localhost"
 cart_purchase_host: "localhost"
 cart_purchase_port: 50052
 
+static_host: "localhost"
+static_port: 50053
+
 pg_ip: "localhost"
-pg_port: 8001
+pg_port: 5432
 pg_user: "postgres"
 pg_password: "postgres"
 pg_db: "emporiumdb"
@@ -31,3 +34,5 @@ csrf_secret: "2b7e151628aed2a6abf7158809cf4f3c"
 static:
   path: "static/"
   max_size: 10485760
+  timeout: 5s
+  port: 8081

@@ -17,6 +17,7 @@ import (
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository/redis"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase/service"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/pkg/connector"
+	static "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/static"
 	"github.com/gorilla/mux"
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/rs/cors"
@@ -82,6 +83,8 @@ func main() {
 }
 
 func Init(cfg config.Config) (*mux.Router, error) {
+	var logger = zap.L()
+
 	router := mux.NewRouter()
 	router.Use(recoveryMiddleware)
 
@@ -105,10 +108,6 @@ func Init(cfg config.Config) (*mux.Router, error) {
 	advertsRepo, err := postgres.NewAdvertRepository(dbPool, zap.L(), ctx, cfg.PGTimeout)
 	if err != nil {
 		return nil, handleRepoError(err, "unable to create advert repository")
-	}
-	staticRepo, err := postgres.NewStaticRepository(ctx, dbPool, cfg.Static.Path, cfg.Static.MaxSize, zap.L(), cfg.PGTimeout)
-	if err != nil {
-		return nil, handleRepoError(err, "unable to create static repository")
 	}
 	categoryRepo, err := postgres.NewCategoryRepository(dbPool, zap.L(), ctx, cfg.PGTimeout)
 	if err != nil {
@@ -138,24 +137,25 @@ func Init(cfg config.Config) (*mux.Router, error) {
 	if err != nil {
 		return nil, handleRepoError(err, "unable to create cart purchase client")
 	}
+	staticClient, err := static.NewStaticGrpcClient(config.GetStaticAddress(), cfg.PGTimeout)
+	if err != nil {
+		return nil, handleRepoError(err, "unable to create static client")
+	}
 
-	advertsUseCase := service.NewAdvertService(advertsRepo, staticRepo, sellerRepo, userRepo, zap.L())
-	staticUseCase := service.NewStaticService(staticRepo, zap.L())
-	categoryUseCase := service.NewCategoryService(categoryRepo, zap.L())
-	userUC := service.NewUserService(userRepo, sellerRepo, zap.L())
-	sessionUC := service.NewAuthService(sessionRepo, zap.L())
-	sessionManager := utils.NewSessionManager(authGrpcClient, int(cfg.Session.ExpirationTime.Seconds()), cfg.Session.SecureCookie, zap.L())
-
+	advertsUseCase := service.NewAdvertService(advertsRepo, sellerRepo, userRepo, logger)
+	categoryUseCase := service.NewCategoryService(categoryRepo, logger)
+	userUC := service.NewUserService(userRepo, sellerRepo, logger)
+	sessionUC := service.NewAuthService(sessionRepo, logger)
+	sessionManager := utils.NewSessionManager(authGrpcClient, int(cfg.Session.ExpirationTime.Seconds()), cfg.Session.SecureCookie, logger)
 	router.Use(middleware.NewAuthMiddleware(sessionManager).AuthMiddleware)
 
-	advertsHandler := http3.NewAdvertEndpoint(advertsUseCase, staticUseCase, sessionManager, zap.L(), policy)
-	authHandler := http3.NewAuthEndpoint(sessionUC, sessionManager, zap.L())
-	userHandler := http3.NewUserEndpoint(userUC, sessionManager, staticUseCase, zap.L(), policy)
-	sellerHandler := http3.NewSellerEndpoint(sellerRepo, zap.L())
-	purchaseHandler := http3.NewPurchaseEndpoint(cartPurchaseClient, zap.L())
-	cartHandler := http3.NewCartEndpoint(cartPurchaseClient, zap.L())
-	categoryHandler := http3.NewCategoryEndpoint(categoryUseCase, zap.L())
-	staticHandler := http3.NewStaticEndpoint(staticUseCase, zap.L())
+	advertsHandler := http3.NewAdvertEndpoint(advertsUseCase, *staticClient, sessionManager, logger, policy)
+	authHandler := http3.NewAuthEndpoint(sessionUC, sessionManager, logger)
+	userHandler := http3.NewUserEndpoint(userUC, sessionUC, sessionManager, *staticClient, logger, policy)
+	sellerHandler := http3.NewSellerEndpoint(sellerRepo, logger)
+	purchaseHandler := http3.NewPurchaseEndpoint(cartPurchaseClient, logger)
+	cartHandler := http3.NewCartEndpoint(cartPurchaseClient, logger)
+	categoryHandler := http3.NewCategoryEndpoint(categoryUseCase, logger)
 
 	csrfEndpoints := http3.NewCSRFEndpoint(csrfToken, sessionManager)
 	csrfEndpoints.Configure(router)
@@ -169,7 +169,6 @@ func Init(cfg config.Config) (*mux.Router, error) {
 	userHandler.ConfigureProtectedRoutes(authRouter)
 	sellerHandler.Configure(authRouter)
 	cartHandler.Configure(authRouter)
-	staticHandler.ConfigureRoutes(authRouter)
 	purchaseHandler.ConfigureRoutes(authRouter)
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 

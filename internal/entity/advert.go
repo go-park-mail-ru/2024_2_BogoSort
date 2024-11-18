@@ -23,7 +23,7 @@ type Advert struct {
 	Title       string        `db:"title"`
 	Description string        `db:"description"`
 	Price       uint          `db:"price"`
-	ImageURL    uuid.NullUUID `db:"image_url"`
+	ImageId     uuid.UUID `db:"image_id"`
 	Status      AdvertStatus  `db:"status"`
 	HasDelivery bool          `db:"has_delivery"`
 	Location    string        `db:"location"`

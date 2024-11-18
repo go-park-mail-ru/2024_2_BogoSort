@@ -22,8 +22,8 @@ type AdvertDB struct {
 
 const (
 	insertAdvertQuery = `
-		INSERT INTO advert (title, description, price, location, has_delivery, category_id, seller_id, image_id, status) 
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
+		INSERT INTO advert (title, description, price, location, has_delivery, category_id, seller_id, status) 
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
 		RETURNING id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status`
 
 	selectAdvertsQuery = `
@@ -113,7 +113,7 @@ type AdvertRepoModel struct {
 	Title       string
 	Description string
 	Price       uint
-	ImageURL    uuid.NullUUID
+	ImageId     uuid.UUID
 	Status      string
 	HasDelivery bool
 	Location    string
@@ -194,7 +194,7 @@ func (r *AdvertDB) convertToEntityAdvert(dbAdvert AdvertRepoModel, userId uuid.U
 		HasDelivery: dbAdvert.HasDelivery,
 		CategoryId:  dbAdvert.CategoryId,
 		SellerId:    dbAdvert.SellerId,
-		ImageURL:    dbAdvert.ImageURL,
+		ImageId:     dbAdvert.ImageId,
 		Status:      entity.AdvertStatus(dbAdvert.Status),
 		CreatedAt:   dbAdvert.CreatedAt,
 		UpdatedAt:   dbAdvert.UpdatedAt,
@@ -219,7 +219,6 @@ func (r *AdvertDB) Add(a *entity.Advert) (*entity.Advert, error) {
 		a.HasDelivery,
 		a.CategoryId,
 		a.SellerId,
-		a.ImageURL,
 		string(a.Status)).Scan(
 		&dbAdvert.ID,
 		&dbAdvert.Title,
@@ -229,7 +228,7 @@ func (r *AdvertDB) Add(a *entity.Advert) (*entity.Advert, error) {
 		&dbAdvert.HasDelivery,
 		&dbAdvert.CategoryId,
 		&dbAdvert.SellerId,
-		&dbAdvert.ImageURL,
+		&dbAdvert.ImageId,
 		&dbAdvert.Status,
 	)
 
@@ -240,7 +239,18 @@ func (r *AdvertDB) Add(a *entity.Advert) (*entity.Advert, error) {
 
 	r.logger.Info("advert added", zap.Any("advert", dbAdvert))
 
-	return r.convertToEntityAdvert(dbAdvert, uuid.Nil), nil
+	return &entity.Advert{
+		ID:          dbAdvert.ID,
+		Title:       dbAdvert.Title,
+		Description: dbAdvert.Description,
+		Price:       dbAdvert.Price,
+		Location:    dbAdvert.Location,
+		HasDelivery: dbAdvert.HasDelivery,
+		CategoryId:  dbAdvert.CategoryId,
+		SellerId:    dbAdvert.SellerId,
+		ImageId:     dbAdvert.ImageId,
+		Status:      entity.AdvertStatus(dbAdvert.Status),
+	}, nil
 }
 
 func (r *AdvertDB) Get(limit, offset int, userId uuid.UUID) ([]*entity.Advert, error) {
@@ -266,7 +276,7 @@ func (r *AdvertDB) Get(limit, offset int, userId uuid.UUID) ([]*entity.Advert, e
 			&dbAdvert.HasDelivery,
 			&dbAdvert.CategoryId,
 			&dbAdvert.SellerId,
-			&dbAdvert.ImageURL,
+			&dbAdvert.ImageId,
 			&dbAdvert.Status,
 			&dbAdvert.CreatedAt,
 			&dbAdvert.UpdatedAt,
@@ -274,7 +284,20 @@ func (r *AdvertDB) Get(limit, offset int, userId uuid.UUID) ([]*entity.Advert, e
 			r.logger.Error("failed to scan row", zap.Error(err))
 			return nil, entity.PSQLWrap(err)
 		}
-		adverts = append(adverts, r.convertToEntityAdvert(dbAdvert, uuid.Nil))
+		adverts = append(adverts, &entity.Advert{
+			ID:          dbAdvert.ID,
+			Title:       dbAdvert.Title,
+			Description: dbAdvert.Description,
+			Price:       dbAdvert.Price,
+			Location:    dbAdvert.Location,
+			HasDelivery: dbAdvert.HasDelivery,
+			CategoryId:  dbAdvert.CategoryId,
+			SellerId:    dbAdvert.SellerId,
+			ImageId:     dbAdvert.ImageId,
+			Status:      entity.AdvertStatus(dbAdvert.Status),
+			CreatedAt:   dbAdvert.CreatedAt,
+			UpdatedAt:   dbAdvert.UpdatedAt,
+		})
 	}
 
 	if err := rows.Err(); err != nil {
@@ -308,7 +331,7 @@ func (r *AdvertDB) GetByCategoryId(categoryId, userId uuid.UUID) ([]*entity.Adve
 			&dbAdvert.HasDelivery,
 			&dbAdvert.CategoryId,
 			&dbAdvert.SellerId,
-			&dbAdvert.ImageURL,
+			&dbAdvert.ImageId,
 			&dbAdvert.Status,
 			&dbAdvert.CreatedAt,
 			&dbAdvert.UpdatedAt,
@@ -316,7 +339,20 @@ func (r *AdvertDB) GetByCategoryId(categoryId, userId uuid.UUID) ([]*entity.Adve
 			r.logger.Error("failed to scan row", zap.Error(err), zap.String("category_id", categoryId.String()))
 			return nil, entity.PSQLWrap(err)
 		}
-		adverts = append(adverts, r.convertToEntityAdvert(dbAdvert, userId))
+		adverts = append(adverts, &entity.Advert{
+			ID:          dbAdvert.ID,
+			Title:       dbAdvert.Title,
+			Description: dbAdvert.Description,
+			Price:       dbAdvert.Price,
+			Location:    dbAdvert.Location,
+			HasDelivery: dbAdvert.HasDelivery,
+			CategoryId:  dbAdvert.CategoryId,
+			SellerId:    dbAdvert.SellerId,
+			ImageId:     dbAdvert.ImageId,
+			Status:      entity.AdvertStatus(dbAdvert.Status),
+			CreatedAt:   dbAdvert.CreatedAt,
+			UpdatedAt:   dbAdvert.UpdatedAt,
+		})
 	}
 
 	if err := rows.Err(); err != nil {
@@ -351,7 +387,7 @@ func (r *AdvertDB) GetBySellerId(sellerId, userId uuid.UUID) ([]*entity.Advert, 
 			&dbAdvert.HasDelivery,
 			&dbAdvert.CategoryId,
 			&dbAdvert.SellerId,
-			&dbAdvert.ImageURL,
+			&dbAdvert.ImageId,
 			&dbAdvert.Status,
 			&dbAdvert.CreatedAt,
 			&dbAdvert.UpdatedAt,
@@ -359,7 +395,20 @@ func (r *AdvertDB) GetBySellerId(sellerId, userId uuid.UUID) ([]*entity.Advert, 
 			r.logger.Error("failed to scan row", zap.Error(err), zap.String("seller_id", sellerId.String()))
 			return nil, entity.PSQLWrap(err)
 		}
-		adverts = append(adverts, r.convertToEntityAdvert(dbAdvert, userId))
+		adverts = append(adverts, &entity.Advert{
+			ID:          dbAdvert.ID,
+			Title:       dbAdvert.Title,
+			Description: dbAdvert.Description,
+			Price:       dbAdvert.Price,
+			Location:    dbAdvert.Location,
+			HasDelivery: dbAdvert.HasDelivery,
+			CategoryId:  dbAdvert.CategoryId,
+			SellerId:    dbAdvert.SellerId,
+			ImageId:     dbAdvert.ImageId,
+			Status:      entity.AdvertStatus(dbAdvert.Status),
+			CreatedAt:   dbAdvert.CreatedAt,
+			UpdatedAt:   dbAdvert.UpdatedAt,
+		})
 	}
 
 	if err := rows.Err(); err != nil {
@@ -394,7 +443,7 @@ func (r *AdvertDB) GetByCartId(cartId, userId uuid.UUID) ([]*entity.Advert, erro
 			&dbAdvert.HasDelivery,
 			&dbAdvert.CategoryId,
 			&dbAdvert.SellerId,
-			&dbAdvert.ImageURL,
+			&dbAdvert.ImageId,
 			&dbAdvert.Status,
 			&dbAdvert.CreatedAt,
 			&dbAdvert.UpdatedAt,
@@ -402,7 +451,20 @@ func (r *AdvertDB) GetByCartId(cartId, userId uuid.UUID) ([]*entity.Advert, erro
 			r.logger.Error("failed to scan row", zap.Error(err), zap.String("cart_id", cartId.String()))
 			return nil, entity.PSQLWrap(err)
 		}
-		adverts = append(adverts, r.convertToEntityAdvert(dbAdvert, userId))
+		adverts = append(adverts, &entity.Advert{
+			ID:          dbAdvert.ID,
+			Title:       dbAdvert.Title,
+			Description: dbAdvert.Description,
+			Price:       dbAdvert.Price,
+			Location:    dbAdvert.Location,
+			HasDelivery: dbAdvert.HasDelivery,
+			CategoryId:  dbAdvert.CategoryId,
+			SellerId:    dbAdvert.SellerId,
+			ImageId:     dbAdvert.ImageId,
+			Status:      entity.AdvertStatus(dbAdvert.Status),
+			CreatedAt:   dbAdvert.CreatedAt,
+			UpdatedAt:   dbAdvert.UpdatedAt,
+		})
 	}
 
 	if err := rows.Err(); err != nil {
@@ -437,7 +499,7 @@ func (r *AdvertDB) GetById(advertId, userId uuid.UUID) (*entity.Advert, error) {
 		&dbAdvert.HasDelivery,
 		&dbAdvert.CategoryId,
 		&dbAdvert.SellerId,
-		&dbAdvert.ImageURL,
+		&dbAdvert.ImageId,
 		&dbAdvert.Status,
 		&dbAdvert.CreatedAt,
 		&dbAdvert.UpdatedAt,
@@ -451,50 +513,20 @@ func (r *AdvertDB) GetById(advertId, userId uuid.UUID) (*entity.Advert, error) {
 		return nil, entity.PSQLWrap(err)
 	}
 
-	return r.convertToEntityAdvert(dbAdvert, userId), nil
-}
-
-func (r *AdvertDB) GetSavedByUserId(userId uuid.UUID) ([]*entity.Advert, error) {
-	var adverts []*entity.Advert
-
-	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
-	defer cancel()
-
-	rows, err := r.DB.Query(ctx, selectSavedAdvertsByUserIdQuery, userId)
-	if err != nil {
-		r.logger.Error("failed to execute query", zap.Error(err), zap.String("user_id", userId.String()))
-		return nil, entity.PSQLWrap(err)
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var dbAdvert AdvertRepoModel
-		if err := rows.Scan(
-			&dbAdvert.ID,
-			&dbAdvert.Title,
-			&dbAdvert.Description,
-			&dbAdvert.Price,
-			&dbAdvert.Location,
-			&dbAdvert.HasDelivery,
-			&dbAdvert.CategoryId,
-			&dbAdvert.SellerId,
-			&dbAdvert.ImageURL,
-			&dbAdvert.Status,
-			&dbAdvert.CreatedAt,
-			&dbAdvert.UpdatedAt,
-		); err != nil {
-			r.logger.Error("failed to scan row", zap.Error(err), zap.String("user_id", userId.String()))
-			return nil, entity.PSQLWrap(err)
-		}
-		adverts = append(adverts, r.convertToEntityAdvert(dbAdvert, userId))
-	}
-
-	if err := rows.Err(); err != nil {
-		r.logger.Error("error iterating over rows", zap.Error(err), zap.String("user_id", userId.String()))
-		return nil, entity.PSQLWrap(err)
-	}
-
-	return adverts, nil
+	return &entity.Advert{
+		ID:          dbAdvert.ID,
+		Title:       dbAdvert.Title,
+		Description: dbAdvert.Description,
+		Price:       dbAdvert.Price,
+		Location:    dbAdvert.Location,
+		HasDelivery: dbAdvert.HasDelivery,
+		CategoryId:  dbAdvert.CategoryId,
+		SellerId:    dbAdvert.SellerId,
+		ImageId:     dbAdvert.ImageId,
+		Status:      entity.AdvertStatus(dbAdvert.Status),
+		CreatedAt:   dbAdvert.CreatedAt,
+		UpdatedAt:   dbAdvert.UpdatedAt,
+	}, nil
 }
 
 func (r *AdvertDB) Update(advert *entity.Advert) error {
@@ -655,4 +687,47 @@ func (r *AdvertDB) CheckIfExists(advertId uuid.UUID) (bool, error) {
 	}
 
 	return exists, nil
+}
+
+func (r *AdvertDB) GetSavedByUserId(userId uuid.UUID) ([]*entity.Advert, error) {
+	var adverts []*entity.Advert
+
+	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
+	defer cancel()
+
+	rows, err := r.DB.Query(ctx, selectSavedAdvertsByUserIdQuery, userId)
+	if err != nil {
+		r.logger.Error("failed to execute query", zap.Error(err), zap.String("user_id", userId.String()))
+		return nil, entity.PSQLWrap(err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var dbAdvert AdvertRepoModel
+		if err := rows.Scan(
+			&dbAdvert.ID,
+			&dbAdvert.Title,
+			&dbAdvert.Description,
+			&dbAdvert.Price,
+			&dbAdvert.Location,
+			&dbAdvert.HasDelivery,
+			&dbAdvert.CategoryId,
+			&dbAdvert.SellerId,
+			&dbAdvert.ImageId,
+			&dbAdvert.Status,
+			&dbAdvert.CreatedAt,
+			&dbAdvert.UpdatedAt,
+		); err != nil {
+			r.logger.Error("failed to scan row", zap.Error(err), zap.String("user_id", userId.String()))
+			return nil, entity.PSQLWrap(err)
+		}
+		adverts = append(adverts, r.convertToEntityAdvert(dbAdvert, userId))
+	}
+
+	if err := rows.Err(); err != nil {
+		r.logger.Error("error iterating over rows", zap.Error(err), zap.String("user_id", userId.String()))
+		return nil, entity.PSQLWrap(err)
+	}
+
+	return adverts, nil
 }

@@ -91,7 +91,7 @@ message PreviewAdvert {
   string category_id = 3;
   string title = 4;
   uint64 price = 5;
-  string image_url = 6;
+  string image_id = 6;
   AdvertStatus status = 7;
   string location = 8;
   bool has_delivery = 9;

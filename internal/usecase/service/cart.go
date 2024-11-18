@@ -30,7 +30,7 @@ func convertAdvertToResponse(advert entity.Advert) dto.PreviewAdvertCard {
 			ID:          advert.ID,
 			Title:       advert.Title,
 			Price:       advert.Price,
-			ImageURL:    advert.ImageURL.UUID.String(),
+			ImageId:     advert.ImageId,
 			Status:      dto.AdvertStatus(advert.Status),
 			Location:    advert.Location,
 			HasDelivery: advert.HasDelivery,

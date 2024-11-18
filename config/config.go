@@ -11,8 +11,8 @@ import (
 )
 
 type ServerConfig struct {
+	IP              string        `yaml:"ip" default:"0.0.0.0"`
 	Port            int           `yaml:"port" default:"8080"`
-	Host            string        `yaml:"host" default:"localhost"`
 	ReadTimeout     time.Duration `yaml:"read_timeout" default:"10s"`
 	WriteTimeout    time.Duration `yaml:"write_timeout" default:"10s"`
 	ShutdownTimeout time.Duration `yaml:"shutdown_timeout" default:"10s"`
@@ -41,11 +41,16 @@ type Config struct {
 	AuthHost         string        `yaml:"auth_host"`
 	CartPurchaseHost string        `yaml:"cart_purchase_host"`
 	CartPurchasePort int           `yaml:"cart_purchase_port"`
+	StaticHost       string        `yaml:"static_host"`
+	StaticPort       int           `yaml:"static_port"`
 }
 
 type StaticConfig struct {
-	Path    string `yaml:"path"`
-	MaxSize int    `yaml:"max_size"`
+	IP          string `yaml:"ip"            default:"0.0.0.0"`
+	Port        int    `yaml:"port"          default:"8081"`
+	Path string `yaml:"path"`
+	MaxSize int `yaml:"max_size"`
+	Timeout time.Duration `yaml:"timeout"`
 }
 
 var cfg Config
@@ -106,6 +111,10 @@ func GetCartPurchaseAddress() string {
 	return fmt.Sprintf("%s:%d", cfg.CartPurchaseHost, cfg.CartPurchasePort)
 }
 
+func GetStaticAddress() string {
+	return fmt.Sprintf("%s:%d", cfg.StaticHost, cfg.StaticPort)
+}
+
 func (cfg *Config) GetConnectURL() string {
 	return fmt.Sprintf(
 		"postgres://%s:%s@%s:%d/%s?sslmode=disable",
@@ -122,6 +131,10 @@ func GetWriteTimeout() time.Duration {
 
 func GetShutdownTimeout() time.Duration {
 	return cfg.Server.ShutdownTimeout
+}
+
+func (cfg *Config) GetServerAddr() string {
+	return fmt.Sprintf("%s:%d", cfg.Server.IP, cfg.Server.Port)
 }
 
 func GetStaticConfig() StaticConfig {

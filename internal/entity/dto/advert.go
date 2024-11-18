@@ -22,7 +22,7 @@ type PreviewAdvert struct {
 	CategoryId  uuid.UUID    `json:"category_id"`
 	Title       string       `json:"title"`
 	Price       uint         `json:"price"`
-	ImageURL    string       `json:"image_url"`
+	ImageId     uuid.UUID    `json:"image_id"`
 	Status      AdvertStatus `json:"status"`
 	Location    string       `json:"location"`
 	HasDelivery bool         `json:"has_delivery"`
@@ -47,7 +47,7 @@ type Advert struct {
 	Title       string       `json:"title"`
 	Description string       `json:"description"`
 	Price       uint         `json:"price"`
-	ImageURL    string       `json:"image_url"`
+	ImageId     uuid.UUID    `json:"image_id"`
 	Status      AdvertStatus `json:"status"`
 	HasDelivery bool         `json:"has_delivery"`
 	Location    string       `json:"location"`

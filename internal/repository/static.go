@@ -11,6 +11,9 @@ type StaticRepository interface {
 
 	// Upload загружает статический файл и возвращает его ID
 	Upload(path, filename string, data []byte) (uuid.UUID, error)
+
+	// GetMaxSize возвращает максимальный размер файла
+	GetMaxSize() int
 }
 
 var (

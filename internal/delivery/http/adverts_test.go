@@ -6,6 +6,12 @@ package http
 // 	"net/http"
 // 	"net/http/httptest"
 // 	"testing"
+// import (
+// 	"bytes"
+// 	"errors"
+// 	"net/http"
+// 	"net/http/httptest"
+// 	"testing"
 
 // 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/utils"
 // 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
@@ -16,7 +22,19 @@ package http
 // 	"github.com/microcosm-cc/bluemonday"
 // 	"go.uber.org/zap"
 // )
+// 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/utils"
+// 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
+// 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase/mocks"
+// 	"github.com/golang/mock/gomock"
+// 	"github.com/google/uuid"
+// 	"github.com/gorilla/mux"
+// 	"github.com/microcosm-cc/bluemonday"
+// 	"go.uber.org/zap"
+// )
 
+// func NewTestSessionManager() *utils.SessionManager {
+// 	return utils.NewSessionManager(nil, 0, false, nil)
+// }
 // func NewTestSessionManager() *utils.SessionManager {
 // 	return utils.NewSessionManager(nil, 0, false, nil)
 // }
@@ -35,6 +53,9 @@ package http
 // 	return endpoints, mockAdvertUseCase, mockStaticUseCase, sessionManager, logger
 // }
 
+// func TestAdvertEndpoints(t *testing.T) {
+// 	endpoints, mockAdvertUseCase, _, _, _ := setupAdvertEndpoints(t)
+// 	defer endpoints.logger.Sync()
 // func TestAdvertEndpoints(t *testing.T) {
 // 	endpoints, mockAdvertUseCase, _, _, _ := setupAdvertEndpoints(t)
 // 	defer endpoints.logger.Sync()
@@ -59,9 +80,14 @@ package http
 
 // 			req := httptest.NewRequest("GET", "/api/v1/adverts?limit=10&offset=5", nil)
 // 			rr := httptest.NewRecorder()
+// 			req := httptest.NewRequest("GET", "/api/v1/adverts?limit=10&offset=5", nil)
+// 			rr := httptest.NewRecorder()
 
 // 			endpoints.Get(rr, req)
 
+// 			if status := rr.Code; status != http.StatusOK {
+// 				t.Errorf("Expected status %v, got %v", http.StatusOK, status)
+// 			}
 // 			if status := rr.Code; status != http.StatusOK {
 // 				t.Errorf("Expected status %v, got %v", http.StatusOK, status)
 // 			}
@@ -75,7 +101,14 @@ package http
 // 				t.Errorf("Expected %v adverts, got %v", len(adverts), len(gotAdverts))
 // 			}
 // 		})
+// 			if len(gotAdverts) != len(adverts) {
+// 				t.Errorf("Expected %v adverts, got %v", len(adverts), len(gotAdverts))
+// 			}
+// 		})
 
+// 		t.Run("Invalid limit", func(t *testing.T) {
+// 			req := httptest.NewRequest("GET", "/api/v1/adverts?limit=-1&offset=5", nil)
+// 			rr := httptest.NewRecorder()
 // 		t.Run("Invalid limit", func(t *testing.T) {
 // 			req := httptest.NewRequest("GET", "/api/v1/adverts?limit=-1&offset=5", nil)
 // 			rr := httptest.NewRecorder()
@@ -85,19 +118,6 @@ package http
 // 			if status := rr.Code; status != http.StatusBadRequest {
 // 				t.Errorf("Expected status %v, got %v", http.StatusBadRequest, status)
 // 			}
-
-// 			var errResp utils.ErrResponse
-// 			if err := parseJSONResponse(rr.Body, &errResp); err != nil {
-// 				t.Errorf("Failed to parse error response: %v", err)
-// 			}
-// 		})
-
-// 		t.Run("Invalid offset", func(t *testing.T) {
-// 			req := httptest.NewRequest("GET", "/api/v1/adverts?limit=10&offset=-5", nil)
-// 			rr := httptest.NewRecorder()
-
-// 			endpoints.Get(rr, req)
-
 // 			if status := rr.Code; status != http.StatusBadRequest {
 // 				t.Errorf("Expected status %v, got %v", http.StatusBadRequest, status)
 // 			}
@@ -107,7 +127,42 @@ package http
 // 				t.Errorf("Failed to parse error response: %v", err)
 // 			}
 // 		})
+// 			var errResp utils.ErrResponse
+// 			if err := parseJSONResponse(rr.Body, &errResp); err != nil {
+// 				t.Errorf("Failed to parse error response: %v", err)
+// 			}
+// 		})
 
+// 		t.Run("Invalid offset", func(t *testing.T) {
+// 			req := httptest.NewRequest("GET", "/api/v1/adverts?limit=10&offset=-5", nil)
+// 			rr := httptest.NewRecorder()
+// 		t.Run("Invalid offset", func(t *testing.T) {
+// 			req := httptest.NewRequest("GET", "/api/v1/adverts?limit=10&offset=-5", nil)
+// 			rr := httptest.NewRecorder()
+
+// 			endpoints.Get(rr, req)
+
+// 			if status := rr.Code; status != http.StatusBadRequest {
+// 				t.Errorf("Expected status %v, got %v", http.StatusBadRequest, status)
+// 			}
+// 			if status := rr.Code; status != http.StatusBadRequest {
+// 				t.Errorf("Expected status %v, got %v", http.StatusBadRequest, status)
+// 			}
+
+// 			var errResp utils.ErrResponse
+// 			if err := parseJSONResponse(rr.Body, &errResp); err != nil {
+// 				t.Errorf("Failed to parse error response: %v", err)
+// 			}
+// 		})
+// 			var errResp utils.ErrResponse
+// 			if err := parseJSONResponse(rr.Body, &errResp); err != nil {
+// 				t.Errorf("Failed to parse error response: %v", err)
+// 			}
+// 		})
+
+// 		t.Run("Internal server error", func(t *testing.T) {
+// 			limit := 10
+// 			offset := 5
 // 		t.Run("Internal server error", func(t *testing.T) {
 // 			limit := 10
 // 			offset := 5
@@ -119,13 +174,24 @@ package http
 
 // 			req := httptest.NewRequest("GET", "/api/v1/adverts?limit=10&offset=5", nil)
 // 			rr := httptest.NewRecorder()
+// 			req := httptest.NewRequest("GET", "/api/v1/adverts?limit=10&offset=5", nil)
+// 			rr := httptest.NewRecorder()
 
 // 			endpoints.Get(rr, req)
 
 // 			if status := rr.Code; status != http.StatusInternalServerError {
 // 				t.Errorf("Expected status %v, got %v", http.StatusInternalServerError, status)
 // 			}
+// 			if status := rr.Code; status != http.StatusInternalServerError {
+// 				t.Errorf("Expected status %v, got %v", http.StatusInternalServerError, status)
+// 			}
 
+// 			var errResp utils.ErrResponse
+// 			if err := parseJSONResponse(rr.Body, &errResp); err != nil {
+// 				t.Errorf("Failed to parse error response: %v", err)
+// 			}
+// 		})
+// 	})
 // 			var errResp utils.ErrResponse
 // 			if err := parseJSONResponse(rr.Body, &errResp); err != nil {
 // 				t.Errorf("Failed to parse error response: %v", err)
@@ -155,9 +221,17 @@ package http
 // 				"sellerId": sellerID.String(),
 // 			})
 // 			rr := httptest.NewRecorder()
+// 			req := httptest.NewRequest("GET", "/api/v1/adverts/seller/"+sellerID.String(), nil)
+// 			req = mux.SetURLVars(req, map[string]string{
+// 				"sellerId": sellerID.String(),
+// 			})
+// 			rr := httptest.NewRecorder()
 
 // 			endpoints.GetBySellerId(rr, req)
 
+// 			if status := rr.Code; status != http.StatusOK {
+// 				t.Errorf("Expected status %v, got %v", http.StatusOK, status)
+// 			}
 // 			if status := rr.Code; status != http.StatusOK {
 // 				t.Errorf("Expected status %v, got %v", http.StatusOK, status)
 // 			}
@@ -171,7 +245,17 @@ package http
 // 				t.Errorf("Expected %v adverts, got %v", len(adverts), len(gotAdverts))
 // 			}
 // 		})
+// 			if len(gotAdverts) != len(adverts) {
+// 				t.Errorf("Expected %v adverts, got %v", len(adverts), len(gotAdverts))
+// 			}
+// 		})
 
+// 		t.Run("Invalid seller ID", func(t *testing.T) {
+// 			req := httptest.NewRequest("GET", "/api/v1/adverts/seller/invalid-uuid", nil)
+// 			req = mux.SetURLVars(req, map[string]string{
+// 				"sellerId": "invalid-uuid",
+// 			})
+// 			rr := httptest.NewRecorder()
 // 		t.Run("Invalid seller ID", func(t *testing.T) {
 // 			req := httptest.NewRequest("GET", "/api/v1/adverts/seller/invalid-uuid", nil)
 // 			req = mux.SetURLVars(req, map[string]string{
@@ -184,13 +268,23 @@ package http
 // 			if status := rr.Code; status != http.StatusBadRequest {
 // 				t.Errorf("Expected status %v, got %v", http.StatusBadRequest, status)
 // 			}
+// 			if status := rr.Code; status != http.StatusBadRequest {
+// 				t.Errorf("Expected status %v, got %v", http.StatusBadRequest, status)
+// 			}
 
 // 			var errResp utils.ErrResponse
 // 			if err := parseJSONResponse(rr.Body, &errResp); err != nil {
 // 				t.Errorf("Failed to parse error response: %v", err)
 // 			}
 // 		})
+// 			var errResp utils.ErrResponse
+// 			if err := parseJSONResponse(rr.Body, &errResp); err != nil {
+// 				t.Errorf("Failed to parse error response: %v", err)
+// 			}
+// 		})
 
+// 		t.Run("Internal server error", func(t *testing.T) {
+// 			sellerID := uuid.New()
 // 		t.Run("Internal server error", func(t *testing.T) {
 // 			sellerID := uuid.New()
 
@@ -204,13 +298,27 @@ package http
 // 				"sellerId": sellerID.String(),
 // 			})
 // 			rr := httptest.NewRecorder()
+// 			req := httptest.NewRequest("GET", "/api/v1/adverts/seller/"+sellerID.String(), nil)
+// 			req = mux.SetURLVars(req, map[string]string{
+// 				"sellerId": sellerID.String(),
+// 			})
+// 			rr := httptest.NewRecorder()
 
 // 			endpoints.GetBySellerId(rr, req)
 
 // 			if status := rr.Code; status != http.StatusInternalServerError {
 // 				t.Errorf("Expected status %v, got %v", http.StatusInternalServerError, status)
 // 			}
+// 			if status := rr.Code; status != http.StatusInternalServerError {
+// 				t.Errorf("Expected status %v, got %v", http.StatusInternalServerError, status)
+// 			}
 
+// 			var errResp utils.ErrResponse
+// 			if err := parseJSONResponse(rr.Body, &errResp); err != nil {
+// 				t.Errorf("Failed to parse error response: %v", err)
+// 			}
+// 		})
+// 	})
 // 			var errResp utils.ErrResponse
 // 			if err := parseJSONResponse(rr.Body, &errResp); err != nil {
 // 				t.Errorf("Failed to parse error response: %v", err)
@@ -240,9 +348,17 @@ package http
 // 				"cartId": cartID.String(),
 // 			})
 // 			rr := httptest.NewRecorder()
+// 			req := httptest.NewRequest("GET", "/api/v1/adverts/cart/"+cartID.String(), nil)
+// 			req = mux.SetURLVars(req, map[string]string{
+// 				"cartId": cartID.String(),
+// 			})
+// 			rr := httptest.NewRecorder()
 
 // 			endpoints.GetByCartId(rr, req)
 
+// 			if status := rr.Code; status != http.StatusOK {
+// 				t.Errorf("Expected status %v, got %v", http.StatusOK, status)
+// 			}
 // 			if status := rr.Code; status != http.StatusOK {
 // 				t.Errorf("Expected status %v, got %v", http.StatusOK, status)
 // 			}
@@ -256,7 +372,17 @@ package http
 // 				t.Errorf("Expected %v adverts, got %v", len(adverts), len(gotAdverts))
 // 			}
 // 		})
+// 			if len(gotAdverts) != len(adverts) {
+// 				t.Errorf("Expected %v adverts, got %v", len(adverts), len(gotAdverts))
+// 			}
+// 		})
 
+// 		t.Run("Invalid cart ID", func(t *testing.T) {
+// 			req := httptest.NewRequest("GET", "/api/v1/adverts/cart/invalid-uuid", nil)
+// 			req = mux.SetURLVars(req, map[string]string{
+// 				"cartId": "invalid-uuid",
+// 			})
+// 			rr := httptest.NewRecorder()
 // 		t.Run("Invalid cart ID", func(t *testing.T) {
 // 			req := httptest.NewRequest("GET", "/api/v1/adverts/cart/invalid-uuid", nil)
 // 			req = mux.SetURLVars(req, map[string]string{
@@ -269,13 +395,23 @@ package http
 // 			if status := rr.Code; status != http.StatusBadRequest {
 // 				t.Errorf("Expected status %v, got %v", http.StatusBadRequest, status)
 // 			}
+// 			if status := rr.Code; status != http.StatusBadRequest {
+// 				t.Errorf("Expected status %v, got %v", http.StatusBadRequest, status)
+// 			}
 
 // 			var errResp utils.ErrResponse
 // 			if err := parseJSONResponse(rr.Body, &errResp); err != nil {
 // 				t.Errorf("Failed to parse error response: %v", err)
 // 			}
 // 		})
+// 			var errResp utils.ErrResponse
+// 			if err := parseJSONResponse(rr.Body, &errResp); err != nil {
+// 				t.Errorf("Failed to parse error response: %v", err)
+// 			}
+// 		})
 
+// 		t.Run("Internal server error", func(t *testing.T) {
+// 			cartID := uuid.New()
 // 		t.Run("Internal server error", func(t *testing.T) {
 // 			cartID := uuid.New()
 
@@ -289,13 +425,27 @@ package http
 // 				"cartId": cartID.String(),
 // 			})
 // 			rr := httptest.NewRecorder()
+// 			req := httptest.NewRequest("GET", "/api/v1/adverts/cart/"+cartID.String(), nil)
+// 			req = mux.SetURLVars(req, map[string]string{
+// 				"cartId": cartID.String(),
+// 			})
+// 			rr := httptest.NewRecorder()
 
 // 			endpoints.GetByCartId(rr, req)
 
 // 			if status := rr.Code; status != http.StatusInternalServerError {
 // 				t.Errorf("Expected status %v, got %v", http.StatusInternalServerError, status)
 // 			}
+// 			if status := rr.Code; status != http.StatusInternalServerError {
+// 				t.Errorf("Expected status %v, got %v", http.StatusInternalServerError, status)
+// 			}
 
+// 			var errResp utils.ErrResponse
+// 			if err := parseJSONResponse(rr.Body, &errResp); err != nil {
+// 				t.Errorf("Failed to parse error response: %v", err)
+// 			}
+// 		})
+// 	})
 // 			var errResp utils.ErrResponse
 // 			if err := parseJSONResponse(rr.Body, &errResp); err != nil {
 // 				t.Errorf("Failed to parse error response: %v", err)
@@ -323,9 +473,17 @@ package http
 // 				"advertId": advertID.String(),
 // 			})
 // 			rr := httptest.NewRecorder()
+// 			req := httptest.NewRequest("GET", "/api/v1/adverts/"+advertID.String(), nil)
+// 			req = mux.SetURLVars(req, map[string]string{
+// 				"advertId": advertID.String(),
+// 			})
+// 			rr := httptest.NewRecorder()
 
 // 			endpoints.GetById(rr, req)
 
+// 			if status := rr.Code; status != http.StatusOK {
+// 				t.Errorf("Expected status %v, got %v", http.StatusOK, status)
+// 			}
 // 			if status := rr.Code; status != http.StatusOK {
 // 				t.Errorf("Expected status %v, got %v", http.StatusOK, status)
 // 			}
@@ -339,7 +497,17 @@ package http
 // 				t.Errorf("Expected advert %v, got %v", advert, gotAdvert)
 // 			}
 // 		})
+// 			if gotAdvert != advert {
+// 				t.Errorf("Expected advert %v, got %v", advert, gotAdvert)
+// 			}
+// 		})
 
+// 		t.Run("Invalid advert ID", func(t *testing.T) {
+// 			req := httptest.NewRequest("GET", "/api/v1/adverts/invalid-uuid", nil)
+// 			req = mux.SetURLVars(req, map[string]string{
+// 				"advertId": "invalid-uuid",
+// 			})
+// 			rr := httptest.NewRecorder()
 // 		t.Run("Invalid advert ID", func(t *testing.T) {
 // 			req := httptest.NewRequest("GET", "/api/v1/adverts/invalid-uuid", nil)
 // 			req = mux.SetURLVars(req, map[string]string{
@@ -352,13 +520,23 @@ package http
 // 			if status := rr.Code; status != http.StatusBadRequest {
 // 				t.Errorf("Expected status %v, got %v", http.StatusBadRequest, status)
 // 			}
+// 			if status := rr.Code; status != http.StatusBadRequest {
+// 				t.Errorf("Expected status %v, got %v", http.StatusBadRequest, status)
+// 			}
 
 // 			var errResp utils.ErrResponse
 // 			if err := parseJSONResponse(rr.Body, &errResp); err != nil {
 // 				t.Errorf("Failed to parse error response: %v", err)
 // 			}
 // 		})
+// 			var errResp utils.ErrResponse
+// 			if err := parseJSONResponse(rr.Body, &errResp); err != nil {
+// 				t.Errorf("Failed to parse error response: %v", err)
+// 			}
+// 		})
 
+// 		t.Run("Advert not found", func(t *testing.T) {
+// 			advertID := uuid.New()
 // 		t.Run("Advert not found", func(t *testing.T) {
 // 			advertID := uuid.New()
 
@@ -372,9 +550,17 @@ package http
 // 				"advertId": advertID.String(),
 // 			})
 // 			rr := httptest.NewRecorder()
+// 			req := httptest.NewRequest("GET", "/api/v1/adverts/"+advertID.String(), nil)
+// 			req = mux.SetURLVars(req, map[string]string{
+// 				"advertId": advertID.String(),
+// 			})
+// 			rr := httptest.NewRecorder()
 
 // 			endpoints.GetById(rr, req)
 
+// 			if status := rr.Code; status != http.StatusNotFound {
+// 				t.Errorf("Expected status %v, got %v", http.StatusNotFound, status)
+// 			}
 // 			if status := rr.Code; status != http.StatusNotFound {
 // 				t.Errorf("Expected status %v, got %v", http.StatusNotFound, status)
 // 			}
@@ -384,7 +570,14 @@ package http
 // 				t.Errorf("Failed to parse error response: %v", err)
 // 			}
 // 		})
+// 			var errResp utils.ErrResponse
+// 			if err := parseJSONResponse(rr.Body, &errResp); err != nil {
+// 				t.Errorf("Failed to parse error response: %v", err)
+// 			}
+// 		})
 
+// 		t.Run("Internal server error", func(t *testing.T) {
+// 			advertID := uuid.New()
 // 		t.Run("Internal server error", func(t *testing.T) {
 // 			advertID := uuid.New()
 
@@ -398,13 +591,27 @@ package http
 // 				"advertId": advertID.String(),
 // 			})
 // 			rr := httptest.NewRecorder()
+// 			req := httptest.NewRequest("GET", "/api/v1/adverts/"+advertID.String(), nil)
+// 			req = mux.SetURLVars(req, map[string]string{
+// 				"advertId": advertID.String(),
+// 			})
+// 			rr := httptest.NewRecorder()
 
 // 			endpoints.GetById(rr, req)
 
 // 			if status := rr.Code; status != http.StatusInternalServerError {
 // 				t.Errorf("Expected status %v, got %v", http.StatusInternalServerError, status)
 // 			}
+// 			if status := rr.Code; status != http.StatusInternalServerError {
+// 				t.Errorf("Expected status %v, got %v", http.StatusInternalServerError, status)
+// 			}
 
+// 			var errResp utils.ErrResponse
+// 			if err := parseJSONResponse(rr.Body, &errResp); err != nil {
+// 				t.Errorf("Failed to parse error response: %v", err)
+// 			}
+// 		})
+// 	})
 // 			var errResp utils.ErrResponse
 // 			if err := parseJSONResponse(rr.Body, &errResp); err != nil {
 // 				t.Errorf("Failed to parse error response: %v", err)
@@ -422,13 +629,32 @@ package http
 // 				"advertId": advertID.String(),
 // 			})
 // 			rr := httptest.NewRecorder()
+// 	t.Run("UpdateAdvert", func(t *testing.T) {
+// 		t.Run("Invalid advert data", func(t *testing.T) {
+// 			advertID := uuid.New()
+// 			body := []byte(`{"title": "Incomplete Advert"`)
+// 			req := httptest.NewRequest("PUT", "/api/v1/adverts/"+advertID.String(), bytes.NewBuffer(body))
+// 			req.Header.Set("Content-Type", "application/json")
+// 			req = mux.SetURLVars(req, map[string]string{
+// 				"advertId": advertID.String(),
+// 			})
+// 			rr := httptest.NewRecorder()
 
 // 			endpoints.Update(rr, req)
 
 // 			if status := rr.Code; status != http.StatusBadRequest {
 // 				t.Errorf("Expected status %v, got %v", http.StatusBadRequest, status)
 // 			}
+// 			if status := rr.Code; status != http.StatusBadRequest {
+// 				t.Errorf("Expected status %v, got %v", http.StatusBadRequest, status)
+// 			}
 
+// 			var errResp utils.ErrResponse
+// 			if err := parseJSONResponse(rr.Body, &errResp); err != nil {
+// 				t.Errorf("Failed to parse error response: %v", err)
+// 			}
+// 		})
+// 	})
 // 			var errResp utils.ErrResponse
 // 			if err := parseJSONResponse(rr.Body, &errResp); err != nil {
 // 				t.Errorf("Failed to parse error response: %v", err)
@@ -443,13 +669,29 @@ package http
 // 				"advertId": "invalid-uuid",
 // 			})
 // 			rr := httptest.NewRecorder()
+// 	t.Run("DeleteAdvertById", func(t *testing.T) {
+// 		t.Run("Invalid advert ID", func(t *testing.T) {
+// 			req := httptest.NewRequest("DELETE", "/api/v1/adverts/invalid-uuid", nil)
+// 			req = mux.SetURLVars(req, map[string]string{
+// 				"advertId": "invalid-uuid",
+// 			})
+// 			rr := httptest.NewRecorder()
 
 // 			endpoints.Delete(rr, req)
 
 // 			if status := rr.Code; status != http.StatusBadRequest {
 // 				t.Errorf("Expected status %v, got %v", http.StatusBadRequest, status)
 // 			}
+// 			if status := rr.Code; status != http.StatusBadRequest {
+// 				t.Errorf("Expected status %v, got %v", http.StatusBadRequest, status)
+// 			}
 
+// 			var errResp utils.ErrResponse
+// 			if err := parseJSONResponse(rr.Body, &errResp); err != nil {
+// 				t.Errorf("Failed to parse error response: %v", err)
+// 			}
+// 		})
+// 	})
 // 			var errResp utils.ErrResponse
 // 			if err := parseJSONResponse(rr.Body, &errResp); err != nil {
 // 				t.Errorf("Failed to parse error response: %v", err)
@@ -473,11 +715,37 @@ package http
 // 				expectedCode: http.StatusBadRequest,
 // 			},
 // 		}
+// 	t.Run("UpdateAdvertStatus", func(t *testing.T) {
+// 		testCases := []struct {
+// 			name         string
+// 			advertID     uuid.UUID
+// 			statusInput  string
+// 			mockBehavior func()
+// 			expectedCode int
+// 		}{
+// 			{
+// 				name:         "Invalid status value",
+// 				advertID:     uuid.New(),
+// 				statusInput:  "unknown_status",
+// 				mockBehavior: func() {},
+// 				expectedCode: http.StatusBadRequest,
+// 			},
+// 		}
 
 // 		for _, tc := range testCases {
 // 			t.Run(tc.name, func(t *testing.T) {
 // 				tc.mockBehavior()
+// 		for _, tc := range testCases {
+// 			t.Run(tc.name, func(t *testing.T) {
+// 				tc.mockBehavior()
 
+// 				reqBody := bytes.NewBufferString(`{"status":"` + tc.statusInput + `"}`)
+// 				req := httptest.NewRequest("PUT", "/api/v1/adverts/"+tc.advertID.String()+"/status", reqBody)
+// 				req.Header.Set("Content-Type", "application/json")
+// 				req = mux.SetURLVars(req, map[string]string{
+// 					"advertId": tc.advertID.String(),
+// 				})
+// 				rr := httptest.NewRecorder()
 // 				reqBody := bytes.NewBufferString(`{"status":"` + tc.statusInput + `"}`)
 // 				req := httptest.NewRequest("PUT", "/api/v1/adverts/"+tc.advertID.String()+"/status", reqBody)
 // 				req.Header.Set("Content-Type", "application/json")
@@ -491,7 +759,19 @@ package http
 // 				if status := rr.Code; status != tc.expectedCode {
 // 					t.Errorf("Expected status %v, got %v", tc.expectedCode, status)
 // 				}
+// 				if status := rr.Code; status != tc.expectedCode {
+// 					t.Errorf("Expected status %v, got %v", tc.expectedCode, status)
+// 				}
 
+// 				if tc.expectedCode != http.StatusOK {
+// 					var errResp utils.ErrResponse
+// 					if err := parseJSONResponse(rr.Body, &errResp); err != nil {
+// 						t.Errorf("Failed to parse error response: %v", err)
+// 					}
+// 				}
+// 			})
+// 		}
+// 	})
 // 				if tc.expectedCode != http.StatusOK {
 // 					var errResp utils.ErrResponse
 // 					if err := parseJSONResponse(rr.Body, &errResp); err != nil {
@@ -519,6 +799,11 @@ package http
 // 				GetByCategoryId(categoryID).
 // 				Return(adverts, nil)
 
+// 			req := httptest.NewRequest("GET", "/api/v1/adverts/category/"+categoryID.String(), nil)
+// 			req = mux.SetURLVars(req, map[string]string{
+// 				"categoryId": categoryID.String(),
+// 			})
+// 			rr := httptest.NewRecorder()
 // 			req := httptest.NewRequest("GET", "/api/v1/adverts/category/"+categoryID.String(), nil)
 // 			req = mux.SetURLVars(req, map[string]string{
 // 				"categoryId": categoryID.String(),
@@ -573,9 +858,17 @@ package http
 // 				"categoryId": categoryID.String(),
 // 			})
 // 			rr := httptest.NewRecorder()
+// 			req := httptest.NewRequest("GET", "/api/v1/adverts/category/"+categoryID.String(), nil)
+// 			req = mux.SetURLVars(req, map[string]string{
+// 				"categoryId": categoryID.String(),
+// 			})
+// 			rr := httptest.NewRecorder()
 
 // 			endpoints.GetByCategoryId(rr, req)
 
+// 			if status := rr.Code; status != http.StatusInternalServerError {
+// 				t.Errorf("Expected status %v, got %v", http.StatusInternalServerError, status)
+// 			}
 // 			if status := rr.Code; status != http.StatusInternalServerError {
 // 				t.Errorf("Expected status %v, got %v", http.StatusInternalServerError, status)
 // 			}
@@ -586,7 +879,20 @@ package http
 // 			}
 // 		})
 // 	})
+// 			var errResp utils.ErrResponse
+// 			if err := parseJSONResponse(rr.Body, &errResp); err != nil {
+// 				t.Errorf("Failed to parse error response: %v", err)
+// 			}
+// 		})
+// 	})
 
+// 	t.Run("UploadImage", func(t *testing.T) {
+// 		t.Run("Invalid advert ID", func(t *testing.T) {
+// 			req := httptest.NewRequest("PUT", "/api/v1/adverts/invalid-uuid/image", nil)
+// 			req = mux.SetURLVars(req, map[string]string{
+// 				"advertId": "invalid-uuid",
+// 			})
+// 			rr := httptest.NewRecorder()
 // 	t.Run("UploadImage", func(t *testing.T) {
 // 		t.Run("Invalid advert ID", func(t *testing.T) {
 // 			req := httptest.NewRequest("PUT", "/api/v1/adverts/invalid-uuid/image", nil)

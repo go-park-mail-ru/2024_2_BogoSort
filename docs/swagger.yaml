@@ -63,6 +63,36 @@ definitions:
       title:
         type: string
     type: object
+<<<<<<< HEAD
+=======
+  dto.AdvertResponse:
+    properties:
+      category_id:
+        type: string
+      created_at:
+        type: string
+      description:
+        type: string
+      has_delivery:
+        type: boolean
+      id:
+        type: string
+      image_id:
+        type: string
+      location:
+        type: string
+      price:
+        type: integer
+      seller_id:
+        type: string
+      status:
+        $ref: '#/definitions/dto.AdvertStatus'
+      title:
+        type: string
+      updated_at:
+        type: string
+    type: object
+>>>>>>> TP-20_add_static_microservice
   dto.AdvertStatus:
     enum:
     - active
@@ -917,6 +947,37 @@ paths:
           schema:
             $ref: '#/definitions/utils.ErrResponse'
       summary: Get file by ID
+      tags:
+      - static
+  /api/v1/files/stream/{fileId}:
+    get:
+      description: Get a static file as a byte stream by its ID
+      parameters:
+      - description: File ID
+        in: path
+        name: fileId
+        required: true
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: Static file content
+          schema:
+            type: binary
+        "400":
+          description: Invalid file ID
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "404":
+          description: Static file not found
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Failed to get static file
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Get static file stream by ID
       tags:
       - static
   /api/v1/login:
