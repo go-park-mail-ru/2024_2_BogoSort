@@ -29,15 +29,15 @@ type PreviewAdvert struct {
 }
 
 type PreviewAdvertCard struct {
-	Preview     PreviewAdvert
-	IsSaved     bool         `json:"is_saved"`
-	IsViewed    bool         `json:"is_viewed"`
+	Preview     PreviewAdvert `json:"preview"`
+	IsSaved     bool          `json:"is_saved"`
+	IsViewed    bool          `json:"is_viewed"`
 }
 
 type MyPreviewAdvertCard struct {
-	Preview     PreviewAdvert
-	ViewsNumber uint         `json:"views_number"`
-	SavesNumber uint         `json:"saves_number"`
+	Preview     PreviewAdvert `json:"preview"`
+	ViewsNumber uint          `json:"views_number"`
+	SavesNumber uint          `json:"saves_number"`
 }
 
 type Advert struct {
@@ -58,7 +58,7 @@ type Advert struct {
 }
 
 type AdvertCard struct {
-	Advert
+	Advert      Advert       `json:"advert"`
 	IsSaved     bool         `json:"is_saved"`
 	IsViewed    bool         `json:"is_viewed"`
 }

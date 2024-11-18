@@ -82,7 +82,8 @@ const (
 
 	insertSavedAdvertQuery = `
 		INSERT INTO saved_advert (user_id, advert_id)
-		VALUES ($1, $2)`
+		VALUES ($1, $2)
+		RETURNING id, user_id, advert_id, created_at`
 
 	deleteSavedAdvertQuery = `
 		DELETE FROM saved_advert
@@ -553,7 +554,7 @@ func (r *AdvertDB) AddToSaved(userId uuid.UUID, advertId uuid.UUID) error {
 	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
 	defer cancel()
 
-	err := r.DB.QueryRow(ctx, insertSavedAdvertQuery, userId, advertId).Scan(
+	err := r.DB.QueryRow(ctx, insertSavedAdvertQuery, advertId, userId).Scan(
 		&savedAdvert.ID,
 		&savedAdvert.UserId,
 		&savedAdvert.AdvertId,
@@ -574,7 +575,7 @@ func (r *AdvertDB) DeleteFromSaved(userId uuid.UUID, advertId uuid.UUID) error {
 	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
 	defer cancel()
 
-	result, err := r.DB.Exec(ctx, deleteAdvertByIdQuery, advertId)
+	result, err := r.DB.Exec(ctx, deleteSavedAdvertQuery, advertId, userId)
 	if err != nil {
 		r.logger.Error("failed to delete advert", zap.Error(err), zap.String("advert_id", advertId.String()))
 		return entity.PSQLWrap(err)

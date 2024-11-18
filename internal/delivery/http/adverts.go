@@ -35,8 +35,8 @@ var (
 )
 
 type AdvertEndpoint struct {
-	advertUC  usecase.AdvertUseCase
-	staticUC  usecase.StaticUseCase
+	advertUC       usecase.AdvertUseCase
+	staticUC       usecase.StaticUseCase
 	sessionManager *utils.SessionManager
 	logger         *zap.Logger
 	policy         *bluemonday.Policy
@@ -57,8 +57,9 @@ func NewAdvertEndpoint(advertUC usecase.AdvertUseCase,
 }
 
 func (h *AdvertEndpoint) ConfigureRoutes(router *mux.Router) {
-	router.HandleFunc("/api/v1/adverts/{advertId}", h.GetById).Methods("GET")
 	router.HandleFunc("/api/v1/adverts/seller", h.GetBySellerId).Methods("GET")
+	router.HandleFunc("/api/v1/adverts/saved", h.GetSavedByUserId).Methods("GET")
+	router.HandleFunc("/api/v1/adverts/{advertId}", h.GetById).Methods("GET")
 	router.HandleFunc("/api/v1/adverts/cart/{cartId}", h.GetByCartId).Methods("GET")
 	router.HandleFunc("/api/v1/adverts", h.Add).Methods("POST")
 	router.HandleFunc("/api/v1/adverts/{advertId}", h.Update).Methods("PUT")
@@ -67,7 +68,6 @@ func (h *AdvertEndpoint) ConfigureRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/adverts/category/{categoryId}", h.GetByCategoryId).Methods("GET")
 	router.HandleFunc("/api/v1/adverts/{advertId}/image", h.UploadImage).Methods("PUT")
 	router.HandleFunc("/api/v1/adverts", h.Get).Methods("GET")
-	router.HandleFunc("/api/v1/adverts/saved", h.GetSavedByUserId).Methods("GET")
 	router.HandleFunc("/api/v1/adverts/saved/{advertId}", h.AddToSaved).Methods("POST")
 	router.HandleFunc("/api/v1/adverts/saved/{advertId}", h.RemoveFromSaved).Methods("DELETE")
 }
