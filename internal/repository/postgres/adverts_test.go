@@ -129,7 +129,7 @@ func TestAdvertDB_GetAdverts(t *testing.T) {
 		WillReturnRows(pgxmock.NewRows([]string{"id", "title", "description", "price", "location", "has_delivery", "category_id", "seller_id", "image_id", "status", "created_at", "updated_at"}).
 			AddRow(uuid.New(), "Test Advert", "Test Description", uint(100), "Test Location", true, uuid.New(), uuid.New(), uuid.NullUUID{}, "active", time.Now(), time.Now()))
 
-	adverts, err := repo.Get(10, 0)
+	adverts, err := repo.Get(10, 0, uuid.Nil)
 	assert.NoError(t, err)
 	assert.Len(t, adverts, 1)
 
@@ -138,7 +138,7 @@ func TestAdvertDB_GetAdverts(t *testing.T) {
 		WithArgs(10, 0).
 		WillReturnError(errors.New("query error"))
 
-	adverts, err = repo.Get(10, 0)
+	adverts, err = repo.Get(10, 0, uuid.Nil)
 	assert.Error(t, err)
 	assert.Nil(t, adverts)
 
@@ -158,7 +158,7 @@ func TestAdvertDB_GetAdvertById(t *testing.T) {
 		WillReturnRows(pgxmock.NewRows([]string{"id", "title", "description", "price", "location", "has_delivery", "category_id", "seller_id", "image_id", "status", "created_at", "updated_at"}).
 			AddRow(advertId, "Test Advert", "Test Description", uint(100), "Test Location", true, uuid.New(), uuid.New(), uuid.NullUUID{}, "active", time.Now(), time.Now()))
 
-	advert, err := repo.GetById(advertId)
+	advert, err := repo.GetById(advertId, uuid.Nil)
 	assert.NoError(t, err)
 	assert.Equal(t, "Test Advert", advert.Title)
 
@@ -167,7 +167,7 @@ func TestAdvertDB_GetAdvertById(t *testing.T) {
 		WithArgs(advertId).
 		WillReturnError(pgx.ErrNoRows)
 
-	advert, err = repo.GetById(advertId)
+	advert, err = repo.GetById(advertId, uuid.Nil)
 	assert.Error(t, err)
 	assert.Nil(t, advert)
 
@@ -335,7 +335,7 @@ func TestAdvertDB_GetAdvertsByCategoryId(t *testing.T) {
 		WillReturnRows(pgxmock.NewRows([]string{"id", "title", "description", "price", "location", "has_delivery", "category_id", "seller_id", "image_id", "status", "created_at", "updated_at"}).
 			AddRow(uuid.New(), "Test Advert", "Test Description", uint(100), "Test Location", true, categoryId, uuid.New(), uuid.NullUUID{}, "active", time.Now(), time.Now()))
 
-	adverts, err := repo.GetByCategoryId(categoryId)
+	adverts, err := repo.GetByCategoryId(categoryId, uuid.Nil)
 	assert.NoError(t, err)
 	assert.Len(t, adverts, 1)
 
@@ -344,7 +344,7 @@ func TestAdvertDB_GetAdvertsByCategoryId(t *testing.T) {
 		WithArgs(categoryId).
 		WillReturnError(errors.New("query error"))
 
-	adverts, err = repo.GetByCategoryId(categoryId)
+	adverts, err = repo.GetByCategoryId(categoryId, uuid.Nil)
 	assert.Error(t, err)
 	assert.Nil(t, adverts)
 
@@ -364,7 +364,7 @@ func TestAdvertDB_GetAdvertsBySellerId(t *testing.T) {
 		WillReturnRows(pgxmock.NewRows([]string{"id", "title", "description", "price", "location", "has_delivery", "category_id", "seller_id", "image_id", "status", "created_at", "updated_at"}).
 			AddRow(uuid.New(), "Test Advert", "Test Description", uint(100), "Test Location", true, uuid.New(), sellerId, uuid.NullUUID{}, "active", time.Now(), time.Now()))
 
-	adverts, err := repo.GetBySellerId(sellerId)
+	adverts, err := repo.GetBySellerId(sellerId, uuid.Nil)
 	assert.NoError(t, err)
 	assert.Len(t, adverts, 1)
 
@@ -373,7 +373,7 @@ func TestAdvertDB_GetAdvertsBySellerId(t *testing.T) {
 		WithArgs(sellerId).
 		WillReturnError(errors.New("query error"))
 
-	adverts, err = repo.GetBySellerId(sellerId)
+	adverts, err = repo.GetBySellerId(sellerId, uuid.Nil)
 	assert.Error(t, err)
 	assert.Nil(t, adverts)
 
@@ -393,7 +393,7 @@ func TestAdvertDB_GetAdvertsByCartId(t *testing.T) {
 		WillReturnRows(pgxmock.NewRows([]string{"id", "title", "description", "price", "location", "has_delivery", "category_id", "seller_id", "image_id", "status", "created_at", "updated_at"}).
 			AddRow(uuid.New(), "Test Advert", "Test Description", uint(100), "Test Location", true, uuid.New(), uuid.New(), uuid.NullUUID{}, "active", time.Now(), time.Now()))
 
-	adverts, err := repo.GetByCartId(cartId)
+	adverts, err := repo.GetByCartId(cartId, uuid.Nil)
 	assert.NoError(t, err)
 	assert.Len(t, adverts, 1)
 
@@ -402,7 +402,7 @@ func TestAdvertDB_GetAdvertsByCartId(t *testing.T) {
 		WithArgs(cartId).
 		WillReturnError(errors.New("query error"))
 
-	adverts, err = repo.GetByCartId(cartId)
+	adverts, err = repo.GetByCartId(cartId, uuid.Nil)
 	assert.Error(t, err)
 	assert.Nil(t, adverts)
 

@@ -58,7 +58,7 @@ func NewAdvertEndpoint(advertUC usecase.AdvertUseCase,
 
 func (h *AdvertEndpoint) ConfigureRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/adverts/{advertId}", h.GetById).Methods("GET")
-	router.HandleFunc("/api/v1/adverts/seller/{sellerId}", h.GetBySellerId).Methods("GET")
+	router.HandleFunc("/api/v1/adverts/seller", h.GetBySellerId).Methods("GET")
 	router.HandleFunc("/api/v1/adverts/cart/{cartId}", h.GetByCartId).Methods("GET")
 	router.HandleFunc("/api/v1/adverts", h.Add).Methods("POST")
 	router.HandleFunc("/api/v1/adverts/{advertId}", h.Update).Methods("PUT")
@@ -67,7 +67,9 @@ func (h *AdvertEndpoint) ConfigureRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/adverts/category/{categoryId}", h.GetByCategoryId).Methods("GET")
 	router.HandleFunc("/api/v1/adverts/{advertId}/image", h.UploadImage).Methods("PUT")
 	router.HandleFunc("/api/v1/adverts", h.Get).Methods("GET")
-	router.HandleFunc("/api/v1/adverts/saved/{userId}", h.GetSavedByUserId).Methods("GET")
+	router.HandleFunc("/api/v1/adverts/saved", h.GetSavedByUserId).Methods("GET")
+	router.HandleFunc("/api/v1/adverts/saved/{advertId}", h.AddToSaved).Methods("POST")
+	router.HandleFunc("/api/v1/adverts/saved/{advertId}", h.RemoveFromSaved).Methods("DELETE")
 }
 
 // Get godoc
@@ -77,11 +79,16 @@ func (h *AdvertEndpoint) ConfigureRoutes(router *mux.Router) {
 // @Produce json
 // @Param limit query int false "Limit the number of results"
 // @Param offset query int false "Offset for pagination"
-// @Success 200 {array} dto.AdvertResponse "List of adverts"
+// @Success 200 {array} dto.PreviewAdvertCard "List of adverts"
 // @Failure 400 {object} utils.ErrResponse "Invalid limit or offset"
 // @Failure 500 {object} utils.ErrResponse "Failed to retrieve adverts"
 // @Router /api/v1/adverts [get]
 func (h *AdvertEndpoint) Get(writer http.ResponseWriter, r *http.Request) {
+	userId, err := h.sessionManager.GetUserID(r)
+	if err != nil {
+		userId = uuid.Nil
+	}
+
 	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
 	if err != nil || limit <= 0 {
 		h.sendError(writer, http.StatusBadRequest, ErrBadRequest, "invalid limit", nil)
@@ -94,15 +101,16 @@ func (h *AdvertEndpoint) Get(writer http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	adverts, err := h.advertUC.Get(limit, offset)
+	adverts, err := h.advertUC.Get(limit, offset, userId)
 	if err != nil {
 		h.sendError(writer, http.StatusInternalServerError, err, "failed to get adverts", nil)
 		return
 	}
 
 	for _, advert := range adverts {
-		utils.SanitizeResponseAdvert(advert, h.policy)
+		utils.SanitizePreviewAdvert(&advert.Preview, h.policy)
 	}
+
 	utils.SendJSONResponse(writer, http.StatusOK, adverts)
 }
 
@@ -112,27 +120,26 @@ func (h *AdvertEndpoint) Get(writer http.ResponseWriter, r *http.Request) {
 // @Tags adverts
 // @Produce json
 // @Param sellerId path string true "Seller ID"
-// @Success 200 {array} dto.AdvertResponse "List of adverts"
+// @Success 200 {array} dto.MyPreviewAdvertCard "List of adverts"
 // @Failure 400 {object} utils.ErrResponse "Invalid seller ID"
 // @Failure 403 {object} utils.ErrResponse "Forbidden"
 // @Failure 500 {object} utils.ErrResponse "Failed to retrieve adverts by seller ID"
-// @Router /api/v1/adverts/seller/{sellerId} [get]
+// @Router /api/v1/adverts/seller [get]
 func (h *AdvertEndpoint) GetBySellerId(writer http.ResponseWriter, r *http.Request) {
-	sellerIdStr := mux.Vars(r)["sellerId"]
-	sellerId, err := uuid.Parse(sellerIdStr)
+	userId, err := h.sessionManager.GetUserID(r)
 	if err != nil {
-		h.sendError(writer, http.StatusBadRequest, ErrInvalidID, "invalid seller ID", nil)
+		h.sendError(writer, http.StatusUnauthorized, err, "user not found", nil)
 		return
 	}
 
-	adverts, err := h.advertUC.GetByUserId(sellerId)
+	adverts, err := h.advertUC.GetByUserId(userId)
 	if err != nil {
 		h.sendError(writer, http.StatusInternalServerError, err, "failed to get adverts by seller ID", nil)
 		return
 	}
 
 	for _, advert := range adverts {
-		utils.SanitizeResponseAdvert(advert, h.policy)
+		utils.SanitizePreviewAdvert(&advert.Preview, h.policy)
 	}
 	utils.SendJSONResponse(writer, http.StatusOK, adverts)
 }
@@ -143,12 +150,18 @@ func (h *AdvertEndpoint) GetBySellerId(writer http.ResponseWriter, r *http.Reque
 // @Tags adverts
 // @Produce json
 // @Param cartId path string true "Cart ID"
-// @Success 200 {array} dto.AdvertResponse "List of adverts in cart"
+// @Success 200 {array} dto.PreviewAdvertCard "List of adverts in cart"
 // @Failure 400 {object} utils.ErrResponse "Invalid cart ID"
 // @Failure 403 {object} utils.ErrResponse "Forbidden"
 // @Failure 500 {object} utils.ErrResponse "Failed to retrieve adverts by cart ID"
 // @Router /api/v1/adverts/cart/{cartId} [get]
 func (h *AdvertEndpoint) GetByCartId(writer http.ResponseWriter, r *http.Request) {
+	userId, err := h.sessionManager.GetUserID(r)
+	if err != nil {
+		h.sendError(writer, http.StatusUnauthorized, err, "user not found", nil)
+		return
+	}
+
 	cartIdStr := mux.Vars(r)["cartId"]
 	cartId, err := uuid.Parse(cartIdStr)
 	if err != nil {
@@ -156,14 +169,14 @@ func (h *AdvertEndpoint) GetByCartId(writer http.ResponseWriter, r *http.Request
 		return
 	}
 
-	adverts, err := h.advertUC.GetByCartId(cartId)
+	adverts, err := h.advertUC.GetByCartId(cartId, userId)
 	if err != nil {
 		h.sendError(writer, http.StatusInternalServerError, err, "failed to get adverts by cart ID", nil)
 		return
 	}
 
 	for _, advert := range adverts {
-		utils.SanitizeResponseAdvert(advert, h.policy)
+		utils.SanitizePreviewAdvert(&advert.Preview, h.policy)
 	}
 	utils.SendJSONResponse(writer, http.StatusOK, adverts)
 }
@@ -174,16 +187,15 @@ func (h *AdvertEndpoint) GetByCartId(writer http.ResponseWriter, r *http.Request
 // @Tags adverts
 // @Produce json
 // @Param userId path string true "User ID"
-// @Success 200 {array} dto.AdvertResponse "List of adverts saved by user"
+// @Success 200 {array} dto.PreviewAdvertCard "List of adverts saved by user"
 // @Failure 400 {object} utils.ErrResponse "Invalid user ID"
 // @Failure 403 {object} utils.ErrResponse "Forbidden"
 // @Failure 500 {object} utils.ErrResponse "Failed to retrieve adverts by user ID"
-// @Router /api/v1/adverts/saved/{userId} [get]
+// @Router /api/v1/adverts/saved [get]
 func (h *AdvertEndpoint) GetSavedByUserId(writer http.ResponseWriter, r *http.Request) {
-	userIdStr := mux.Vars(r)["userId"]
-	userId, err := uuid.Parse(userIdStr)
+	userId, err := h.sessionManager.GetUserID(r)
 	if err != nil {
-		h.sendError(writer, http.StatusBadRequest, ErrInvalidID, "invalid user ID", nil)
+		h.sendError(writer, http.StatusUnauthorized, err, "user not found", nil)
 		return
 	}
 
@@ -194,7 +206,7 @@ func (h *AdvertEndpoint) GetSavedByUserId(writer http.ResponseWriter, r *http.Re
 	}
 
 	for _, advert := range adverts {
-		utils.SanitizeResponseAdvert(advert, h.policy)
+		utils.SanitizePreviewAdvert(&advert.Preview, h.policy)
 	}
 	utils.SendJSONResponse(writer, http.StatusOK, adverts)
 }
@@ -205,12 +217,17 @@ func (h *AdvertEndpoint) GetSavedByUserId(writer http.ResponseWriter, r *http.Re
 // @Tags adverts
 // @Produce json
 // @Param advertId path string true "Advert ID"
-// @Success 200 {object} dto.AdvertResponse "Advert details"
+// @Success 200 {object} dto.AdvertCard "Advert details"
 // @Failure 400 {object} utils.ErrResponse "Invalid advert ID"
 // @Failure 404 {object} utils.ErrResponse "Advert not found"
 // @Failure 500 {object} utils.ErrResponse "Failed to retrieve advert by ID"
 // @Router /api/v1/adverts/{advertId} [get]
 func (h *AdvertEndpoint) GetById(writer http.ResponseWriter, r *http.Request) {
+	userId, err := h.sessionManager.GetUserID(r)
+	if err != nil {
+		userId = uuid.Nil
+	}
+
 	advertIdStr := mux.Vars(r)["advertId"]
 	advertId, err := uuid.Parse(advertIdStr)
 	if err != nil {
@@ -218,13 +235,13 @@ func (h *AdvertEndpoint) GetById(writer http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	advert, err := h.advertUC.GetById(advertId)
+	advert, err := h.advertUC.GetById(advertId, userId)
 	if err != nil {
 		h.handleError(writer, err, "failed to get advert by ID")
 		return
 	}
 
-	utils.SanitizeResponseAdvert(advert, h.policy)
+	utils.SanitizeAdvert(&advert.Advert, h.policy)
 	utils.SendJSONResponse(writer, http.StatusOK, advert)
 }
 
@@ -235,7 +252,7 @@ func (h *AdvertEndpoint) GetById(writer http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param advert body dto.AdvertRequest true "Advert data"
-// @Success 201 {object} dto.AdvertResponse "Advert created"
+// @Success 201 {object} dto.Advert "Advert created"
 // @Failure 400 {object} utils.ErrResponse "Invalid advert data"
 // @Failure 500 {object} utils.ErrResponse "Failed to create advert"
 // @Router /api/v1/adverts [post]
@@ -271,7 +288,7 @@ func (h *AdvertEndpoint) Add(writer http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param advertId path string true "Advert ID"
 // @Param advert body dto.AdvertRequest true "Updated advert data"
-// @Success 200 "Advert updated successfully"
+// @Success 200 {string} string "Advert updated successfully"
 // @Failure 400 {object} utils.ErrResponse "Invalid advert data"
 // @Failure 404 {object} utils.ErrResponse "Advert not found"
 // @Failure 403 {object} utils.ErrResponse "Forbidden"
@@ -372,7 +389,7 @@ func (h *AdvertEndpoint) UpdateStatus(writer http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	if err := h.advertUC.UpdateStatus(advertId, dto.AdvertStatus(status), userID); err != nil {
+	if err := h.advertUC.UpdateStatus(advertId, userID, dto.AdvertStatus(status)); err != nil {
 		h.handleError(writer, err, "failed to update advert status")
 		return
 	}
@@ -386,7 +403,7 @@ func (h *AdvertEndpoint) UpdateStatus(writer http.ResponseWriter, r *http.Reques
 // @Tags adverts
 // @Produce json
 // @Param categoryId path string true "Category ID"
-// @Success 200 {array} dto.AdvertResponse "List of adverts by category ID"
+// @Success 200 {array} dto.PreviewAdvertCard "List of adverts by category ID"
 // @Failure 400 {object} utils.ErrResponse "Invalid category ID"
 // @Failure 500 {object} utils.ErrResponse "Failed to retrieve adverts by category ID"
 // @Router /api/v1/adverts/category/{categoryId} [get]
@@ -398,14 +415,19 @@ func (h *AdvertEndpoint) GetByCategoryId(writer http.ResponseWriter, r *http.Req
 		return
 	}
 
-	adverts, err := h.advertUC.GetByCategoryId(categoryId)
+	userId, err := h.sessionManager.GetUserID(r)
+	if err != nil {
+		userId = uuid.Nil
+	}
+
+	adverts, err := h.advertUC.GetByCategoryId(categoryId, userId)
 	if err != nil {
 		h.sendError(writer, http.StatusInternalServerError, err, "failed to get adverts by category ID", nil)
 		return
 	}
 
 	for _, advert := range adverts {
-		utils.SanitizeResponseAdvert(advert, h.policy)
+		utils.SanitizePreviewAdvert(&advert.Preview, h.policy)
 	}
 	utils.SendJSONResponse(writer, http.StatusOK, adverts)
 }
@@ -469,6 +491,70 @@ func (h *AdvertEndpoint) UploadImage(writer http.ResponseWriter, r *http.Request
 	}
 
 	utils.SendJSONResponse(writer, http.StatusOK, "Image uploaded")
+}
+
+// AddToSaved godoc
+// @Summary Add an advert to saved
+// @Description Add an advert to saved by its ID.
+// @Tags adverts
+// @Param advertId path string true "Advert ID"
+// @Success 200 "Advert added to saved"
+// @Failure 400 {object} utils.ErrResponse "Invalid advert ID"
+// @Failure 404 {object} utils.ErrResponse "Advert not found"
+// @Failure 500 {object} utils.ErrResponse "Failed to add advert to saved"
+// @Router /api/v1/adverts/saved/{advertId} [post]
+func (h *AdvertEndpoint) AddToSaved(writer http.ResponseWriter, r *http.Request) {
+	userId, err := h.sessionManager.GetUserID(r)
+	if err != nil {
+		h.sendError(writer, http.StatusUnauthorized, ErrInvalidCredentials, "user not found", nil)
+		return
+	}
+
+	advertIdStr := mux.Vars(r)["advertId"]
+	advertId, err := uuid.Parse(advertIdStr)
+	if err != nil {
+		h.sendError(writer, http.StatusBadRequest, ErrInvalidID, "invalid advert ID", nil)
+		return
+	}
+
+	if err := h.advertUC.AddToSaved(advertId, userId); err != nil {
+		h.handleError(writer, err, "failed to add advert to saved")
+		return
+	}
+
+	utils.SendJSONResponse(writer, http.StatusOK, "Advert added to saved")
+}
+
+// RemoveFromSaved godoc
+// @Summary Remove an advert from saved
+// @Description Remove an advert from saved by its ID.
+// @Tags adverts
+// @Param advertId path string true "Advert ID"
+// @Success 200 "Advert removed from saved"
+// @Failure 400 {object} utils.ErrResponse "Invalid advert ID"
+// @Failure 404 {object} utils.ErrResponse "Advert not found"
+// @Failure 500 {object} utils.ErrResponse "Failed to remove advert from saved"
+// @Router /api/v1/adverts/saved/{advertId} [delete]
+func (h *AdvertEndpoint) RemoveFromSaved(writer http.ResponseWriter, r *http.Request) {
+	userId, err := h.sessionManager.GetUserID(r)
+	if err != nil {
+		h.sendError(writer, http.StatusUnauthorized, ErrInvalidCredentials, "user not found", nil)
+		return
+	}
+
+	advertIdStr := mux.Vars(r)["advertId"]
+	advertId, err := uuid.Parse(advertIdStr)
+	if err != nil {
+		h.sendError(writer, http.StatusBadRequest, ErrInvalidID, "invalid advert ID", nil)
+		return
+	}
+
+	if err := h.advertUC.RemoveFromSaved(advertId, userId); err != nil {
+		h.handleError(writer, err, "failed to remove advert from saved")
+		return
+	}
+
+	utils.SendJSONResponse(writer, http.StatusOK, "Advert removed from saved")
 }
 
 func (h *AdvertEndpoint) sendError(w http.ResponseWriter, statusCode int, err error, context string, additionalInfo map[string]string) {

@@ -9,20 +9,20 @@ import (
 
 type AdvertRepository interface {
 	// Get возвращает массив объявлений в соответствии с offset и limit
-	Get(limit, offset int) ([]*entity.Advert, error)
+	Get(limit, offset int, userId uuid.UUID) ([]*entity.Advert, error)
 
 	// GetBySellerId возвращает массив объявлений в соответствии с sellerId
-	GetBySellerId(sellerId uuid.UUID) ([]*entity.Advert, error)
+	GetBySellerId(sellerId, userId uuid.UUID) ([]*entity.Advert, error)
 
 	// GetByCartId возвращает массив объявлений, которые находятся в корзине
-	GetByCartId(cartId uuid.UUID) ([]*entity.Advert, error)
+	GetByCartId(cartId uuid.UUID, userId uuid.UUID) ([]*entity.Advert, error)
 
 	// GetByCategoryId возвращает массив объявлений по categoryId
-	GetByCategoryId(categoryId uuid.UUID) ([]*entity.Advert, error)
+	GetByCategoryId(categoryId, userId uuid.UUID) ([]*entity.Advert, error)
 
 	// GetById возвращает объявление по его идентификатору
 	// Если объявление не найдено, возвращает ErrAdvertNotFound
-	GetById(advertId uuid.UUID) (*entity.Advert, error)
+	GetById(advertId, userId uuid.UUID) (*entity.Advert, error)
 
 	// GetSavedByUserId возвращает массив объявлений, которые находятся в сохраненных
 	GetSavedByUserId(userId uuid.UUID) ([]*entity.Advert, error)
@@ -32,6 +32,12 @@ type AdvertRepository interface {
 	// ErrAdvertBadRequest - некорректные данные для создания объявления
 	// ErrAdvertAlreadyExists - объявление уже существует
 	Add(advert *entity.Advert) (*entity.Advert, error)
+
+	// AddToSaved добавляет объявление в сохраненные
+	AddToSaved(userId, advertId uuid.UUID) error
+
+	// DeleteFromSaved удаляет объявление из сохраненных
+	DeleteFromSaved(userId, advertId uuid.UUID) error
 
 	// Update обновляет объявление
 	// Возможные ошибки:

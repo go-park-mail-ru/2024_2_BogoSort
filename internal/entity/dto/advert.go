@@ -16,7 +16,31 @@ type AdvertRequest struct {
 	Location    string       `json:"location"`
 }
 
-type AdvertResponse struct {
+type PreviewAdvert struct {
+	ID          uuid.UUID    `json:"id"`
+	SellerId    uuid.UUID    `json:"seller_id"`
+	CategoryId  uuid.UUID    `json:"category_id"`
+	Title       string       `json:"title"`
+	Price       uint         `json:"price"`
+	ImageURL    string       `json:"image_url"`
+	Status      AdvertStatus `json:"status"`
+	Location    string       `json:"location"`
+	HasDelivery bool         `json:"has_delivery"`
+}
+
+type PreviewAdvertCard struct {
+	Preview     PreviewAdvert
+	IsSaved     bool         `json:"is_saved"`
+	IsViewed    bool         `json:"is_viewed"`
+}
+
+type MyPreviewAdvertCard struct {
+	Preview     PreviewAdvert
+	ViewsNumber uint         `json:"views_number"`
+	SavesNumber uint         `json:"saves_number"`
+}
+
+type Advert struct {
 	ID          uuid.UUID    `json:"id"`
 	SellerId    uuid.UUID    `json:"seller_id"`
 	CategoryId  uuid.UUID    `json:"category_id"`
@@ -27,8 +51,16 @@ type AdvertResponse struct {
 	Status      AdvertStatus `json:"status"`
 	HasDelivery bool         `json:"has_delivery"`
 	Location    string       `json:"location"`
+	SavesNumber uint          `json:"saves_number"`
+	ViewsNumber uint          `json:"views_number"`
 	CreatedAt   time.Time    `json:"created_at"`
 	UpdatedAt   time.Time    `json:"updated_at"`
+}
+
+type AdvertCard struct {
+	Advert
+	IsSaved     bool         `json:"is_saved"`
+	IsViewed    bool         `json:"is_viewed"`
 }
 
 type AdvertStatus string

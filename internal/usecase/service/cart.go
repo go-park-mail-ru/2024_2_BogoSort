@@ -24,11 +24,23 @@ func NewCartService(cartRepo repository.Cart, advertRepo repository.AdvertReposi
 	}
 }
 
-func convertAdvertToResponse(advert entity.Advert) dto.AdvertResponse {
-	return dto.AdvertResponse{ID: advert.ID, Title: advert.Title, Price: advert.Price, ImageURL: advert.ImageURL.UUID.String()}
+func convertAdvertToResponse(advert entity.Advert) dto.PreviewAdvertCard {
+	return dto.PreviewAdvertCard{
+		Preview: dto.PreviewAdvert{
+			ID:          advert.ID,
+			Title:       advert.Title,
+			Price:       advert.Price,
+			ImageURL:    advert.ImageURL.UUID.String(),
+			Status:      dto.AdvertStatus(advert.Status),
+			Location:    advert.Location,
+			HasDelivery: advert.HasDelivery,
+		},
+		IsSaved: advert.IsSaved,
+		IsViewed: advert.IsViewed,
+	}
 }
 
-func (c *CartService) AddAdvert(userID uuid.UUID, AdvertID uuid.UUID) error {
+func (c *CartService) AddAdvert(userID, advertID uuid.UUID) error {
 	cart, err := c.cartRepo.GetByUserId(userID)
 	switch {
 	case errors.Is(err, repository.ErrCartNotFound):
@@ -36,22 +48,22 @@ func (c *CartService) AddAdvert(userID uuid.UUID, AdvertID uuid.UUID) error {
 		if err != nil {
 			return entity.PSQLWrap(errors.New("error creating cart"), err)
 		}
-		advert, err := c.advertRepo.GetById(AdvertID)
+		advert, err := c.advertRepo.GetById(advertID, userID)
 		if err != nil {
 			return entity.PSQLWrap(errors.New("error getting advert by id"), err)
 		}
 		if advert.Status != entity.AdvertStatusActive {
 			return entity.UsecaseWrap(errors.New("advert is not active"), nil)
 		}
-		return c.cartRepo.AddAdvert(cartID, AdvertID)
+		return c.cartRepo.AddAdvert(cartID, advertID)
 	case err != nil:
 		return entity.PSQLWrap(errors.New("error getting cart by user id"), err)
 	}
-	return c.cartRepo.AddAdvert(cart.ID, AdvertID)
+	return c.cartRepo.AddAdvert(cart.ID, advertID)
 }
 
-func (c *CartService) DeleteAdvert(cartID uuid.UUID, AdvertID uuid.UUID) error {
-	return c.cartRepo.DeleteAdvert(cartID, AdvertID)
+func (c *CartService) DeleteAdvert(cartID uuid.UUID, advertID uuid.UUID) error {
+	return c.cartRepo.DeleteAdvert(cartID, advertID)
 }
 
 func (c *CartService) GetById(cartID uuid.UUID) (dto.Cart, error) {
@@ -67,7 +79,7 @@ func (c *CartService) GetById(cartID uuid.UUID) (dto.Cart, error) {
 		return dto.Cart{}, entity.PSQLWrap(errors.New("error getting cart by id"), err)
 	}
 
-	advertsResponse := make([]dto.AdvertResponse, len(adverts))
+	advertsResponse := make([]dto.PreviewAdvertCard, len(adverts))
 	for i, advert := range adverts {
 		advertsResponse[i] = convertAdvertToResponse(advert)
 	}

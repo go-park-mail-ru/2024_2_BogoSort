@@ -39,13 +39,20 @@ func (h *PurchaseEndpoint) ConfigureRoutes(router *mux.Router) {
 // @Router /api/v1/purchase [post]
 func (h *PurchaseEndpoint) Add(w http.ResponseWriter, r *http.Request) {
 	var purchase dto.PurchaseRequest
+
+	userId, ok := r.Context().Value("userId").(string)
+	if !ok {
+		utils.SendErrorResponse(w, http.StatusBadRequest, "user id not found")
+		return
+	}
+
 	if err := json.NewDecoder(r.Body).Decode(&purchase); err != nil {
 		h.logger.Error("failed to decode purchase request", zap.Error(err))
 		utils.SendErrorResponse(w, http.StatusBadRequest, "invalid request parameters")
 		return
 	}
 
-	purchaseResponse, err := h.purchaseUC.Add(purchase)
+	purchaseResponse, err := h.purchaseUC.Add(purchase, uuid.MustParse(userId))
 	if err != nil {
 		h.logger.Error("failed to add purchase", zap.Error(err))
 		utils.SendErrorResponse(w, http.StatusInternalServerError, "internal server error")

@@ -79,6 +79,18 @@ const (
 		UPDATE advert
 		SET image_id = $1
 		WHERE id = $2`
+
+	insertSavedAdvertQuery = `
+		INSERT INTO saved_advert (user_id, advert_id)
+		VALUES ($1, $2)`
+
+	deleteSavedAdvertQuery = `
+		DELETE FROM saved_advert
+		WHERE user_id = $1 AND advert_id = $2`
+
+	selectSavedCountAndIsSavedQuery = `
+		SELECT COUNT(*), EXISTS(SELECT 1 FROM saved_advert WHERE advert_id = $1 AND user_id = $2) 
+		FROM saved_advert WHERE advert_id = $1`
 )
 
 type AdvertRepoModel struct {
@@ -96,6 +108,13 @@ type AdvertRepoModel struct {
 	UpdatedAt   time.Time
 }
 
+type SavedAdvertRepoModel struct {
+	ID       uuid.UUID
+	AdvertId uuid.UUID
+	UserId   uuid.UUID
+	CreatedAt time.Time
+}
+
 func NewAdvertRepository(db *pgxpool.Pool, logger *zap.Logger, ctx context.Context, timeout time.Duration) (repository.AdvertRepository, error) {
 	if err := db.Ping(ctx); err != nil {
 		return nil, err
@@ -106,6 +125,49 @@ func NewAdvertRepository(db *pgxpool.Pool, logger *zap.Logger, ctx context.Conte
 		ctx:     ctx,
 		timeout: timeout,
 	}, nil
+}
+
+func (r *AdvertDB) getSavedCount(advertId uuid.UUID, userId uuid.UUID) (int, bool, error) {
+	var savedCount int
+	isSaved := false
+
+	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
+	defer cancel()
+
+	err := r.DB.QueryRow(ctx, selectSavedCountAndIsSavedQuery, advertId, userId).Scan(&savedCount, &isSaved)
+	if err != nil {
+			r.logger.Error("failed to execute query", zap.Error(err), zap.String("advert_id", advertId.String()), zap.String("user_id", userId.String()))
+			return 0, false, err
+	}
+
+	return savedCount, isSaved, nil
+}
+
+func (r *AdvertDB) convertToEntityAdvert(dbAdvert AdvertRepoModel, userId uuid.UUID) *entity.Advert {
+	savedCount, isSaved, err := r.getSavedCount(dbAdvert.ID, userId)
+	if err != nil {
+		r.logger.Error("failed to get saved count", zap.Error(err), zap.String("advert_id", dbAdvert.ID.String()), zap.String("user_id", userId.String()))
+		return nil
+	}
+
+	return &entity.Advert{
+		ID:          dbAdvert.ID,
+		Title:       dbAdvert.Title,
+		Description: dbAdvert.Description,
+		Price:       dbAdvert.Price,
+		Location:    dbAdvert.Location,
+		HasDelivery: dbAdvert.HasDelivery,
+		CategoryId:  dbAdvert.CategoryId,
+		SellerId:    dbAdvert.SellerId,
+		ImageURL:    dbAdvert.ImageURL,
+		Status:      entity.AdvertStatus(dbAdvert.Status),
+		CreatedAt:   dbAdvert.CreatedAt,
+		UpdatedAt:   dbAdvert.UpdatedAt,
+		IsSaved:     isSaved,
+		IsViewed:    false,
+		ViewsNumber: 0,
+		SavesNumber: uint(savedCount),
+	}
 }
 
 func (r *AdvertDB) Add(a *entity.Advert) (*entity.Advert, error) {
@@ -143,21 +205,10 @@ func (r *AdvertDB) Add(a *entity.Advert) (*entity.Advert, error) {
 
 	r.logger.Info("advert added", zap.Any("advert", dbAdvert))
 
-	return &entity.Advert{
-		ID:          dbAdvert.ID,
-		Title:       dbAdvert.Title,
-		Description: dbAdvert.Description,
-		Price:       dbAdvert.Price,
-		Location:    dbAdvert.Location,
-		HasDelivery: dbAdvert.HasDelivery,
-		CategoryId:  dbAdvert.CategoryId,
-		SellerId:    dbAdvert.SellerId,
-		ImageURL:    dbAdvert.ImageURL,
-		Status:      entity.AdvertStatus(dbAdvert.Status),
-	}, nil
+	return r.convertToEntityAdvert(dbAdvert, uuid.Nil), nil
 }
 
-func (r *AdvertDB) Get(limit, offset int) ([]*entity.Advert, error) {
+func (r *AdvertDB) Get(limit, offset int, userId uuid.UUID) ([]*entity.Advert, error) {
 	var adverts []*entity.Advert
 
 	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
@@ -188,20 +239,7 @@ func (r *AdvertDB) Get(limit, offset int) ([]*entity.Advert, error) {
 			r.logger.Error("failed to scan row", zap.Error(err))
 			return nil, entity.PSQLWrap(err)
 		}
-		adverts = append(adverts, &entity.Advert{
-			ID:          dbAdvert.ID,
-			Title:       dbAdvert.Title,
-			Description: dbAdvert.Description,
-			Price:       dbAdvert.Price,
-			Location:    dbAdvert.Location,
-			HasDelivery: dbAdvert.HasDelivery,
-			CategoryId:  dbAdvert.CategoryId,
-			SellerId:    dbAdvert.SellerId,
-			ImageURL:    dbAdvert.ImageURL,
-			Status:      entity.AdvertStatus(dbAdvert.Status),
-			CreatedAt:   dbAdvert.CreatedAt,
-			UpdatedAt:   dbAdvert.UpdatedAt,
-		})
+		adverts = append(adverts, r.convertToEntityAdvert(dbAdvert, uuid.Nil))
 	}
 
 	if err := rows.Err(); err != nil {
@@ -212,7 +250,7 @@ func (r *AdvertDB) Get(limit, offset int) ([]*entity.Advert, error) {
 	return adverts, nil
 }
 
-func (r *AdvertDB) GetByCategoryId(categoryId uuid.UUID) ([]*entity.Advert, error) {
+func (r *AdvertDB) GetByCategoryId(categoryId, userId uuid.UUID) ([]*entity.Advert, error) {
 	var adverts []*entity.Advert
 
 	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
@@ -243,20 +281,7 @@ func (r *AdvertDB) GetByCategoryId(categoryId uuid.UUID) ([]*entity.Advert, erro
 			r.logger.Error("failed to scan row", zap.Error(err), zap.String("category_id", categoryId.String()))
 			return nil, entity.PSQLWrap(err)
 		}
-		adverts = append(adverts, &entity.Advert{
-			ID:          dbAdvert.ID,
-			Title:       dbAdvert.Title,
-			Description: dbAdvert.Description,
-			Price:       dbAdvert.Price,
-			Location:    dbAdvert.Location,
-			HasDelivery: dbAdvert.HasDelivery,
-			CategoryId:  dbAdvert.CategoryId,
-			SellerId:    dbAdvert.SellerId,
-			ImageURL:    dbAdvert.ImageURL,
-			Status:      entity.AdvertStatus(dbAdvert.Status),
-			CreatedAt:   dbAdvert.CreatedAt,
-			UpdatedAt:   dbAdvert.UpdatedAt,
-		})
+		adverts = append(adverts, r.convertToEntityAdvert(dbAdvert, userId))
 	}
 
 	if err := rows.Err(); err != nil {
@@ -267,7 +292,7 @@ func (r *AdvertDB) GetByCategoryId(categoryId uuid.UUID) ([]*entity.Advert, erro
 	return adverts, nil
 }
 
-func (r *AdvertDB) GetBySellerId(sellerId uuid.UUID) ([]*entity.Advert, error) {
+func (r *AdvertDB) GetBySellerId(sellerId, userId uuid.UUID) ([]*entity.Advert, error) {
 	var adverts []*entity.Advert
 
 	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
@@ -299,20 +324,7 @@ func (r *AdvertDB) GetBySellerId(sellerId uuid.UUID) ([]*entity.Advert, error) {
 			r.logger.Error("failed to scan row", zap.Error(err), zap.String("seller_id", sellerId.String()))
 			return nil, entity.PSQLWrap(err)
 		}
-		adverts = append(adverts, &entity.Advert{
-			ID:          dbAdvert.ID,
-			Title:       dbAdvert.Title,
-			Description: dbAdvert.Description,
-			Price:       dbAdvert.Price,
-			Location:    dbAdvert.Location,
-			HasDelivery: dbAdvert.HasDelivery,
-			CategoryId:  dbAdvert.CategoryId,
-			SellerId:    dbAdvert.SellerId,
-			ImageURL:    dbAdvert.ImageURL,
-			Status:      entity.AdvertStatus(dbAdvert.Status),
-			CreatedAt:   dbAdvert.CreatedAt,
-			UpdatedAt:   dbAdvert.UpdatedAt,
-		})
+		adverts = append(adverts, r.convertToEntityAdvert(dbAdvert, userId))
 	}
 
 	if err := rows.Err(); err != nil {
@@ -323,7 +335,7 @@ func (r *AdvertDB) GetBySellerId(sellerId uuid.UUID) ([]*entity.Advert, error) {
 	return adverts, nil
 }
 
-func (r *AdvertDB) GetByCartId(cartId uuid.UUID) ([]*entity.Advert, error) {
+func (r *AdvertDB) GetByCartId(cartId, userId uuid.UUID) ([]*entity.Advert, error) {
 	var adverts []*entity.Advert
 
 	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
@@ -331,7 +343,7 @@ func (r *AdvertDB) GetByCartId(cartId uuid.UUID) ([]*entity.Advert, error) {
 
 	rows, err := r.DB.Query(ctx, selectAdvertsByCartIdQuery, cartId)
 	if err != nil {
-		r.logger.Error("failed to execute query", zap.Error(err), zap.String("user_id", cartId.String()))
+		r.logger.Error("failed to execute query", zap.Error(err), zap.String("cart_id", cartId.String()))
 		return nil, entity.PSQLWrap(err)
 	}
 	defer rows.Close()
@@ -355,20 +367,7 @@ func (r *AdvertDB) GetByCartId(cartId uuid.UUID) ([]*entity.Advert, error) {
 			r.logger.Error("failed to scan row", zap.Error(err), zap.String("cart_id", cartId.String()))
 			return nil, entity.PSQLWrap(err)
 		}
-		adverts = append(adverts, &entity.Advert{
-			ID:          dbAdvert.ID,
-			Title:       dbAdvert.Title,
-			Description: dbAdvert.Description,
-			Price:       dbAdvert.Price,
-			Location:    dbAdvert.Location,
-			HasDelivery: dbAdvert.HasDelivery,
-			CategoryId:  dbAdvert.CategoryId,
-			SellerId:    dbAdvert.SellerId,
-			ImageURL:    dbAdvert.ImageURL,
-			Status:      entity.AdvertStatus(dbAdvert.Status),
-			CreatedAt:   dbAdvert.CreatedAt,
-			UpdatedAt:   dbAdvert.UpdatedAt,
-		})
+		adverts = append(adverts, r.convertToEntityAdvert(dbAdvert, userId))
 	}
 
 	if err := rows.Err(); err != nil {
@@ -388,7 +387,7 @@ func (r *AdvertDB) BeginTransaction() (pgx.Tx, error) {
 	return tx, nil
 }
 
-func (r *AdvertDB) GetById(advertId uuid.UUID) (*entity.Advert, error) {
+func (r *AdvertDB) GetById(advertId, userId uuid.UUID) (*entity.Advert, error) {
 	var dbAdvert AdvertRepoModel
 
 	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
@@ -417,20 +416,7 @@ func (r *AdvertDB) GetById(advertId uuid.UUID) (*entity.Advert, error) {
 		return nil, entity.PSQLWrap(err)
 	}
 
-	return &entity.Advert{
-		ID:          dbAdvert.ID,
-		Title:       dbAdvert.Title,
-		Description: dbAdvert.Description,
-		Price:       dbAdvert.Price,
-		Location:    dbAdvert.Location,
-		HasDelivery: dbAdvert.HasDelivery,
-		CategoryId:  dbAdvert.CategoryId,
-		SellerId:    dbAdvert.SellerId,
-		ImageURL:    dbAdvert.ImageURL,
-		Status:      entity.AdvertStatus(dbAdvert.Status),
-		CreatedAt:   dbAdvert.CreatedAt,
-		UpdatedAt:   dbAdvert.UpdatedAt,
-	}, nil
+	return r.convertToEntityAdvert(dbAdvert, userId), nil
 }
 
 func (r *AdvertDB) GetSavedByUserId(userId uuid.UUID) ([]*entity.Advert, error) {
@@ -465,20 +451,7 @@ func (r *AdvertDB) GetSavedByUserId(userId uuid.UUID) ([]*entity.Advert, error) 
 			r.logger.Error("failed to scan row", zap.Error(err), zap.String("user_id", userId.String()))
 			return nil, entity.PSQLWrap(err)
 		}
-		adverts = append(adverts, &entity.Advert{
-			ID:          dbAdvert.ID,
-			Title:       dbAdvert.Title,
-			Description: dbAdvert.Description,
-			Price:       dbAdvert.Price,
-			Location:    dbAdvert.Location,
-			HasDelivery: dbAdvert.HasDelivery,
-			CategoryId:  dbAdvert.CategoryId,
-			SellerId:    dbAdvert.SellerId,
-			ImageURL:    dbAdvert.ImageURL,
-			Status:      entity.AdvertStatus(dbAdvert.Status),
-			CreatedAt:   dbAdvert.CreatedAt,
-			UpdatedAt:   dbAdvert.UpdatedAt,
-		})
+		adverts = append(adverts, r.convertToEntityAdvert(dbAdvert, userId))
 	}
 
 	if err := rows.Err(); err != nil {
@@ -562,6 +535,48 @@ func (r *AdvertDB) UploadImage(advertId uuid.UUID, imageId uuid.UUID) error {
 	result, err := r.DB.Exec(ctx, uploadImageQuery, imageId, advertId)
 	if err != nil {
 		r.logger.Error("failed to upload image", zap.Error(err), zap.String("advert_id", advertId.String()))
+		return entity.PSQLWrap(err)
+	}
+
+	rowsAffected := result.RowsAffected()
+	if rowsAffected == 0 {
+		r.logger.Error("advert not found", zap.String("advert_id", advertId.String()))
+		return entity.PSQLWrap(repository.ErrAdvertNotFound)
+	}
+
+	return nil
+}
+
+func (r *AdvertDB) AddToSaved(userId uuid.UUID, advertId uuid.UUID) error {
+	var savedAdvert SavedAdvertRepoModel
+
+	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
+	defer cancel()
+
+	err := r.DB.QueryRow(ctx, insertSavedAdvertQuery, userId, advertId).Scan(
+		&savedAdvert.ID,
+		&savedAdvert.UserId,
+		&savedAdvert.AdvertId,
+		&savedAdvert.CreatedAt,
+	)
+
+	if err != nil {
+		r.logger.Error("error adding advert to saved", zap.Error(err))
+		return entity.PSQLWrap(err)
+	}
+
+	r.logger.Info("advert added to saved", zap.Any("saved_advert", savedAdvert))
+
+	return nil
+}
+
+func (r *AdvertDB) DeleteFromSaved(userId uuid.UUID, advertId uuid.UUID) error {
+	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
+	defer cancel()
+
+	result, err := r.DB.Exec(ctx, deleteAdvertByIdQuery, advertId)
+	if err != nil {
+		r.logger.Error("failed to delete advert", zap.Error(err), zap.String("advert_id", advertId.String()))
 		return entity.PSQLWrap(err)
 	}
 

@@ -5,9 +5,13 @@ import (
 	"github.com/microcosm-cc/bluemonday"
 )
 
-func SanitizeResponseAdvert(advert *dto.AdvertResponse, policy *bluemonday.Policy) {
+func SanitizeAdvert(advert *dto.Advert, policy *bluemonday.Policy) {
 	advert.Title = policy.Sanitize(advert.Title)
 	advert.Description = policy.Sanitize(advert.Description)
+}
+
+func SanitizePreviewAdvert(advert *dto.PreviewAdvert, policy *bluemonday.Policy) {
+	advert.Title = policy.Sanitize(advert.Title)
 }
 
 func SanitizeRequestAdvert(advert *dto.AdvertRequest, policy *bluemonday.Policy) {
