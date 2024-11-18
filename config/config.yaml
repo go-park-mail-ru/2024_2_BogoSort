@@ -1,6 +1,6 @@
 server:
   port: 8080
-  host: "0.0.0.0"
+  host: "localhost"
   read_timeout: 10s
   write_timeout: 10s
   shutdown_timeout: 10s
@@ -10,16 +10,16 @@ session:
   secure_cookie: false
 
 auth_port: 50051
-auth_host: "0.0.0.0"
+auth_host: "localhost"
 
-pg_ip: "postgres"
-pg_port: 8002
+pg_ip: "localhost"
+pg_port: 8001
 pg_user: "postgres"
 pg_password: "postgres"
 pg_db: "emporiumdb"
 pg_timeout: 5s
 
-rd_addr: "redis:6379"
+rd_addr: "localhost:6379"
 rd_password: ""
 rd_db: 0
 

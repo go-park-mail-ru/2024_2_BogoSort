@@ -34,7 +34,7 @@ func main() {
 		logger.Fatal("Ошибка при подключении �� Redis", zap.Error(err))
 	}
 
-	sessionRepo, err := redis.NewSessionRepository(rdb, 10, context.Background(), logger)
+	sessionRepo, err := redis.NewSessionRepository(rdb, int(cfg.Session.ExpirationTime.Seconds()), context.Background(), logger)
 	if err != nil {
 		logger.Fatal("Ошибка при инициализации репозитория сессий", zap.Error(err))
 	}
