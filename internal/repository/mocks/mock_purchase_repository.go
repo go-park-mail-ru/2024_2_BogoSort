@@ -36,19 +36,19 @@ func (m *MockPurchaseRepository) EXPECT() *MockPurchaseRepositoryMockRecorder {
 	return m.recorder
 }
 
-// AddPurchase mocks base method.
-func (m *MockPurchaseRepository) AddPurchase(tx pgx.Tx, purchase *entity.Purchase) (*entity.Purchase, error) {
+// Add mocks base method.
+func (m *MockPurchaseRepository) Add(tx pgx.Tx, purchase *entity.Purchase) (*entity.Purchase, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddPurchase", tx, purchase)
+	ret := m.ctrl.Call(m, "Add", tx, purchase)
 	ret0, _ := ret[0].(*entity.Purchase)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// AddPurchase indicates an expected call of AddPurchase.
-func (mr *MockPurchaseRepositoryMockRecorder) AddPurchase(tx, purchase interface{}) *gomock.Call {
+// Add indicates an expected call of Add.
+func (mr *MockPurchaseRepositoryMockRecorder) Add(tx, purchase interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddPurchase", reflect.TypeOf((*MockPurchaseRepository)(nil).AddPurchase), tx, purchase)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Add", reflect.TypeOf((*MockPurchaseRepository)(nil).Add), tx, purchase)
 }
 
 // BeginTransaction mocks base method.
@@ -66,17 +66,17 @@ func (mr *MockPurchaseRepositoryMockRecorder) BeginTransaction() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BeginTransaction", reflect.TypeOf((*MockPurchaseRepository)(nil).BeginTransaction))
 }
 
-// GetPurchasesByUserID mocks base method.
-func (m *MockPurchaseRepository) GetPurchasesByUserID(userID uuid.UUID) ([]*entity.Purchase, error) {
+// GetByUserId mocks base method.
+func (m *MockPurchaseRepository) GetByUserId(userID uuid.UUID) ([]*entity.Purchase, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPurchasesByUserID", userID)
+	ret := m.ctrl.Call(m, "GetByUserId", userID)
 	ret0, _ := ret[0].([]*entity.Purchase)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetPurchasesByUserID indicates an expected call of GetPurchasesByUserID.
-func (mr *MockPurchaseRepositoryMockRecorder) GetPurchasesByUserID(userID interface{}) *gomock.Call {
+// GetByUserId indicates an expected call of GetByUserId.
+func (mr *MockPurchaseRepositoryMockRecorder) GetByUserId(userID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPurchasesByUserID", reflect.TypeOf((*MockPurchaseRepository)(nil).GetPurchasesByUserID), userID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByUserId", reflect.TypeOf((*MockPurchaseRepository)(nil).GetByUserId), userID)
 }

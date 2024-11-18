@@ -11,16 +11,18 @@ import (
 
 type User interface {
 	BeginTransaction() (pgx.Tx, error)
-	// AddUser добавляет пользователя в базу в рамках транзакции
-	AddUser(tx pgx.Tx, email string, hash, salt []byte) (uuid.UUID, error)
-	// GetUserByEmail возвращает пользователя по его емейлу
-	GetUserByEmail(email string) (*entity.User, error)
-	// GetUserById возвращает пользователя по его id
-	GetUserById(userId uuid.UUID) (*entity.User, error)
-	// UpdateUser обновляет данные пользователя в рамках транзакции
-	UpdateUser(user *entity.User) error
-	// DeleteUser удаляет пользователя
-	DeleteUser(userID uuid.UUID) error
+	// Add добавляет пользователя в базу в рамках транзакции
+	Add(tx pgx.Tx, email string, hash, salt []byte) (uuid.UUID, error)
+	// GetByEmail возвращает пользователя по его емейлу
+	GetByEmail(email string) (*entity.User, error)
+	// GetById возвращает пользователя по его id
+	GetById(userId uuid.UUID) (*entity.User, error)
+	// Update обновляет данные пользователя в рамках транзакции
+	Update(user *entity.User) error
+	// Delete удаляет пользователя
+	Delete(userID uuid.UUID) error
+	// CheckIfExists проверяет, существует ли пользователь
+	CheckIfExists(userId uuid.UUID) (bool, error)
 	// UploadImage обновляет аватар пользователя
 	UploadImage(userID uuid.UUID, imageId uuid.UUID) error
 }

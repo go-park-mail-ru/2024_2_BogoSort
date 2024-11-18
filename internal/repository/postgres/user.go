@@ -74,6 +74,7 @@ func NewUserRepository(db *pgxpool.Pool, ctx context.Context, logger *zap.Logger
 	if err := db.Ping(ctx); err != nil {
 		return nil, err
 	}
+	
 	return &UserDB{
 		DB:      db,
 		ctx:     ctx,
@@ -106,7 +107,7 @@ func (us *UserDB) BeginTransaction() (pgx.Tx, error) {
 	return tx, nil
 }
 
-func (us *UserDB) AddUser(tx pgx.Tx, email string, hash, salt []byte) (uuid.UUID, error) {
+func (us *UserDB) Add(tx pgx.Tx, email string, hash, salt []byte) (uuid.UUID, error) {
 	var dbUser DBUser
 
 	ctx, cancel := context.WithTimeout(us.ctx, us.timeout)
@@ -135,7 +136,7 @@ func (us *UserDB) AddUser(tx pgx.Tx, email string, hash, salt []byte) (uuid.UUID
 	return dbUser.ID, nil
 }
 
-func (us *UserDB) GetUserByEmail(email string) (*entity.User, error) {
+func (us *UserDB) GetByEmail(email string) (*entity.User, error) {
 	var dbUser DBUser
 
 	ctx, cancel := context.WithTimeout(us.ctx, us.timeout)
@@ -167,7 +168,7 @@ func (us *UserDB) GetUserByEmail(email string) (*entity.User, error) {
 	return &user, nil
 }
 
-func (us *UserDB) GetUserById(id uuid.UUID) (*entity.User, error) {
+func (us *UserDB) GetById(id uuid.UUID) (*entity.User, error) {
 	var dbUser DBUser
 
 	ctx, cancel := context.WithTimeout(us.ctx, us.timeout)
@@ -199,7 +200,7 @@ func (us *UserDB) GetUserById(id uuid.UUID) (*entity.User, error) {
 	return &user, nil
 }
 
-func (us *UserDB) UpdateUser(user *entity.User) error {
+func (us *UserDB) Update(user *entity.User) error {
 	ctx, cancel := context.WithTimeout(us.ctx, us.timeout)
 	defer cancel()
 
@@ -223,7 +224,7 @@ func (us *UserDB) UpdateUser(user *entity.User) error {
 	return nil
 }
 
-func (us *UserDB) DeleteUser(userID uuid.UUID) error {
+func (us *UserDB) Delete(userID uuid.UUID) error {
 	ctx, cancel := context.WithTimeout(us.ctx, us.timeout)
 	defer cancel()
 
@@ -264,4 +265,16 @@ func (us *UserDB) UploadImage(userID uuid.UUID, imageId uuid.UUID) error {
 	}
 
 	return nil
+}
+
+func (us *UserDB) CheckIfExists(userId uuid.UUID) (bool, error) {
+	ctx, cancel := context.WithTimeout(us.ctx, us.timeout)
+	defer cancel()
+
+	var exists bool
+	err := us.DB.QueryRow(ctx, checkIfExistsQuery, userId).Scan(&exists)
+	if err != nil {
+		return false, err
+	}
+	return exists, nil
 }

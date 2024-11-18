@@ -16,8 +16,8 @@ type User interface {
 	UpdateInfo(*dto.UserUpdate) error
 	// ChangePassword изменение пароля
 	ChangePassword(userID uuid.UUID, password *dto.UpdatePassword) error
-	// GetUser получение данных пользователя
-	GetUser(userID uuid.UUID) (*dto.User, error)
+	// Get получение данных пользователя
+	Get(userID uuid.UUID) (*dto.User, error)
 	// UploadImage обновление аватара пользователя
 	UploadImage(userID uuid.UUID, imageID uuid.UUID) error
 }

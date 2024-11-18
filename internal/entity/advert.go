@@ -27,8 +27,12 @@ type Advert struct {
 	Status      AdvertStatus  `db:"status"`
 	HasDelivery bool          `db:"has_delivery"`
 	Location    string        `db:"location"`
+	SavesNumber uint          
+	ViewsNumber uint         
 	CreatedAt   time.Time     `db:"created_at"`
 	UpdatedAt   time.Time     `db:"updated_at"`
+	IsSaved     bool          `db:"is_saved"`
+	IsViewed    bool          `db:"is_viewed"`
 }
 
 type AdvertStatus string

@@ -49,6 +49,7 @@ message AddPurchaseRequest {
   string address = 2;
   PaymentMethod payment_method = 3;
   DeliveryMethod delivery_method = 4;
+  string user_id = 5;
 }
 
 message AddPurchaseResponse {
@@ -84,17 +85,28 @@ message GetCartByUserIDResponse {
   Cart cart = 1;
 }
 
-message Advert {
+message PreviewAdvert {
   string advert_id = 1;
-  string title = 2;
-  string description = 3;
-  uint64 price = 4;
+  string seller_id = 2;
+  string category_id = 3;
+  string title = 4;
+  uint64 price = 5;
+  string image_url = 6;
+  AdvertStatus status = 7;
+  string location = 8;
+  bool has_delivery = 9;
+}
+
+message PreviewAdvertCard {
+  PreviewAdvert preview = 1;
+  bool is_saved = 2;
+  bool is_viewed = 3;
 }
 
 message Cart {
   string id = 1;
   string user_id = 2;
-  repeated Advert adverts = 3;
+  repeated PreviewAdvertCard adverts = 3;
   CartStatus status = 4;
 }
 
@@ -127,4 +139,10 @@ enum DeliveryMethod {
 enum CartStatus {
   ACTIVE = 0;
   CLOSED = 1;
+}
+
+enum AdvertStatus {
+  ADVERT_ACTIVE = 0;
+  ADVERT_PENDING = 1;
+  ADVERT_INACTIVE = 2;
 }

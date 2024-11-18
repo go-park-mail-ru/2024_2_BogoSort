@@ -7,11 +7,11 @@ import (
 	"time"
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository/mocks"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/pashagolub/pgxmock/v4"
 	"github.com/stretchr/testify/assert"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository/mocks"
 	"go.uber.org/zap"
 )
 
@@ -83,7 +83,7 @@ func TestAdvertDB_AddAdvert(t *testing.T) {
 				stringStatus,
 			))
 
-	result, err := repo.AddAdvert(advert)
+	result, err := repo.Add(advert)
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -112,7 +112,7 @@ func TestAdvertDB_AddAdvert(t *testing.T) {
 		).
 		WillReturnError(errors.New("insert error"))
 
-	_, err = repo.AddAdvert(advert)
+	_, err = repo.Add(advert)
 	assert.Error(t, err)
 
 	err = mockPool.ExpectationsWereMet()
@@ -129,7 +129,7 @@ func TestAdvertDB_GetAdverts(t *testing.T) {
 		WillReturnRows(pgxmock.NewRows([]string{"id", "title", "description", "price", "location", "has_delivery", "category_id", "seller_id", "image_id", "status", "created_at", "updated_at"}).
 			AddRow(uuid.New(), "Test Advert", "Test Description", uint(100), "Test Location", true, uuid.New(), uuid.New(), uuid.NullUUID{}, "active", time.Now(), time.Now()))
 
-	adverts, err := repo.GetAdverts(10, 0)
+	adverts, err := repo.Get(10, 0, uuid.Nil)
 	assert.NoError(t, err)
 	assert.Len(t, adverts, 1)
 
@@ -138,7 +138,7 @@ func TestAdvertDB_GetAdverts(t *testing.T) {
 		WithArgs(10, 0).
 		WillReturnError(errors.New("query error"))
 
-	adverts, err = repo.GetAdverts(10, 0)
+	adverts, err = repo.Get(10, 0, uuid.Nil)
 	assert.Error(t, err)
 	assert.Nil(t, adverts)
 
@@ -158,7 +158,7 @@ func TestAdvertDB_GetAdvertById(t *testing.T) {
 		WillReturnRows(pgxmock.NewRows([]string{"id", "title", "description", "price", "location", "has_delivery", "category_id", "seller_id", "image_id", "status", "created_at", "updated_at"}).
 			AddRow(advertId, "Test Advert", "Test Description", uint(100), "Test Location", true, uuid.New(), uuid.New(), uuid.NullUUID{}, "active", time.Now(), time.Now()))
 
-	advert, err := repo.GetAdvertById(advertId)
+	advert, err := repo.GetById(advertId, uuid.Nil)
 	assert.NoError(t, err)
 	assert.Equal(t, "Test Advert", advert.Title)
 
@@ -167,7 +167,7 @@ func TestAdvertDB_GetAdvertById(t *testing.T) {
 		WithArgs(advertId).
 		WillReturnError(pgx.ErrNoRows)
 
-	advert, err = repo.GetAdvertById(advertId)
+	advert, err = repo.GetById(advertId, uuid.Nil)
 	assert.Error(t, err)
 	assert.Nil(t, advert)
 
@@ -197,7 +197,7 @@ func TestAdvertDB_UpdateAdvert(t *testing.T) {
 		WithArgs(advert.Title, advert.Description, advert.Price, advert.Location, advert.HasDelivery, advert.CategoryId, advert.Status, advert.ID).
 		WillReturnResult(pgxmock.NewResult("UPDATE", 1))
 
-	err := repo.UpdateAdvert(advert)
+	err := repo.Update(advert)
 	assert.NoError(t, err)
 
 	// Error case (not found)
@@ -205,7 +205,7 @@ func TestAdvertDB_UpdateAdvert(t *testing.T) {
 		WithArgs(advert.Title, advert.Description, advert.Price, advert.Location, advert.HasDelivery, advert.CategoryId, advert.Status, advert.ID).
 		WillReturnResult(pgxmock.NewResult("UPDATE", 0))
 
-	err = repo.UpdateAdvert(advert)
+	err = repo.Update(advert)
 	assert.Error(t, err)
 
 	// Error case (SQL error)
@@ -213,7 +213,7 @@ func TestAdvertDB_UpdateAdvert(t *testing.T) {
 		WithArgs(advert.Title, advert.Description, advert.Price, advert.Location, advert.HasDelivery, advert.CategoryId, advert.Status, advert.ID).
 		WillReturnError(errors.New("update error"))
 
-	err = repo.UpdateAdvert(advert)
+	err = repo.Update(advert)
 	assert.Error(t, err)
 
 	err = mockPool.ExpectationsWereMet()
@@ -231,7 +231,7 @@ func TestAdvertDB_DeleteAdvertById(t *testing.T) {
 		WithArgs(advertId).
 		WillReturnResult(pgxmock.NewResult("DELETE", 1))
 
-	err := repo.DeleteAdvertById(advertId)
+	err := repo.DeleteById(advertId)
 	assert.NoError(t, err)
 
 	// Error case (not found)
@@ -239,7 +239,7 @@ func TestAdvertDB_DeleteAdvertById(t *testing.T) {
 		WithArgs(advertId).
 		WillReturnResult(pgxmock.NewResult("DELETE", 0))
 
-	err = repo.DeleteAdvertById(advertId)
+	err = repo.DeleteById(advertId)
 	assert.Error(t, err)
 
 	// Error case (SQL error)
@@ -247,7 +247,7 @@ func TestAdvertDB_DeleteAdvertById(t *testing.T) {
 		WithArgs(advertId).
 		WillReturnError(errors.New("delete error"))
 
-	err = repo.DeleteAdvertById(advertId)
+	err = repo.DeleteById(advertId)
 	assert.Error(t, err)
 
 	err = mockPool.ExpectationsWereMet()
@@ -335,7 +335,7 @@ func TestAdvertDB_GetAdvertsByCategoryId(t *testing.T) {
 		WillReturnRows(pgxmock.NewRows([]string{"id", "title", "description", "price", "location", "has_delivery", "category_id", "seller_id", "image_id", "status", "created_at", "updated_at"}).
 			AddRow(uuid.New(), "Test Advert", "Test Description", uint(100), "Test Location", true, categoryId, uuid.New(), uuid.NullUUID{}, "active", time.Now(), time.Now()))
 
-	adverts, err := repo.GetAdvertsByCategoryId(categoryId)
+	adverts, err := repo.GetByCategoryId(categoryId, uuid.Nil)
 	assert.NoError(t, err)
 	assert.Len(t, adverts, 1)
 
@@ -344,7 +344,7 @@ func TestAdvertDB_GetAdvertsByCategoryId(t *testing.T) {
 		WithArgs(categoryId).
 		WillReturnError(errors.New("query error"))
 
-	adverts, err = repo.GetAdvertsByCategoryId(categoryId)
+	adverts, err = repo.GetByCategoryId(categoryId, uuid.Nil)
 	assert.Error(t, err)
 	assert.Nil(t, adverts)
 
@@ -364,7 +364,7 @@ func TestAdvertDB_GetAdvertsBySellerId(t *testing.T) {
 		WillReturnRows(pgxmock.NewRows([]string{"id", "title", "description", "price", "location", "has_delivery", "category_id", "seller_id", "image_id", "status", "created_at", "updated_at"}).
 			AddRow(uuid.New(), "Test Advert", "Test Description", uint(100), "Test Location", true, uuid.New(), sellerId, uuid.NullUUID{}, "active", time.Now(), time.Now()))
 
-	adverts, err := repo.GetAdvertsBySellerId(sellerId)
+	adverts, err := repo.GetBySellerId(sellerId, uuid.Nil)
 	assert.NoError(t, err)
 	assert.Len(t, adverts, 1)
 
@@ -373,7 +373,7 @@ func TestAdvertDB_GetAdvertsBySellerId(t *testing.T) {
 		WithArgs(sellerId).
 		WillReturnError(errors.New("query error"))
 
-	adverts, err = repo.GetAdvertsBySellerId(sellerId)
+	adverts, err = repo.GetBySellerId(sellerId, uuid.Nil)
 	assert.Error(t, err)
 	assert.Nil(t, adverts)
 
@@ -393,7 +393,7 @@ func TestAdvertDB_GetAdvertsByCartId(t *testing.T) {
 		WillReturnRows(pgxmock.NewRows([]string{"id", "title", "description", "price", "location", "has_delivery", "category_id", "seller_id", "image_id", "status", "created_at", "updated_at"}).
 			AddRow(uuid.New(), "Test Advert", "Test Description", uint(100), "Test Location", true, uuid.New(), uuid.New(), uuid.NullUUID{}, "active", time.Now(), time.Now()))
 
-	adverts, err := repo.GetAdvertsByCartId(cartId)
+	adverts, err := repo.GetByCartId(cartId, uuid.Nil)
 	assert.NoError(t, err)
 	assert.Len(t, adverts, 1)
 
@@ -402,7 +402,7 @@ func TestAdvertDB_GetAdvertsByCartId(t *testing.T) {
 		WithArgs(cartId).
 		WillReturnError(errors.New("query error"))
 
-	adverts, err = repo.GetAdvertsByCartId(cartId)
+	adverts, err = repo.GetByCartId(cartId, uuid.Nil)
 	assert.Error(t, err)
 	assert.Nil(t, adverts)
 

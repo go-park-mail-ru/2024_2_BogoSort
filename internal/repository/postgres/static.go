@@ -54,7 +54,7 @@ func NewStaticRepository(ctx context.Context, dbpool *pgxpool.Pool, basicPath st
 	}, nil
 }
 
-func (s StaticDB) GetStatic(staticID uuid.UUID) (string, error) {
+func (s StaticDB) Get(staticID uuid.UUID) (string, error) {
 	var path, name string
 
 	ctx, cancel := context.WithTimeout(s.Ctx, s.timeout)
@@ -73,7 +73,7 @@ func (s StaticDB) GetStatic(staticID uuid.UUID) (string, error) {
 	return fmt.Sprintf("%s/%s", path, name), nil
 }
 
-func (s StaticDB) UploadStatic(path, filename string, data []byte) (uuid.UUID, error) {
+func (s StaticDB) Upload(path, filename string, data []byte) (uuid.UUID, error) {
 	ctx, cancel := context.WithTimeout(s.Ctx, s.timeout)
 	defer cancel()
 

@@ -74,13 +74,13 @@ func (u *UserService) Signup(signupInfo *dto.Signup) (uuid.UUID, error) {
 		}
 	}()
 
-	userID, err := u.userRepo.AddUser(tx, signupInfo.Email, hash, salt)
+	userID, err := u.userRepo.Add(tx, signupInfo.Email, hash, salt)
 	if err != nil {
 		err = u.handleRepoError(err, "Signup")
 		return uuid.Nil, err
 	}
 
-	_, err = u.sellerRepo.AddSeller(tx, userID)
+	_, err = u.sellerRepo.Add(tx, userID)
 	if err != nil {
 		err = u.handleRepoError(err, "Signup_CreateSeller")
 		return uuid.Nil, err
@@ -97,7 +97,7 @@ func (u *UserService) Login(loginInfo *dto.Login) (uuid.UUID, error) {
 		return uuid.Nil, usecase.UserIncorrectDataError{Err: err}
 	}
 
-	user, err := u.userRepo.GetUserByEmail(loginInfo.Email)
+	user, err := u.userRepo.GetByEmail(loginInfo.Email)
 	if err != nil {
 		return uuid.Nil, u.handleRepoError(err, "Login")
 	}
@@ -118,25 +118,25 @@ func (u *UserService) UpdateInfo(user *dto.UserUpdate) error {
 		Phone:    user.Phone,
 	}
 
-	err := u.userRepo.UpdateUser(entityUser)
+	err := u.userRepo.Update(entityUser)
 	if err != nil {
 		return u.handleRepoError(err, "UpdateInfo")
 	}
 	return nil
 }
 
-func (u *UserService) DeleteUser(userID uuid.UUID) error {
-	err := u.userRepo.DeleteUser(userID)
+func (u *UserService) Delete(userID uuid.UUID) error {
+	err := u.userRepo.Delete(userID)
 	if err != nil {
 		return u.handleRepoError(err, "DeleteUser")
 	}
 	return nil
 }
 
-func (u *UserService) GetUser(userID uuid.UUID) (*dto.User, error) {
-	entityUser, err := u.userRepo.GetUserById(userID)
+func (u *UserService) Get(userID uuid.UUID) (*dto.User, error) {
+	entityUser, err := u.userRepo.GetById(userID)
 	if err != nil {
-		return nil, u.handleRepoError(err, "GetUser")
+		return nil, u.handleRepoError(err, "Get")
 	}
 	return &dto.User{
 		ID:        entityUser.ID,
@@ -154,7 +154,7 @@ func (u *UserService) ChangePassword(userID uuid.UUID, password *dto.UpdatePassw
 	if err := entity.ValidatePassword(password.NewPassword); err != nil {
 		return usecase.UserIncorrectDataError{Err: err}
 	}
-	user, err := u.userRepo.GetUserById(userID)
+	user, err := u.userRepo.GetById(userID)
 	switch {
 	case err != nil:
 		return u.handleRepoError(err, "ChangePassword")
@@ -175,7 +175,7 @@ func (u *UserService) ChangePassword(userID uuid.UUID, password *dto.UpdatePassw
 		PasswordSalt: salt,
 	}
 
-	err = u.userRepo.UpdateUser(entityUser)
+	err = u.userRepo.Update(entityUser)
 	if err != nil {
 		return u.handleRepoError(err, "ChangePassword")
 	}

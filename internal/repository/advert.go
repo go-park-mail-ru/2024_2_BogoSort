@@ -8,50 +8,65 @@ import (
 )
 
 type AdvertRepository interface {
-	// GetAdverts возвращает массив объявлений в соответствии с offset и limit
-	GetAdverts(limit, offset int) ([]*entity.Advert, error)
+	// Get возвращает массив объявлений в соответствии с offset и limit
+	Get(limit, offset int, userId uuid.UUID) ([]*entity.Advert, error)
 
-	// GetAdvertsBySellerId возвращает массив объявлений в соответствии с sellerId
-	GetAdvertsBySellerId(sellerId uuid.UUID) ([]*entity.Advert, error)
+	// GetBySellerId возвращает массив объявлений в соответствии с sellerId
+	GetBySellerId(sellerId, userId uuid.UUID) ([]*entity.Advert, error)
 
-	// GetAdvertsByCartId возвращает массив объявлений, которые находятся в корзине
-	GetAdvertsByCartId(cartId uuid.UUID) ([]*entity.Advert, error)
+	// GetByCartId возвращает массив объявлений, которые находятся в корзине
+	GetByCartId(cartId uuid.UUID, userId uuid.UUID) ([]*entity.Advert, error)
 
-	// GetAdvertsByCategoryId возвращает массив объявлений по categoryId
-	GetAdvertsByCategoryId(categoryId uuid.UUID) ([]*entity.Advert, error)
+	// GetByCategoryId возвращает массив объявлений по categoryId
+	GetByCategoryId(categoryId, userId uuid.UUID) ([]*entity.Advert, error)
 
-	// GetAdvertById возвращает объявление по его идентификатору
+	// GetById возвращает объявление по его идентификатору
 	// Если объявление не найдено, возвращает ErrAdvertNotFound
-	GetAdvertById(advertId uuid.UUID) (*entity.Advert, error)
+	GetById(advertId, userId uuid.UUID) (*entity.Advert, error)
 
-	// AddAdvert добавляет объявление
+	// GetSavedByUserId возвращает массив объявлений, которые находятся в сохраненных
+	GetSavedByUserId(userId uuid.UUID) ([]*entity.Advert, error)
+
+	// Add добавляет объявление
 	// Возможные ошибки:
 	// ErrAdvertBadRequest - некорректные данные для создания объявления
 	// ErrAdvertAlreadyExists - объявление уже существует
-	AddAdvert(advert *entity.Advert) (*entity.Advert, error)
+	Add(advert *entity.Advert) (*entity.Advert, error)
 
-	// UpdateAdvert обновляет объявление
+	// AddToSaved добавляет объявление в сохраненные
+	AddToSaved(userId, advertId uuid.UUID) error
+
+	// DeleteFromSaved удаляет объявление из сохраненных
+	DeleteFromSaved(userId, advertId uuid.UUID) error
+
+	// Update обновляет объявление
 	// Возможные ошибки:
 	// ErrAdvertBadRequest - некорректные данные для создания объявления
 	// ErrAdvertNotFound - объявление не найдено
-	UpdateAdvert(advert *entity.Advert) error
+	Update(advert *entity.Advert) error
 
-	// DeleteAdvertById удаляет объявление по Id
+	// DeleteById удаляет объявление по Id
 	// Возможные ошибки:
 	// ErrAdvertNotFound - объявление не найдено
-	DeleteAdvertById(advertId uuid.UUID) error
+	DeleteById(advertId uuid.UUID) error
 
-	// UpdateAdvertStatus обновляет статус объявления
+	// UpdateStatus обновляет статус объявления
 	// Возможные ошибки:
 	// ErrAdvertBadRequest - некорректные данные для создания объявления
 	// ErrAdvertNotFound - объявление не найдено
-	UpdateAdvertStatus(tx pgx.Tx, advertId uuid.UUID, status entity.AdvertStatus) error
+	UpdateStatus(tx pgx.Tx, advertId uuid.UUID, status entity.AdvertStatus) error
 
 	// UploadImage загружает изображение в объявление
 	UploadImage(advertId uuid.UUID, imageId uuid.UUID) error
 
+	// AddViewed добавляет просмотренное объявление
+	AddViewed(userId, advertId uuid.UUID) error
+
 	// BeginTransaction начинает транзакцию
 	BeginTransaction() (pgx.Tx, error)
+
+	// CheckIfExists проверяет, существует ли объявление
+	CheckIfExists(advertId uuid.UUID) (bool, error)
 }
 
 var (

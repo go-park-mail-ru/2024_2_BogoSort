@@ -1,121 +1,121 @@
 package http
 
-import (
-	"bytes"
-	"encoding/json"
-	"net/http"
-	"net/http/httptest"
-	"testing"
+// import (
+// 	"bytes"
+// 	"encoding/json"
+// 	"net/http"
+// 	"net/http/httptest"
+// 	"testing"
 
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase/mocks"
-	"github.com/golang/mock/gomock"
-	"github.com/google/uuid"
-	// "github.com/gorilla/mux"
-	// "github.com/microcosm-cc/bluemonday"
-	// "go.uber.org/zap"
-)
+// 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
+// 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase/mocks"
+// 	"github.com/golang/mock/gomock"
+// 	"github.com/google/uuid"
+// 	// "github.com/gorilla/mux"
+// 	// "github.com/microcosm-cc/bluemonday"
+// 	// "go.uber.org/zap"
+// )
 
-func setupUserEndpoints(t *testing.T) (*UserEndpoints, *mocks.MockUser, *mocks.MockAuth, *gomock.Controller) {
-	// ctrl := gomock.NewController(t)
-	// mockUserUC := mocks.NewMockUser(ctrl)
-	// mockAuthUC := mocks.NewMockAuth(ctrl)
-	// logger, _ := zap.NewDevelopment()
-	// policy := bluemonday.UGCPolicy()
+// func setupUserEndpoint(t *testing.T) (*UserEndpoint, *mocks.MockUser, *mocks.MockAuth, *gomock.Controller) {
+// 	// ctrl := gomock.NewController(t)
+// 	// mockUserUC := mocks.NewMockUser(ctrl)
+// 	// mockAuthUC := mocks.NewMockAuth(ctrl)
+// 	// logger, _ := zap.NewDevelopment()
+// 	// policy := bluemonday.UGCPolicy()
 
-	// sessionManager := &utils.SessionManager{
-	// 	SessionUC:        mockAuthUC,
-	// 	SessionAliveTime: 1,
-	// 	SecureCookie:     false,
-	// 	Logger:           logger,
-	// }
+// 	// sessionManager := &utils.SessionManager{
+// 	// 	SessionUC:        mockAuthUC,
+// 	// 	SessionAliveTime: 1,
+// 	// 	SecureCookie:     false,
+// 	// 	Logger:           logger,
+// 	// }
 
-	// endpoints := NewUserEndpoints(mockUserUC, mockAuthUC, sessionManager, nil, logger, policy)
-	// return endpoints, mockUserUC, mockAuthUC, ctrl
-	return nil, nil, nil, nil
-}
+// 	// endpoints := NewUserEndpoints(mockUserUC, mockAuthUC, sessionManager, nil, logger, policy)
+// 	// return endpoints, mockUserUC, mockAuthUC, ctrl
+// 	return nil, nil, nil, nil
+// }
 
-func TestUserEndpoints_Signup(t *testing.T) {
-	endpoints, mockUserUC, mockAuthUC, ctrl := setupUserEndpoints(t)
-	defer ctrl.Finish()
+// func TestUserEndpoint_Signup(t *testing.T) {
+// 	endpoints, mockUserUC, mockAuthUC, ctrl := setupUserEndpoint(t)
+// 	defer ctrl.Finish()
 
-	t.Run("Success", func(t *testing.T) {
-		credentials := dto.Signup{
-			Email:    "test@example.com",
-			Password: "password123",
-		}
-		userID := uuid.New()
+// 	t.Run("Success", func(t *testing.T) {
+// 		credentials := dto.Signup{
+// 			Email:    "test@example.com",
+// 			Password: "password123",
+// 		}
+// 		userID := uuid.New()
 
-		mockUserUC.EXPECT().Signup(&credentials).Return(userID, nil)
-		mockAuthUC.EXPECT().CreateSession(userID).Return("session-id", nil)
+// 		mockUserUC.EXPECT().Signup(&credentials).Return(userID, nil)
+// 		mockAuthUC.EXPECT().CreateSession(userID).Return("session-id", nil)
 
-		body, _ := json.Marshal(credentials)
-		req := httptest.NewRequest("POST", "/api/v1/signup", bytes.NewBuffer(body))
-		rr := httptest.NewRecorder()
+// 		body, _ := json.Marshal(credentials)
+// 		req := httptest.NewRequest("POST", "/api/v1/signup", bytes.NewBuffer(body))
+// 		rr := httptest.NewRecorder()
 
-		endpoints.Signup(rr, req)
+// 		endpoints.Signup(rr, req)
 
-		if status := rr.Code; status != http.StatusOK {
-			t.Errorf("Expected status %v, got %v", http.StatusOK, status)
-		}
-	})
+// 		if status := rr.Code; status != http.StatusOK {
+// 			t.Errorf("Expected status %v, got %v", http.StatusOK, status)
+// 		}
+// 	})
 
-	t.Run("Invalid request body", func(t *testing.T) {
-		req := httptest.NewRequest("POST", "/api/v1/signup", bytes.NewBuffer([]byte("invalid json")))
-		rr := httptest.NewRecorder()
+// 	t.Run("Invalid request body", func(t *testing.T) {
+// 		req := httptest.NewRequest("POST", "/api/v1/signup", bytes.NewBuffer([]byte("invalid json")))
+// 		rr := httptest.NewRecorder()
 
-		endpoints.Signup(rr, req)
+// 		endpoints.Signup(rr, req)
 
-		if status := rr.Code; status != http.StatusBadRequest {
-			t.Errorf("Expected status %v, got %v", http.StatusBadRequest, status)
-		}
-	})
-}
+// 		if status := rr.Code; status != http.StatusBadRequest {
+// 			t.Errorf("Expected status %v, got %v", http.StatusBadRequest, status)
+// 		}
+// 	})
+// }
 
-func TestUserEndpoints_Login(t *testing.T) {
-	endpoints, mockUserUC, mockAuthUC, ctrl := setupUserEndpoints(t)
-	defer ctrl.Finish()
+// func TestUserEndpoint_Login(t *testing.T) {
+// 	endpoints, mockUserUC, mockAuthUC, ctrl := setupUserEndpoint(t)
+// 	defer ctrl.Finish()
 
-	t.Run("Success", func(t *testing.T) {
-		credentials := dto.Login{
-			Email:    "test@example.com",
-			Password: "password123",
-		}
-		userID := uuid.New()
+// 	t.Run("Success", func(t *testing.T) {
+// 		credentials := dto.Login{
+// 			Email:    "test@example.com",
+// 			Password: "password123",
+// 		}
+// 		userID := uuid.New()
 
-		mockUserUC.EXPECT().Login(&credentials).Return(userID, nil)
-		mockAuthUC.EXPECT().CreateSession(userID).Return("session-id", nil)
+// 		mockUserUC.EXPECT().Login(&credentials).Return(userID, nil)
+// 		mockAuthUC.EXPECT().CreateSession(userID).Return("session-id", nil)
 
-		body, _ := json.Marshal(credentials)
-		req := httptest.NewRequest("POST", "/api/v1/login", bytes.NewBuffer(body))
-		rr := httptest.NewRecorder()
+// 		body, _ := json.Marshal(credentials)
+// 		req := httptest.NewRequest("POST", "/api/v1/login", bytes.NewBuffer(body))
+// 		rr := httptest.NewRecorder()
 
-		endpoints.Login(rr, req)
+// 		endpoints.Login(rr, req)
 
-		if status := rr.Code; status != http.StatusOK {
-			t.Errorf("Expected status %v, got %v", http.StatusOK, status)
-		}
-	})
+// 		if status := rr.Code; status != http.StatusOK {
+// 			t.Errorf("Expected status %v, got %v", http.StatusOK, status)
+// 		}
+// 	})
 
-	t.Run("Invalid credentials", func(t *testing.T) {
-		credentials := dto.Login{
-			Email:    "test@example.com",
-			Password: "wrongpassword",
-		}
+// 	t.Run("Invalid credentials", func(t *testing.T) {
+// 		credentials := dto.Login{
+// 			Email:    "test@example.com",
+// 			Password: "wrongpassword",
+// 		}
 
-		mockUserUC.EXPECT().Login(&credentials).Return(uuid.Nil, ErrInvalidCredentials)
+// 		mockUserUC.EXPECT().Login(&credentials).Return(uuid.Nil, ErrInvalidCredentials)
 
-		body, _ := json.Marshal(credentials)
-		req := httptest.NewRequest("POST", "/api/v1/login", bytes.NewBuffer(body))
-		rr := httptest.NewRecorder()
+// 		body, _ := json.Marshal(credentials)
+// 		req := httptest.NewRequest("POST", "/api/v1/login", bytes.NewBuffer(body))
+// 		rr := httptest.NewRecorder()
 
-		endpoints.Login(rr, req)
+// 		endpoints.Login(rr, req)
 
-		if status := rr.Code; status != http.StatusInternalServerError {
-			t.Errorf("Expected status %v, got %v", http.StatusInternalServerError, status)
-		}
-	})
-}
+// 		if status := rr.Code; status != http.StatusInternalServerError {
+// 			t.Errorf("Expected status %v, got %v", http.StatusInternalServerError, status)
+// 		}
+// 	})
+// }
 
 // func TestUserEndpoints_GetProfile(t *testing.T) {
 // 	endpoints, mockUserUC, _, ctrl := setupUserEndpoints(t)

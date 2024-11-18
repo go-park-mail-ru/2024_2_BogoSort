@@ -140,15 +140,22 @@ func (c *CartPurchaseClient) GetCartByID(ctx context.Context, cartID uuid.UUID) 
 		ID:      uuid.MustParse(resp.Cart.Id),
 		UserID:  uuid.MustParse(resp.Cart.UserId),
 		Status:  entity.CartStatus(resp.Cart.Status),
-		Adverts: []dto.AdvertResponse{},
+		Adverts: []dto.PreviewAdvertCard{},
 	}
 
-	for _, a := range resp.Cart.Adverts {
-		ad := dto.AdvertResponse{
-			ID:          uuid.MustParse(a.AdvertId),
-			Title:       a.Title,
-			Description: a.Description,
-			Price:       uint(a.Price),
+	for _, advert := range resp.Cart.Adverts {
+		ad := dto.PreviewAdvertCard{
+			Preview: dto.PreviewAdvert{
+				ID:          uuid.MustParse(advert.Preview.AdvertId),
+				Title:       advert.Preview.Title,
+				Price:       uint(advert.Preview.Price),
+				ImageURL:    advert.Preview.ImageUrl,
+				Status:      dto.AdvertStatus(advert.Preview.Status),
+				Location:    advert.Preview.Location,
+				HasDelivery: advert.Preview.HasDelivery,
+			},
+			IsSaved: advert.IsSaved,
+			IsViewed: advert.IsViewed,
 		}
 		cart.Adverts = append(cart.Adverts, ad)
 	}
@@ -170,15 +177,22 @@ func (c *CartPurchaseClient) GetCartByUserID(ctx context.Context, userID uuid.UU
 		ID:      uuid.MustParse(resp.Cart.Id),
 		UserID:  uuid.MustParse(resp.Cart.UserId),
 		Status:  entity.CartStatus(resp.Cart.Status),
-		Adverts: []dto.AdvertResponse{},
+		Adverts: []dto.PreviewAdvertCard{},
 	}
 
-	for _, a := range resp.Cart.Adverts {
-		ad := dto.AdvertResponse{
-			ID:          uuid.MustParse(a.AdvertId),
-			Title:       a.Title,
-			Description: a.Description,
-			Price:       uint(a.Price),
+	for _, advert := range resp.Cart.Adverts {
+		ad := dto.PreviewAdvertCard{
+			Preview: dto.PreviewAdvert{
+				ID:          uuid.MustParse(advert.Preview.AdvertId),
+				Title:       advert.Preview.Title,
+				Price:       uint(advert.Preview.Price),
+				ImageURL:    advert.Preview.ImageUrl,
+				Status:      dto.AdvertStatus(advert.Preview.Status),
+				Location:    advert.Preview.Location,
+				HasDelivery: advert.Preview.HasDelivery,
+			},
+			IsSaved: advert.IsSaved,
+			IsViewed: advert.IsViewed,
 		}
 		cart.Adverts = append(cart.Adverts, ad)
 	}

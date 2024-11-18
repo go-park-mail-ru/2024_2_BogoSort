@@ -49,19 +49,19 @@ func (mr *MockUserMockRecorder) ChangePassword(userID, password interface{}) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ChangePassword", reflect.TypeOf((*MockUser)(nil).ChangePassword), userID, password)
 }
 
-// GetUser mocks base method.
-func (m *MockUser) GetUser(userID uuid.UUID) (*dto.User, error) {
+// Get mocks base method.
+func (m *MockUser) Get(userID uuid.UUID) (*dto.User, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUser", userID)
+	ret := m.ctrl.Call(m, "Get", userID)
 	ret0, _ := ret[0].(*dto.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetUser indicates an expected call of GetUser.
-func (mr *MockUserMockRecorder) GetUser(userID interface{}) *gomock.Call {
+// Get indicates an expected call of Get.
+func (mr *MockUserMockRecorder) Get(userID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUser", reflect.TypeOf((*MockUser)(nil).GetUser), userID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockUser)(nil).Get), userID)
 }
 
 // Login mocks base method.
@@ -95,7 +95,7 @@ func (mr *MockUserMockRecorder) Signup(arg0 interface{}) *gomock.Call {
 }
 
 // UpdateInfo mocks base method.
-func (m *MockUser) UpdateInfo(arg0 *dto.User) error {
+func (m *MockUser) UpdateInfo(arg0 *dto.UserUpdate) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateInfo", arg0)
 	ret0, _ := ret[0].(error)

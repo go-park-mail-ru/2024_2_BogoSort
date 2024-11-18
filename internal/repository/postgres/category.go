@@ -33,7 +33,7 @@ func NewCategoryRepository(db *pgxpool.Pool, logger *zap.Logger, ctx context.Con
 	}, nil
 }
 
-func (c *CategoryDB) GetCategories() ([]*entity.Category, error) {
+func (c *CategoryDB) Get() ([]*entity.Category, error) {
 	var categories []*entity.Category
 
 	ctx, cancel := context.WithTimeout(c.ctx, c.timeout)

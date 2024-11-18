@@ -46,7 +46,7 @@ func TestCategoryDB_GetCategories(t *testing.T) {
 		WillReturnRows(pgxmock.NewRows([]string{"id", "title"}).
 			AddRow(uuid.New(), "Test Category"))
 
-	categories, err := repo.GetCategories()
+	categories, err := repo.Get()
 	assert.NoError(t, err)
 	assert.Len(t, categories, 1)
 
@@ -54,7 +54,7 @@ func TestCategoryDB_GetCategories(t *testing.T) {
 	mockPool.ExpectQuery(getCategoryQuery).
 		WillReturnError(errors.New("query error"))
 
-	categories, err = repo.GetCategories()
+	categories, err = repo.Get()
 	assert.Error(t, err)
 	assert.Nil(t, categories)
 

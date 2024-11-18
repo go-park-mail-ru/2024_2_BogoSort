@@ -6,24 +6,7 @@ definitions:
       user_id:
         type: string
     type: object
-  dto.AdvertRequest:
-    properties:
-      category_id:
-        type: string
-      description:
-        type: string
-      has_delivery:
-        type: boolean
-      location:
-        type: string
-      price:
-        type: integer
-      status:
-        $ref: '#/definitions/dto.AdvertStatus'
-      title:
-        type: string
-    type: object
-  dto.AdvertResponse:
+  dto.Advert:
     properties:
       category_id:
         type: string
@@ -41,6 +24,8 @@ definitions:
         type: string
       price:
         type: integer
+      saves_number:
+        type: integer
       seller_id:
         type: string
       status:
@@ -48,6 +33,34 @@ definitions:
       title:
         type: string
       updated_at:
+        type: string
+      views_number:
+        type: integer
+    type: object
+  dto.AdvertCard:
+    properties:
+      advert:
+        $ref: '#/definitions/dto.Advert'
+      is_saved:
+        type: boolean
+      is_viewed:
+        type: boolean
+    type: object
+  dto.AdvertRequest:
+    properties:
+      category_id:
+        type: string
+      description:
+        type: string
+      has_delivery:
+        type: boolean
+      location:
+        type: string
+      price:
+        type: integer
+      status:
+        $ref: '#/definitions/dto.AdvertStatus'
+      title:
         type: string
     type: object
   dto.AdvertStatus:
@@ -64,7 +77,7 @@ definitions:
     properties:
       adverts:
         items:
-          $ref: '#/definitions/dto.AdvertResponse'
+          $ref: '#/definitions/dto.PreviewAdvertCard'
         type: array
       id:
         type: string
@@ -100,6 +113,15 @@ definitions:
       password:
         type: string
     type: object
+  dto.MyPreviewAdvertCard:
+    properties:
+      preview:
+        $ref: '#/definitions/dto.PreviewAdvert'
+      saves_number:
+        type: integer
+      views_number:
+        type: integer
+    type: object
   dto.PaymentMethod:
     enum:
     - card
@@ -108,6 +130,36 @@ definitions:
     x-enum-varnames:
     - PaymentMethodCard
     - PaymentMethodCash
+  dto.PreviewAdvert:
+    properties:
+      category_id:
+        type: string
+      has_delivery:
+        type: boolean
+      id:
+        type: string
+      image_url:
+        type: string
+      location:
+        type: string
+      price:
+        type: integer
+      seller_id:
+        type: string
+      status:
+        $ref: '#/definitions/dto.AdvertStatus'
+      title:
+        type: string
+    type: object
+  dto.PreviewAdvertCard:
+    properties:
+      is_saved:
+        type: boolean
+      is_viewed:
+        type: boolean
+      preview:
+        $ref: '#/definitions/dto.PreviewAdvert'
+    type: object
   dto.PurchaseRequest:
     properties:
       address:
@@ -247,7 +299,7 @@ paths:
           description: List of adverts
           schema:
             items:
-              $ref: '#/definitions/dto.AdvertResponse'
+              $ref: '#/definitions/dto.PreviewAdvertCard'
             type: array
         "400":
           description: Invalid limit or offset
@@ -277,7 +329,7 @@ paths:
         "201":
           description: Advert created
           schema:
-            $ref: '#/definitions/dto.AdvertResponse'
+            $ref: '#/definitions/dto.Advert'
         "400":
           description: Invalid advert data
           schema:
@@ -334,7 +386,7 @@ paths:
         "200":
           description: Advert details
           schema:
-            $ref: '#/definitions/dto.AdvertResponse'
+            $ref: '#/definitions/dto.AdvertCard'
         "400":
           description: Invalid advert ID
           schema:
@@ -371,6 +423,8 @@ paths:
       responses:
         "200":
           description: Advert updated successfully
+          schema:
+            type: string
         "400":
           description: Invalid advert data
           schema:
@@ -473,7 +527,7 @@ paths:
           description: List of adverts in cart
           schema:
             items:
-              $ref: '#/definitions/dto.AdvertResponse'
+              $ref: '#/definitions/dto.PreviewAdvertCard'
             type: array
         "400":
           description: Invalid cart ID
@@ -506,7 +560,7 @@ paths:
           description: List of adverts by category ID
           schema:
             items:
-              $ref: '#/definitions/dto.AdvertResponse'
+              $ref: '#/definitions/dto.PreviewAdvertCard'
             type: array
         "400":
           description: Invalid category ID
@@ -517,6 +571,113 @@ paths:
           schema:
             $ref: '#/definitions/utils.ErrResponse'
       summary: Retrieve adverts by category ID
+      tags:
+      - adverts
+  /api/v1/adverts/my:
+    get:
+      description: Fetch a list of adverts associated with a specific user ID.
+      responses:
+        "200":
+          description: List of adverts by user ID
+          schema:
+            items:
+              $ref: '#/definitions/dto.MyPreviewAdvertCard'
+            type: array
+        "400":
+          description: Invalid user ID
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Failed to retrieve adverts by user ID
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Retrieve adverts by user ID
+      tags:
+      - adverts
+  /api/v1/adverts/saved:
+    get:
+      description: Fetch a list of adverts saved by the specified user ID.
+      parameters:
+      - description: User ID
+        in: path
+        name: userId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of adverts saved by user
+          schema:
+            items:
+              $ref: '#/definitions/dto.PreviewAdvertCard'
+            type: array
+        "400":
+          description: Invalid user ID
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Failed to retrieve adverts by user ID
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Retrieve adverts by user ID
+      tags:
+      - adverts
+  /api/v1/adverts/saved/{advertId}:
+    delete:
+      description: Remove an advert from saved by its ID.
+      parameters:
+      - description: Advert ID
+        in: path
+        name: advertId
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Advert removed from saved
+        "400":
+          description: Invalid advert ID
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "404":
+          description: Advert not found
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Failed to remove advert from saved
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Remove an advert from saved
+      tags:
+      - adverts
+    post:
+      description: Add an advert to saved by its ID.
+      parameters:
+      - description: Advert ID
+        in: path
+        name: advertId
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Advert added to saved
+        "400":
+          description: Invalid advert ID
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "404":
+          description: Advert not found
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Failed to add advert to saved
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Add an advert to saved
       tags:
       - adverts
   /api/v1/adverts/seller/{sellerId}:
@@ -535,7 +696,7 @@ paths:
           description: List of adverts
           schema:
             items:
-              $ref: '#/definitions/dto.AdvertResponse'
+              $ref: '#/definitions/dto.PreviewAdvertCard'
             type: array
         "400":
           description: Invalid seller ID
@@ -617,9 +778,9 @@ paths:
     delete:
       consumes:
       - application/json
-      description: Удаляет объявление из корзины, связанной с пользователем
+      description: Deletes an advert from the cart associated with a user
       parameters:
-      - description: Данные для удаления объявления из корзины
+      - description: Data to delete advert from cart
         in: body
         name: purchase
         required: true
@@ -646,14 +807,14 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/utils.ErrResponse'
-      summary: Удалить объявление из корзины
+      summary: Delete advert from user's cart
       tags:
       - Cart
   /api/v1/cart/exists/{user_id}:
     get:
       consumes:
       - application/json
-      description: Проверяет, существует ли корзина для пользователя по его ID
+      description: Checks if a cart exists for a user by their ID
       parameters:
       - description: User ID
         in: path
@@ -677,7 +838,7 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/utils.ErrResponse'
-      summary: Проверить существование корзины для пользователя
+      summary: Check if cart exists for user
       tags:
       - Cart
   /api/v1/categories:

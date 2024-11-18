@@ -139,7 +139,7 @@ func Init(cfg config.Config) (*mux.Router, error) {
 		return nil, handleRepoError(err, "unable to create cart purchase client")
 	}
 
-	advertsUseCase := service.NewAdvertService(advertsRepo, staticRepo, sellerRepo, zap.L())
+	advertsUseCase := service.NewAdvertService(advertsRepo, staticRepo, sellerRepo, userRepo, zap.L())
 	staticUseCase := service.NewStaticService(staticRepo, zap.L())
 	categoryUseCase := service.NewCategoryService(categoryRepo, zap.L())
 	userUC := service.NewUserService(userRepo, sellerRepo, zap.L())
@@ -148,16 +148,16 @@ func Init(cfg config.Config) (*mux.Router, error) {
 
 	router.Use(middleware.NewAuthMiddleware(sessionManager).AuthMiddleware)
 
-	advertsHandler := http3.NewAdvertEndpoints(advertsUseCase, staticUseCase, sessionManager, zap.L(), policy)
-	authHandler := http3.NewAuthEndpoints(sessionUC, sessionManager, zap.L())
-	userHandler := http3.NewUserEndpoints(userUC, sessionManager, staticUseCase, zap.L(), policy)
-	sellerHandler := http3.NewSellerEndpoints(sellerRepo, zap.L())
-	purchaseHandler := http3.NewPurchaseEndpoints(cartPurchaseClient, zap.L())
-	cartHandler := http3.NewCartEndpoints(cartPurchaseClient, zap.L())
-	categoryHandler := http3.NewCategoryEndpoints(categoryUseCase, zap.L())
-	staticHandler := http3.NewStaticEndpoints(staticUseCase, zap.L())
+	advertsHandler := http3.NewAdvertEndpoint(advertsUseCase, staticUseCase, sessionManager, zap.L(), policy)
+	authHandler := http3.NewAuthEndpoint(sessionUC, sessionManager, zap.L())
+	userHandler := http3.NewUserEndpoint(userUC, sessionManager, staticUseCase, zap.L(), policy)
+	sellerHandler := http3.NewSellerEndpoint(sellerRepo, zap.L())
+	purchaseHandler := http3.NewPurchaseEndpoint(cartPurchaseClient, zap.L())
+	cartHandler := http3.NewCartEndpoint(cartPurchaseClient, zap.L())
+	categoryHandler := http3.NewCategoryEndpoint(categoryUseCase, zap.L())
+	staticHandler := http3.NewStaticEndpoint(staticUseCase, zap.L())
 
-	csrfEndpoints := http3.NewCSRFEndpoints(csrfToken, sessionManager)
+	csrfEndpoints := http3.NewCSRFEndpoint(csrfToken, sessionManager)
 	csrfEndpoints.Configure(router)
 	userHandler.ConfigureUnprotectedRoutes(router)
 

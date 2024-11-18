@@ -26,9 +26,9 @@ func TestCategoryService_GetCategories_Success(t *testing.T) {
 	defer ctrl.Finish()
 
 	expectedCategories := []*entity.Category{{ID: uuid.New(), Title: "Category1"}}
-	mockRepo.EXPECT().GetCategories().Return(expectedCategories, nil)
+	mockRepo.EXPECT().Get().Return(expectedCategories, nil)
 
-	categories, err := service.GetCategories()
+	categories, err := service.Get()
 
 	assert.NoError(t, err)
 	assert.Equal(t, expectedCategories, categories)
@@ -38,9 +38,9 @@ func TestCategoryService_GetCategories_Error(t *testing.T) {
 	service, ctrl, mockRepo := setupCategoryTestService(t)
 	defer ctrl.Finish()
 
-	mockRepo.EXPECT().GetCategories().Return(nil, assert.AnError)
+	mockRepo.EXPECT().Get().Return(nil, assert.AnError)
 
-	categories, err := service.GetCategories()
+	categories, err := service.Get()
 
 	assert.Error(t, err)
 	assert.Nil(t, categories)

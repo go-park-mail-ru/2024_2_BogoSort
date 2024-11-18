@@ -56,7 +56,7 @@ func NewCartRepository(db *pgxpool.Pool, ctx context.Context, logger *zap.Logger
 	}, nil
 }
 
-func (c *CartDB) GetCartByUserID(userID uuid.UUID) (entity.Cart, error) {
+func (c *CartDB) GetByUserId(userID uuid.UUID) (entity.Cart, error) {
 	var cart entity.Cart
 	err := c.DB.QueryRow(c.ctx, queryGetCart, userID).Scan(&cart.ID, &cart.UserID, &cart.Status)
 
@@ -71,7 +71,7 @@ func (c *CartDB) GetCartByUserID(userID uuid.UUID) (entity.Cart, error) {
 	return cart, nil
 }
 
-func (c *CartDB) CreateCart(userID uuid.UUID) (uuid.UUID, error) {
+func (c *CartDB) Create(userID uuid.UUID) (uuid.UUID, error) {
 	var cartID uuid.UUID
 	err := c.DB.QueryRow(c.ctx, queryCreateCart, userID).Scan(&cartID)
 
@@ -83,7 +83,7 @@ func (c *CartDB) CreateCart(userID uuid.UUID) (uuid.UUID, error) {
 	return cartID, nil
 }
 
-func (c *CartDB) AddAdvertToCart(cartID uuid.UUID, AdvertID uuid.UUID) error {
+func (c *CartDB) AddAdvert(cartID uuid.UUID, AdvertID uuid.UUID) error {
 	_, err := c.DB.Exec(c.ctx, queryAddAdvertToCart, cartID, AdvertID)
 	switch {
 	case errors.Is(err, pgx.ErrNoRows):
@@ -95,7 +95,7 @@ func (c *CartDB) AddAdvertToCart(cartID uuid.UUID, AdvertID uuid.UUID) error {
 	return nil
 }
 
-func (c *CartDB) DeleteAdvertFromCart(cartID uuid.UUID, AdvertID uuid.UUID) error {
+func (c *CartDB) DeleteAdvert(cartID uuid.UUID, AdvertID uuid.UUID) error {
 	cmdTag, err := c.DB.Exec(c.ctx, queryDeleteAdvertFromCart, cartID, AdvertID)
 	switch {
 	case errors.Is(err, pgx.ErrNoRows):
@@ -111,7 +111,7 @@ func (c *CartDB) DeleteAdvertFromCart(cartID uuid.UUID, AdvertID uuid.UUID) erro
 	return nil
 }
 
-func (c *CartDB) GetAdvertsByCartID(cartID uuid.UUID) ([]entity.Advert, error) {
+func (c *CartDB) GetAdvertsByCartId(cartID uuid.UUID) ([]entity.Advert, error) {
 	rows, err := c.DB.Query(c.ctx, queryGetAdvertsByCartID, cartID)
 	switch {
 	case errors.Is(err, pgx.ErrNoRows):
@@ -135,7 +135,7 @@ func (c *CartDB) GetAdvertsByCartID(cartID uuid.UUID) ([]entity.Advert, error) {
 	return Adverts, nil
 }
 
-func (c *CartDB) UpdateCartStatus(tx pgx.Tx, cartID uuid.UUID, status entity.CartStatus) error {
+func (c *CartDB) UpdateStatus(tx pgx.Tx, cartID uuid.UUID, status entity.CartStatus) error {
 	_, err := tx.Exec(c.ctx, queryUpdateCartStatus, cartID, status)
 	switch {
 	case err != nil:
@@ -149,7 +149,7 @@ func (c *CartDB) UpdateCartStatus(tx pgx.Tx, cartID uuid.UUID, status entity.Car
 	return nil
 }
 
-func (c *CartDB) GetCartByID(cartID uuid.UUID) (entity.Cart, error) {
+func (c *CartDB) GetById(cartID uuid.UUID) (entity.Cart, error) {
 	var cart entity.Cart
 	err := c.DB.QueryRow(c.ctx, queryGetCartByID, cartID).Scan(&cart.ID, &cart.UserID, &cart.Status)
 	switch {

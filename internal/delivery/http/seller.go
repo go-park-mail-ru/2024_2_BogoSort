@@ -18,21 +18,21 @@ var (
 	ErrInvalidSellerData   = errors.New("invalid seller data")
 )
 
-type SellerEndpoints struct {
+type SellerEndpoint struct {
 	sellerRepo repository.Seller
 	logger     *zap.Logger
 }
 
-func NewSellerEndpoints(sellerRepo repository.Seller, logger *zap.Logger) *SellerEndpoints {
-	return &SellerEndpoints{
+func NewSellerEndpoint(sellerRepo repository.Seller, logger *zap.Logger) *SellerEndpoint {
+	return &SellerEndpoint{
 		sellerRepo: sellerRepo,
 		logger:     logger,
 	}
 }
 
-func (s *SellerEndpoints) Configure(router *mux.Router) {
-	router.HandleFunc("/api/v1/seller/{seller_id}", s.GetSellerByID).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/seller/user/{user_id}", s.GetSellerByUserID).Methods(http.MethodGet)
+func (s *SellerEndpoint) Configure(router *mux.Router) {
+	router.HandleFunc("/api/v1/seller/{seller_id}", s.GetByID).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/seller/user/{user_id}", s.GetByUserID).Methods(http.MethodGet)
 }
 
 // GetSellerByID
@@ -47,7 +47,7 @@ func (s *SellerEndpoints) Configure(router *mux.Router) {
 // @Failure 404 {object} utils.ErrResponse "Продавец не найден"
 // @Failure 500 {object} utils.ErrResponse "Внутренняя ошибка сервера"
 // @Router /api/v1/seller/{seller_id} [get]
-func (s *SellerEndpoints) GetSellerByID(w http.ResponseWriter, r *http.Request) {
+func (s *SellerEndpoint) GetByID(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	sellerID, err := uuid.Parse(vars["seller_id"])
 	if err != nil {
@@ -55,7 +55,7 @@ func (s *SellerEndpoints) GetSellerByID(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	seller, err := s.sellerRepo.GetSellerByID(sellerID)
+	seller, err := s.sellerRepo.GetById(sellerID)
 	switch {
 	case errors.Is(err, repository.ErrSellerNotFound):
 		s.handleError(w, err, "error getting seller by id")
@@ -79,7 +79,7 @@ func (s *SellerEndpoints) GetSellerByID(w http.ResponseWriter, r *http.Request) 
 // @Failure 404 {object} utils.ErrResponse "Продавец не найден"
 // @Failure 500 {object} utils.ErrResponse "Внутренняя ошибка сервера"
 // @Router /api/v1/seller/user/{user_id} [get]
-func (s *SellerEndpoints) GetSellerByUserID(w http.ResponseWriter, r *http.Request) {
+func (s *SellerEndpoint) GetByUserID(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	userID, err := uuid.Parse(vars["user_id"])
 	if err != nil {
@@ -87,7 +87,7 @@ func (s *SellerEndpoints) GetSellerByUserID(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	seller, err := s.sellerRepo.GetSellerByUserID(userID)
+	seller, err := s.sellerRepo.GetByUserId(userID)
 	switch {
 	case errors.Is(err, repository.ErrSellerNotFound):
 		s.handleError(w, err, "error getting seller by user_id")
@@ -99,7 +99,7 @@ func (s *SellerEndpoints) GetSellerByUserID(w http.ResponseWriter, r *http.Reque
 	utils.SendJSONResponse(w, http.StatusOK, seller)
 }
 
-func (s *SellerEndpoints) handleError(w http.ResponseWriter, err error, context string) {
+func (s *SellerEndpoint) handleError(w http.ResponseWriter, err error, context string) {
 	switch {
 	case errors.Is(err, repository.ErrSellerNotFound):
 		s.sendError(w, http.StatusNotFound, ErrSellerNotFound, context, nil)
@@ -110,7 +110,7 @@ func (s *SellerEndpoints) handleError(w http.ResponseWriter, err error, context 
 	}
 }
 
-func (s *SellerEndpoints) sendError(w http.ResponseWriter, statusCode int, err error, context string, additionalInfo map[string]string) {
+func (s *SellerEndpoint) sendError(w http.ResponseWriter, statusCode int, err error, context string, additionalInfo map[string]string) {
 	s.logger.Error(err.Error(), zap.String("context", context), zap.Any("info", additionalInfo))
 	utils.SendErrorResponse(w, statusCode, err.Error())
 }

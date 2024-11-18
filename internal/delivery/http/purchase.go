@@ -14,21 +14,21 @@ import (
 	"go.uber.org/zap"
 )
 
-type PurchaseEndpoints struct {
+type PurchaseEndpoint struct {
 	purchaseClient *cart_purchase.CartPurchaseClient
 	logger         *zap.Logger
 }
 
-func NewPurchaseEndpoints(purchaseClient *cart_purchase.CartPurchaseClient, logger *zap.Logger) *PurchaseEndpoints {
-	return &PurchaseEndpoints{purchaseClient: purchaseClient, logger: logger}
+func NewPurchaseEndpoint(purchaseClient *cart_purchase.CartPurchaseClient, logger *zap.Logger) *PurchaseEndpoint {
+	return &PurchaseEndpoint{purchaseClient: purchaseClient, logger: logger}
 }
 
-func (h *PurchaseEndpoints) ConfigureRoutes(router *mux.Router) {
-	router.HandleFunc("/api/v1/purchase", h.AddPurchase).Methods("POST")
-	router.HandleFunc("/api/v1/purchase/{user_id}", h.GetPurchasesByUserID).Methods("GET")
+func (h *PurchaseEndpoint) ConfigureRoutes(router *mux.Router) {
+	router.HandleFunc("/api/v1/purchase", h.Add).Methods("POST")
+	router.HandleFunc("/api/v1/purchase/{user_id}", h.GetByUserID).Methods("GET")
 }
 
-// AddPurchase processes the addition of a purchase
+// Add processes the addition of a purchase
 // @Summary Adds a purchase
 // @Description Accepts purchase data, validates it, and adds it to the system. Returns a response with purchase data or an error.
 // @Tags Purchases
@@ -39,8 +39,15 @@ func (h *PurchaseEndpoints) ConfigureRoutes(router *mux.Router) {
 // @Failure 400 {object} utils.ErrResponse "Invalid request parameters"
 // @Failure 500 {object} utils.ErrResponse "Internal server error"
 // @Router /api/v1/purchase [post]
-func (h *PurchaseEndpoints) AddPurchase(w http.ResponseWriter, r *http.Request) {
+func (h *PurchaseEndpoint) Add(w http.ResponseWriter, r *http.Request) {
 	var purchase dto.PurchaseRequest
+
+	_, ok := r.Context().Value("user_id").(string)
+	if !ok {
+		utils.SendErrorResponse(w, http.StatusBadRequest, "user id not found")
+		return
+	}
+
 	if err := json.NewDecoder(r.Body).Decode(&purchase); err != nil {
 		h.logger.Error("failed to decode purchase request", zap.Error(err))
 		utils.SendErrorResponse(w, http.StatusBadRequest, "invalid request parameters")
@@ -60,7 +67,7 @@ func (h *PurchaseEndpoints) AddPurchase(w http.ResponseWriter, r *http.Request) 
 	utils.SendJSONResponse(w, http.StatusCreated, purchaseResponse)
 }
 
-// GetPurchasesByUserID processes the retrieval of purchases by user ID
+// GetByUserID processes the retrieval of purchases by user ID
 // @Summary Retrieves purchases by user ID
 // @Description Accepts a user ID, validates it, and retrieves purchases from the system. Returns a response with purchase data or an error.
 // @Tags Purchases
@@ -71,7 +78,7 @@ func (h *PurchaseEndpoints) AddPurchase(w http.ResponseWriter, r *http.Request) 
 // @Failure 400 {object} utils.ErrResponse "Invalid user ID"
 // @Failure 500 {object} utils.ErrResponse "Internal server error"
 // @Router /api/v1/purchase/{user_id} [get]
-func (h *PurchaseEndpoints) GetPurchasesByUserID(w http.ResponseWriter, r *http.Request) {
+func (h *PurchaseEndpoint) GetByUserID(w http.ResponseWriter, r *http.Request) {
 	userIDStr := mux.Vars(r)["user_id"]
 	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
@@ -91,7 +98,7 @@ func (h *PurchaseEndpoints) GetPurchasesByUserID(w http.ResponseWriter, r *http.
 	utils.SendJSONResponse(w, http.StatusOK, purchases)
 }
 
-func (h *PurchaseEndpoints) handleError(w http.ResponseWriter, err error, message string) {
+func (h *PurchaseEndpoint) handleError(w http.ResponseWriter, err error, message string) {
 	h.logger.Error(message, zap.Error(err))
 	utils.SendErrorResponse(w, http.StatusInternalServerError, "internal server error")
 }

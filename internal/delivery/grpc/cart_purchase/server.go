@@ -33,7 +33,8 @@ func (s *GrpcServer) AddPurchase(ctx context.Context, req *proto.AddPurchaseRequ
 		DeliveryMethod: dto.DeliveryMethod(req.DeliveryMethod.String()),
 	}
 
-	purchaseResp, err := s.purchaseUC.AddPurchase(purchaseReq)
+	userID := uuid.MustParse(req.UserId)
+	purchaseResp, err := s.purchaseUC.Add(purchaseReq, userID)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to add purchase: %v", err)
 	}
@@ -50,7 +51,7 @@ func (s *GrpcServer) AddPurchase(ctx context.Context, req *proto.AddPurchaseRequ
 
 func (s *GrpcServer) GetPurchasesByUserID(ctx context.Context, req *proto.GetPurchasesByUserIDRequest) (*proto.GetPurchasesByUserIDResponse, error) {
 	userID := uuid.MustParse(req.UserId)
-	purchases, err := s.purchaseUC.GetPurchasesByUserID(userID)
+	purchases, err := s.purchaseUC.GetByUserId(userID)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get purchases: %v", err)
 	}
@@ -73,7 +74,7 @@ func (s *GrpcServer) GetPurchasesByUserID(ctx context.Context, req *proto.GetPur
 }
 
 func (s *GrpcServer) AddAdvertToCart(ctx context.Context, req *proto.AddAdvertToCartRequest) (*proto.AddAdvertToCartResponse, error) {
-	err := s.cartUC.AddAdvertToUserCart(uuid.MustParse(req.UserId), uuid.MustParse(req.AdvertId))
+	err := s.cartUC.AddAdvert(uuid.MustParse(req.UserId), uuid.MustParse(req.AdvertId))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to add advert to cart: %v", err)
 	}
@@ -84,7 +85,7 @@ func (s *GrpcServer) AddAdvertToCart(ctx context.Context, req *proto.AddAdvertTo
 }
 
 func (s *GrpcServer) DeleteAdvertFromCart(ctx context.Context, req *proto.DeleteAdvertFromCartRequest) (*proto.DeleteAdvertFromCartResponse, error) {
-	err := s.cartUC.DeleteAdvertFromCart(uuid.MustParse(req.CartId), uuid.MustParse(req.AdvertId))
+	err := s.cartUC.DeleteAdvert(uuid.MustParse(req.CartId), uuid.MustParse(req.AdvertId))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to delete advert from cart: %v", err)
 	}
@@ -95,7 +96,7 @@ func (s *GrpcServer) DeleteAdvertFromCart(ctx context.Context, req *proto.Delete
 }
 
 func (s *GrpcServer) CheckCartExists(ctx context.Context, req *proto.CheckCartExistsRequest) (*proto.CheckCartExistsResponse, error) {
-	exists, err := s.cartUC.CheckCartExists(uuid.MustParse(req.UserId))
+	exists, err := s.cartUC.CheckExists(uuid.MustParse(req.UserId))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to check cart existence: %v", err)
 	}
@@ -106,7 +107,7 @@ func (s *GrpcServer) CheckCartExists(ctx context.Context, req *proto.CheckCartEx
 }
 
 func (s *GrpcServer) GetCartByID(ctx context.Context, req *proto.GetCartByIDRequest) (*proto.GetCartByIDResponse, error) {
-	cart, err := s.cartUC.GetCartByID(uuid.MustParse(req.CartId))
+	cart, err := s.cartUC.GetById(uuid.MustParse(req.CartId))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get cart: %v", err)
 	}
@@ -115,15 +116,22 @@ func (s *GrpcServer) GetCartByID(ctx context.Context, req *proto.GetCartByIDRequ
 		Id:      cart.ID.String(),
 		UserId:  cart.UserID.String(),
 		Status:  proto.CartStatus(proto.CartStatus_value[string(cart.Status)]),
-		Adverts: []*proto.Advert{},
+		Adverts: []*proto.PreviewAdvertCard{},
 	}
 
 	for _, advert := range cart.Adverts {
-		protoCart.Adverts = append(protoCart.Adverts, &proto.Advert{
-			AdvertId:    advert.ID.String(),
-			Title:       advert.Title,
-			Description: advert.Description,
-			Price:       uint64(advert.Price),
+		protoCart.Adverts = append(protoCart.Adverts, &proto.PreviewAdvertCard{
+			Preview: &proto.PreviewAdvert{
+				AdvertId:    advert.Preview.ID.String(),
+				Title:       advert.Preview.Title,
+				Price:       uint64(advert.Preview.Price),
+				ImageUrl:    advert.Preview.ImageURL,
+				Status:      proto.AdvertStatus(proto.AdvertStatus_value[string(advert.Preview.Status)]),
+				Location:    advert.Preview.Location,
+				HasDelivery: advert.Preview.HasDelivery,
+			},
+			IsSaved: advert.IsSaved,
+			IsViewed: advert.IsViewed,
 		})
 	}
 
@@ -132,8 +140,8 @@ func (s *GrpcServer) GetCartByID(ctx context.Context, req *proto.GetCartByIDRequ
 	}, nil
 }
 
-func (s *GrpcServer) GetCartByUserID(ctx context.Context, req *proto.GetCartByUserIDRequest) (*proto.GetCartByUserIDResponse, error) {
-	cart, err := s.cartUC.GetCartByUserID(uuid.MustParse(req.UserId))
+func (s *GrpcServer) GetByUserID(ctx context.Context, req *proto.GetCartByUserIDRequest) (*proto.GetCartByUserIDResponse, error) {
+	cart, err := s.cartUC.GetByUserId(uuid.MustParse(req.UserId))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get cart: %v", err)
 	}
@@ -142,15 +150,22 @@ func (s *GrpcServer) GetCartByUserID(ctx context.Context, req *proto.GetCartByUs
 		Id:      cart.ID.String(),
 		UserId:  cart.UserID.String(),
 		Status:  proto.CartStatus(proto.CartStatus_value[string(cart.Status)]),
-		Adverts: []*proto.Advert{},
+		Adverts: []*proto.PreviewAdvertCard{},
 	}
 
 	for _, advert := range cart.Adverts {
-		protoCart.Adverts = append(protoCart.Adverts, &proto.Advert{
-			AdvertId:    advert.ID.String(),
-			Title:       advert.Title,
-			Description: advert.Description,
-			Price:       uint64(advert.Price),
+		protoCart.Adverts = append(protoCart.Adverts, &proto.PreviewAdvertCard{
+			Preview: &proto.PreviewAdvert{
+				AdvertId:    advert.Preview.ID.String(),
+				Title:       advert.Preview.Title,
+				Price:       uint64(advert.Preview.Price),
+				ImageUrl:    advert.Preview.ImageURL,
+				Status:      proto.AdvertStatus(proto.AdvertStatus_value[string(advert.Preview.Status)]),
+				Location:    advert.Preview.Location,
+				HasDelivery: advert.Preview.HasDelivery,
+			},
+			IsSaved: advert.IsSaved,
+			IsViewed: advert.IsViewed,
 		})
 	}
 

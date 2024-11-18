@@ -16,20 +16,20 @@ var (
 	ErrFailedToGetStatic  = errors.New("failed to get static file")
 )
 
-type StaticEndpoints struct {
+type StaticEndpoint struct {
 	StaticUseCase usecase.StaticUseCase
 	logger        *zap.Logger
 }
 
-func NewStaticEndpoints(staticUseCase usecase.StaticUseCase, logger *zap.Logger) *StaticEndpoints {
-	return &StaticEndpoints{
+func NewStaticEndpoint(staticUseCase usecase.StaticUseCase, logger *zap.Logger) *StaticEndpoint {
+	return &StaticEndpoint{
 		StaticUseCase: staticUseCase,
 		logger:        logger,
 	}
 }
 
-func (h *StaticEndpoints) ConfigureRoutes(router *mux.Router) {
-	router.HandleFunc("/api/v1/files/{fileId}", h.GetStaticById).Methods("GET")
+func (h *StaticEndpoint) ConfigureRoutes(router *mux.Router) {
+	router.HandleFunc("/api/v1/files/{fileId}", h.GetById).Methods("GET")
 }
 
 // GetStaticById godoc
@@ -43,7 +43,7 @@ func (h *StaticEndpoints) ConfigureRoutes(router *mux.Router) {
 // @Failure 404 {object} utils.ErrResponse "Static file not found"
 // @Failure 500 {object} utils.ErrResponse "Failed to get static file"
 // @Router /api/v1/files/{fileId} [get]
-func (h *StaticEndpoints) GetStaticById(writer http.ResponseWriter, r *http.Request) {
+func (h *StaticEndpoint) GetById(writer http.ResponseWriter, r *http.Request) {
 	staticIdStr := mux.Vars(r)["fileId"]
 	staticId, err := uuid.Parse(staticIdStr)
 	if err != nil {
@@ -64,7 +64,7 @@ func (h *StaticEndpoints) GetStaticById(writer http.ResponseWriter, r *http.Requ
 	utils.SendJSONResponse(writer, http.StatusOK, staticURL)
 }
 
-func (e *StaticEndpoints) sendError(w http.ResponseWriter, statusCode int, err error, context string, additionalInfo map[string]string) {
+func (e *StaticEndpoint) sendError(w http.ResponseWriter, statusCode int, err error, context string, additionalInfo map[string]string) {
 	e.logger.Error(err.Error(), zap.String("context", context), zap.Any("info", additionalInfo))
 	utils.SendErrorResponse(w, statusCode, err.Error())
 }

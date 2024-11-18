@@ -34,17 +34,17 @@ func (m *MockCategoryUseCase) EXPECT() *MockCategoryUseCaseMockRecorder {
 	return m.recorder
 }
 
-// GetCategories mocks base method.
-func (m *MockCategoryUseCase) GetCategories() ([]*entity.Category, error) {
+// Get mocks base method.
+func (m *MockCategoryUseCase) Get() ([]*entity.Category, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetCategories")
+	ret := m.ctrl.Call(m, "Get")
 	ret0, _ := ret[0].([]*entity.Category)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetCategories indicates an expected call of GetCategories.
-func (mr *MockCategoryUseCaseMockRecorder) GetCategories() *gomock.Call {
+// Get indicates an expected call of Get.
+func (mr *MockCategoryUseCaseMockRecorder) Get() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCategories", reflect.TypeOf((*MockCategoryUseCase)(nil).GetCategories))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockCategoryUseCase)(nil).Get))
 }

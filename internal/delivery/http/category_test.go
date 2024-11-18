@@ -22,14 +22,14 @@ func TestGetCategories_Success(t *testing.T) {
 	mockUseCase := mocks.NewMockCategoryUseCase(ctrl)
 	logger, _ := zap.NewDevelopment()
 
-	mockUseCase.EXPECT().GetCategories().Return([]*entity.Category{{ID: uuid.New(), Title: "Category1"}}, nil)
+	mockUseCase.EXPECT().Get().Return([]*entity.Category{{ID: uuid.New(), Title: "Category1"}}, nil)
 
-	endpoints := NewCategoryEndpoints(mockUseCase, logger)
+	endpoints := NewCategoryEndpoint(mockUseCase, logger)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/categories", nil)
 	w := httptest.NewRecorder()
 
-	endpoints.GetCategories(w, req)
+	endpoints.Get(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
 
@@ -47,14 +47,14 @@ func TestGetCategories_Error(t *testing.T) {
 	mockUseCase := mocks.NewMockCategoryUseCase(ctrl)
 	logger, _ := zap.NewDevelopment()
 
-	mockUseCase.EXPECT().GetCategories().Return(nil, errors.New("some error"))
+	mockUseCase.EXPECT().Get().Return(nil, errors.New("some error"))
 
-	endpoints := NewCategoryEndpoints(mockUseCase, logger)
+	endpoints := NewCategoryEndpoint(mockUseCase, logger)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/categories", nil)
 	w := httptest.NewRecorder()
 
-	endpoints.GetCategories(w, req)
+	endpoints.Get(w, req)
 
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
 }

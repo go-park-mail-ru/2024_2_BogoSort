@@ -1,9 +1,9 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"strings"
-	"context"
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
@@ -23,94 +23,116 @@ type AdvertService struct {
 	advertRepo repository.AdvertRepository
 	staticRepo repository.StaticRepository
 	sellerRepo repository.Seller
+	userRepo   repository.User
 	logger     *zap.Logger
 }
 
 func NewAdvertService(advertRepo repository.AdvertRepository,
 	staticRepo repository.StaticRepository,
 	sellerRepo repository.Seller,
+	userRepo repository.User,
 	logger *zap.Logger) *AdvertService {
 	return &AdvertService{
 		advertRepo: advertRepo,
 		staticRepo: staticRepo,
 		sellerRepo: sellerRepo,
+		userRepo:   userRepo,
 	}
 }
 
-func (s *AdvertService) advertEntityToDTO(advert *entity.Advert) (*dto.AdvertResponse, error) {
-	var posterURL string
-
-	if !advert.ImageURL.Valid {
-		posterURL = ""
-	} else {
-		var err error
-		posterURL, err = s.staticRepo.GetStatic(advert.ImageURL.UUID)
-		if err != nil {
-			posterURL = ""
-		}
-	}
-
-	advertDTO := dto.AdvertResponse{
-		ID:          advert.ID,
-		SellerId:    advert.SellerId,
-		CategoryId:  advert.CategoryId,
-		Title:       advert.Title,
-		Description: advert.Description,
-		Price:       advert.Price,
-		ImageURL:    posterURL,
-		Status:      dto.AdvertStatus(advert.Status),
-		HasDelivery: advert.HasDelivery,
-		Location:    advert.Location,
-		CreatedAt:   advert.CreatedAt,
-		UpdatedAt:   advert.UpdatedAt,
-	}
-
-	return &advertDTO, nil
-}
-
-func (s *AdvertService) advertEntitiesToDTO(adverts []*entity.Advert) ([]*dto.AdvertResponse, error) {
-	dtoAdverts := make([]*dto.AdvertResponse, 0, len(adverts))
-	for _, advert := range adverts {
-		advertDTO, err := s.advertEntityToDTO(advert)
-		if err != nil {
-			return nil, entity.UsecaseWrap(err, err)
-		}
-		dtoAdverts = append(dtoAdverts, advertDTO)
-	}
-	return dtoAdverts, nil
-}
-
-func (s *AdvertService) GetAdverts(limit, offset int) ([]*dto.AdvertResponse, error) {
-	adverts, err := s.advertRepo.GetAdverts(limit, offset)
+func (s *AdvertService) Get(limit, offset int, userId uuid.UUID) ([]*dto.PreviewAdvertCard, error) {
+	adverts, err := s.advertRepo.Get(limit, offset, userId)
 	if err != nil {
 		return nil, entity.UsecaseWrap(err, err)
 	}
-	return s.advertEntitiesToDTO(adverts)
+
+	dtoAdverts := make([]*dto.PreviewAdvertCard, 0, len(adverts))
+	for _, advert := range adverts {
+		advertDTO := dto.PreviewAdvertCard{
+			Preview: dto.PreviewAdvert{
+				ID:          advert.ID,
+				SellerId:    advert.SellerId,
+				CategoryId:  advert.CategoryId,
+				Title:       advert.Title,
+				Price:       advert.Price,
+				ImageURL:    advert.ImageURL.UUID.String(),
+				Status:      dto.AdvertStatus(advert.Status),
+				HasDelivery: advert.HasDelivery,
+				Location:    advert.Location,
+			},
+			IsSaved:  advert.IsSaved,
+			IsViewed: advert.IsViewed,
+		}
+		dtoAdverts = append(dtoAdverts, &advertDTO)
+	}
+
+	return dtoAdverts, nil
 }
 
-func (s *AdvertService) GetAdvertsByUserId(userId uuid.UUID) ([]*dto.AdvertResponse, error) {
-	seller, err := s.sellerRepo.GetSellerByUserID(userId)
+func (s *AdvertService) GetByUserId(userId uuid.UUID) ([]*dto.MyPreviewAdvertCard, error) {
+	seller, err := s.sellerRepo.GetByUserId(userId)
 	if err != nil {
 		return nil, entity.UsecaseWrap(err, repository.ErrSellerNotFound)
 	}
 
-	adverts, err := s.advertRepo.GetAdvertsBySellerId(seller.ID)
+	adverts, err := s.advertRepo.GetBySellerId(seller.ID, userId)
 	if err != nil {
 		return nil, entity.UsecaseWrap(err, err)
 	}
-	return s.advertEntitiesToDTO(adverts)
+
+	dtoAdverts := make([]*dto.MyPreviewAdvertCard, 0, len(adverts))
+	for _, advert := range adverts {
+		advertDTO := dto.MyPreviewAdvertCard{
+			Preview: dto.PreviewAdvert{
+				ID:          advert.ID,
+				SellerId:    advert.SellerId,
+				CategoryId:  advert.CategoryId,
+				Title:       advert.Title,
+				Price:       advert.Price,
+				ImageURL:    advert.ImageURL.UUID.String(),
+				Status:      dto.AdvertStatus(advert.Status),
+				HasDelivery: advert.HasDelivery,
+				Location:    advert.Location,
+			},
+			ViewsNumber: advert.ViewsNumber,
+			SavesNumber: advert.SavesNumber,
+		}
+		dtoAdverts = append(dtoAdverts, &advertDTO)
+	}
+	return dtoAdverts, nil
 }
 
-func (s *AdvertService) GetAdvertsByCartId(cartId uuid.UUID) ([]*dto.AdvertResponse, error) {
-	adverts, err := s.advertRepo.GetAdvertsByCartId(cartId)
+func (s *AdvertService) GetByCartId(cartId, userId uuid.UUID) ([]*dto.PreviewAdvertCard, error) {
+	adverts, err := s.advertRepo.GetByCartId(cartId, userId)
 	if err != nil {
 		return nil, entity.UsecaseWrap(err, err)
 	}
-	return s.advertEntitiesToDTO(adverts)
+
+	dtoAdverts := make([]*dto.PreviewAdvertCard, 0, len(adverts))
+	for _, advert := range adverts {
+		advertDTO := dto.PreviewAdvertCard{
+			Preview: dto.PreviewAdvert{
+				ID:          advert.ID,
+				SellerId:    advert.SellerId,
+				CategoryId:  advert.CategoryId,
+				Title:       advert.Title,
+				Price:       advert.Price,
+				ImageURL:    advert.ImageURL.UUID.String(),
+				Status:      dto.AdvertStatus(advert.Status),
+				HasDelivery: advert.HasDelivery,
+				Location:    advert.Location,
+			},
+			IsSaved:  advert.IsSaved,
+			IsViewed: advert.IsViewed,
+		}
+		dtoAdverts = append(dtoAdverts, &advertDTO)
+	}
+
+	return dtoAdverts, nil
 }
 
-func (s *AdvertService) GetAdvertById(advertId uuid.UUID) (*dto.AdvertResponse, error) {
-	advert, err := s.advertRepo.GetAdvertById(advertId)
+func (s *AdvertService) GetById(advertId, userId uuid.UUID) (*dto.AdvertCard, error) {
+	advert, err := s.advertRepo.GetById(advertId, userId)
 
 	if err != nil {
 		if errors.Is(err, repository.ErrAdvertNotFound) {
@@ -119,10 +141,29 @@ func (s *AdvertService) GetAdvertById(advertId uuid.UUID) (*dto.AdvertResponse, 
 		return nil, entity.UsecaseWrap(err, err)
 	}
 
-	return s.advertEntityToDTO(advert)
+	advertDTO := dto.AdvertCard{
+		Advert: dto.Advert{
+			ID:          advert.ID,
+			SellerId:    advert.SellerId,
+			CategoryId:  advert.CategoryId,
+			Title:       advert.Title,
+			Price:       advert.Price,
+			ImageURL:    advert.ImageURL.UUID.String(),
+			Status:      dto.AdvertStatus(advert.Status),
+			HasDelivery: advert.HasDelivery,
+			Location:    advert.Location,
+			CreatedAt:   advert.CreatedAt,
+			UpdatedAt:   advert.UpdatedAt,
+			ViewsNumber: advert.ViewsNumber,
+			SavesNumber: advert.SavesNumber,
+		},
+		IsSaved:  advert.IsSaved,
+		IsViewed: advert.IsViewed,
+	}
+	return &advertDTO, nil
 }
 
-func (s *AdvertService) AddAdvert(advert *dto.AdvertRequest, userId uuid.UUID) (*dto.AdvertResponse, error) {
+func (s *AdvertService) Add(advert *dto.AdvertRequest, userId uuid.UUID) (*dto.Advert, error) {
 	if err := entity.ValidateAdvert(advert.Title,
 		advert.Description,
 		advert.Location,
@@ -131,12 +172,12 @@ func (s *AdvertService) AddAdvert(advert *dto.AdvertRequest, userId uuid.UUID) (
 		return nil, entity.UsecaseWrap(ErrAdvertBadRequest, ErrAdvertBadRequest)
 	}
 
-	seller, err := s.sellerRepo.GetSellerByUserID(userId)
+	seller, err := s.sellerRepo.GetByUserId(userId)
 	if err != nil {
 		return nil, entity.UsecaseWrap(err, repository.ErrSellerNotFound)
 	}
 
-	entityAdvert, err := s.advertRepo.AddAdvert(&entity.Advert{
+	entityAdvert, err := s.advertRepo.Add(&entity.Advert{
 		SellerId:    seller.ID,
 		CategoryId:  advert.CategoryId,
 		Title:       strings.TrimSpace(advert.Title),
@@ -150,10 +191,26 @@ func (s *AdvertService) AddAdvert(advert *dto.AdvertRequest, userId uuid.UUID) (
 		return nil, entity.UsecaseWrap(ErrAdvertBadRequest, ErrAdvertBadRequest)
 	}
 
-	return s.advertEntityToDTO(entityAdvert)
+	advertDTO := dto.Advert{
+		ID:          entityAdvert.ID,
+		CategoryId:  entityAdvert.CategoryId,
+		SellerId:    entityAdvert.SellerId,
+		Title:       entityAdvert.Title,
+		Description: entityAdvert.Description,
+		Price:       entityAdvert.Price,
+		Status:      dto.AdvertStatus(entityAdvert.Status),
+		HasDelivery: entityAdvert.HasDelivery,
+		Location:    entityAdvert.Location,
+		ImageURL:    entityAdvert.ImageURL.UUID.String(),
+		CreatedAt:   entityAdvert.CreatedAt,
+		UpdatedAt:   entityAdvert.UpdatedAt,
+		ViewsNumber: entityAdvert.ViewsNumber,
+		SavesNumber: entityAdvert.SavesNumber,
+	}
+	return &advertDTO, nil
 }
 
-func (s *AdvertService) UpdateAdvert(advert *dto.AdvertRequest, userId uuid.UUID, advertId uuid.UUID) error {
+func (s *AdvertService) Update(advert *dto.AdvertRequest, userId uuid.UUID, advertId uuid.UUID) error {
 	if err := entity.ValidateAdvert(advert.Title,
 		advert.Description,
 		advert.Location,
@@ -162,12 +219,12 @@ func (s *AdvertService) UpdateAdvert(advert *dto.AdvertRequest, userId uuid.UUID
 		return entity.UsecaseWrap(ErrAdvertBadRequest, ErrAdvertBadRequest)
 	}
 
-	seller, err := s.sellerRepo.GetSellerByUserID(userId)
+	seller, err := s.sellerRepo.GetByUserId(userId)
 	if err != nil {
 		return entity.UsecaseWrap(err, repository.ErrSellerNotFound)
 	}
 
-	existingAdvert, err := s.advertRepo.GetAdvertById(advertId)
+	existingAdvert, err := s.advertRepo.GetById(advertId, userId)
 	if err != nil {
 		if errors.Is(err, repository.ErrAdvertNotFound) {
 			return entity.UsecaseWrap(ErrAdvertNotFound, ErrAdvertNotFound)
@@ -178,7 +235,7 @@ func (s *AdvertService) UpdateAdvert(advert *dto.AdvertRequest, userId uuid.UUID
 		return entity.UsecaseWrap(ErrForbidden, ErrForbidden)
 	}
 
-	err = s.advertRepo.UpdateAdvert(&entity.Advert{
+	err = s.advertRepo.Update(&entity.Advert{
 		ID:          advertId,
 		SellerId:    seller.ID,
 		CategoryId:  advert.CategoryId,
@@ -196,13 +253,13 @@ func (s *AdvertService) UpdateAdvert(advert *dto.AdvertRequest, userId uuid.UUID
 	return nil
 }
 
-func (s *AdvertService) DeleteAdvertById(advertId uuid.UUID, userId uuid.UUID) error {
-	seller, err := s.sellerRepo.GetSellerByUserID(userId)
+func (s *AdvertService) DeleteById(advertId uuid.UUID, userId uuid.UUID) error {
+	seller, err := s.sellerRepo.GetByUserId(userId)
 	if err != nil {
 		return entity.UsecaseWrap(err, repository.ErrSellerNotFound)
 	}
 
-	existingAdvert, err := s.advertRepo.GetAdvertById(advertId)
+	existingAdvert, err := s.advertRepo.GetById(advertId, userId)
 	if err != nil {
 		return entity.UsecaseWrap(err, repository.ErrAdvertNotFound)
 	}
@@ -210,7 +267,7 @@ func (s *AdvertService) DeleteAdvertById(advertId uuid.UUID, userId uuid.UUID) e
 		return entity.UsecaseWrap(ErrForbidden, ErrForbidden)
 	}
 
-	if err := s.advertRepo.DeleteAdvertById(advertId); err != nil {
+	if err := s.advertRepo.DeleteById(advertId); err != nil {
 		if errors.Is(err, repository.ErrAdvertNotFound) {
 			return entity.UsecaseWrap(ErrAdvertNotFound, ErrAdvertNotFound)
 		}
@@ -220,7 +277,7 @@ func (s *AdvertService) DeleteAdvertById(advertId uuid.UUID, userId uuid.UUID) e
 	return nil
 }
 
-func (s *AdvertService) UpdateAdvertStatus(advertId uuid.UUID, status dto.AdvertStatus, userId uuid.UUID) error {
+func (s *AdvertService) UpdateStatus(advertId, userId uuid.UUID, status dto.AdvertStatus) error {
 	ctx := context.Background()
 	tx, err := s.advertRepo.BeginTransaction()
 	if err != nil {
@@ -235,12 +292,12 @@ func (s *AdvertService) UpdateAdvertStatus(advertId uuid.UUID, status dto.Advert
 		}
 	}()
 
-	seller, err := s.sellerRepo.GetSellerByUserID(userId)
+	seller, err := s.sellerRepo.GetByUserId(userId)
 	if err != nil {
 		return entity.UsecaseWrap(err, repository.ErrSellerNotFound)
 	}
 
-	existingAdvert, err := s.advertRepo.GetAdvertById(advertId)
+	existingAdvert, err := s.advertRepo.GetById(advertId, userId)
 	if err != nil {
 		return entity.UsecaseWrap(err, repository.ErrAdvertNotFound)
 	}
@@ -248,7 +305,7 @@ func (s *AdvertService) UpdateAdvertStatus(advertId uuid.UUID, status dto.Advert
 		return entity.UsecaseWrap(ErrForbidden, ErrForbidden)
 	}
 
-	if err := s.advertRepo.UpdateAdvertStatus(tx, advertId, entity.AdvertStatus(status)); err != nil {
+	if err := s.advertRepo.UpdateStatus(tx, advertId, entity.AdvertStatus(status)); err != nil {
 		if errors.Is(err, repository.ErrAdvertNotFound) {
 			return entity.UsecaseWrap(ErrAdvertNotFound, ErrAdvertNotFound)
 		}
@@ -258,22 +315,42 @@ func (s *AdvertService) UpdateAdvertStatus(advertId uuid.UUID, status dto.Advert
 	return nil
 }
 
-func (s *AdvertService) GetAdvertsByCategoryId(categoryId uuid.UUID) ([]*dto.AdvertResponse, error) {
-	adverts, err := s.advertRepo.GetAdvertsByCategoryId(categoryId)
+func (s *AdvertService) GetByCategoryId(categoryId, userId uuid.UUID) ([]*dto.PreviewAdvertCard, error) {
+	adverts, err := s.advertRepo.GetByCategoryId(categoryId, userId)
 	if err != nil {
 		return nil, entity.UsecaseWrap(err, err)
 	}
 
-	return s.advertEntitiesToDTO(adverts)
+	dtoAdverts := make([]*dto.PreviewAdvertCard, 0, len(adverts))
+	for _, advert := range adverts {
+		advertDTO := dto.PreviewAdvertCard{
+			Preview: dto.PreviewAdvert{
+				ID:          advert.ID,
+				SellerId:    advert.SellerId,
+				CategoryId:  advert.CategoryId,
+				Title:       advert.Title,
+				Price:       advert.Price,
+				ImageURL:    advert.ImageURL.UUID.String(),
+				Status:      dto.AdvertStatus(advert.Status),
+				HasDelivery: advert.HasDelivery,
+				Location:    advert.Location,
+			},
+			IsSaved:  advert.IsSaved,
+			IsViewed: advert.IsViewed,
+		}
+		dtoAdverts = append(dtoAdverts, &advertDTO)
+	}
+
+	return dtoAdverts, nil
 }
 
 func (s *AdvertService) UploadImage(advertId uuid.UUID, imageId uuid.UUID, userId uuid.UUID) error {
-	seller, err := s.sellerRepo.GetSellerByUserID(userId)
+	seller, err := s.sellerRepo.GetByUserId(userId)
 	if err != nil {
 		return entity.UsecaseWrap(err, repository.ErrSellerNotFound)
 	}
 
-	existingAdvert, err := s.advertRepo.GetAdvertById(advertId)
+	existingAdvert, err := s.advertRepo.GetById(advertId, userId)
 	if err != nil {
 		return entity.UsecaseWrap(err, repository.ErrAdvertNotFound)
 	}
@@ -286,4 +363,121 @@ func (s *AdvertService) UploadImage(advertId uuid.UUID, imageId uuid.UUID, userI
 	}
 
 	return nil
+}
+
+func (s *AdvertService) GetSavedByUserId(userId uuid.UUID) ([]*dto.PreviewAdvertCard, error) {
+	adverts, err := s.advertRepo.GetSavedByUserId(userId)
+	if err != nil {
+		return nil, entity.UsecaseWrap(err, err)
+	}
+
+	dtoAdverts := make([]*dto.PreviewAdvertCard, 0, len(adverts))
+	for _, advert := range adverts {
+		advertDTO := dto.PreviewAdvertCard{
+			Preview: dto.PreviewAdvert{
+				ID:          advert.ID,
+				SellerId:    advert.SellerId,
+				CategoryId:  advert.CategoryId,
+				Title:       advert.Title,
+				Price:       advert.Price,
+				ImageURL:    advert.ImageURL.UUID.String(),
+				Status:      dto.AdvertStatus(advert.Status),
+				HasDelivery: advert.HasDelivery,
+				Location:    advert.Location,
+			},
+			IsSaved:  advert.IsSaved,
+			IsViewed: advert.IsViewed,
+		}
+		dtoAdverts = append(dtoAdverts, &advertDTO)
+	}
+
+	return dtoAdverts, nil
+}
+
+func (s *AdvertService) AddToSaved(advertId, userId uuid.UUID) error {
+	exists, err := s.advertRepo.CheckIfExists(advertId)
+	if err != nil {
+		return entity.UsecaseWrap(err, err)
+	}
+	if !exists {
+		return entity.UsecaseWrap(ErrAdvertNotFound, ErrAdvertNotFound)
+	}
+
+	exists, err = s.userRepo.CheckIfExists(userId)
+	if err != nil {
+		return entity.UsecaseWrap(err, err)
+	}
+	if !exists {
+		return entity.UsecaseWrap(repository.ErrUserNotFound, repository.ErrUserNotFound)
+	}
+
+	err = s.advertRepo.AddToSaved(advertId, userId)
+	if err != nil {
+		return entity.UsecaseWrap(err, err)
+	}
+
+	return nil
+}
+
+func (s *AdvertService) RemoveFromSaved(advertId, userId uuid.UUID) error {
+	exists, err := s.advertRepo.CheckIfExists(advertId)
+	if err != nil {
+		return entity.UsecaseWrap(err, err)
+	}
+	if !exists {
+		return entity.UsecaseWrap(ErrAdvertNotFound, ErrAdvertNotFound)
+	}
+
+	err = s.advertRepo.DeleteFromSaved(advertId, userId)
+	if err != nil {
+		return entity.UsecaseWrap(err, err)
+	}
+
+	return nil
+}
+
+func (s *AdvertService) AddViewed(advertId, userId uuid.UUID) error {
+	exists, err := s.advertRepo.CheckIfExists(advertId)
+	if err != nil {
+		return entity.UsecaseWrap(err, err)
+	}
+	if !exists {
+		return entity.UsecaseWrap(ErrAdvertNotFound, ErrAdvertNotFound)
+	}
+
+	err = s.advertRepo.AddViewed(userId, advertId)
+	if err != nil {
+		return entity.UsecaseWrap(err, err)
+	}
+
+	return nil
+}
+
+func (s *AdvertService) GetBySellerId(userId, sellerId uuid.UUID) ([]*dto.PreviewAdvertCard, error) {
+	adverts, err := s.advertRepo.GetBySellerId(sellerId, userId)
+	if err != nil {
+		return nil, entity.UsecaseWrap(err, err)
+	}
+
+	dtoAdverts := make([]*dto.PreviewAdvertCard, 0, len(adverts))
+	for _, advert := range adverts {
+		advertDTO := dto.PreviewAdvertCard{
+			Preview: dto.PreviewAdvert{
+				ID:          advert.ID,
+				SellerId:    advert.SellerId,
+				CategoryId:  advert.CategoryId,
+				Title:       advert.Title,
+				Price:       advert.Price,
+				ImageURL:    advert.ImageURL.UUID.String(),
+				Status:      dto.AdvertStatus(advert.Status),
+				HasDelivery: advert.HasDelivery,
+				Location:    advert.Location,
+			},
+			IsSaved:  advert.IsSaved,
+			IsViewed: advert.IsViewed,
+		}
+		dtoAdverts = append(dtoAdverts, &advertDTO)
+	}
+
+	return dtoAdverts, nil
 }

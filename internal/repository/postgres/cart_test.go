@@ -51,7 +51,7 @@ func TestCartDB_GetCartByUserID(t *testing.T) {
 		WillReturnRows(pgxmock.NewRows([]string{"id", "user_id", "status"}).
 			AddRow(cartID, userID, entity.CartStatusActive))
 
-	cart, err := repo.GetCartByUserID(userID)
+	cart, err := repo.GetByUserId(userID)
 	assert.NoError(t, err)
 	assert.Equal(t, cartID, cart.ID)
 	assert.Equal(t, entity.CartStatusActive, cart.Status)
@@ -60,7 +60,7 @@ func TestCartDB_GetCartByUserID(t *testing.T) {
 		WithArgs(userID).
 		WillReturnError(pgx.ErrNoRows)
 
-	cart, err = repo.GetCartByUserID(userID)
+	cart, err = repo.GetByUserId(userID)
 	assert.Error(t, err)
 	assert.Equal(t, repository.ErrCartNotFound, err)
 	assert.Equal(t, uuid.Nil, cart.ID)
@@ -69,7 +69,7 @@ func TestCartDB_GetCartByUserID(t *testing.T) {
 		WithArgs(userID).
 		WillReturnError(errors.New("error getting cart by user id"))
 
-	cart, err = repo.GetCartByUserID(userID)
+	cart, err = repo.GetByUserId(userID)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "error getting cart by user id")
 	assert.Equal(t, uuid.Nil, cart.ID)
@@ -96,7 +96,7 @@ func TestCartDB_DeleteAdvertFromCart(t *testing.T) {
 	mockTx, err := mockPool.Begin(context.Background())
 	assert.NoError(t, err)
 
-	err = repo.DeleteAdvertFromCart(cartID, advertID)
+	err = repo.DeleteAdvert(cartID, advertID)
 	assert.NoError(t, err)
 
 	err = mockTx.Commit(context.Background())
@@ -113,7 +113,7 @@ func TestCartDB_DeleteAdvertFromCart(t *testing.T) {
 	mockTx2, err := mockPool.Begin(context.Background())
 	assert.NoError(t, err)
 
-	err = repo.DeleteAdvertFromCart(cartID, advertID)
+	err = repo.DeleteAdvert(cartID, advertID)
 	assert.Error(t, err)
 	assert.Equal(t, repository.ErrCartOrAdvertNotFound, err)
 
@@ -131,7 +131,7 @@ func TestCartDB_DeleteAdvertFromCart(t *testing.T) {
 	mockTx3, err := mockPool.Begin(context.Background())
 	assert.NoError(t, err)
 
-	err = repo.DeleteAdvertFromCart(cartID, advertID)
+	err = repo.DeleteAdvert(cartID, advertID)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "error deleting Advert from cart")
 
@@ -163,7 +163,7 @@ func TestCartDB_GetAdvertsByCartID(t *testing.T) {
 				entity.AdvertStatusActive,
 			))
 
-	adverts, err := repo.GetAdvertsByCartID(cartID)
+	adverts, err := repo.GetAdvertsByCartId(cartID)
 	assert.NoError(t, err)
 	assert.Len(t, adverts, 1)
 	assert.Equal(t, "Test Advert", adverts[0].Title)
@@ -172,7 +172,7 @@ func TestCartDB_GetAdvertsByCartID(t *testing.T) {
 		WithArgs(cartID).
 		WillReturnError(pgx.ErrNoRows)
 
-	adverts, err = repo.GetAdvertsByCartID(cartID)
+	adverts, err = repo.GetAdvertsByCartId(cartID)
 	assert.Error(t, err)
 	assert.Equal(t, repository.ErrCartNotFound, err)
 	assert.Nil(t, adverts)
@@ -181,7 +181,7 @@ func TestCartDB_GetAdvertsByCartID(t *testing.T) {
 		WithArgs(cartID).
 		WillReturnError(errors.New("query error"))
 
-	adverts, err = repo.GetAdvertsByCartID(cartID)
+	adverts, err = repo.GetAdvertsByCartId(cartID)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "error getting adverts by cart id")
 	assert.Nil(t, adverts)

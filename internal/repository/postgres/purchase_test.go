@@ -66,7 +66,7 @@ func TestPurchaseDB_AddPurchase(t *testing.T) {
 		WillReturnRows(pgxmock.NewRows([]string{"id", "cart_id", "adress", "status", "payment_method", "delivery_method"}).
 			AddRow(uuid.New(), purchase.CartID, purchase.Address, purchase.Status, purchase.PaymentMethod, purchase.DeliveryMethod))
 
-	result, err := repo.AddPurchase(tx, purchase)
+	result, err := repo.Add(tx, purchase)
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -87,7 +87,7 @@ func TestPurchaseDB_AddPurchase(t *testing.T) {
 		).
 		WillReturnError(errors.New("insert error"))
 
-	_, err = repo.AddPurchase(tx, purchase)
+	_, err = repo.Add(tx, purchase)
 	assert.Error(t, err)
 
 	mockPool.ExpectRollback()

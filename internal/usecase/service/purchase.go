@@ -33,7 +33,7 @@ func (s *PurchaseService) purchaseEntityToDTO(purchase *entity.Purchase) (*dto.P
 	}, nil
 }
 
-func (s *PurchaseService) AddPurchase(purchaseRequest dto.PurchaseRequest) (*dto.PurchaseResponse, error) {
+func (s *PurchaseService) Add(purchaseRequest dto.PurchaseRequest, userId uuid.UUID) (*dto.PurchaseResponse, error) {
 	ctx := context.Background()
 	tx, err := s.purchaseRepo.BeginTransaction()
 	if err != nil {
@@ -48,7 +48,7 @@ func (s *PurchaseService) AddPurchase(purchaseRequest dto.PurchaseRequest) (*dto
 		}
 	}()
 
-	purchase, err := s.purchaseRepo.AddPurchase(tx, &entity.Purchase{
+	purchase, err := s.purchaseRepo.Add(tx, &entity.Purchase{
 		CartID: purchaseRequest.CartID,
 		Address: purchaseRequest.Address,
 		Status: entity.StatusPending,
@@ -59,18 +59,18 @@ func (s *PurchaseService) AddPurchase(purchaseRequest dto.PurchaseRequest) (*dto
 		return nil, entity.UsecaseWrap(errors.New("failed to add purchase"), err)
 	}
 
-	err = s.cartRepo.UpdateCartStatus(tx, purchase.CartID, entity.CartStatusInactive)
+	err = s.cartRepo.UpdateStatus(tx, purchase.CartID, entity.CartStatusInactive)
 	if err != nil {
 		return nil, entity.UsecaseWrap(errors.New("failed to update cart status"), err)
 	}
 
-	adverts, err := s.advertRepo.GetAdvertsByCartId(purchase.CartID)
+	adverts, err := s.advertRepo.GetByCartId(purchase.CartID, userId)
 	if err != nil {
 		return nil, entity.UsecaseWrap(errors.New("failed to get adverts"), err)
 	}
 
 	for _, advert := range adverts {
-		err = s.advertRepo.UpdateAdvertStatus(tx, advert.ID, entity.AdvertStatusReserved)
+		err = s.advertRepo.UpdateStatus(tx, advert.ID, entity.AdvertStatusReserved)
 		if err != nil {
 			return nil, entity.UsecaseWrap(errors.New("failed to update advert status"), err)
 		}
@@ -79,8 +79,8 @@ func (s *PurchaseService) AddPurchase(purchaseRequest dto.PurchaseRequest) (*dto
 	return s.purchaseEntityToDTO(purchase)
 }
 
-func (s *PurchaseService) GetPurchasesByUserID(userID uuid.UUID) ([]*dto.PurchaseResponse, error) {
-	purchases, err := s.purchaseRepo.GetPurchasesByUserID(userID)
+func (s *PurchaseService) GetByUserId(userID uuid.UUID) ([]*dto.PurchaseResponse, error) {
+	purchases, err := s.purchaseRepo.GetByUserId(userID)
 	if err != nil {
 		return nil, entity.UsecaseWrap(errors.New("failed to get purchases"), err)
 	}

@@ -9,13 +9,13 @@ import (
 )
 
 type Cart interface {
-	GetAdvertsByCartID(cartID uuid.UUID) ([]entity.Advert, error)
-	AddAdvertToCart(cartID uuid.UUID, AdvertID uuid.UUID) error
-	DeleteAdvertFromCart(cartID uuid.UUID, AdvertID uuid.UUID) error
-	UpdateCartStatus(tx pgx.Tx, cartID uuid.UUID, status entity.CartStatus) error
-	GetCartByUserID(userID uuid.UUID) (entity.Cart, error)
-	CreateCart(userID uuid.UUID) (uuid.UUID, error)
-	GetCartByID(cartID uuid.UUID) (entity.Cart, error)
+	GetAdvertsByCartId(cartID uuid.UUID) ([]entity.Advert, error)
+	AddAdvert(cartID uuid.UUID, AdvertID uuid.UUID) error
+	DeleteAdvert(cartID uuid.UUID, AdvertID uuid.UUID) error
+	UpdateStatus(tx pgx.Tx, cartID uuid.UUID, status entity.CartStatus) error
+	GetByUserId(userID uuid.UUID) (entity.Cart, error)
+	Create(userID uuid.UUID) (uuid.UUID, error)
+	GetById(cartID uuid.UUID) (entity.Cart, error)
 }
 
 var (

@@ -18,8 +18,8 @@ func NewCategoryService(categoryRepo repository.CategoryRepository, logger *zap.
 	}
 }
 
-func (s *CategoryService) GetCategories() ([]*entity.Category, error) {
-	categories, err := s.categoryRepo.GetCategories()
+func (s *CategoryService) Get() ([]*entity.Category, error) {
+	categories, err := s.categoryRepo.Get()
 	if err != nil {
 		s.logger.Error("error getting categories", zap.Error(err))
 		return nil, entity.UsecaseWrap(err, err)

@@ -7,12 +7,12 @@ import (
 )
 
 type Session interface {
-	// CreateSession создает сессию для пользователя
-	CreateSession(userID uuid.UUID) (string, error)
-	// GetSession возвращает id пользователя по sessionID
-	GetSession(sessionID string) (uuid.UUID, error)
-	// DeleteSession удаляет сессию
-	DeleteSession(sessionID string) error
+	// Create создает сессию для пользователя
+	Create(userID uuid.UUID) (string, error)
+	// Get возвращает id пользователя по sessionID
+	Get(sessionID string) (uuid.UUID, error)
+	// Delete удаляет сессию
+	Delete(sessionID string) error
 }
 
 var (
