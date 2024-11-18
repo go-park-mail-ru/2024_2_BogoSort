@@ -1,0 +1,85 @@
+services:
+  auth:
+    build:
+      context: .
+      dockerfile: cmd/auth/Dockerfile
+    ports:
+      - "50051:50051"
+    environment:
+      - ENV=production
+      - LOG_LEVEL=info
+      - CONFIG_PATH=/config/config.yaml
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - app-network
+    volumes:
+      - ./config/config.yaml:/config/config.yaml
+      - ./static/:/static/
+    healthcheck:
+      test: ["CMD", "grpc_health_probe", "-addr=:50051"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  app:
+    build:
+      context: .
+      dockerfile: cmd/app/Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - ENV=production
+      - CONFIG_PATH=/config/config.yaml
+    depends_on:
+      auth:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - app-network
+    volumes:
+      - ./config/config.yaml:/config/config.yaml
+      - ./static/:/static/
+
+  postgres:
+    image: postgres:13
+    ports:
+      - "8002:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=emporiumdb
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:6
+    ports:
+      - "6379:6379"
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  pgdata:

@@ -19,9 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AuthService_Logout_FullMethodName             = "/auth.AuthService/Logout"
 	AuthService_GetUserIDBySession_FullMethodName = "/auth.AuthService/GetUserIDBySession"
-	AuthService_GetSessionByUserID_FullMethodName = "/auth.AuthService/GetSessionByUserID"
 	AuthService_CreateSession_FullMethodName      = "/auth.AuthService/CreateSession"
 	AuthService_DeleteSession_FullMethodName      = "/auth.AuthService/DeleteSession"
 	AuthService_Ping_FullMethodName               = "/auth.AuthService/Ping"
@@ -31,9 +29,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AuthServiceClient interface {
-	Logout(ctx context.Context, in *Session, opts ...grpc.CallOption) (*NoContent, error)
 	GetUserIDBySession(ctx context.Context, in *Session, opts ...grpc.CallOption) (*User, error)
-	GetSessionByUserID(ctx context.Context, in *User, opts ...grpc.CallOption) (*Session, error)
 	CreateSession(ctx context.Context, in *User, opts ...grpc.CallOption) (*Session, error)
 	DeleteSession(ctx context.Context, in *Session, opts ...grpc.CallOption) (*NoContent, error)
 	Ping(ctx context.Context, in *NoContent, opts ...grpc.CallOption) (*NoContent, error)
@@ -47,30 +43,10 @@ func NewAuthServiceClient(cc grpc.ClientConnInterface) AuthServiceClient {
 	return &authServiceClient{cc}
 }
 
-func (c *authServiceClient) Logout(ctx context.Context, in *Session, opts ...grpc.CallOption) (*NoContent, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(NoContent)
-	err := c.cc.Invoke(ctx, AuthService_Logout_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *authServiceClient) GetUserIDBySession(ctx context.Context, in *Session, opts ...grpc.CallOption) (*User, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(User)
 	err := c.cc.Invoke(ctx, AuthService_GetUserIDBySession_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *authServiceClient) GetSessionByUserID(ctx context.Context, in *User, opts ...grpc.CallOption) (*Session, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Session)
-	err := c.cc.Invoke(ctx, AuthService_GetSessionByUserID_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -111,9 +87,7 @@ func (c *authServiceClient) Ping(ctx context.Context, in *NoContent, opts ...grp
 // All implementations must embed UnimplementedAuthServiceServer
 // for forward compatibility.
 type AuthServiceServer interface {
-	Logout(context.Context, *Session) (*NoContent, error)
 	GetUserIDBySession(context.Context, *Session) (*User, error)
-	GetSessionByUserID(context.Context, *User) (*Session, error)
 	CreateSession(context.Context, *User) (*Session, error)
 	DeleteSession(context.Context, *Session) (*NoContent, error)
 	Ping(context.Context, *NoContent) (*NoContent, error)
@@ -127,14 +101,8 @@ type AuthServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedAuthServiceServer struct{}
 
-func (UnimplementedAuthServiceServer) Logout(context.Context, *Session) (*NoContent, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Logout not implemented")
-}
 func (UnimplementedAuthServiceServer) GetUserIDBySession(context.Context, *Session) (*User, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUserIDBySession not implemented")
-}
-func (UnimplementedAuthServiceServer) GetSessionByUserID(context.Context, *User) (*Session, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetSessionByUserID not implemented")
 }
 func (UnimplementedAuthServiceServer) CreateSession(context.Context, *User) (*Session, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateSession not implemented")
@@ -166,24 +134,6 @@ func RegisterAuthServiceServer(s grpc.ServiceRegistrar, srv AuthServiceServer) {
 	s.RegisterService(&AuthService_ServiceDesc, srv)
 }
 
-func _AuthService_Logout_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Session)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AuthServiceServer).Logout(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: AuthService_Logout_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServiceServer).Logout(ctx, req.(*Session))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _AuthService_GetUserIDBySession_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Session)
 	if err := dec(in); err != nil {
@@ -198,24 +148,6 @@ func _AuthService_GetUserIDBySession_Handler(srv interface{}, ctx context.Contex
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AuthServiceServer).GetUserIDBySession(ctx, req.(*Session))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _AuthService_GetSessionByUserID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(User)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AuthServiceServer).GetSessionByUserID(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: AuthService_GetSessionByUserID_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServiceServer).GetSessionByUserID(ctx, req.(*User))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -282,16 +214,8 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*AuthServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Logout",
-			Handler:    _AuthService_Logout_Handler,
-		},
-		{
 			MethodName: "GetUserIDBySession",
 			Handler:    _AuthService_GetUserIDBySession_Handler,
-		},
-		{
-			MethodName: "GetSessionByUserID",
-			Handler:    _AuthService_GetSessionByUserID_Handler,
 		},
 		{
 			MethodName: "CreateSession",

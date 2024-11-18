@@ -5,6 +5,7 @@ import (
 	"os"
 	"strconv"
 	"time"
+
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
@@ -23,24 +24,26 @@ type SessionConfig struct {
 }
 
 type Config struct {
-	Server  ServerConfig  `yaml:"server"`
-	Session SessionConfig `yaml:"session"`
-	PGIP    string        `yaml:"pg_ip"`
-	PGPort  int           `yaml:"pg_port"`
-	PGUser  string        `yaml:"pg_user"`
-	PGPass  string        `yaml:"pg_password"`
-	PGTimeout time.Duration `yaml:"pg_timeout" default:"5s"`
-	PGDB    string        `yaml:"pg_db"`
-	RdAddr  string        `yaml:"rd_addr"`
-	RdPass  string        `yaml:"rd_password"`
-	RdDB    int           `yaml:"rd_db"`
-	Static StaticConfig   `yaml:"static"`
-	CSRFSecret string      `yaml:"csrf_secret"`
+	Server     ServerConfig  `yaml:"server"`
+	Session    SessionConfig `yaml:"session"`
+	PGIP       string        `yaml:"pg_ip"`
+	PGPort     int           `yaml:"pg_port"`
+	PGUser     string        `yaml:"pg_user"`
+	PGPass     string        `yaml:"pg_password"`
+	PGTimeout  time.Duration `yaml:"pg_timeout" default:"5s"`
+	PGDB       string        `yaml:"pg_db"`
+	RdAddr     string        `yaml:"rd_addr"`
+	RdPass     string        `yaml:"rd_password"`
+	RdDB       int           `yaml:"rd_db"`
+	Static     StaticConfig  `yaml:"static"`
+	CSRFSecret string        `yaml:"csrf_secret"`
+	AuthPort   int           `yaml:"auth_port"`
+	AuthHost   string        `yaml:"auth_host"`
 }
 
 type StaticConfig struct {
-	Path string `yaml:"path"`
-	MaxSize int `yaml:"max_size"`
+	Path    string `yaml:"path"`
+	MaxSize int    `yaml:"max_size"`
 }
 
 var cfg Config
@@ -80,11 +83,21 @@ func Init() (Config, error) {
 		cfg.Server.Port, _ = strconv.Atoi(port)
 	}
 
+	if port := os.Getenv("AUTH_PORT"); port != "" {
+		cfg.AuthPort, _ = strconv.Atoi(port)
+	}
+	if host := os.Getenv("AUTH_HOST"); host != "" {
+		cfg.AuthHost = host
+	}
 	return cfg, nil
 }
 
 func GetServerAddress() string {
 	return fmt.Sprintf(":%d", cfg.Server.Port)
+}
+
+func GetAuthAddress() string {
+	return fmt.Sprintf("%s:%d", cfg.AuthHost, cfg.AuthPort)
 }
 
 func (cfg *Config) GetConnectURL() string {

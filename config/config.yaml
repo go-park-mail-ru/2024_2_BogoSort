@@ -9,6 +9,9 @@ session:
   expiration_time: 12h
   secure_cookie: false
 
+auth_port: 50051
+auth_host: "localhost"
+
 pg_ip: "localhost"
 pg_port: 8001
 pg_user: "postgres"
