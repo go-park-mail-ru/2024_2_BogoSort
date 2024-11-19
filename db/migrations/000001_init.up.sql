@@ -43,6 +43,7 @@ BEGIN
     END IF;
 END $$;
 
+
 -- Таблица для хранения статических файлов
 CREATE TABLE IF NOT EXISTS static (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4() NOT NULL,
@@ -121,6 +122,9 @@ CREATE TABLE IF NOT EXISTS advert (
     FOREIGN KEY (image_id) REFERENCES static(id) ON DELETE SET NULL,
     FOREIGN KEY (category_id) REFERENCES category(id) ON DELETE SET NULL
 );
+
+-- Создание GIN индекса для полнотекстового поиска на русском языке
+CREATE INDEX IF NOT EXISTS idx_advert_fulltext ON advert USING GIN(to_tsvector('russian', title || ' ' || description));
 
 -- Таблица сохраненных объявлений
 CREATE TABLE IF NOT EXISTS saved_advert (
