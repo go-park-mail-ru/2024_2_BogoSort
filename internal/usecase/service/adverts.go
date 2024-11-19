@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"sync"
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
@@ -474,6 +475,69 @@ func (s *AdvertService) GetBySellerId(userId, sellerId uuid.UUID) ([]*dto.Previe
 			IsViewed: advert.IsViewed,
 		}
 		dtoAdverts = append(dtoAdverts, &advertDTO)
+	}
+
+	return dtoAdverts, nil
+}
+
+func (s *AdvertService) Search(query string, batchSize, limit, offset int, userId uuid.UUID) ([]*dto.PreviewAdvertCard, error) {
+	totalAdverts, err := s.advertRepo.Count()
+	if err != nil {
+		return nil, entity.UsecaseWrap(err, err)
+	}
+
+	numBatches := (totalAdverts + batchSize - 1) / batchSize
+
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	results := make([]*entity.Advert, 0)
+
+	semaphore := make(chan struct{}, 10)
+
+	for i := 0; i < numBatches; i++ {
+		wg.Add(1)
+		go func(batchNumber int) {
+			defer wg.Done()
+			semaphore <- struct{}{}
+			defer func() { <-semaphore }()
+
+			batchOffset := batchNumber * batchSize
+
+			adverts, err := s.advertRepo.Search(query, batchSize, batchOffset, userId)
+			if err != nil {
+				return
+			}
+
+			mu.Lock()
+			results = append(results, adverts...)
+			mu.Unlock()
+		}(i)
+	}
+
+	wg.Wait()
+
+	uniqueAdverts := make(map[uuid.UUID]*entity.Advert)
+	for _, advert := range results {
+		uniqueAdverts[advert.ID] = advert
+	}
+
+	dtoAdverts := make([]*dto.PreviewAdvertCard, 0, len(uniqueAdverts))
+	for _, advert := range uniqueAdverts {
+		dtoAdverts = append(dtoAdverts, &dto.PreviewAdvertCard{
+			Preview: dto.PreviewAdvert{
+				ID:          advert.ID,
+				SellerId:    advert.SellerId,
+				CategoryId:  advert.CategoryId,
+				Title:       advert.Title,
+				Price:       advert.Price,
+				ImageId:     advert.ImageId,
+				Status:      dto.AdvertStatus(advert.Status),
+				HasDelivery: advert.HasDelivery,
+				Location:    advert.Location,
+			},
+			IsSaved:  advert.IsSaved,
+			IsViewed: advert.IsViewed,
+		})
 	}
 
 	return dtoAdverts, nil

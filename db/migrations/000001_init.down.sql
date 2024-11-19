@@ -13,6 +13,9 @@ DROP TRIGGER IF EXISTS update_advert_updated_at ON advert;
 DROP TRIGGER IF EXISTS update_cart_updated_at ON cart;
 DROP TRIGGER IF EXISTS update_purchase_updated_at ON purchase;  
 
+-- Удаление GIN индекса для полнотекстового поиска
+DROP INDEX IF EXISTS idx_advert_fulltext;
+
 -- Удаление триггера для установки image_id по умолчанию
 DROP TRIGGER IF EXISTS trg_set_default_image_id ON "user";
 

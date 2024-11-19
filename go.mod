@@ -13,7 +13,6 @@ require (
 require github.com/google/uuid v1.6.0
 
 require (
-	github.com/chai2010/webp v1.1.1
 	github.com/golang/mock v1.6.0
 	github.com/jackc/pgx/v5 v5.7.1
 	github.com/microcosm-cc/bluemonday v1.0.27

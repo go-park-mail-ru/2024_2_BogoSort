@@ -3,7 +3,7 @@ package usecase
 import (
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
 	"github.com/google/uuid"
-)	
+)
 
 type AdvertUseCase interface {
 	// Get возвращает массив объявлений в соответствии с offset и limit
@@ -68,4 +68,7 @@ type AdvertUseCase interface {
 
 	// GetBySellerId возвращает массив объявлений по sellerId
 	GetBySellerId(userId, sellerId uuid.UUID) ([]*dto.PreviewAdvertCard, error)
+
+	// Search ищет объявления по запросу
+	Search(query string, batchSize, limit, offset int, userId uuid.UUID) ([]*dto.PreviewAdvertCard, error)
 }
