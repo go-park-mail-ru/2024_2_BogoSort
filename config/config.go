@@ -43,13 +43,14 @@ type Config struct {
 	CartPurchasePort int           `yaml:"cart_purchase_port"`
 	StaticHost       string        `yaml:"static_host"`
 	StaticPort       int           `yaml:"static_port"`
+	SearchBatchSize  int           `yaml:"search_batch_size"`
 }
 
 type StaticConfig struct {
-	IP          string `yaml:"ip"            default:"0.0.0.0"`
-	Port        int    `yaml:"port"          default:"8081"`
-	Path string `yaml:"path"`
-	MaxSize int `yaml:"max_size"`
+	IP      string        `yaml:"ip"            default:"0.0.0.0"`
+	Port    int           `yaml:"port"          default:"8081"`
+	Path    string        `yaml:"path"`
+	MaxSize int           `yaml:"max_size"`
 	Timeout time.Duration `yaml:"timeout"`
 }
 
@@ -96,7 +97,16 @@ func Init() (Config, error) {
 	if host := os.Getenv("AUTH_HOST"); host != "" {
 		cfg.AuthHost = host
 	}
+
+	if batchSize := os.Getenv("SEARCH_BATCH_SIZE"); batchSize != "" {
+		cfg.SearchBatchSize, _ = strconv.Atoi(batchSize)
+	}
+
 	return cfg, nil
+}
+
+func GetSearchBatchSize() int {
+	return cfg.SearchBatchSize
 }
 
 func GetServerAddress() string {
