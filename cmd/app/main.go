@@ -156,20 +156,23 @@ func Init(cfg config.Config) (*mux.Router, error) {
 	purchaseHandler := http3.NewPurchaseEndpoint(cartPurchaseClient, logger)
 	cartHandler := http3.NewCartEndpoint(cartPurchaseClient, logger)
 	categoryHandler := http3.NewCategoryEndpoint(categoryUseCase, logger)
+	staticHandler := http3.NewStaticEndpoint(*staticClient, logger)
 
 	csrfEndpoints := http3.NewCSRFEndpoint(csrfToken, sessionManager)
 	csrfEndpoints.Configure(router)
 	userHandler.ConfigureUnprotectedRoutes(router)
+	advertsHandler.ConfigureRoutes(router)
 
 	authRouter.Use(middleware.CSRFMiddleware(csrfToken, sessionManager))
 
-	advertsHandler.ConfigureRoutes(authRouter)
+	advertsHandler.ConfigureProtectedRoutes(authRouter)
 	categoryHandler.ConfigureRoutes(authRouter)
 	authHandler.Configure(authRouter)
 	userHandler.ConfigureProtectedRoutes(authRouter)
 	sellerHandler.Configure(authRouter)
 	cartHandler.Configure(authRouter)
 	purchaseHandler.ConfigureRoutes(authRouter)
+	staticHandler.ConfigureRoutes(router)
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
 	return router, nil

@@ -3,7 +3,6 @@ package http
 import (
 	"errors"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/utils"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/static"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -20,22 +19,20 @@ var (
 
 type StaticEndpoint struct {
 	staticGrpcClient  static.StaticGrpcClient
-	staticUseCase usecase.StaticUseCase
 	logger        *zap.Logger
 }
 
-func NewStaticEndpoints(staticGrpcClient static.StaticGrpcClient, 
-	staticUseCase usecase.StaticUseCase,
+func NewStaticEndpoint(staticGrpcClient static.StaticGrpcClient, 
 	logger *zap.Logger) *StaticEndpoint {
 	return &StaticEndpoint{
 		staticGrpcClient: staticGrpcClient,
-		staticUseCase: staticUseCase,
 		logger:        logger,
 	}
 }
 
 func (h *StaticEndpoint) ConfigureRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/files/{fileId}", h.GetById).Methods("GET")
+	router.HandleFunc("/api/v1/files/stream/{fileId}", h.GetFileStream).Methods("GET")
 }
 
 // GetStaticById godoc
@@ -57,7 +54,7 @@ func (h *StaticEndpoint) GetById(writer http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	staticURL, err := h.staticUseCase.GetStatic(staticId)
+	staticURL, err := h.staticGrpcClient.GetStatic(staticId)
 	if err != nil {
 		if errors.Is(err, ErrStaticFileNotFound) {
 			h.sendError(writer, http.StatusNotFound, err, "static file not found", nil)
@@ -89,7 +86,7 @@ func (h *StaticEndpoint) GetFileStream(writer http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	filePath, err := h.staticUseCase.GetStatic(fileId)
+	filePath, err := h.staticGrpcClient.GetStatic(fileId)
 	if err != nil {
 		h.sendError(writer, http.StatusInternalServerError, err, "failed to get static file path", nil)
 		return

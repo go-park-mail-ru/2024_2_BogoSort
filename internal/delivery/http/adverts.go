@@ -71,16 +71,16 @@ func (h *AdvertEndpoint) ConfigureProtectedRoutes(router *mux.Router) {
 	sessionMiddleware := middleware.NewAuthMiddleware(h.sessionManager)
 	protected.Use(sessionMiddleware.SessionMiddleware)
 
-	protected.HandleFunc("/api/v1/adverts/my", h.GetByUserId).Methods("GET")
-	protected.HandleFunc("/api/v1/adverts/saved", h.GetSavedByUserId).Methods("GET")
-	protected.HandleFunc("/api/v1/adverts/cart/{cartId}", h.GetByCartId).Methods("GET")
-	protected.HandleFunc("/api/v1/adverts", h.Add).Methods("POST")
-	protected.HandleFunc("/api/v1/adverts/{advertId}", h.Update).Methods("PUT")
-	protected.HandleFunc("/api/v1/adverts/{advertId}", h.Delete).Methods("DELETE")
-	protected.HandleFunc("/api/v1/adverts/{advertId}/status", h.UpdateStatus).Methods("PUT")
-	protected.HandleFunc("/api/v1/adverts/{advertId}/image", h.UploadImage).Methods("PUT")
-	protected.HandleFunc("/api/v1/adverts/saved/{advertId}", h.AddToSaved).Methods("POST")
-	protected.HandleFunc("/api/v1/adverts/saved/{advertId}", h.RemoveFromSaved).Methods("DELETE")
+	protected.HandleFunc("/adverts", h.Add).Methods("POST")
+	protected.HandleFunc("/adverts/my", h.GetByUserId).Methods("GET")
+	protected.HandleFunc("/adverts/saved", h.GetSavedByUserId).Methods("GET")
+	protected.HandleFunc("/adverts/cart/{cartId}", h.GetByCartId).Methods("GET")
+	protected.HandleFunc("/adverts/{advertId}", h.Update).Methods("PUT")
+	protected.HandleFunc("/adverts/{advertId}", h.Delete).Methods("DELETE")
+	protected.HandleFunc("/adverts/{advertId}/status", h.UpdateStatus).Methods("PUT")
+	protected.HandleFunc("/adverts/{advertId}/image", h.UploadImage).Methods("PUT")
+	protected.HandleFunc("/adverts/saved/{advertId}", h.AddToSaved).Methods("POST")
+	protected.HandleFunc("/adverts/saved/{advertId}", h.RemoveFromSaved).Methods("DELETE")
 }
 
 // Get godoc
