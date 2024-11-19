@@ -18,12 +18,12 @@ import (
 )
 
 func main() {
-	zap.ReplaceGlobals(zap.Must(zap.NewProduction()))
-	defer zap.L().Sync()
+	logger := zap.L()
+	defer logger.Sync()
 
 	cfg, err := config.Init()
 	if err != nil {
-		zap.L().Fatal("Ошибка при инициализации конфигурации", zap.Error(err))
+		logger.Fatal("Ошибка при инициализации конфигурации", zap.Error(err))
 	}
 
 	dbPool, err := connector.GetPostgresConnector(cfg.GetConnectURL())
