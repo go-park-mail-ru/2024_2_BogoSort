@@ -17,7 +17,6 @@ RUN go mod tidy
 RUN go build -o static cmd/static/main.go
 
 # --------------------------------------------
-
 # Этап запуска
 FROM alpine:latest
 
