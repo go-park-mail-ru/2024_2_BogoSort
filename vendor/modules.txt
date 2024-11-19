@@ -10,14 +10,13 @@ github.com/aymerick/douceur/parser
 github.com/cespare/xxhash/v2
 # github.com/chai2010/webp v1.1.1
 ## explicit; go 1.17
+github.com/chai2010/webp
 # github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 ## explicit
 github.com/davecgh/go-spew/spew
 # github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f
 ## explicit
 github.com/dgryski/go-rendezvous
-# github.com/dsnet/compress v0.0.1
-## explicit; go 1.9
 # github.com/go-openapi/jsonpointer v0.21.0
 ## explicit; go 1.20
 github.com/go-openapi/jsonpointer
@@ -34,8 +33,6 @@ github.com/go-openapi/swag
 # github.com/golang/mock v1.6.0
 ## explicit; go 1.11
 github.com/golang/mock/gomock
-# github.com/golang/snappy v0.0.4
-## explicit
 # github.com/google/uuid v1.6.0
 ## explicit
 github.com/google/uuid
@@ -76,23 +73,13 @@ github.com/josharian/intern
 github.com/mailru/easyjson/buffer
 github.com/mailru/easyjson/jlexer
 github.com/mailru/easyjson/jwriter
-# github.com/mholt/archiver v3.1.1+incompatible
-## explicit
 # github.com/microcosm-cc/bluemonday v1.0.27
 ## explicit; go 1.19
 github.com/microcosm-cc/bluemonday
 github.com/microcosm-cc/bluemonday/css
-# github.com/nickalie/go-binwrapper v0.0.0-20190114141239-525121d43c84
-## explicit
-# github.com/nickalie/go-webpbin v0.0.0-20220110095747-f10016bf2dc1
-## explicit; go 1.14
-# github.com/nwaples/rardecode v1.1.0
-## explicit
 # github.com/pashagolub/pgxmock/v4 v4.3.0
 ## explicit; go 1.22.0
 github.com/pashagolub/pgxmock/v4
-# github.com/pierrec/lz4 v2.6.1+incompatible
-## explicit
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors
@@ -119,10 +106,6 @@ github.com/stretchr/testify/assert
 # github.com/swaggo/swag v1.16.3
 ## explicit; go 1.18
 github.com/swaggo/swag
-# github.com/ulikunitz/xz v0.5.10
-## explicit; go 1.12
-# github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8
-## explicit
 # go.uber.org/multierr v1.10.0
 ## explicit; go 1.19
 go.uber.org/multierr

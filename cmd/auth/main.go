@@ -17,22 +17,22 @@ import (
 )
 
 func main() {
-	logger := zap.L()
-	defer logger.Sync()
+	zap.ReplaceGlobals(zap.Must(zap.NewProduction()))
+	defer zap.L().Sync()
 
 	cfg, err := config.Init()
 	if err != nil {
-		logger.Fatal("Ошибка при инициализации конфигурации", zap.Error(err))
+		zap.L().Fatal("Ошибка при инициализации конфигурации", zap.Error(err))
 	}
 
 	rdb, err := connector.GetRedisConnector(cfg.RdAddr, cfg.RdPass, cfg.RdDB)
 	if err != nil {
-		logger.Fatal("Ошибка при подключении к Redis", zap.Error(err))
+		zap.L().Fatal("Ошибка при подключении к Redis", zap.Error(err))
 	}
 
 	sessionRepo, err := redis.NewSessionRepository(rdb, int(cfg.Session.ExpirationTime.Seconds()), context.Background(), zap.L())
 	if err != nil {
-		logger.Fatal("Ошибка при инициализации репозитория сессий", zap.Error(err))
+		zap.L().Fatal("Ошибка при инициализации репозитория сессий", zap.Error(err))
 	}
 
 	authService := service.NewAuthService(sessionRepo, zap.L())
@@ -49,11 +49,11 @@ func main() {
 	address := config.GetAuthAddress()
 	lis, err := net.Listen("tcp", address)
 	if err != nil {
-		logger.Fatal("Не удалось прослушивать порт", zap.Error(err))
+		zap.L().Fatal("Не удалось прослушивать порт", zap.Error(err))
 	}
 
-	logger.Info("Auth сервер запущен на " + address)
+	zap.L().Info("Auth сервер запущен на " + address)
 	if err := server.Serve(lis); err != nil {
-		logger.Fatal("Ошибка при запуске gRPC сервера", zap.Error(err))
+		zap.L().Fatal("Ошибка при запуске gRPC сервера", zap.Error(err))
 	}
 }
