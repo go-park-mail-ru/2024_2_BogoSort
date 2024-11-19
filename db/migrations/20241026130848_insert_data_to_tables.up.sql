@@ -1,6 +1,7 @@
 -- Заполнение таблицы "static"
 INSERT INTO static (id, name, path, created_at)
 VALUES
+    (uuid_generate_v4(), 'default_advert.jpg', 'static/images/', CURRENT_TIMESTAMP),
     (uuid_generate_v4(), 'default.jpg', 'static/images/', CURRENT_TIMESTAMP),
     (uuid_generate_v4(), 'image1.jpg', 'static/images/', CURRENT_TIMESTAMP),
     (uuid_generate_v4(), 'image2.jpg', 'static/images/', CURRENT_TIMESTAMP),
