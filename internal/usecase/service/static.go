@@ -3,12 +3,12 @@ package service
 import (
 	"bytes"
 	"fmt"
+	"github.com/chai2010/webp"
 	"image"
 	"image/draw"
 	_ "image/png"
 	"io"
 	"net/http"
-	"github.com/chai2010/webp"
 	"os"
 	"path/filepath"
 
@@ -63,7 +63,7 @@ func (s *StaticService) UploadStatic(reader io.ReadSeeker) (uuid.UUID, error) {
 	if contentType != "image/jpeg" && contentType != "image/png" && contentType != "image/gif" {
 		return uuid.Nil, usecase.ErrStaticNotImage
 	}
-	_, err = reader.Seek(0, io.SeekStart) 
+	_, err = reader.Seek(0, io.SeekStart)
 	if err != nil {
 		return uuid.Nil, entity.UsecaseWrap(err, errors.New("error returning io.ReadSeeker to the start of the file"))
 	}
