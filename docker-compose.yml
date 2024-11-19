@@ -2,7 +2,7 @@ services:
   auth:
     build:
       context: .
-      dockerfile: cmd/auth/Dockerfile
+      dockerfile: ./docker/auth.dockerfile
     ports:
       - "50051:50051"
     environment:
@@ -18,7 +18,7 @@ services:
       - app-network
     volumes:
       - ./config/config.yaml:/config/config.yaml
-      - ./static/:/static/
+      - ./static_files:/src/static_files
     healthcheck:
       test: ["CMD", "grpc_health_probe", "-addr=:50051"]
       interval: 30s
@@ -28,7 +28,7 @@ services:
   static:
     build:
       context: .
-      dockerfile: docker/core.dockerfile
+      dockerfile: ./docker/static.dockerfile
     ports:
       - "50053:50053"
     environment:
@@ -37,9 +37,14 @@ services:
       - CONFIG_PATH=/config/config.yaml
     networks:
       - app-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     volumes:
       - ./config/config.yaml:/config/config.yaml
-      - ./static/:/static/
+      - ./static_files:/src/static_files
     healthcheck:
       test: ["CMD", "grpc_health_probe", "-addr=:50053"]
       interval: 30s
@@ -49,18 +54,23 @@ services:
   cart_purchase:
     build:
       context: .
-      dockerfile: cmd/cart_purchase/Dockerfile
+      dockerfile: ./docker/cart_purchase.dockerfile
     ports:
       - "50052:50052"
     environment:
       - ENV=production
       - LOG_LEVEL=info
       - CONFIG_PATH=/config/config.yaml
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - app-network
     volumes:
       - ./config/config.yaml:/config/config.yaml
-      - ./static/:/static/
+      - ./static_files:/src/static_files
     healthcheck:
       test: ["CMD", "grpc_health_probe", "-addr=:50052"]
       interval: 30s
@@ -70,7 +80,7 @@ services:
   app:
     build:
       context: .
-      dockerfile: cmd/app/Dockerfile
+      dockerfile: ./docker/core.dockerfile
     ports:
       - "8080:8080"
     environment:
@@ -78,6 +88,10 @@ services:
       - CONFIG_PATH=/config/config.yaml
     depends_on:
       auth:
+        condition: service_healthy
+      static:
+        condition: service_healthy
+      cart_purchase:
         condition: service_healthy
       postgres:
         condition: service_healthy
@@ -87,12 +101,12 @@ services:
       - app-network
     volumes:
       - ./config/config.yaml:/config/config.yaml
-      - ./static/:/static/
+      - ./static_files:/src/static_files
 
   postgres:
     image: postgres:13
     ports:
-      - "8002:5432"
+      - "5432:5432"
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
@@ -110,7 +124,7 @@ services:
   redis:
     image: redis:6
     ports:
-      - "6379:6379"
+      - "6380:6380"
     networks:
       - app-network
     healthcheck:

@@ -2,7 +2,7 @@
 # docker run -d -p 8080:8080 --name core core_service
 
 # Этап сборки
-FROM golang:1.22-alpine AS build
+FROM golang:1.23-alpine AS build
 
 RUN apk add --no-cache gcc
 RUN apk add libc-dev
@@ -12,10 +12,10 @@ COPY internal internal
 COPY docs docs
 COPY go.mod go.mod
 COPY config config
+COPY static_files static_files
 COPY pkg pkg
 RUN go mod tidy
 RUN go build -o core cmd/app/main.go
-
 
 # --------------------------------------------
 

@@ -2,7 +2,7 @@
 #docker run -d -p 50053:50053 --name cart_purchase cart_purchase
 
 # Этап сборки
-FROM golang:1.22-alpine AS build
+FROM golang:1.23-alpine AS build
 
 RUN apk add --no-cache gcc
 RUN apk add libc-dev
@@ -12,9 +12,10 @@ COPY internal internal
 COPY docs docs
 COPY go.mod go.mod
 COPY config config
+COPY static_files static_files
 COPY pkg pkg
 RUN go mod tidy
-RUN go build -o cart_purchase cmd/app/main.go
+RUN go build -o cart_purchase cmd/cart_purchase/main.go
 
 # --------------------------------------------
 
@@ -22,7 +23,7 @@ RUN go build -o cart_purchase cmd/app/main.go
 FROM alpine:latest
 
 WORKDIR /app
-COPY --from=build /src/cart_purchase /cart_purchase
+COPY --from=build /src/cart_purchase /app
 COPY config/config.yaml /app/config/config.yaml
 
 CMD ["./cart_purchase"]
