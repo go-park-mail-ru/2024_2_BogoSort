@@ -73,7 +73,7 @@ func (s *AdvertService) GetByUserId(userId uuid.UUID) ([]*dto.MyPreviewAdvertCar
 		return nil, entity.UsecaseWrap(err, repository.ErrSellerNotFound)
 	}
 
-	adverts, err := s.advertRepo.GetBySellerId(seller.ID, userId)
+	adverts, err := s.advertRepo.GetByUserId(seller.ID, userId)
 	if err != nil {
 		return nil, entity.UsecaseWrap(err, err)
 	}
