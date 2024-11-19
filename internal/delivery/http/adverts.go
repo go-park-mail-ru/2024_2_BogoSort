@@ -4,12 +4,15 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/utils"
-	"github.com/google/uuid"
-	"go.uber.org/zap"
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
+
+	"github.com/go-park-mail-ru/2024_2_BogoSort/config"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/utils"
+	"github.com/google/uuid"
+	"go.uber.org/zap"
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/static"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/middleware"
@@ -64,6 +67,7 @@ func (h *AdvertEndpoint) ConfigureRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/adverts/category/{categoryId}", h.GetByCategoryId).Methods("GET")
 	router.HandleFunc("/api/v1/adverts", h.Get).Methods("GET")
 	router.HandleFunc("/api/v1/adverts/viewed/{advertId}", h.AddToViewed).Methods("POST")
+	router.HandleFunc("/api/v1/search", h.Search).Methods("GET")
 }
 
 func (h *AdvertEndpoint) ConfigureProtectedRoutes(router *mux.Router) {
@@ -646,6 +650,51 @@ func (h *AdvertEndpoint) GetByUserId(writer http.ResponseWriter, r *http.Request
 
 	for _, advert := range adverts {
 		utils.SanitizePreviewAdvert(&advert.Preview, h.policy)
+	}
+
+	utils.SendJSONResponse(writer, http.StatusOK, adverts)
+}
+
+// Search godoc
+// @Summary Поиск объявлений
+// @Description Выполняет поиск объявлений по строке запроса с разбивкой на батчи.
+// @Tags adverts
+// @Produce json
+// @Param query query string true "Строка поиска"
+// @Param limit query int false "Лимит результатов (по умолчанию 100)"
+// @Param offset query int false "Смещение для пагинации (по умолчанию 0)"
+// @Success 200 {array} dto.PreviewAdvertCard "Список найденных объявлений"
+// @Failure 400 {object} utils.ErrResponse "Неверные параметры запроса"
+// @Failure 500 {object} utils.ErrResponse "Ошибка сервера"
+// @Router /api/v1/adverts/search [get]
+func (h *AdvertEndpoint) Search(writer http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query().Get("query")
+	if strings.TrimSpace(query) == "" {
+		h.sendError(writer, http.StatusBadRequest, errors.New("search query is empty"), "empty search query", nil)
+		return
+	}
+
+	batchSize := config.GetSearchBatchSize()
+
+	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
+	if err != nil || limit <= 0 {
+		limit = 100
+	}
+
+	offset, err := strconv.Atoi(r.URL.Query().Get("offset"))
+	if err != nil || offset < 0 {
+		offset = 0
+	}
+
+	userId, err := h.sessionManager.GetUserID(r)
+	if err != nil {
+		userId = uuid.Nil
+	}
+
+	adverts, err := h.advertUC.Search(query, batchSize, limit, offset, userId)
+	if err != nil {
+		h.sendError(writer, http.StatusInternalServerError, err, "error during search execution", nil)
+		return
 	}
 
 	utils.SendJSONResponse(writer, http.StatusOK, adverts)

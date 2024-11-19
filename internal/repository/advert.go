@@ -2,9 +2,10 @@ package repository
 
 import (
 	"errors"
+
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
-	"github.com/jackc/pgx/v5"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 )
 
 type AdvertRepository interface {
@@ -67,6 +68,12 @@ type AdvertRepository interface {
 
 	// CheckIfExists проверяет, существует ли объявление
 	CheckIfExists(advertId uuid.UUID) (bool, error)
+
+	// Search ищет объявления по запросу
+	Search(query string, limit, offset int, userId uuid.UUID) ([]*entity.Advert, error)
+
+	// Count возвращает количество объявлений
+	Count() (int, error)
 }
 
 var (

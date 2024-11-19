@@ -104,6 +104,15 @@ const (
 
 	checkIfExistsQuery = `
 		SELECT EXISTS(SELECT 1 FROM advert WHERE id = $1)`
+
+	searchAdvertsQuery = `
+		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at
+		FROM advert
+		WHERE to_tsvector('russian', title || ' ' || description) @@ plainto_tsquery('russian', $1)
+		ORDER BY created_at DESC
+		LIMIT $2 OFFSET $3`
+
+	countAdvertsQuery = `SELECT COUNT(*) FROM advert`
 )
 
 type AdvertRepoModel struct {
@@ -730,4 +739,59 @@ func (r *AdvertDB) GetSavedByUserId(userId uuid.UUID) ([]*entity.Advert, error) 
 	}
 
 	return adverts, nil
+}
+
+func (r *AdvertDB) Search(query string, limit, offset int, userId uuid.UUID) ([]*entity.Advert, error) {
+	var adverts []*entity.Advert
+
+	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
+	defer cancel()
+
+	rows, err := r.DB.Query(ctx, searchAdvertsQuery, query, limit, offset)
+	if err != nil {
+		r.logger.Error("failed to execute query", zap.Error(err), zap.String("query", query))
+		return nil, entity.PSQLWrap(err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var dbAdvert AdvertRepoModel
+		if err := rows.Scan(
+			&dbAdvert.ID,
+			&dbAdvert.Title,
+			&dbAdvert.Description,
+			&dbAdvert.Price,
+			&dbAdvert.Location,
+			&dbAdvert.HasDelivery,
+			&dbAdvert.CategoryId,
+			&dbAdvert.SellerId,
+			&dbAdvert.ImageId,
+			&dbAdvert.Status,
+			&dbAdvert.CreatedAt,
+			&dbAdvert.UpdatedAt,
+		); err != nil {
+			r.logger.Error("failed to scan row", zap.Error(err), zap.String("query", query))
+			return nil, entity.PSQLWrap(err)
+		}
+		adverts = append(adverts, r.convertToEntityAdvert(dbAdvert, userId))
+	}
+
+	if err := rows.Err(); err != nil {
+		r.logger.Error("error iterating over rows", zap.Error(err), zap.String("query", query))
+		return nil, entity.PSQLWrap(err)
+	}
+
+	return adverts, nil
+}
+
+func (r *AdvertDB) Count() (int, error) {
+	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
+	defer cancel()
+
+	var count int
+	err := r.DB.QueryRow(ctx, countAdvertsQuery).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
 }
