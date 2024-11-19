@@ -353,6 +353,62 @@
                 }
             }
         },
+        "/api/v1/adverts/search": {
+            "get": {
+                "description": "Выполняет поиск объявлений по строке запроса с разбивкой на батчи.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "adverts"
+                ],
+                "summary": "Поиск объявлений",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Строка поиска",
+                        "name": "query",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Лимит результатов (по умолчанию 100)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Смещение для пагинации (по умолчанию 0)",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Список найденных объявлений",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.PreviewAdvertCard"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Неверные параметры запроса",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/adverts/seller/{sellerId}": {
             "get": {
                 "description": "Fetch a list of adverts associated with a specific seller ID.",
@@ -1854,7 +1910,7 @@
                 "id": {
                     "type": "string"
                 },
-                "image_url": {
+                "image_id": {
                     "type": "string"
                 },
                 "location": {
