@@ -17,34 +17,54 @@ const docTemplate = `{
     "paths": {
         "/api/v1/adverts": {
             "get": {
-                "description": "Get a list of all adverts",
+                "description": "Fetch a list of all adverts with optional pagination.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "adverts"
                 ],
-                "summary": "Get all adverts",
+                "summary": "Retrieve all adverts",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Limit the number of results",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset for pagination",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "List of adverts",
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/storage.Advert"
+                                "$ref": "#/definitions/dto.PreviewAdvertCard"
                             }
                         }
                     },
-                    "500": {
-                        "description": "Internal Server Error",
+                    "400": {
+                        "description": "Invalid limit or offset",
                         "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to retrieve adverts",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
                         }
                     }
                 }
             },
             "post": {
-                "description": "Add a new advert to the list",
+                "description": "Add a new advert to the system.",
                 "consumes": [
                     "application/json"
                 ],
@@ -54,7 +74,7 @@ const docTemplate = `{
                 "tags": [
                     "adverts"
                 ],
-                "summary": "Add a new advert",
+                "summary": "Create a new advert",
                 "parameters": [
                     {
                         "description": "Advert data",
@@ -62,74 +82,442 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/storage.Advert"
+                            "$ref": "#/definitions/dto.AdvertRequest"
                         }
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
+                    "201": {
+                        "description": "Advert created",
                         "schema": {
-                            "$ref": "#/definitions/storage.Advert"
+                            "$ref": "#/definitions/dto.Advert"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Invalid advert data",
                         "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to create advert",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
                         }
                     }
                 }
             }
         },
-        "/api/v1/adverts/{id}": {
+        "/api/v1/adverts/cart/{cartId}": {
             "get": {
-                "description": "Get a single advert by its ID",
+                "description": "Fetch a list of adverts in the specified cart.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "adverts"
                 ],
-                "summary": "Get an advert by ID",
+                "summary": "Retrieve adverts by cart ID",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "Advert ID",
-                        "name": "id",
+                        "type": "string",
+                        "description": "Cart ID",
+                        "name": "cartId",
                         "in": "path",
                         "required": true
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "List of adverts in cart",
                         "schema": {
-                            "$ref": "#/definitions/storage.Advert"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.PreviewAdvertCard"
+                            }
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Invalid cart ID",
                         "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
+                            "$ref": "#/definitions/utils.ErrResponse"
                         }
                     },
-                    "404": {
-                        "description": "Not Found",
+                    "403": {
+                        "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
+                            "$ref": "#/definitions/utils.ErrResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Failed to retrieve adverts by cart ID",
                         "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/adverts/category/{categoryId}": {
+            "get": {
+                "description": "Fetch a list of adverts associated with a specific category ID.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "adverts"
+                ],
+                "summary": "Retrieve adverts by category ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Category ID",
+                        "name": "categoryId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of adverts by category ID",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.PreviewAdvertCard"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid category ID",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to retrieve adverts by category ID",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/adverts/my": {
+            "get": {
+                "description": "Fetch a list of adverts associated with a specific user ID.",
+                "tags": [
+                    "adverts"
+                ],
+                "summary": "Retrieve adverts by user ID",
+                "responses": {
+                    "200": {
+                        "description": "List of adverts by user ID",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.MyPreviewAdvertCard"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid user ID",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to retrieve adverts by user ID",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/adverts/saved": {
+            "get": {
+                "description": "Fetch a list of adverts saved by the specified user ID.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "adverts"
+                ],
+                "summary": "Retrieve adverts by user ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "userId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of adverts saved by user",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.PreviewAdvertCard"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid user ID",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to retrieve adverts by user ID",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/adverts/saved/{advertId}": {
+            "post": {
+                "description": "Add an advert to saved by its ID.",
+                "tags": [
+                    "adverts"
+                ],
+                "summary": "Add an advert to saved",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Advert ID",
+                        "name": "advertId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Advert added to saved"
+                    },
+                    "400": {
+                        "description": "Invalid advert ID",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Advert not found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to add advert to saved",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Remove an advert from saved by its ID.",
+                "tags": [
+                    "adverts"
+                ],
+                "summary": "Remove an advert from saved",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Advert ID",
+                        "name": "advertId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Advert removed from saved"
+                    },
+                    "400": {
+                        "description": "Invalid advert ID",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Advert not found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to remove advert from saved",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/adverts/search": {
+            "get": {
+                "description": "Выполняет поиск объявлений по строке запроса с разбивкой на батчи.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "adverts"
+                ],
+                "summary": "Поиск объявлений",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Строка поиска",
+                        "name": "query",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Лимит результатов (по умолчанию 100)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Смещение для пагинации (по умолчанию 0)",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Список найденных объявлений",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.PreviewAdvertCard"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Неверные параметры запроса",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/adverts/seller/{sellerId}": {
+            "get": {
+                "description": "Fetch a list of adverts associated with a specific seller ID.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "adverts"
+                ],
+                "summary": "Retrieve adverts by seller ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Seller ID",
+                        "name": "sellerId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of adverts",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.PreviewAdvertCard"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid seller ID",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to retrieve adverts by seller ID",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/adverts/{advertId}": {
+            "get": {
+                "description": "Fetch an advert based on its ID.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "adverts"
+                ],
+                "summary": "Retrieve an advert by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Advert ID",
+                        "name": "advertId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Advert details",
+                        "schema": {
+                            "$ref": "#/definitions/dto.AdvertCard"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid advert ID",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Advert not found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to retrieve advert by ID",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
                         }
                     }
                 }
             },
             "put": {
-                "description": "Update an existing advert by its ID",
+                "description": "Modify the details of an existing advert.",
                 "consumes": [
                     "application/json"
                 ],
@@ -139,140 +527,208 @@ const docTemplate = `{
                 "tags": [
                     "adverts"
                 ],
-                "summary": "Update an advert",
+                "summary": "Update an existing advert",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Advert ID",
-                        "name": "id",
+                        "name": "advertId",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "Advert data",
+                        "description": "Updated advert data",
                         "name": "advert",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/storage.Advert"
+                            "$ref": "#/definitions/dto.AdvertRequest"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Advert updated successfully",
                         "schema": {
-                            "$ref": "#/definitions/storage.Advert"
+                            "type": "string"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Invalid advert data",
                         "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "Advert not found",
                         "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
+                            "$ref": "#/definitions/utils.ErrResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Failed to update advert",
                         "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
+                            "$ref": "#/definitions/utils.ErrResponse"
                         }
                     }
                 }
             },
             "delete": {
-                "description": "Delete an advert by its ID",
+                "description": "Remove an advert from the system using its ID.",
                 "tags": [
                     "adverts"
                 ],
-                "summary": "Delete an advert",
+                "summary": "Delete an advert by ID",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Advert ID",
-                        "name": "id",
+                        "name": "advertId",
                         "in": "path",
                         "required": true
                     }
                 ],
                 "responses": {
                     "204": {
-                        "description": "No Content"
+                        "description": "Advert deleted"
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Invalid advert ID",
                         "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Advert not found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Failed to delete advert",
                         "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
+                            "$ref": "#/definitions/utils.ErrResponse"
                         }
                     }
                 }
             }
         },
-        "/api/v1/login": {
-            "post": {
-                "description": "Login a user with email and password or with a valid session cookie or Authorization header",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
+        "/api/v1/adverts/{advertId}/image": {
+            "put": {
+                "description": "Upload an image associated with an advert by its ID.",
                 "tags": [
-                    "auth"
+                    "adverts"
                 ],
-                "summary": "Login a user",
+                "summary": "Upload an image for an advert",
                 "parameters": [
                     {
-                        "description": "User credentials",
-                        "name": "credentials",
-                        "in": "body",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.AuthCredentials"
-                        }
+                        "type": "string",
+                        "description": "Advert ID",
+                        "name": "advertId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Image file to upload",
+                        "name": "image",
+                        "in": "formData",
+                        "required": true
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Image uploaded",
                         "schema": {
-                            "$ref": "#/definitions/responses.AuthResponse"
+                            "type": "string"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Invalid advert ID or file not attached",
                         "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
-                        }
-                    },
-                    "405": {
-                        "description": "Method Not Allowed",
-                        "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
+                            "$ref": "#/definitions/utils.ErrResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Failed to upload image",
                         "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
+                            "$ref": "#/definitions/utils.ErrResponse"
                         }
                     }
                 }
             }
         },
-        "/api/v1/logout": {
+        "/api/v1/adverts/{advertId}/status": {
+            "put": {
+                "description": "Change the status of an advert by its ID.",
+                "tags": [
+                    "adverts"
+                ],
+                "summary": "Update the status of an advert",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Advert ID",
+                        "name": "advertId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "New status",
+                        "name": "status",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Advert status updated"
+                    },
+                    "400": {
+                        "description": "Invalid advert ID or status",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Advert not found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to update advert status",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/cart/add": {
             "post": {
-                "description": "Logout a user by invalidating the session cookie or Authorization header",
+                "description": "Adds a new advert to the cart associated with a user",
                 "consumes": [
                     "application/json"
                 ],
@@ -280,12 +736,23 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "auth"
+                    "Cart"
                 ],
-                "summary": "Logout a user",
+                "summary": "Add advert to user's cart",
+                "parameters": [
+                    {
+                        "description": "Data to add advert to cart",
+                        "name": "purchase",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.AddAdvertToUserCartRequest"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Successfully added advert",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -294,29 +761,23 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Invalid request data",
                         "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
+                            "$ref": "#/definitions/utils.ErrResponse"
                         }
                     },
-                    "401": {
-                        "description": "Unauthorized",
+                    "500": {
+                        "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
-                        }
-                    },
-                    "405": {
-                        "description": "Method Not Allowed",
-                        "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
+                            "$ref": "#/definitions/utils.ErrResponse"
                         }
                     }
                 }
             }
         },
-        "/api/v1/signup": {
-            "post": {
-                "description": "Signup a new user with email and password",
+        "/api/v1/cart/delete": {
+            "delete": {
+                "description": "Deletes an advert from the cart associated with a user",
                 "consumes": [
                     "application/json"
                 ],
@@ -324,43 +785,926 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "auth"
+                    "Cart"
                 ],
-                "summary": "Signup a new user",
+                "summary": "Delete advert from user's cart",
                 "parameters": [
                     {
-                        "description": "User credentials",
-                        "name": "credentials",
+                        "description": "Data to delete advert from cart",
+                        "name": "purchase",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handlers.AuthCredentials"
+                            "$ref": "#/definitions/dto.DeleteAdvertFromUserCartRequest"
                         }
                     }
                 ],
                 "responses": {
-                    "201": {
-                        "description": "Created",
+                    "200": {
+                        "description": "Successfully deleted advert from user cart",
                         "schema": {
-                            "$ref": "#/definitions/responses.AuthResponse"
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Invalid request data",
                         "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
+                            "$ref": "#/definitions/utils.ErrResponse"
                         }
                     },
-                    "405": {
-                        "description": "Method Not Allowed",
+                    "404": {
+                        "description": "Cart or advert not found",
                         "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/cart/exists/{user_id}": {
+            "get": {
+                "description": "Checks if a cart exists for a user by their ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Cart"
+                ],
+                "summary": "Check if cart exists for user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Cart existence check result",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "boolean"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid user ID format",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/cart/{cart_id}": {
+            "get": {
+                "description": "Retrieves detailed information about a cart using its unique identifier",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Cart"
+                ],
+                "summary": "Retrieve cart by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Cart ID",
+                        "name": "cart_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved cart",
+                        "schema": {
+                            "$ref": "#/definitions/dto.CartResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid cart ID format",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/categories": {
+            "get": {
+                "description": "Retrieve a list of all categories",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "categories"
+                ],
+                "summary": "Get all categories",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/entity.Category"
+                            }
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/responses.ErrResponse"
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/csrf-token": {
+            "get": {
+                "description": "This endpoint checks for a session ID in the request cookies and retrieves the user ID from the session manager. If both are valid, it generates a CSRF token using the session ID and user ID, and sends it back in the response header. If any step fails, it responds with an appropriate error message.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "CSRF"
+                ],
+                "summary": "Retrieve CSRF Token",
+                "responses": {
+                    "200": {
+                        "description": "CSRF Token",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to create CSRF token",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/files/stream/{fileId}": {
+            "get": {
+                "description": "Get a static file as a byte stream by its ID",
+                "produces": [
+                    "application/octet-stream"
+                ],
+                "tags": [
+                    "static"
+                ],
+                "summary": "Get static file stream by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "File ID",
+                        "name": "fileId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Static file content",
+                        "schema": {
+                            "type": "binary"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid file ID",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Static file not found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to get static file",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/files/{fileId}": {
+            "get": {
+                "description": "Get a file by its ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "static"
+                ],
+                "summary": "Get file by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "File ID",
+                        "name": "fileId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "URL of the static file",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid static ID",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Static file not found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to get static file",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/login": {
+            "post": {
+                "description": "Allows a user to log into the system",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "User login",
+                "parameters": [
+                    {
+                        "description": "Login data",
+                        "name": "login",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.Login"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "SessionID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid credentials or unauthorized access",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/logout": {
+            "post": {
+                "description": "Allows the user to log out of the system by deleting their session",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "User logout",
+                "responses": {
+                    "200": {
+                        "description": "You have successfully logged out",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request or missing cookie",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized access",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/me": {
+            "get": {
+                "description": "Returns information about the currently authenticated user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Get current user information",
+                "responses": {
+                    "200": {
+                        "description": "User information",
+                        "schema": {
+                            "$ref": "#/definitions/dto.User"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized access",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/password": {
+            "post": {
+                "description": "Allows a user to change their password",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Change user password",
+                "parameters": [
+                    {
+                        "description": "Password change data",
+                        "name": "password",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UpdatePassword"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Password changed successfully",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized access",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/profile": {
+            "put": {
+                "description": "Allows a user to update their profile information",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Update user profile",
+                "parameters": [
+                    {
+                        "description": "Profile data",
+                        "name": "profile",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UserUpdate"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Profile updated successfully",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid data",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized access",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/profile/{user_id}": {
+            "get": {
+                "description": "Returns user information by their ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Get user profile",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User profile",
+                        "schema": {
+                            "$ref": "#/definitions/dto.User"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/purchase": {
+            "post": {
+                "description": "Accepts purchase data, validates it, and adds it to the system. Returns a response with purchase data or an error.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Purchases"
+                ],
+                "summary": "Adds a purchase",
+                "parameters": [
+                    {
+                        "description": "Purchase request",
+                        "name": "purchase",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.PurchaseRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successful purchase",
+                        "schema": {
+                            "$ref": "#/definitions/dto.PurchaseResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameters",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/purchase/{user_id}": {
+            "get": {
+                "description": "Accepts a user ID, validates it, and retrieves purchases from the system. Returns a response with purchase data or an error.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Purchases"
+                ],
+                "summary": "Retrieves purchases by user ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful purchase",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.PurchaseResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid user ID",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/seller/user/{user_id}": {
+            "get": {
+                "description": "Возвращает информацию о продавце, связанном с указанным ID пользователя",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Продавцы"
+                ],
+                "summary": "Получить продавца по ID пользователя",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID пользователя",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Информация о продавце",
+                        "schema": {
+                            "$ref": "#/definitions/entity.Seller"
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректный ID пользователя",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Продавец не найден",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/seller/{seller_id}": {
+            "get": {
+                "description": "Возвращает информацию о продавце по его ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Продавцы"
+                ],
+                "summary": "Получение продавца по ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID продавца",
+                        "name": "seller_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Информация о продавце",
+                        "schema": {
+                            "$ref": "#/definitions/entity.Seller"
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректный запрос",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Продавец не найден",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/signup": {
+            "post": {
+                "description": "Creates a new user in the system",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "User registration",
+                "parameters": [
+                    {
+                        "description": "Registration data",
+                        "name": "signup",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.Signup"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "SessionID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request or user already exists",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/user/{user_id}/image": {
+            "put": {
+                "description": "Upload an image associated with an advert by its ID",
+                "tags": [
+                    "adverts"
+                ],
+                "summary": "Upload an image for an advert",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Image file to upload",
+                        "name": "image",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Image uploaded",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid user ID or file not attached",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to upload image",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/cart/user/{user_id}": {
+            "get": {
+                "description": "Retrieves detailed information about a cart associated with a specific user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Cart"
+                ],
+                "summary": "Retrieve cart by User ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved cart",
+                        "schema": {
+                            "$ref": "#/definitions/dto.CartResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid user ID format",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
                         }
                     }
                 }
@@ -368,12 +1712,169 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "handlers.AuthCredentials": {
+        "dto.AddAdvertToUserCartRequest": {
             "type": "object",
-            "required": [
-                "email",
-                "password"
+            "properties": {
+                "advert_id": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.Advert": {
+            "type": "object",
+            "properties": {
+                "category_id": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "has_delivery": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "image_id": {
+                    "type": "string"
+                },
+                "location": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "integer"
+                },
+                "saves_number": {
+                    "type": "integer"
+                },
+                "seller_id": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/dto.AdvertStatus"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "views_number": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.AdvertCard": {
+            "type": "object",
+            "properties": {
+                "advert": {
+                    "$ref": "#/definitions/dto.Advert"
+                },
+                "is_saved": {
+                    "type": "boolean"
+                },
+                "is_viewed": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "dto.AdvertRequest": {
+            "type": "object",
+            "properties": {
+                "category_id": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "has_delivery": {
+                    "type": "boolean"
+                },
+                "location": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "integer"
+                },
+                "status": {
+                    "$ref": "#/definitions/dto.AdvertStatus"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.AdvertStatus": {
+            "type": "string",
+            "enum": [
+                "active",
+                "inactive",
+                "reserved"
             ],
+            "x-enum-varnames": [
+                "AdvertStatusActive",
+                "AdvertStatusInactive",
+                "AdvertStatusReserved"
+            ]
+        },
+        "dto.Cart": {
+            "type": "object",
+            "properties": {
+                "adverts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.PreviewAdvertCard"
+                    }
+                },
+                "id": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/entity.CartStatus"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.CartResponse": {
+            "type": "object",
+            "properties": {
+                "cart": {
+                    "$ref": "#/definitions/dto.Cart"
+                }
+            }
+        },
+        "dto.DeleteAdvertFromUserCartRequest": {
+            "type": "object",
+            "properties": {
+                "advert_id": {
+                    "type": "string"
+                },
+                "cart_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.DeliveryMethod": {
+            "type": "string",
+            "enum": [
+                "pickup",
+                "delivery"
+            ],
+            "x-enum-varnames": [
+                "DeliveryMethodPickup",
+                "DeliveryMethodDelivery"
+            ]
+        },
+        "dto.Login": {
+            "type": "object",
             "properties": {
                 "email": {
                     "type": "string"
@@ -383,35 +1884,44 @@ const docTemplate = `{
                 }
             }
         },
-        "responses.AuthResponse": {
+        "dto.MyPreviewAdvertCard": {
             "type": "object",
             "properties": {
-                "email": {
-                    "type": "string"
+                "preview": {
+                    "$ref": "#/definitions/dto.PreviewAdvert"
                 },
-                "token": {
-                    "type": "string"
-                }
-            }
-        },
-        "responses.ErrResponse": {
-            "type": "object",
-            "properties": {
-                "code": {
+                "saves_number": {
                     "type": "integer"
                 },
-                "status": {
-                    "type": "string"
+                "views_number": {
+                    "type": "integer"
                 }
             }
         },
-        "storage.Advert": {
+        "dto.PaymentMethod": {
+            "type": "string",
+            "enum": [
+                "card",
+                "cash"
+            ],
+            "x-enum-varnames": [
+                "PaymentMethodCard",
+                "PaymentMethodCash"
+            ]
+        },
+        "dto.PreviewAdvert": {
             "type": "object",
             "properties": {
+                "category_id": {
+                    "type": "string"
+                },
+                "has_delivery": {
+                    "type": "boolean"
+                },
                 "id": {
-                    "type": "integer"
+                    "type": "string"
                 },
-                "image_url": {
+                "image_id": {
                     "type": "string"
                 },
                 "location": {
@@ -420,7 +1930,199 @@ const docTemplate = `{
                 "price": {
                     "type": "integer"
                 },
+                "seller_id": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/dto.AdvertStatus"
+                },
                 "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.PreviewAdvertCard": {
+            "type": "object",
+            "properties": {
+                "is_saved": {
+                    "type": "boolean"
+                },
+                "is_viewed": {
+                    "type": "boolean"
+                },
+                "preview": {
+                    "$ref": "#/definitions/dto.PreviewAdvert"
+                }
+            }
+        },
+        "dto.PurchaseRequest": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "cart_id": {
+                    "type": "string"
+                },
+                "delivery_method": {
+                    "$ref": "#/definitions/dto.DeliveryMethod"
+                },
+                "payment_method": {
+                    "$ref": "#/definitions/dto.PaymentMethod"
+                }
+            }
+        },
+        "dto.PurchaseResponse": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "cart_id": {
+                    "type": "string"
+                },
+                "delivery_method": {
+                    "$ref": "#/definitions/dto.DeliveryMethod"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "payment_method": {
+                    "$ref": "#/definitions/dto.PaymentMethod"
+                },
+                "status": {
+                    "$ref": "#/definitions/dto.PurchaseStatus"
+                }
+            }
+        },
+        "dto.PurchaseStatus": {
+            "type": "string",
+            "enum": [
+                "pending",
+                "completed",
+                "in_progress",
+                "canceled"
+            ],
+            "x-enum-varnames": [
+                "StatusPending",
+                "StatusCompleted",
+                "StatusFailed",
+                "StatusCanceled"
+            ]
+        },
+        "dto.Signup": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.UpdatePassword": {
+            "type": "object",
+            "properties": {
+                "new_password": {
+                    "type": "string"
+                },
+                "old_password": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.User": {
+            "type": "object",
+            "properties": {
+                "avatar_id": {
+                    "type": "string",
+                    "default": "00000000-0000-0000-0000-000000000000"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string",
+                    "default": "active"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.UserUpdate": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "entity.CartStatus": {
+            "type": "string",
+            "enum": [
+                "active",
+                "inactive"
+            ],
+            "x-enum-varnames": [
+                "CartStatusActive",
+                "CartStatusInactive"
+            ]
+        },
+        "entity.Category": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "entity.Seller": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "utils.ErrResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "status": {
                     "type": "string"
                 }
             }
