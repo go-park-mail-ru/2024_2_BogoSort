@@ -2,33 +2,46 @@ package repository
 
 import (
 	"errors"
+
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
-	"github.com/jackc/pgx/v5"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 )
 
 type AdvertRepository interface {
 	// Get возвращает массив объявлений в соответствии с offset и limit
-	Get(limit, offset int) ([]*entity.Advert, error)
+	Get(limit, offset int, userId uuid.UUID) ([]*entity.Advert, error)
 
 	// GetBySellerId возвращает массив объявлений в соответствии с sellerId
-	GetBySellerId(sellerId uuid.UUID) ([]*entity.Advert, error)
+	GetBySellerId(sellerId, userId uuid.UUID) ([]*entity.Advert, error)
+
+	// GetByUserId возвращает массив объявлений в соответствии с userId
+	GetByUserId(sellerId, userId uuid.UUID) ([]*entity.Advert, error)
 
 	// GetByCartId возвращает массив объявлений, которые находятся в корзине
-	GetByCartId(cartId uuid.UUID) ([]*entity.Advert, error)
+	GetByCartId(cartId uuid.UUID, userId uuid.UUID) ([]*entity.Advert, error)
 
 	// GetByCategoryId возвращает массив объявлений по categoryId
-	GetByCategoryId(categoryId uuid.UUID) ([]*entity.Advert, error)
+	GetByCategoryId(categoryId, userId uuid.UUID) ([]*entity.Advert, error)
 
 	// GetById возвращает объявление по его идентификатору
 	// Если объявление не найдено, возвращает ErrAdvertNotFound
-	GetById(advertId uuid.UUID) (*entity.Advert, error)
+	GetById(advertId, userId uuid.UUID) (*entity.Advert, error)
+
+	// GetSavedByUserId возвращает массив объявлений, которые находятся в сохраненных
+	GetSavedByUserId(userId uuid.UUID) ([]*entity.Advert, error)
 
 	// Add добавляет объявление
 	// Возможные ошибки:
 	// ErrAdvertBadRequest - некорректные данные для создания объявления
 	// ErrAdvertAlreadyExists - объявление уже существует
 	Add(advert *entity.Advert) (*entity.Advert, error)
+
+	// AddToSaved добавляет объявление в сохраненные
+	AddToSaved(userId, advertId uuid.UUID) error
+
+	// DeleteFromSaved удаляет объявление из сохраненных
+	DeleteFromSaved(userId, advertId uuid.UUID) error
 
 	// Update обновляет объявление
 	// Возможные ошибки:
@@ -50,8 +63,20 @@ type AdvertRepository interface {
 	// UploadImage загружает изображение в объявление
 	UploadImage(advertId uuid.UUID, imageId uuid.UUID) error
 
+	// AddViewed добавляет просмотренное объявление
+	AddViewed(userId, advertId uuid.UUID) error
+
 	// BeginTransaction начинает транзакцию
 	BeginTransaction() (pgx.Tx, error)
+
+	// CheckIfExists проверяет, существует ли объявление
+	CheckIfExists(advertId uuid.UUID) (bool, error)
+
+	// Search ищет объявления по запросу
+	Search(query string, limit, offset int, userId uuid.UUID) ([]*entity.Advert, error)
+
+	// Count возвращает количество объявлений
+	Count() (int, error)
 }
 
 var (

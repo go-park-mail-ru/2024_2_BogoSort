@@ -33,7 +33,7 @@ func (s *PurchaseService) purchaseEntityToDTO(purchase *entity.Purchase) (*dto.P
 	}, nil
 }
 
-func (s *PurchaseService) Add(purchaseRequest dto.PurchaseRequest) (*dto.PurchaseResponse, error) {
+func (s *PurchaseService) Add(purchaseRequest dto.PurchaseRequest, userId uuid.UUID) (*dto.PurchaseResponse, error) {
 	ctx := context.Background()
 	tx, err := s.purchaseRepo.BeginTransaction()
 	if err != nil {
@@ -64,7 +64,7 @@ func (s *PurchaseService) Add(purchaseRequest dto.PurchaseRequest) (*dto.Purchas
 		return nil, entity.UsecaseWrap(errors.New("failed to update cart status"), err)
 	}
 
-	adverts, err := s.advertRepo.GetByCartId(purchase.CartID)
+	adverts, err := s.advertRepo.GetByCartId(purchase.CartID, userId)
 	if err != nil {
 		return nil, entity.UsecaseWrap(errors.New("failed to get adverts"), err)
 	}

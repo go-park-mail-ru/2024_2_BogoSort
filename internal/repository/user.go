@@ -21,6 +21,8 @@ type User interface {
 	Update(user *entity.User) error
 	// Delete удаляет пользователя
 	Delete(userID uuid.UUID) error
+	// CheckIfExists проверяет, существует ли пользователь
+	CheckIfExists(userId uuid.UUID) (bool, error)
 	// UploadImage обновляет аватар пользователя
 	UploadImage(userID uuid.UUID, imageId uuid.UUID) error
 }

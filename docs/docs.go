@@ -45,7 +45,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dto.AdvertResponse"
+                                "$ref": "#/definitions/dto.PreviewAdvertCard"
                             }
                         }
                     },
@@ -90,7 +90,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Advert created",
                         "schema": {
-                            "$ref": "#/definitions/dto.AdvertResponse"
+                            "$ref": "#/definitions/dto.Advert"
                         }
                     },
                     "400": {
@@ -133,7 +133,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dto.AdvertResponse"
+                                "$ref": "#/definitions/dto.PreviewAdvertCard"
                             }
                         }
                     },
@@ -183,7 +183,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dto.AdvertResponse"
+                                "$ref": "#/definitions/dto.PreviewAdvertCard"
                             }
                         }
                     },
@@ -195,6 +195,224 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Failed to retrieve adverts by category ID",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/adverts/my": {
+            "get": {
+                "description": "Fetch a list of adverts associated with a specific user ID.",
+                "tags": [
+                    "adverts"
+                ],
+                "summary": "Retrieve adverts by user ID",
+                "responses": {
+                    "200": {
+                        "description": "List of adverts by user ID",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.MyPreviewAdvertCard"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid user ID",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to retrieve adverts by user ID",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/adverts/saved": {
+            "get": {
+                "description": "Fetch a list of adverts saved by the specified user ID.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "adverts"
+                ],
+                "summary": "Retrieve adverts by user ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "userId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of adverts saved by user",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.PreviewAdvertCard"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid user ID",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to retrieve adverts by user ID",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/adverts/saved/{advertId}": {
+            "post": {
+                "description": "Add an advert to saved by its ID.",
+                "tags": [
+                    "adverts"
+                ],
+                "summary": "Add an advert to saved",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Advert ID",
+                        "name": "advertId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Advert added to saved"
+                    },
+                    "400": {
+                        "description": "Invalid advert ID",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Advert not found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to add advert to saved",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Remove an advert from saved by its ID.",
+                "tags": [
+                    "adverts"
+                ],
+                "summary": "Remove an advert from saved",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Advert ID",
+                        "name": "advertId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Advert removed from saved"
+                    },
+                    "400": {
+                        "description": "Invalid advert ID",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Advert not found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to remove advert from saved",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/adverts/search": {
+            "get": {
+                "description": "Выполняет поиск объявлений по строке запроса с разбивкой на батчи.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "adverts"
+                ],
+                "summary": "Поиск объявлений",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Строка поиска",
+                        "name": "query",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Лимит результатов (по умолчанию 100)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Смещение для пагинации (по умолчанию 0)",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Список найденных объявлений",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.PreviewAdvertCard"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Неверные параметры запроса",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
                         "schema": {
                             "$ref": "#/definitions/utils.ErrResponse"
                         }
@@ -227,7 +445,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dto.AdvertResponse"
+                                "$ref": "#/definitions/dto.PreviewAdvertCard"
                             }
                         }
                     },
@@ -275,7 +493,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Advert details",
                         "schema": {
-                            "$ref": "#/definitions/dto.AdvertResponse"
+                            "$ref": "#/definitions/dto.AdvertCard"
                         }
                     },
                     "400": {
@@ -330,7 +548,10 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Advert updated successfully"
+                        "description": "Advert updated successfully",
+                        "schema": {
+                            "type": "string"
+                        }
                     },
                     "400": {
                         "description": "Invalid advert data",
@@ -556,7 +777,7 @@ const docTemplate = `{
         },
         "/api/v1/cart/delete": {
             "delete": {
-                "description": "Удаляет объявление из корзины, связанной с пользователем",
+                "description": "Deletes an advert from the cart associated with a user",
                 "consumes": [
                     "application/json"
                 ],
@@ -566,10 +787,10 @@ const docTemplate = `{
                 "tags": [
                     "Cart"
                 ],
-                "summary": "Удалить объявление из корзины",
+                "summary": "Delete advert from user's cart",
                 "parameters": [
                     {
-                        "description": "Данные для удаления объявления из корзины",
+                        "description": "Data to delete advert from cart",
                         "name": "purchase",
                         "in": "body",
                         "required": true,
@@ -611,7 +832,7 @@ const docTemplate = `{
         },
         "/api/v1/cart/exists/{user_id}": {
             "get": {
-                "description": "Проверяет, существует ли корзина для пользователя по его ID",
+                "description": "Checks if a cart exists for a user by their ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -621,7 +842,7 @@ const docTemplate = `{
                 "tags": [
                     "Cart"
                 ],
-                "summary": "Проверить существование корзины для пользователя",
+                "summary": "Check if cart exists for user",
                 "parameters": [
                     {
                         "type": "string",
@@ -760,6 +981,53 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Failed to create CSRF token",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/files/stream/{fileId}": {
+            "get": {
+                "description": "Get a static file as a byte stream by its ID",
+                "produces": [
+                    "application/octet-stream"
+                ],
+                "tags": [
+                    "static"
+                ],
+                "summary": "Get static file stream by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "File ID",
+                        "name": "fileId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Static file content",
+                        "schema": {
+                            "type": "binary"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid file ID",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Static file not found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to get static file",
                         "schema": {
                             "$ref": "#/definitions/utils.ErrResponse"
                         }
@@ -1455,6 +1723,67 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.Advert": {
+            "type": "object",
+            "properties": {
+                "category_id": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "has_delivery": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "image_id": {
+                    "type": "string"
+                },
+                "location": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "integer"
+                },
+                "saves_number": {
+                    "type": "integer"
+                },
+                "seller_id": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/dto.AdvertStatus"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "views_number": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.AdvertCard": {
+            "type": "object",
+            "properties": {
+                "advert": {
+                    "$ref": "#/definitions/dto.Advert"
+                },
+                "is_saved": {
+                    "type": "boolean"
+                },
+                "is_viewed": {
+                    "type": "boolean"
+                }
+            }
+        },
         "dto.AdvertRequest": {
             "type": "object",
             "properties": {
@@ -1481,47 +1810,6 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.AdvertResponse": {
-            "type": "object",
-            "properties": {
-                "category_id": {
-                    "type": "string"
-                },
-                "created_at": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "has_delivery": {
-                    "type": "boolean"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "image_url": {
-                    "type": "string"
-                },
-                "location": {
-                    "type": "string"
-                },
-                "price": {
-                    "type": "integer"
-                },
-                "seller_id": {
-                    "type": "string"
-                },
-                "status": {
-                    "$ref": "#/definitions/dto.AdvertStatus"
-                },
-                "title": {
-                    "type": "string"
-                },
-                "updated_at": {
-                    "type": "string"
-                }
-            }
-        },
         "dto.AdvertStatus": {
             "type": "string",
             "enum": [
@@ -1541,7 +1829,7 @@ const docTemplate = `{
                 "adverts": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/dto.AdvertResponse"
+                        "$ref": "#/definitions/dto.PreviewAdvertCard"
                     }
                 },
                 "id": {
@@ -1596,6 +1884,20 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.MyPreviewAdvertCard": {
+            "type": "object",
+            "properties": {
+                "preview": {
+                    "$ref": "#/definitions/dto.PreviewAdvert"
+                },
+                "saves_number": {
+                    "type": "integer"
+                },
+                "views_number": {
+                    "type": "integer"
+                }
+            }
+        },
         "dto.PaymentMethod": {
             "type": "string",
             "enum": [
@@ -1606,6 +1908,52 @@ const docTemplate = `{
                 "PaymentMethodCard",
                 "PaymentMethodCash"
             ]
+        },
+        "dto.PreviewAdvert": {
+            "type": "object",
+            "properties": {
+                "category_id": {
+                    "type": "string"
+                },
+                "has_delivery": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "image_id": {
+                    "type": "string"
+                },
+                "location": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "integer"
+                },
+                "seller_id": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/dto.AdvertStatus"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.PreviewAdvertCard": {
+            "type": "object",
+            "properties": {
+                "is_saved": {
+                    "type": "boolean"
+                },
+                "is_viewed": {
+                    "type": "boolean"
+                },
+                "preview": {
+                    "$ref": "#/definitions/dto.PreviewAdvert"
+                }
+            }
         },
         "dto.PurchaseRequest": {
             "type": "object",

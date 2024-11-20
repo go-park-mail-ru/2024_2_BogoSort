@@ -74,6 +74,7 @@ func NewUserRepository(db *pgxpool.Pool, ctx context.Context, logger *zap.Logger
 	if err := db.Ping(ctx); err != nil {
 		return nil, err
 	}
+	
 	return &UserDB{
 		DB:      db,
 		ctx:     ctx,
@@ -264,4 +265,16 @@ func (us *UserDB) UploadImage(userID uuid.UUID, imageId uuid.UUID) error {
 	}
 
 	return nil
+}
+
+func (us *UserDB) CheckIfExists(userId uuid.UUID) (bool, error) {
+	ctx, cancel := context.WithTimeout(us.ctx, us.timeout)
+	defer cancel()
+
+	var exists bool
+	err := us.DB.QueryRow(ctx, checkIfExistsQuery, userId).Scan(&exists)
+	if err != nil {
+		return false, err
+	}
+	return exists, nil
 }

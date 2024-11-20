@@ -59,7 +59,7 @@ func (a *AuthEndpoint) Logout(w http.ResponseWriter, r *http.Request) {
 		a.handleError(w, err, "Logout", nil)
 		return
 	}
-	err = a.authUC.Logout(cookie.Value)
+	err = a.sessionManager.DeleteSession(cookie.Value)
 	if err != nil {
 		a.handleError(w, err, "Logout", map[string]string{"userID": userID.String()})
 		return

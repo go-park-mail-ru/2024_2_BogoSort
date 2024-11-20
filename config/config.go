@@ -5,13 +5,14 @@ import (
 	"os"
 	"strconv"
 	"time"
+
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
 
 type ServerConfig struct {
+	IP              string        `yaml:"ip" default:"0.0.0.0"`
 	Port            int           `yaml:"port" default:"8080"`
-	Host            string        `yaml:"host" default:"localhost"`
 	ReadTimeout     time.Duration `yaml:"read_timeout" default:"10s"`
 	WriteTimeout    time.Duration `yaml:"write_timeout" default:"10s"`
 	ShutdownTimeout time.Duration `yaml:"shutdown_timeout" default:"10s"`
@@ -23,24 +24,34 @@ type SessionConfig struct {
 }
 
 type Config struct {
-	Server  ServerConfig  `yaml:"server"`
-	Session SessionConfig `yaml:"session"`
-	PGIP    string        `yaml:"pg_ip"`
-	PGPort  int           `yaml:"pg_port"`
-	PGUser  string        `yaml:"pg_user"`
-	PGPass  string        `yaml:"pg_password"`
-	PGTimeout time.Duration `yaml:"pg_timeout" default:"5s"`
-	PGDB    string        `yaml:"pg_db"`
-	RdAddr  string        `yaml:"rd_addr"`
-	RdPass  string        `yaml:"rd_password"`
-	RdDB    int           `yaml:"rd_db"`
-	Static StaticConfig   `yaml:"static"`
-	CSRFSecret string      `yaml:"csrf_secret"`
+	Server           ServerConfig  `yaml:"server"`
+	Session          SessionConfig `yaml:"session"`
+	PGIP             string        `yaml:"pg_ip"`
+	PGPort           int           `yaml:"pg_port"`
+	PGUser           string        `yaml:"pg_user"`
+	PGPass           string        `yaml:"pg_password"`
+	PGTimeout        time.Duration `yaml:"pg_timeout" default:"5s"`
+	PGDB             string        `yaml:"pg_db"`
+	RdAddr           string        `yaml:"rd_addr"`
+	RdPass           string        `yaml:"rd_password"`
+	RdDB             int           `yaml:"rd_db"`
+	Static           StaticConfig  `yaml:"static"`
+	CSRFSecret       string        `yaml:"csrf_secret"`
+	AuthPort         int           `yaml:"auth_port"`
+	AuthHost         string        `yaml:"auth_host"`
+	CartPurchaseHost string        `yaml:"cart_purchase_host"`
+	CartPurchasePort int           `yaml:"cart_purchase_port"`
+	StaticHost       string        `yaml:"static_host"`
+	StaticPort       int           `yaml:"static_port"`
+	SearchBatchSize  int           `yaml:"search_batch_size"`
 }
 
 type StaticConfig struct {
-	Path string `yaml:"path"`
-	MaxSize int `yaml:"max_size"`
+	IP      string        `yaml:"ip"            default:"0.0.0.0"`
+	Port    int           `yaml:"port"          default:"8081"`
+	Path    string        `yaml:"path"`
+	MaxSize int           `yaml:"max_size"`
+	Timeout time.Duration `yaml:"timeout"`
 }
 
 var cfg Config
@@ -80,11 +91,38 @@ func Init() (Config, error) {
 		cfg.Server.Port, _ = strconv.Atoi(port)
 	}
 
+	if port := os.Getenv("AUTH_PORT"); port != "" {
+		cfg.AuthPort, _ = strconv.Atoi(port)
+	}
+	if host := os.Getenv("AUTH_HOST"); host != "" {
+		cfg.AuthHost = host
+	}
+
+	if batchSize := os.Getenv("SEARCH_BATCH_SIZE"); batchSize != "" {
+		cfg.SearchBatchSize, _ = strconv.Atoi(batchSize)
+	}
+
 	return cfg, nil
+}
+
+func GetSearchBatchSize() int {
+	return cfg.SearchBatchSize
 }
 
 func GetServerAddress() string {
 	return fmt.Sprintf(":%d", cfg.Server.Port)
+}
+
+func GetAuthAddress() string {
+	return fmt.Sprintf("%s:%d", cfg.AuthHost, cfg.AuthPort)
+}
+
+func GetCartPurchaseAddress() string {
+	return fmt.Sprintf("%s:%d", cfg.CartPurchaseHost, cfg.CartPurchasePort)
+}
+
+func GetStaticAddress() string {
+	return fmt.Sprintf("%s:%d", cfg.StaticHost, cfg.StaticPort)
 }
 
 func (cfg *Config) GetConnectURL() string {
@@ -103,6 +141,10 @@ func GetWriteTimeout() time.Duration {
 
 func GetShutdownTimeout() time.Duration {
 	return cfg.Server.ShutdownTimeout
+}
+
+func (cfg *Config) GetServerAddr() string {
+	return fmt.Sprintf("%s:%d", cfg.Server.IP, cfg.Server.Port)
 }
 
 func GetStaticConfig() StaticConfig {

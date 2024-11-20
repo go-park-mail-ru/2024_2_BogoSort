@@ -21,7 +21,7 @@ package service
 // 	logger := zap.NewNop()
 
 // 	service := &AdvertService{
-// 		advertRepo: mockAdvertRepo,
+// 		advertRepo: mockRepo,
 // 		staticRepo: mockStaticRepo,
 // 		sellerRepo: mockSellerRepo,
 // 		logger:     logger,

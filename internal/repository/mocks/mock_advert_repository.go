@@ -155,6 +155,21 @@ func (mr *MockAdvertRepositoryMockRecorder) GetBySellerId(sellerId interface{}) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBySellerId", reflect.TypeOf((*MockAdvertRepository)(nil).GetBySellerId), sellerId)
 }
 
+// GetSavedByUserId mocks base method.
+func (m *MockAdvertRepository) GetSavedByUserId(userId uuid.UUID) ([]*entity.Advert, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSavedByUserId", userId)
+	ret0, _ := ret[0].([]*entity.Advert)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSavedByUserId indicates an expected call of GetSavedByUserId.
+func (mr *MockAdvertRepositoryMockRecorder) GetSavedByUserId(userId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSavedByUserId", reflect.TypeOf((*MockAdvertRepository)(nil).GetSavedByUserId), userId)
+}
+
 // Update mocks base method.
 func (m *MockAdvertRepository) Update(advert *entity.Advert) error {
 	m.ctrl.T.Helper()
