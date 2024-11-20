@@ -115,6 +115,8 @@ func (s *StaticService) UploadStatic(reader io.ReadSeeker) (uuid.UUID, error) {
 
 func (s *StaticService) GetStaticFile(staticURI string) (io.ReadSeeker, error) {
 	absolutePath, err := filepath.Abs(staticURI)
+	zap.L().Info("Getting static file", zap.String("uri", staticURI))
+	zap.L().Info("Absolute path", zap.String("path", absolutePath))
 	if err != nil {
 		return nil, entity.UsecaseWrap(err, errors.New("error determining absolute path"))
 	}

@@ -104,6 +104,8 @@ func (gate *StaticGrpcClient) UploadStatic(reader io.ReadSeeker) (uuid.UUID, err
 }
 
 func (gate *StaticGrpcClient) GetStaticFile(staticURI string) (io.ReadSeeker, error) {
+	zap.L().Info("Getting static file", zap.String("uri", staticURI))
+
 	stream, err := gate.staticManager.GetStaticFile(context.Background(), &static.Static{Uri: staticURI})
 	if err != nil {
 		if strings.Contains(err.Error(), repository.ErrStaticNotFound.Error()) {

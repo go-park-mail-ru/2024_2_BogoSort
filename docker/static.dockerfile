@@ -14,6 +14,7 @@ COPY go.mod go.mod
 COPY config config
 COPY static_files static_files
 COPY pkg pkg
+COPY db/migrations db/migrations
 RUN go mod tidy
 RUN go build -o static cmd/static/main.go
 
@@ -24,5 +25,6 @@ FROM alpine:latest
 WORKDIR /app
 COPY --from=build /src/static /app
 COPY config/config.yaml /app/config/config.yaml
+COPY ./static_files /src/static_files/
 
 CMD ["./static"]

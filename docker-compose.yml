@@ -1,110 +1,10 @@
 services:
-  auth:
-    build:
-      context: .
-      dockerfile: ./docker/auth.dockerfile
-    ports:
-      - "50051:50051"
-    environment:
-      - ENV=production
-      - LOG_LEVEL=info
-      - CONFIG_PATH=/config/config.yaml
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    networks:
-      - app-network
-    volumes:
-      - ./config/config.yaml:/config/config.yaml
-      - ./static_files:/src/static_files
-    healthcheck:
-      test: ["CMD", "grpc_health_probe", "-addr=:50051"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  static:
-    build:
-      context: .
-      dockerfile: ./docker/static.dockerfile
-    ports:
-      - "50053:50053"
-    environment:
-      - ENV=production
-      - LOG_LEVEL=info
-      - CONFIG_PATH=/config/config.yaml
-    networks:
-      - app-network
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    volumes:
-      - ./config/config.yaml:/config/config.yaml
-      - ./static_files:/src/static_files
-    healthcheck:
-      test: ["CMD", "grpc_health_probe", "-addr=:50053"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  cart_purchase:
-    build:
-      context: .
-      dockerfile: ./docker/cart_purchase.dockerfile
-    ports:
-      - "50052:50052"
-    environment:
-      - ENV=production
-      - LOG_LEVEL=info
-      - CONFIG_PATH=/config/config.yaml
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    networks:
-      - app-network
-    volumes:
-      - ./config/config.yaml:/config/config.yaml
-      - ./static_files:/src/static_files
-    healthcheck:
-      test: ["CMD", "grpc_health_probe", "-addr=:50052"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  app:
-    build:
-      context: .
-      dockerfile: ./docker/core.dockerfile
-    ports:
-      - "8080:8080"
-    environment:
-      - ENV=production
-      - CONFIG_PATH=/config/config.yaml
-    depends_on:
-      auth:
-        condition: service_healthy
-      static:
-        condition: service_healthy
-      cart_purchase:
-        condition: service_healthy
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    networks:
-      - app-network
-    volumes:
-      - ./config/config.yaml:/config/config.yaml
-      - ./static_files:/src/static_files
-
+  # ----------------------------------------------
+  # БД: Postgres, Redis
+  # ----------------------------------------------
   postgres:
     image: postgres:13
+    restart: always
     ports:
       - "5432:5432"
     environment:
@@ -113,8 +13,6 @@ services:
       - POSTGRES_DB=emporiumdb
     volumes:
       - pgdata:/var/lib/postgresql/data
-    networks:
-      - app-network
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "postgres"]
       interval: 10s
@@ -123,15 +21,125 @@ services:
 
   redis:
     image: redis:6
+    restart: always
     ports:
-      - "6380:6380"
-    networks:
-      - app-network
+      - "6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
+
+  migrate:
+    image: migrate/migrate
+    depends_on:
+      postgres:
+        condition: service_healthy
+    entrypoint: [
+      "migrate",
+      "-path=/db/migrations",
+      "-database=postgres://postgres:postgres@postgres:5432/emporiumdb?sslmode=disable",
+      "up"
+    ]
+    volumes:
+      - ./db/migrations:/db/migrations
+
+  # ----------------------------------------------
+  # Сервисы
+  # ----------------------------------------------
+  auth:
+    restart: always
+    build:
+      context: .
+      dockerfile: ./docker/auth.dockerfile
+    ports:
+      - "50051:50051"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    volumes:
+      - ./config/config.yaml:/config/config.yaml
+      - ./static_files:/app/static_files/
+    healthcheck:
+      test: ["CMD", "grpc_health_probe", "-addr=:50051"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  static:
+    restart: always
+    build:
+      context: .
+      dockerfile: ./docker/static.dockerfile
+    ports:
+      - "50053:50053"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    volumes:
+      - ./config/config.yaml:/config/config.yaml
+      - ./static_files:/app/static_files/
+    healthcheck:
+      test: ["CMD", "grpc_health_probe", "-addr=:50053"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  cart_purchase:
+    restart: always
+    build:
+      context: .
+      dockerfile: ./docker/cart_purchase.dockerfile
+    ports:
+      - "50052:50052"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    volumes:
+      - ./config/config.yaml:/config/config.yaml
+      - ./static_files:/app/static_files/
+    healthcheck:
+      test: ["CMD", "grpc_health_probe", "-addr=:50052"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  app:
+    restart: always
+    build:
+      context: .
+      dockerfile: ./docker/core.dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/emporiumdb
+    depends_on:
+      - postgres
+      - redis
+      - migrate
+      - auth
+      - static
+      - cart_purchase
+    volumes:
+      - ./config/config.yaml:/config/config.yaml
+      - ./static_files:/app/static_files/
+    healthcheck:
+      test: ["CMD", "grpc_health_probe", "-addr=:8080"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 networks:
   app-network:

@@ -25,5 +25,6 @@ FROM alpine:latest
 WORKDIR /app
 COPY --from=build /src/auth /app
 COPY config/config.yaml /app/config/config.yaml
+COPY ./static_files /src/static_files/
 
 CMD ["./auth"]

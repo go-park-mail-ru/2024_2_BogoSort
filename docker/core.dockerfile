@@ -25,5 +25,5 @@ FROM alpine:latest
 WORKDIR /app
 COPY --from=build /src/core /app
 COPY config/config.yaml /app/config/config.yaml
-
+COPY static_files /app/static_files
 CMD ["./core"]

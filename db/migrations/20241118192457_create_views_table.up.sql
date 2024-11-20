@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS viewed_advert (
 );
 
 -- Создание триггерной функции для установки image_id по умолчанию
-CREATE OR REPLACE FUNCTION set_default_image_id()
+CREATE OR REPLACE FUNCTION set_advert_default_image_id()
 RETURNS TRIGGER AS $$
 BEGIN
     IF NEW.image_id IS NULL THEN
@@ -23,8 +23,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Создание триггера для таблицы "user"
-CREATE TRIGGER trg_set_default_image_id
+-- Создание триггера для таблицы advert
+CREATE TRIGGER trg_set_advert_default_image_id
 BEFORE INSERT ON advert
 FOR EACH ROW
-EXECUTE FUNCTION set_default_image_id();
+EXECUTE FUNCTION set_advert_default_image_id();
