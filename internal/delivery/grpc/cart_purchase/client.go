@@ -154,7 +154,7 @@ func (c *CartPurchaseClient) GetCartByID(ctx context.Context, cartID uuid.UUID) 
 				Location:    advert.Preview.Location,
 				HasDelivery: advert.Preview.HasDelivery,
 			},
-			IsSaved: advert.IsSaved,
+			IsSaved:  advert.IsSaved,
 			IsViewed: advert.IsViewed,
 		}
 		cart.Adverts = append(cart.Adverts, ad)
@@ -191,7 +191,7 @@ func (c *CartPurchaseClient) GetCartByUserID(ctx context.Context, userID uuid.UU
 				Location:    advert.Preview.Location,
 				HasDelivery: advert.Preview.HasDelivery,
 			},
-			IsSaved: advert.IsSaved,
+			IsSaved:  advert.IsSaved,
 			IsViewed: advert.IsViewed,
 		}
 		cart.Adverts = append(cart.Adverts, ad)
@@ -228,17 +228,17 @@ func (c *CartPurchaseClient) DeleteAdvertFromCart(ctx context.Context, cartID uu
 	return resp.Message, nil
 }
 
-func (c *CartPurchaseClient) CheckCartExists(ctx context.Context, userID uuid.UUID) (bool, error) {
+func (c *CartPurchaseClient) CheckCartExists(ctx context.Context, userID uuid.UUID) (uuid.UUID, error) {
 	protoReq := &cartPurchaseProto.CheckCartExistsRequest{
 		UserId: userID.String(),
 	}
 
 	resp, err := c.client.CheckCartExists(ctx, protoReq)
 	if err != nil {
-		return false, errors.Wrap(ErrCartNotFound, "cart not found")
+		return uuid.Nil, errors.Wrap(ErrCartNotFound, "cart not found")
 	}
 
-	return resp.Exists, nil
+	return uuid.MustParse(resp.CartId), nil
 }
 
 func (c *CartPurchaseClient) Ping(ctx context.Context) error {

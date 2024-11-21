@@ -8,13 +8,13 @@ import (
 	"time"
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/cart_purchase"
+
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/utils"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 )
-
 
 type CartEndpoint struct {
 	cartClient *cart_purchase.CartPurchaseClient
@@ -116,10 +116,11 @@ func (h *CartEndpoint) GetByUserID(w http.ResponseWriter, r *http.Request) {
 	}
 	if err != nil {
 		h.logger.Error("failed to get cart", zap.Error(err))
-		utils.SendErrorResponse(w, http.StatusInternalServerError, "failed to get cart")
+		utils.SendErrorResponse(w, http.StatusInternalServerError, "failed to get adverts from cart")
 		return
 	}
 
+	h.logger.Info("cart", zap.Any("cart", cart))
 	utils.SendJSONResponse(w, http.StatusOK, cart)
 }
 
@@ -215,9 +216,11 @@ func (h *CartEndpoint) CheckExists(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	exists, err := h.cartClient.CheckCartExists(ctx, userID)
 	if err != nil {
+		h.logger.Error("failed to check cart existence", zap.Error(err))
 		utils.SendErrorResponse(w, http.StatusInternalServerError, "failed to check cart existence")
 		return
 	}
 
-	utils.SendJSONResponse(w, http.StatusOK, map[string]bool{"exists": exists})
+	h.logger.Info("cart exists", zap.String("cart_id", exists.String()))
+	utils.SendJSONResponse(w, http.StatusOK, map[string]string{"cart_id": exists.String()})
 }

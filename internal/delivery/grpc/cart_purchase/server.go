@@ -2,11 +2,13 @@ package cart_purchase
 
 import (
 	"context"
+	"errors"
 
 	"github.com/google/uuid"
 
 	proto "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/cart_purchase/proto"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -26,11 +28,13 @@ func NewGrpcServer(cartUC usecase.Cart, purchaseUC usecase.Purchase) *GrpcServer
 }
 
 func (s *GrpcServer) AddPurchase(ctx context.Context, req *proto.AddPurchaseRequest) (*proto.AddPurchaseResponse, error) {
+	paymentMethod := ConvertPaymentMethodToDB(req.PaymentMethod)
+	deliveryMethod := ConvertDeliveryMethodToDB(req.DeliveryMethod)
 	purchaseReq := dto.PurchaseRequest{
 		CartID:         uuid.MustParse(req.CartId),
 		Address:        req.Address,
-		PaymentMethod:  dto.PaymentMethod(req.PaymentMethod.String()),
-		DeliveryMethod: dto.DeliveryMethod(req.DeliveryMethod.String()),
+		PaymentMethod:  dto.PaymentMethod(paymentMethod),
+		DeliveryMethod: dto.DeliveryMethod(deliveryMethod),
 	}
 
 	userID := uuid.MustParse(req.UserId)
@@ -39,13 +43,26 @@ func (s *GrpcServer) AddPurchase(ctx context.Context, req *proto.AddPurchaseRequ
 		return nil, status.Errorf(codes.Internal, "failed to add purchase: %v", err)
 	}
 
+	purchaseStatus, err := ConvertDBPurchaseStatusToEnum(string(purchaseResp.Status))
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to convert purchase status: %v", err)
+	}
+	purchasePaymentMethod, err := ConvertDBPaymentMethodToEnum(string(purchaseResp.PaymentMethod))
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to convert purchase payment method: %v", err)
+	}
+	purchaseDeliveryMethod, err := ConvertDBDeliveryMethodToEnum(string(purchaseResp.DeliveryMethod))
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to convert purchase delivery method: %v", err)
+	}
+
 	return &proto.AddPurchaseResponse{
 		Id:             purchaseResp.ID.String(),
 		CartId:         purchaseResp.CartID.String(),
 		Address:        purchaseResp.Address,
-		Status:         proto.PurchaseStatus(proto.PurchaseStatus_value[string(purchaseResp.Status)]),
-		PaymentMethod:  proto.PaymentMethod(proto.PaymentMethod_value[string(purchaseResp.PaymentMethod)]),
-		DeliveryMethod: proto.DeliveryMethod(proto.DeliveryMethod_value[string(purchaseResp.DeliveryMethod)]),
+		Status:         purchaseStatus,
+		PaymentMethod:  purchasePaymentMethod,
+		DeliveryMethod: purchaseDeliveryMethod,
 	}, nil
 }
 
@@ -58,13 +75,25 @@ func (s *GrpcServer) GetPurchasesByUserID(ctx context.Context, req *proto.GetPur
 
 	var protoPurchases []*proto.PurchaseResponse
 	for _, p := range purchases {
+		purchaseStatus, err := ConvertDBPurchaseStatusToEnum(string(p.Status))
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to convert purchase status: %v", err)
+		}
+		purchasePaymentMethod, err := ConvertDBPaymentMethodToEnum(string(p.PaymentMethod))
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to convert purchase payment method: %v", err)
+		}
+		purchaseDeliveryMethod, err := ConvertDBDeliveryMethodToEnum(string(p.DeliveryMethod))
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to convert purchase delivery method: %v", err)
+		}
 		protoPurchases = append(protoPurchases, &proto.PurchaseResponse{
 			Id:             p.ID.String(),
 			CartId:         p.CartID.String(),
 			Address:        p.Address,
-			Status:         proto.PurchaseStatus(proto.PurchaseStatus_value[string(p.Status)]),
-			PaymentMethod:  proto.PaymentMethod(proto.PaymentMethod_value[string(p.PaymentMethod)]),
-			DeliveryMethod: proto.DeliveryMethod(proto.DeliveryMethod_value[string(p.DeliveryMethod)]),
+			Status:         purchaseStatus,
+			PaymentMethod:  purchasePaymentMethod,
+			DeliveryMethod: purchaseDeliveryMethod,
 		})
 	}
 
@@ -96,13 +125,13 @@ func (s *GrpcServer) DeleteAdvertFromCart(ctx context.Context, req *proto.Delete
 }
 
 func (s *GrpcServer) CheckCartExists(ctx context.Context, req *proto.CheckCartExistsRequest) (*proto.CheckCartExistsResponse, error) {
-	exists, err := s.cartUC.CheckExists(uuid.MustParse(req.UserId))
+	cart, err := s.cartUC.CheckExists(uuid.MustParse(req.UserId))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to check cart existence: %v", err)
 	}
 
 	return &proto.CheckCartExistsResponse{
-		Exists: exists,
+		CartId: cart.String(),
 	}, nil
 }
 
@@ -130,7 +159,7 @@ func (s *GrpcServer) GetCartByID(ctx context.Context, req *proto.GetCartByIDRequ
 				Location:    advert.Preview.Location,
 				HasDelivery: advert.Preview.HasDelivery,
 			},
-			IsSaved: advert.IsSaved,
+			IsSaved:  advert.IsSaved,
 			IsViewed: advert.IsViewed,
 		})
 	}
@@ -143,6 +172,9 @@ func (s *GrpcServer) GetCartByID(ctx context.Context, req *proto.GetCartByIDRequ
 func (s *GrpcServer) GetByUserID(ctx context.Context, req *proto.GetCartByUserIDRequest) (*proto.GetCartByUserIDResponse, error) {
 	cart, err := s.cartUC.GetByUserId(uuid.MustParse(req.UserId))
 	if err != nil {
+		if errors.Is(err, repository.ErrCartNotFound) {
+			return nil, status.Errorf(codes.NotFound, "cart not found")
+		}
 		return nil, status.Errorf(codes.Internal, "failed to get cart: %v", err)
 	}
 
@@ -164,7 +196,7 @@ func (s *GrpcServer) GetByUserID(ctx context.Context, req *proto.GetCartByUserID
 				Location:    advert.Preview.Location,
 				HasDelivery: advert.Preview.HasDelivery,
 			},
-			IsSaved: advert.IsSaved,
+			IsSaved:  advert.IsSaved,
 			IsViewed: advert.IsViewed,
 		})
 	}
