@@ -276,5 +276,6 @@ func (us *UserDB) CheckIfExists(userId uuid.UUID) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	return exists, nil
+
+	return true, nil
 }

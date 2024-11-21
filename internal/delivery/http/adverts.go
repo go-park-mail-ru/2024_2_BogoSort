@@ -465,6 +465,12 @@ func (h *AdvertEndpoint) GetByCategoryId(writer http.ResponseWriter, r *http.Req
 // @Failure 500 {object} utils.ErrResponse "Failed to upload image"
 // @Router /api/v1/adverts/{advertId}/image [put]
 func (h *AdvertEndpoint) UploadImage(writer http.ResponseWriter, r *http.Request) {
+	userID, err := h.sessionManager.GetUserID(r)
+	if err != nil {
+		h.sendError(writer, http.StatusUnauthorized, ErrInvalidCredentials, "user not found", nil)
+		return
+	}
+
 	advertIdStr := mux.Vars(r)["advertId"]
 	advertId, err := uuid.Parse(advertIdStr)
 	if err != nil {
@@ -503,12 +509,6 @@ func (h *AdvertEndpoint) UploadImage(writer http.ResponseWriter, r *http.Request
 		} else {
 			h.sendError(writer, http.StatusInternalServerError, ErrFailedToUploadFile, "failed to upload image", nil)
 		}
-		return
-	}
-
-	userID, err := h.sessionManager.GetUserID(r)
-	if err != nil {
-		h.sendError(writer, http.StatusUnauthorized, ErrInvalidCredentials, "user not found", nil)
 		return
 	}
 
