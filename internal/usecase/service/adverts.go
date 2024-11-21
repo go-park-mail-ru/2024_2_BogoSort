@@ -144,6 +144,7 @@ func (s *AdvertService) GetById(advertId, userId uuid.UUID) (*dto.AdvertCard, er
 			ID:          advert.ID,
 			SellerId:    advert.SellerId,
 			CategoryId:  advert.CategoryId,
+			Description: advert.Description,
 			Title:       advert.Title,
 			Price:       advert.Price,
 			ImageId:     advert.ImageId,
