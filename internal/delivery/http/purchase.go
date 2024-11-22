@@ -24,7 +24,7 @@ func NewPurchaseEndpoint(purchaseClient *cart_purchase.CartPurchaseClient, logge
 }
 
 func (h *PurchaseEndpoint) ConfigureRoutes(router *mux.Router) {
-	router.HandleFunc("/api/v1/purchase", h.Add).Methods("POST")
+	router.HandleFunc("/api/v1/purchase/{user_id}", h.Add).Methods("POST")
 	router.HandleFunc("/api/v1/purchase/{user_id}", h.GetByUserID).Methods("GET")
 }
 
@@ -38,13 +38,14 @@ func (h *PurchaseEndpoint) ConfigureRoutes(router *mux.Router) {
 // @Success 201 {object} dto.PurchaseResponse "Successful purchase"
 // @Failure 400 {object} utils.ErrResponse "Invalid request parameters"
 // @Failure 500 {object} utils.ErrResponse "Internal server error"
-// @Router /api/v1/purchase [post]
+// @Router /api/v1/purchase/{user_id} [post]
 func (h *PurchaseEndpoint) Add(w http.ResponseWriter, r *http.Request) {
 	var purchase dto.PurchaseRequest
 
-	_, ok := r.Context().Value("user_id").(string)
-	if !ok {
-		utils.SendErrorResponse(w, http.StatusBadRequest, "user id not found")
+	userIDStr := mux.Vars(r)["user_id"]
+	_, err := uuid.Parse(userIDStr)
+	if err != nil {
+		h.handleError(w, err, "invalid user ID")
 		return
 	}
 
