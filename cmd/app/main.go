@@ -88,6 +88,11 @@ func Init(cfg config.Config) (*mux.Router, error) {
 	router := mux.NewRouter()
 	router.Use(recoveryMiddleware)
 
+
+	// metric := metrics.NewHTTPMetrics()
+	// metricsMiddleware := middleware.CreateMetricsMiddleware(metric)
+	// router.Use(metricsMiddleware)
+
 	policy := bluemonday.UGCPolicy()
 
 	authRouter := router.PathPrefix("").Subrouter()
