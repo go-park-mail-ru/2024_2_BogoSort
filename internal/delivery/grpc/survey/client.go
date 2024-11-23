@@ -10,6 +10,7 @@ import (
 
 	pb "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/survey/proto"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
+	"go.uber.org/zap"
 )
 
 var (
@@ -69,25 +70,34 @@ func (c *SurveyClient) GetQuestions(ctx context.Context, request *dto.GetQuestio
 		Page: page,
 	}
 
+	zap.L().Info("protoReq", zap.Any("protoReq", protoReq))
+
 	resp, err := c.client.GetQuestions(ctx, protoReq)
 	if err != nil {
 		return nil, errors.Wrap(ErrSurveyNotFound, err.Error())
 	}
 
+	zap.L().Info("resp", zap.Any("resp", resp))
+
 	var questions []*entity.Question
 	for _, pq := range resp.Questions {
 		questionPageType := ConvertEnumToDBPageType(pq.Page)
 
+		zap.L().Info("pq", zap.Any("pq", pq))
+
 		questions = append(questions, &entity.Question{
 			ID:             uuid.MustParse(pq.Id),
 			Page:           entity.PageType(questionPageType),
+			Title:          pq.Title,
 			Description:    pq.Description,
 			TriggerValue:   int(pq.TriggerValue),
 			LowerDescription: pq.LowerDescription,
 			UpperDescription: pq.UpperDescription,
-			ParentID: uuid.MustParse(pq.ParentId),
+			ParentID: uuid.NullUUID{UUID: uuid.MustParse(pq.ParentId), Valid: true},
 		})
 	}
+
+	zap.L().Info("questions", zap.Any("questions", questions))
 
 	return questions, nil
 }

@@ -26,12 +26,13 @@ message GetQuestionsRequest {
 
 message Question {
   string id = 1;
-  string description = 2;
-  PageType page = 3;
-  int32 trigger_value = 4;
-  string lower_description = 5;
-  string upper_description = 6;
-  string parent_id = 7;
+  string title = 2;
+  string description = 3;
+  PageType page = 4;
+  int32 trigger_value = 5;
+  string lower_description = 6;
+  string upper_description = 7;
+  string parent_id = 8;
 }
 
 message GetQuestionsResponse {
