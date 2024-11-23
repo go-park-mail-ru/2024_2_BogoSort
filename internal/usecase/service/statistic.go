@@ -1,6 +1,8 @@
 package service
 
 import (
+	"math"
+
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
@@ -36,13 +38,21 @@ func (s *StatisticService) GetStats() (*dto.GetStatsResponse, error) {
 			for _, answer := range answers {
 				answerStats = append(answerStats, dto.AnswerStats{
 					Value: answer.Value,
-					Count: 0, // TODO: count answers
+					Count: len(answers),
 				})
+			}
+			avgValue := 0
+			sumValues := 0
+			for _, answer := range answers {
+				sumValues += answer.Value
+			}
+			if len(answers) > 0 {
+				avgValue = int(math.Round(float64(sumValues) / float64(len(answers))))
 			}
 			questionStats = append(questionStats, dto.QuestionStats{
 				ID:          question.ID,
 				Title:       question.Title,
-				AvgValue:    0, // TODO: calculate avg value
+				AvgValue:    avgValue,
 				AnswerStats: answerStats,
 			})
 		}
