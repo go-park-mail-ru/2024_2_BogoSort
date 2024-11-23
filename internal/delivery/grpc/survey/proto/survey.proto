@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+option go_package = "./;survey";
+
+package survey;
+
+service SurveyService {
+  rpc AddAnswer(AddAnswerRequest) returns (AddAnswerResponse);
+  rpc Ping(NoContent) returns (NoContent);
+}
+
+message AddAnswerRequest {
+  string user_id = 1;
+  string question_id = 2;
+  int32 value = 3;
+}
+
+message AddAnswerResponse {
+  string message = 1;
+}
+
+message NoContent {}
