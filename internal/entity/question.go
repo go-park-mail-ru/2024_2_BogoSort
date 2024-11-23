@@ -1,0 +1,27 @@
+package entity
+
+import "github.com/google/uuid"
+
+type Question struct {
+	ID               uuid.UUID
+	Description      string
+	Page             PageType
+	TriggerValue     int
+	LowerDescription string
+	UpperDescription string
+	ParentID         uuid.UUID
+}
+
+type PageType string
+
+const (
+	MainPage         PageType = "mainPage"
+	AdvertPage       PageType = "advertPage"
+	AdvertCreatePage PageType = "advertCreatePage"
+	CartPage         PageType = "cartPage"
+	CategoryPage     PageType = "categoryPage"
+	AdvertEditPage   PageType = "advertEditPage"
+	UserPage         PageType = "userPage"
+	SellerPage       PageType = "sellerPage"
+	SearchPage       PageType = "searchPage"
+)
