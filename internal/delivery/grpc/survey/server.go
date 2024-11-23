@@ -54,11 +54,10 @@ func (s *GrpcSurveyServer) GetQuestions(ctx context.Context, req *proto.GetQuest
 
 	var protoQuestions []*proto.Question
 	for _, question := range questions {
-		zap.L().Info("question", zap.Any("question", question.Page))
-
-		protoPageType := proto.PageType(proto.PageType_value[string(question.Page)])
-
-		zap.L().Info("protoPageType", zap.Any("protoPageType", protoPageType))
+		protoPageType, err := ConvertDBPageTypeToEnum(string(question.Page))
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to convert page type: %v", err)
+		}
 
 		protoQuestions = append(protoQuestions, &proto.Question{
 			Id: question.ID.String(),	
@@ -72,11 +71,11 @@ func (s *GrpcSurveyServer) GetQuestions(ctx context.Context, req *proto.GetQuest
 		})
 	}
 
-	zap.L().Info("protoQuestions", zap.Any("protoQuestions", protoQuestions))
-
 	var protoResp = &proto.GetQuestionsResponse{
 		Questions: protoQuestions,
 	}
+
+	zap.L().Info("protoResp", zap.Any("protoResp", protoResp))
 
 	return protoResp, nil
 }
