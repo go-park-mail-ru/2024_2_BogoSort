@@ -27,7 +27,6 @@ func NewSurveyClient(addr string) (*SurveyClient, error) {
 
 	client := pb.NewSurveyServiceClient(conn)
 
-	// Проверка доступности сервиса
 	_, err = client.Ping(context.Background(), &pb.NoContent{})
 	if err != nil {
 		return nil, err
