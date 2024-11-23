@@ -10,6 +10,8 @@ import (
 	"github.com/go-park-mail-ru/2024_2_BogoSort/config"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/auth"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/cart_purchase"
+	static "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/static"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/survey"
 	http3 "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/middleware"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/utils"
@@ -17,7 +19,6 @@ import (
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository/redis"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase/service"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/pkg/connector"
-	static "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/static"
 	"github.com/gorilla/mux"
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/rs/cors"
@@ -141,6 +142,10 @@ func Init(cfg config.Config) (*mux.Router, error) {
 	if err != nil {
 		return nil, handleRepoError(err, "unable to create static client")
 	}
+	surveyClient, err := survey.NewSurveyClient(config.GetSurveyAddress())
+	if err != nil {
+		return nil, handleRepoError(err, "unable to create survey client")
+	}
 
 	advertsUseCase := service.NewAdvertService(advertsRepo, sellerRepo, userRepo, logger)
 	categoryUseCase := service.NewCategoryService(categoryRepo, logger)
@@ -151,10 +156,11 @@ func Init(cfg config.Config) (*mux.Router, error) {
 
 	advertsHandler := http3.NewAdvertEndpoint(advertsUseCase, *staticClient, sessionManager, logger, policy)
 	authHandler := http3.NewAuthEndpoint(sessionUC, sessionManager, logger)
-	userHandler := http3.NewUserEndpoint(userUC, sessionUC, sessionManager, *staticClient, logger, policy)
+	userHandler := http3.NewUserEndpoint(userUC, sessionManager, *staticClient, logger, policy)
 	sellerHandler := http3.NewSellerEndpoint(sellerRepo, logger)
 	purchaseHandler := http3.NewPurchaseEndpoint(cartPurchaseClient, logger)
 	cartHandler := http3.NewCartEndpoint(cartPurchaseClient, logger)
+	surveyHandler := http3.NewSurveyEndpoint(*surveyClient, sessionManager, logger)
 	categoryHandler := http3.NewCategoryEndpoint(categoryUseCase, logger)
 	staticHandler := http3.NewStaticEndpoint(*staticClient, logger)
 
@@ -173,6 +179,7 @@ func Init(cfg config.Config) (*mux.Router, error) {
 	cartHandler.Configure(authRouter)
 	purchaseHandler.ConfigureRoutes(authRouter)
 	staticHandler.ConfigureRoutes(router)
+	surveyHandler.ConfigureProtectedRoutes(authRouter)
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
 	return router, nil
