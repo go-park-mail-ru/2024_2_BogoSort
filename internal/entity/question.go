@@ -26,3 +26,15 @@ const (
 	SellerPage       PageType = "sellerPage"
 	SearchPage       PageType = "searchPage"
 )
+
+var PageTypeValues = []PageType{
+	MainPage,
+	AdvertPage,
+	AdvertCreatePage,
+	CartPage,
+	CategoryPage,
+	AdvertEditPage,
+	UserPage,
+	SellerPage,
+	SearchPage,
+}

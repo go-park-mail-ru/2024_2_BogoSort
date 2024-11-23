@@ -3,10 +3,11 @@ package dto
 import "github.com/google/uuid"
 
 type GetStatsResponse struct {
-	Stats Stats `json:"stats"`
+	PageStats []PageStats `json:"page_stats"`
 }
 
-type Stats struct {
+type PageStats struct {
+	Page          string          `json:"page"`
 	QuestionStats []QuestionStats `json:"question_stats"`
 }
 

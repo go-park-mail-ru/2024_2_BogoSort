@@ -41,6 +41,7 @@ func (s *SurveyEndpoint) ConfigureProtectedRoutes(router *mux.Router) {
 
 	protected.HandleFunc("/questions/{page}", s.GetQuestions).Methods(http.MethodGet)
 	protected.HandleFunc("/answer", s.PostAnswer).Methods(http.MethodPost)
+	protected.HandleFunc("/stats", s.GetStats).Methods(http.MethodGet)
 }
 
 func (s *SurveyEndpoint) sendError(w http.ResponseWriter, statusCode int, err error, message string, details map[string]string) {
@@ -95,4 +96,17 @@ func (s *SurveyEndpoint) PostAnswer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.SendJSONResponse(w, http.StatusOK, message)
+}
+
+func (s *SurveyEndpoint) GetStats(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	stats, err := s.surveyClient.GetStats(ctx)
+	if err != nil {
+		s.sendError(w, http.StatusInternalServerError, err, "failed to get stats", nil)
+		return
+	}
+
+	utils.SendJSONResponse(w, http.StatusOK, stats)
 }
