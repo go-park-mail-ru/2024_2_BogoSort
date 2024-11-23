@@ -55,7 +55,7 @@ func (h *PurchaseEndpoint) Add(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Hour)
 	defer cancel()
 
 	purchaseResponse, err := h.purchaseClient.AddPurchase(ctx, purchase)

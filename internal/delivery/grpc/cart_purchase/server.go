@@ -35,35 +35,28 @@ func (s *GrpcServer) AddPurchase(ctx context.Context, req *proto.AddPurchaseRequ
 		Address:        req.Address,
 		PaymentMethod:  dto.PaymentMethod(paymentMethod),
 		DeliveryMethod: dto.DeliveryMethod(deliveryMethod),
+		UserID:         uuid.MustParse(req.UserId),
 	}
 
-	userID := uuid.MustParse(req.UserId)
-	purchaseResp, err := s.purchaseUC.Add(purchaseReq, userID)
+	purchaseResp, err := s.purchaseUC.Add(purchaseReq, purchaseReq.UserID)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to add purchase: %v", err)
 	}
 
-	purchaseStatus, err := ConvertDBPurchaseStatusToEnum(string(purchaseResp.Status))
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to convert purchase status: %v", err)
-	}
-	purchasePaymentMethod, err := ConvertDBPaymentMethodToEnum(string(purchaseResp.PaymentMethod))
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to convert purchase payment method: %v", err)
-	}
-	purchaseDeliveryMethod, err := ConvertDBDeliveryMethodToEnum(string(purchaseResp.DeliveryMethod))
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to convert purchase delivery method: %v", err)
-	}
+	purchaseStatus := proto.PurchaseStatus(proto.PurchaseStatus_value[string(purchaseResp.Status)])
+	purchasePaymentMethod := proto.PaymentMethod(proto.PaymentMethod_value[string(purchaseResp.PaymentMethod)])
+	purchaseDeliveryMethod := proto.DeliveryMethod(proto.DeliveryMethod_value[string(purchaseResp.DeliveryMethod)])
 
-	return &proto.AddPurchaseResponse{
+	purchaseRespProto := &proto.AddPurchaseResponse{
 		Id:             purchaseResp.ID.String(),
 		CartId:         purchaseResp.CartID.String(),
 		Address:        purchaseResp.Address,
 		Status:         purchaseStatus,
 		PaymentMethod:  purchasePaymentMethod,
 		DeliveryMethod: purchaseDeliveryMethod,
-	}, nil
+	}
+
+	return purchaseRespProto, nil
 }
 
 func (s *GrpcServer) GetPurchasesByUserID(ctx context.Context, req *proto.GetPurchasesByUserIDRequest) (*proto.GetPurchasesByUserIDResponse, error) {
@@ -75,18 +68,10 @@ func (s *GrpcServer) GetPurchasesByUserID(ctx context.Context, req *proto.GetPur
 
 	var protoPurchases []*proto.PurchaseResponse
 	for _, p := range purchases {
-		purchaseStatus, err := ConvertDBPurchaseStatusToEnum(string(p.Status))
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to convert purchase status: %v", err)
-		}
-		purchasePaymentMethod, err := ConvertDBPaymentMethodToEnum(string(p.PaymentMethod))
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to convert purchase payment method: %v", err)
-		}
-		purchaseDeliveryMethod, err := ConvertDBDeliveryMethodToEnum(string(p.DeliveryMethod))
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to convert purchase delivery method: %v", err)
-		}
+		purchaseStatus := proto.PurchaseStatus(proto.PurchaseStatus_value[string(p.Status)])
+		purchasePaymentMethod := proto.PaymentMethod(proto.PaymentMethod_value[string(p.PaymentMethod)])
+		purchaseDeliveryMethod := proto.DeliveryMethod(proto.DeliveryMethod_value[string(p.DeliveryMethod)])
+
 		protoPurchases = append(protoPurchases, &proto.PurchaseResponse{
 			Id:             p.ID.String(),
 			CartId:         p.CartID.String(),

@@ -13,8 +13,8 @@ import (
 
 type PurchaseService struct {
 	purchaseRepo repository.PurchaseRepository
-	cartRepo repository.Cart
-	advertRepo repository.AdvertRepository
+	cartRepo     repository.Cart
+	advertRepo   repository.AdvertRepository
 	logger       *zap.Logger
 }
 
@@ -24,11 +24,11 @@ func NewPurchaseService(purchaseRepo repository.PurchaseRepository, advertRepo r
 
 func (s *PurchaseService) purchaseEntityToDTO(purchase *entity.Purchase) (*dto.PurchaseResponse, error) {
 	return &dto.PurchaseResponse{
-		ID: purchase.ID,
-		CartID: purchase.CartID,
-		Address: purchase.Address,
-		Status: dto.PurchaseStatus(purchase.Status),
-		PaymentMethod: dto.PaymentMethod(purchase.PaymentMethod),
+		ID:             purchase.ID,
+		CartID:         purchase.CartID,
+		Address:        purchase.Address,
+		Status:         dto.PurchaseStatus(purchase.Status),
+		PaymentMethod:  dto.PaymentMethod(purchase.PaymentMethod),
 		DeliveryMethod: dto.DeliveryMethod(purchase.DeliveryMethod),
 	}, nil
 }
@@ -49,10 +49,10 @@ func (s *PurchaseService) Add(purchaseRequest dto.PurchaseRequest, userId uuid.U
 	}()
 
 	purchase, err := s.purchaseRepo.Add(tx, &entity.Purchase{
-		CartID: purchaseRequest.CartID,
-		Address: purchaseRequest.Address,
-		Status: entity.StatusPending,
-		PaymentMethod: entity.PaymentMethod(purchaseRequest.PaymentMethod),
+		CartID:         purchaseRequest.CartID,
+		Address:        purchaseRequest.Address,
+		Status:         entity.StatusPending,
+		PaymentMethod:  entity.PaymentMethod(purchaseRequest.PaymentMethod),
 		DeliveryMethod: entity.DeliveryMethod(purchaseRequest.DeliveryMethod),
 	})
 	if err != nil {

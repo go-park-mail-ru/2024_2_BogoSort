@@ -9,6 +9,7 @@ type PurchaseRequest struct {
 	Address        string   	`json:"address"`
 	PaymentMethod  PaymentMethod `json:"payment_method"`
 	DeliveryMethod DeliveryMethod `json:"delivery_method"`
+	UserID         uuid.UUID   	`json:"user_id"`
 }
 
 type PurchaseStatus string
