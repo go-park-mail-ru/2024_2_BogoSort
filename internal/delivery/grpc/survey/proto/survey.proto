@@ -6,6 +6,7 @@ package survey;
 
 service SurveyService {
   rpc AddAnswer(AddAnswerRequest) returns (AddAnswerResponse);
+  rpc GetQuestions(GetQuestionsRequest) returns (GetQuestionsResponse);
   rpc Ping(NoContent) returns (NoContent);
 }
 
@@ -17,6 +18,37 @@ message AddAnswerRequest {
 
 message AddAnswerResponse {
   string message = 1;
+}
+
+message GetQuestionsRequest {
+  PageType page = 1;
+}
+
+message Question {
+  string id = 1;
+  string description = 2;
+  PageType page = 3;
+  int32 trigger_value = 4;
+  string lower_description = 5;
+  string upper_description = 6;
+  string parent_id = 7;
+}
+
+message GetQuestionsResponse {
+  repeated Question questions = 1;
+}
+
+enum PageType {
+  PAGE_TYPE_UNSPECIFIED = 0; 
+  PAGE_TYPE_MAIN = 1;         
+  PAGE_TYPE_ADVERT = 2;       
+  PAGE_TYPE_ADVERT_CREATE = 3; 
+  PAGE_TYPE_CART = 4;         
+  PAGE_TYPE_CATEGORY = 5;     
+  PAGE_TYPE_ADVERT_EDIT = 6; 
+  PAGE_TYPE_USER = 7;         
+  PAGE_TYPE_SELLER = 8;      
+  PAGE_TYPE_SEARCH = 9;      
 }
 
 message NoContent {}

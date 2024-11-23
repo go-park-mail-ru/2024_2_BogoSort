@@ -19,3 +19,4 @@ type PostAnswersRequest struct {
 type PostAnswersResponse struct {
 	Message string `json:"message"`
 }
+

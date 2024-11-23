@@ -5,24 +5,29 @@ import (
 	proto "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/survey/proto"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"go.uber.org/zap"
 )
 
-type GrpcServer struct {
+type GrpcSurveyServer struct {
 	proto.UnimplementedSurveyServiceServer
-	surveyUC usecase.AnswerUsecase
+	answerUC usecase.AnswerUsecase
+	questionRepo repository.QuestionRepository
 }
 
-func NewGrpcServer(surveyUC usecase.AnswerUsecase) *GrpcServer {
-	return &GrpcServer{
-		surveyUC: surveyUC,
+func NewSurveyGrpcServer(answerUC usecase.AnswerUsecase, questionRepo repository.QuestionRepository) *GrpcSurveyServer {
+	return &GrpcSurveyServer{
+		answerUC: answerUC,
+		questionRepo: questionRepo,
 	}
 }
 
-func (s *GrpcServer) AddAnswer(ctx context.Context, req *proto.AddAnswerRequest) (*proto.AddAnswerResponse, error) {
-	answerID, err := s.surveyUC.Add(&dto.AnswerRequest{
+func (s *GrpcSurveyServer) AddAnswer(ctx context.Context, req *proto.AddAnswerRequest) (*proto.AddAnswerResponse, error) {
+	answerID, err := s.answerUC.Add(&dto.AnswerRequest{
 		UserID:     uuid.MustParse(req.UserId),
 		QuestionID: uuid.MustParse(req.QuestionId),
 		Value:      int(req.Value),
@@ -36,6 +41,29 @@ func (s *GrpcServer) AddAnswer(ctx context.Context, req *proto.AddAnswerRequest)
 	}, nil
 }
 
-func (s *GrpcServer) Ping(ctx context.Context, req *proto.NoContent) (*proto.NoContent, error) {
+func (s *GrpcSurveyServer) GetQuestions(ctx context.Context, req *proto.GetQuestionsRequest) (*proto.GetQuestionsResponse, error) {
+	zap.L().Info("GetQuestions", zap.Any("req", req.Page))
+	pageType := ConvertEnumToDBPageType(req.Page)
+
+	questions, err := s.questionRepo.GetByPageType(entity.PageType(pageType))
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get questions: %v", err)
+	}
+
+	zap.L().Info("questions", zap.Any("questions", questions))
+
+	var protoQuestions []*proto.Question
+	for _, question := range questions {
+		protoQuestions = append(protoQuestions, &proto.Question{
+			Id: question.ID.String(),
+		})
+	}
+
+	return &proto.GetQuestionsResponse{
+		Questions: protoQuestions,
+	}, nil
+}
+
+func (s *GrpcSurveyServer) Ping(ctx context.Context, req *proto.NoContent) (*proto.NoContent, error) {
 	return &proto.NoContent{}, nil
 }

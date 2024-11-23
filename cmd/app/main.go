@@ -142,7 +142,7 @@ func Init(cfg config.Config) (*mux.Router, error) {
 	if err != nil {
 		return nil, handleRepoError(err, "unable to create static client")
 	}
-	surveyClient, err := survey.NewSurveyClient(config.GetSurveyAddress())
+	surveyClient, err := survey.NewSurveyGrpcClient(config.GetSurveyAddress())
 	if err != nil {
 		return nil, handleRepoError(err, "unable to create survey client")
 	}

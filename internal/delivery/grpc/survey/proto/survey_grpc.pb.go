@@ -19,8 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	SurveyService_AddAnswer_FullMethodName = "/survey.SurveyService/AddAnswer"
-	SurveyService_Ping_FullMethodName      = "/survey.SurveyService/Ping"
+	SurveyService_AddAnswer_FullMethodName    = "/survey.SurveyService/AddAnswer"
+	SurveyService_GetQuestions_FullMethodName = "/survey.SurveyService/GetQuestions"
+	SurveyService_Ping_FullMethodName         = "/survey.SurveyService/Ping"
 )
 
 // SurveyServiceClient is the client API for SurveyService service.
@@ -28,6 +29,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SurveyServiceClient interface {
 	AddAnswer(ctx context.Context, in *AddAnswerRequest, opts ...grpc.CallOption) (*AddAnswerResponse, error)
+	GetQuestions(ctx context.Context, in *GetQuestionsRequest, opts ...grpc.CallOption) (*GetQuestionsResponse, error)
 	Ping(ctx context.Context, in *NoContent, opts ...grpc.CallOption) (*NoContent, error)
 }
 
@@ -49,6 +51,16 @@ func (c *surveyServiceClient) AddAnswer(ctx context.Context, in *AddAnswerReques
 	return out, nil
 }
 
+func (c *surveyServiceClient) GetQuestions(ctx context.Context, in *GetQuestionsRequest, opts ...grpc.CallOption) (*GetQuestionsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetQuestionsResponse)
+	err := c.cc.Invoke(ctx, SurveyService_GetQuestions_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *surveyServiceClient) Ping(ctx context.Context, in *NoContent, opts ...grpc.CallOption) (*NoContent, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(NoContent)
@@ -64,6 +76,7 @@ func (c *surveyServiceClient) Ping(ctx context.Context, in *NoContent, opts ...g
 // for forward compatibility.
 type SurveyServiceServer interface {
 	AddAnswer(context.Context, *AddAnswerRequest) (*AddAnswerResponse, error)
+	GetQuestions(context.Context, *GetQuestionsRequest) (*GetQuestionsResponse, error)
 	Ping(context.Context, *NoContent) (*NoContent, error)
 	mustEmbedUnimplementedSurveyServiceServer()
 }
@@ -77,6 +90,9 @@ type UnimplementedSurveyServiceServer struct{}
 
 func (UnimplementedSurveyServiceServer) AddAnswer(context.Context, *AddAnswerRequest) (*AddAnswerResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddAnswer not implemented")
+}
+func (UnimplementedSurveyServiceServer) GetQuestions(context.Context, *GetQuestionsRequest) (*GetQuestionsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetQuestions not implemented")
 }
 func (UnimplementedSurveyServiceServer) Ping(context.Context, *NoContent) (*NoContent, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
@@ -120,6 +136,24 @@ func _SurveyService_AddAnswer_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SurveyService_GetQuestions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetQuestionsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SurveyServiceServer).GetQuestions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SurveyService_GetQuestions_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SurveyServiceServer).GetQuestions(ctx, req.(*GetQuestionsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _SurveyService_Ping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(NoContent)
 	if err := dec(in); err != nil {
@@ -148,6 +182,10 @@ var SurveyService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AddAnswer",
 			Handler:    _SurveyService_AddAnswer_Handler,
+		},
+		{
+			MethodName: "GetQuestions",
+			Handler:    _SurveyService_GetQuestions_Handler,
 		},
 		{
 			MethodName: "Ping",

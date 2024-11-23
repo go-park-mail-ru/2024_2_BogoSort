@@ -32,15 +32,21 @@ func main() {
 		return
 	}
 
-	surveyRepo, err := postgres.NewAnswerRepository(dbPool, zap.L(), context.Background(), time.Duration(cfg.PGTimeout))
+	answerRepo, err := postgres.NewAnswerRepository(dbPool, zap.L(), context.Background(), time.Duration(cfg.PGTimeout))
 	if err != nil {
 		zap.L().Error("Failed to create survey repository", zap.Error(err))
 		return
 	}
 
+	questionRepo, err := postgres.NewQuestionRepository(dbPool, zap.L(), context.Background(), time.Duration(cfg.PGTimeout))
+	if err != nil {
+		zap.L().Error("Failed to create question repository", zap.Error(err))
+		return
+	}
+
 	server := grpc.NewServer()
-	surveyUC := service.NewAnswerService(surveyRepo, zap.L())
-	surveyServer := survey.NewGrpcServer(surveyUC)
+	surveyUC := service.NewAnswerService(answerRepo, zap.L())
+	surveyServer := survey.NewSurveyGrpcServer(surveyUC, questionRepo)
 
 	healthServer := health.NewServer()
 	healthProto.RegisterHealthServer(server, healthServer)
