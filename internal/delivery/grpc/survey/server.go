@@ -1,0 +1,98 @@
+package survey
+
+import (
+	"context"
+
+	proto "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/survey/proto"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase"
+	"github.com/google/uuid"
+	"go.uber.org/zap"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+)
+
+type GrpcSurveyServer struct {
+	proto.UnimplementedSurveyServiceServer
+	answerUC     usecase.AnswerUsecase
+	questionRepo repository.QuestionRepository
+	statisticUC  usecase.StatisticUsecase
+}
+
+func NewSurveyGrpcServer(answerUC usecase.AnswerUsecase, questionRepo repository.QuestionRepository, statisticUC usecase.StatisticUsecase) *GrpcSurveyServer {
+	return &GrpcSurveyServer{
+		answerUC:     answerUC,
+		questionRepo: questionRepo,
+		statisticUC:  statisticUC,
+	}
+}
+
+func (s *GrpcSurveyServer) AddAnswer(ctx context.Context, req *proto.AddAnswerRequest) (*proto.AddAnswerResponse, error) {
+	answerID, err := s.answerUC.Add(&dto.AnswerRequest{
+		UserID:     uuid.MustParse(req.UserId),
+		QuestionID: uuid.MustParse(req.QuestionId),
+		Value:      int(req.Value),
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to add answer: %v", err)
+	}
+
+	return &proto.AddAnswerResponse{
+		Message: "Answer added successfully with ID: " + answerID.ID.String(),
+	}, nil
+}
+
+func (s *GrpcSurveyServer) GetQuestions(ctx context.Context, req *proto.GetQuestionsRequest) (*proto.GetQuestionsResponse, error) {
+	pageType := ConvertEnumToDBPageType(req.Page)
+
+	questions, err := s.questionRepo.GetByPageType(entity.PageType(pageType))
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get questions: %v", err)
+	}
+
+	var protoQuestions []*proto.Question
+	for _, question := range questions {
+		protoPageType, err := ConvertDBPageTypeToEnum(string(question.Page))
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to convert page type: %v", err)
+		}
+
+		protoQuestions = append(protoQuestions, &proto.Question{
+			Id: question.ID.String(),	
+			Title: question.Title,
+			Description: question.Description,
+			Page: protoPageType,
+			TriggerValue: int32(question.TriggerValue),
+			LowerDescription: question.LowerDescription,
+			UpperDescription: question.UpperDescription,
+			ParentId: question.ParentID.UUID.String(),
+		})
+	}
+
+	var protoResp = &proto.GetQuestionsResponse{
+		Questions: protoQuestions,
+	}
+
+	return protoResp, nil
+}
+
+func (s *GrpcSurveyServer) GetStats(ctx context.Context, req *proto.NoContent) (*proto.GetStatsResponse, error) {
+	stats, err := s.statisticUC.GetStats()
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get stats: %v", err)
+	}
+
+	protoStats := ConvertDBStatsToProto(stats)
+
+	zap.L().Info("protoStats", zap.Any("protoStats", protoStats))
+
+	return &proto.GetStatsResponse{
+		PageStats: protoStats,
+	}, nil
+}
+
+func (s *GrpcSurveyServer) Ping(ctx context.Context, req *proto.NoContent) (*proto.NoContent, error) {
+	return &proto.NoContent{}, nil
+}

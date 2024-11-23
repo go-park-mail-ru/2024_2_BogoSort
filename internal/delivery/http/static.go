@@ -2,13 +2,14 @@ package http
 
 import (
 	"errors"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/utils"
+	"io"
+	"net/http"
+
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/static"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/utils"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
-	"net/http"
-	"io"
 )
 
 var (
@@ -18,15 +19,15 @@ var (
 )
 
 type StaticEndpoint struct {
-	staticGrpcClient  static.StaticGrpcClient
-	logger        *zap.Logger
+	staticGrpcClient static.StaticGrpcClient
+	logger           *zap.Logger
 }
 
-func NewStaticEndpoint(staticGrpcClient static.StaticGrpcClient, 
+func NewStaticEndpoint(staticGrpcClient static.StaticGrpcClient,
 	logger *zap.Logger) *StaticEndpoint {
 	return &StaticEndpoint{
 		staticGrpcClient: staticGrpcClient,
-		logger:        logger,
+		logger:           logger,
 	}
 }
 
@@ -105,7 +106,7 @@ func (h *StaticEndpoint) GetFileStream(writer http.ResponseWriter, r *http.Reque
 	writer.Header().Set("Content-Type", "image/webp")
 	writer.WriteHeader(http.StatusOK)
 
-	_, err = io.Copy(writer, fileStream) 
+	_, err = io.Copy(writer, fileStream)
 	if err != nil {
 		h.sendError(writer, http.StatusInternalServerError, err, "failed to write file stream", nil)
 	}

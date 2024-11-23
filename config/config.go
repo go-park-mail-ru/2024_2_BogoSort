@@ -44,6 +44,8 @@ type Config struct {
 	StaticHost       string        `yaml:"static_host"`
 	StaticPort       int           `yaml:"static_port"`
 	SearchBatchSize  int           `yaml:"search_batch_size"`
+	SurveyHost       string        `yaml:"survey_host"`
+	SurveyPort       int           `yaml:"survey_port"`
 }
 
 type StaticConfig struct {
@@ -98,6 +100,13 @@ func Init() (Config, error) {
 		cfg.AuthHost = host
 	}
 
+	if port := os.Getenv("SURVEY_PORT"); port != "" {
+		cfg.SurveyPort, _ = strconv.Atoi(port)
+	}
+	if host := os.Getenv("SURVEY_HOST"); host != "" {
+		cfg.SurveyHost = host
+	}
+
 	if batchSize := os.Getenv("SEARCH_BATCH_SIZE"); batchSize != "" {
 		cfg.SearchBatchSize, _ = strconv.Atoi(batchSize)
 	}
@@ -123,6 +132,10 @@ func GetCartPurchaseAddress() string {
 
 func GetStaticAddress() string {
 	return fmt.Sprintf("%s:%d", cfg.StaticHost, cfg.StaticPort)
+}
+
+func GetSurveyAddress() string {
+	return fmt.Sprintf("%s:%d", cfg.SurveyHost, cfg.SurveyPort)
 }
 
 func (cfg *Config) GetConnectURL() string {
