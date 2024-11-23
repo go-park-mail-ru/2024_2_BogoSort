@@ -81,9 +81,19 @@ func (q *QuestionDB) GetAll() ([]entity.Question, error) {
 	defer rows.Close()
 
 	var questions []entity.Question
+	createdAt := time.Time{}
 	for rows.Next() {
 		var question entity.Question
-		if err := rows.Scan(&question.ID, &question.Title, &question.Description, &question.Page, &question.TriggerValue, &question.LowerDescription, &question.UpperDescription, &question.ParentID); err != nil {
+		if err := rows.Scan(&question.ID,
+			&question.Title,
+			&question.Description,
+			&question.Page,
+			&question.TriggerValue,
+			&question.LowerDescription,
+			&question.UpperDescription,
+			&question.ParentID,
+			&createdAt); err != nil {
+
 			q.logger.Error("failed to scan question", zap.Error(err))
 			return nil, entity.PSQLWrap(err, err)
 		}
