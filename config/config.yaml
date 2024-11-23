@@ -10,22 +10,22 @@ session:
   secure_cookie: false
 
 auth_port: 50051
-auth_host: "auth"
+auth_host: "localhost"
 
-cart_purchase_host: "cart_purchase"
+cart_purchase_host: "localhost"
 cart_purchase_port: 50052
 
-static_host: "static"
+static_host: "localhost"
 static_port: 50053
 
-pg_ip: "postgres"
+pg_ip: "localhost"
 pg_port: 5432
 pg_user: "postgres"
 pg_password: "postgres"
 pg_db: "emporiumdb"
 pg_timeout: 5s
 
-rd_addr: "redis:6379"
+rd_addr: "localhost:6379"
 rd_password: ""
 rd_db: 0
 

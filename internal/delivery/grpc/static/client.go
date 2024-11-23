@@ -14,10 +14,6 @@ import (
 	"go.uber.org/zap"
 	"time"
 	"github.com/pkg/errors"
-	"image"
-	"image/jpeg"
-	"image/png"
-	"github.com/chai2010/webp"
 )
 
 const (
@@ -61,64 +57,50 @@ func (gate *StaticGrpcClient) GetStatic(staticID uuid.UUID) (string, error) {
 }
 
 func (gate *StaticGrpcClient) UploadStatic(reader io.ReadSeeker) (uuid.UUID, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-    defer cancel()
+	stream, err := gate.staticManager.UploadStatic(context.Background())
+	if err != nil {
+		return uuid.Nil, err
+	}
 
-    stream, err := gate.staticManager.UploadStatic(ctx)
-    if err != nil {
-        return uuid.Nil, err
-    }
+	zap.L().Info("Uploading static")
 
-    zap.L().Info("Uploading static")
+	buffer := make([]byte, bufSize)
 
-    imgData, err := io.ReadAll(reader)
-    if err != nil {
-        return uuid.Nil, err
-    }
+	for {
+		bytesRead, err := reader.Read(buffer)
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return uuid.Nil, err
+		}
 
-    cleanImgData, err := removeMetadata(imgData)
-    if err != nil {
-        return uuid.Nil, err
-    }
+		err = stream.Send(&static.StaticUpload{
+			Chunk: buffer[:bytesRead],
+		})
+		if err != nil {
+			return uuid.Nil, err
+		}
+	}
 
-    buffer := bytes.NewBuffer(cleanImgData)
+	response, err := stream.CloseAndRecv()
 
-    chunk := make([]byte, bufSize)
-    for {
-        bytesRead, err := buffer.Read(chunk)
-        if err == io.EOF {
-            break
-        }
-        if err != nil {
-            return uuid.Nil, err
-        }
-
-        err = stream.Send(&static.StaticUpload{
-            Chunk: chunk[:bytesRead],
-        })
-        if err != nil {
-            return uuid.Nil, err
-        }
-    }
-
-    response, err := stream.CloseAndRecv()
-
-    if err != nil {
-        switch {
-        case strings.Contains(err.Error(), usecase.ErrStaticTooBigFile.Error()):
-            return uuid.Nil, usecase.ErrStaticTooBigFile
-        case strings.Contains(err.Error(), usecase.ErrStaticNotImage.Error()):
-            return uuid.Nil, usecase.ErrStaticNotImage
-        case strings.Contains(err.Error(), usecase.ErrStaticImageDimensions.Error()):
-            return uuid.Nil, usecase.ErrStaticImageDimensions
-        case strings.Contains(err.Error(), "context deadline exceeded"):
-            return uuid.Nil, errors.New("context deadline exceeded")
-        default:
-            return uuid.Nil, err
-        }
-    }
-    zap.L().Info("Static uploaded", zap.String("id", response.Id))
-    return uuid.MustParse(response.Id), nil
+	if err != nil {
+		switch {
+		case strings.Contains(err.Error(), usecase.ErrStaticTooBigFile.Error()):
+			return uuid.Nil, usecase.ErrStaticTooBigFile
+		case strings.Contains(err.Error(), usecase.ErrStaticNotImage.Error()):
+			return uuid.Nil, usecase.ErrStaticNotImage
+		case strings.Contains(err.Error(), usecase.ErrStaticImageDimensions.Error()):
+			return uuid.Nil, usecase.ErrStaticImageDimensions
+		case strings.Contains(err.Error(), "context deadline exceeded"):
+			return uuid.Nil, errors.New("context deadline exceeded")
+		default:
+			return uuid.Nil, err
+		}
+	}
+	zap.L().Info("Static uploaded", zap.String("id", response.Id))
+	return uuid.MustParse(response.Id), nil
 }
 
 func (gate *StaticGrpcClient) GetStaticFile(staticURI string) (io.ReadSeeker, error) {
@@ -155,67 +137,4 @@ func (gate *StaticGrpcClient) GetStaticFile(staticURI string) (io.ReadSeeker, er
 	}
 
 	return io.ReadSeeker(bytes.NewReader(buffer)), nil
-}
-
-func removeMetadata(imgData []byte) ([]byte, error) {
-    var (
-        img    image.Image
-        format string
-        err    error
-    )
-
-    isAnimated, err := isAnimatedWebP(imgData)
-    if err == nil && isAnimated {
-        return nil, errors.New("animated WebP images are not supported")
-    }
-
-    img, format, err = image.Decode(bytes.NewReader(imgData))
-    if err != nil {
-        img, err = webp.Decode(bytes.NewReader(imgData))
-        if err != nil {
-            return nil, err
-        }
-        format = "webp"
-    }
-
-    var buf bytes.Buffer
-
-    switch format {
-    case "jpeg":
-        err = jpeg.Encode(&buf, img, nil)
-    case "png":
-        err = png.Encode(&buf, img)
-    case "webp":
-        err = webp.Encode(&buf, img, &webp.Options{Lossless: true})
-    default:
-        return nil, errors.New("unsupported image format")
-    }
-
-    if err != nil {
-        return nil, err
-    }
-
-    return buf.Bytes(), nil
-}
-
-func isAnimatedWebP(data []byte) (bool, error) {
-    const (
-        webpHeader = "RIFF"
-        webpType   = "WEBP"
-        animChunk  = "ANIM"
-    )
-
-    if len(data) < 12 {
-        return false, errors.New("data too short to be a valid WebP")
-    }
-
-    if string(data[:4]) != webpHeader || string(data[8:12]) != webpType {
-        return false, errors.New("not a WebP file")
-    }
-
-    if bytes.Contains(data, []byte(animChunk)) {
-        return true, nil
-    }
-
-    return false, nil
 }

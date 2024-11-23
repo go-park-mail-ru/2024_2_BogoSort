@@ -10,6 +10,7 @@ import (
 
 	staticProto "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/static/proto"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase"
+	"go.uber.org/zap"
 )
 
 type Grpc struct {
@@ -47,11 +48,15 @@ func (service *Grpc) UploadStatic(stream staticProto.StaticService_UploadStaticS
 		bytesAvatar = append(bytesAvatar, chunk.GetChunk()...)
 	}
 
+	zap.L().Info("static uploaded", zap.String("bytesAvatar", string(bytesAvatar)))
+
 	reader := bytes.NewReader(bytesAvatar)
 	staticID, err := service.staticUC.UploadStatic(reader)
 	if err != nil {
 		return err
 	}
+
+	zap.L().Info("static uploaded", zap.String("static_id", staticID.String()))
 
 	switch {
 	case errors.Is(err, usecase.ErrStaticTooBigFile):
