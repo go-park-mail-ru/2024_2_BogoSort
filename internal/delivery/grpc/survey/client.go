@@ -84,8 +84,6 @@ func (c *SurveyClient) GetQuestions(ctx context.Context, request *dto.GetQuestio
 	for _, pq := range resp.Questions {
 		questionPageType := ConvertEnumToDBPageType(pq.Page)
 
-		zap.L().Info("pq", zap.Any("pq", pq))
-
 		questions = append(questions, &entity.Question{
 			ID:               uuid.MustParse(pq.Id),
 			Page:             entity.PageType(questionPageType),

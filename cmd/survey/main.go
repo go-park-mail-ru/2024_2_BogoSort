@@ -45,8 +45,9 @@ func main() {
 	}
 
 	server := grpc.NewServer()
-	surveyUC := service.NewAnswerService(answerRepo, zap.L())
-	surveyServer := survey.NewSurveyGrpcServer(surveyUC, questionRepo)
+	answerUC := service.NewAnswerService(answerRepo, zap.L())
+	statisticUC := service.NewStatisticService(answerRepo, questionRepo)
+	surveyServer := survey.NewSurveyGrpcServer(answerUC, questionRepo, statisticUC)
 
 	healthServer := health.NewServer()
 	healthProto.RegisterHealthServer(server, healthServer)
