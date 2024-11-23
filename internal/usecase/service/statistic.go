@@ -6,6 +6,7 @@ import (
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
+	"go.uber.org/zap"
 )
 
 type StatisticService struct {
@@ -24,6 +25,7 @@ func (s *StatisticService) GetStats() (*dto.GetStatsResponse, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		pageStats := dto.PageStats{
 			Page:          string(page),
 			QuestionStats: []dto.QuestionStats{},
@@ -55,11 +57,12 @@ func (s *StatisticService) GetStats() (*dto.GetStatsResponse, error) {
 				AvgValue:    avgValue,
 				AnswerStats: answerStats,
 			})
+
+			zap.L().Info("questionStats", zap.Any("questionStats", questionStats))
 		}
 		pageStats.QuestionStats = questionStats
 		stats.PageStats = append(stats.PageStats, pageStats)
 	}
 
 	return &stats, nil
-
 }

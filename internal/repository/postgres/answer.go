@@ -87,9 +87,10 @@ func (r *AnswerDB) GetByQuestionID(questionID string) ([]entity.Answer, error) {
 	defer rows.Close()
 
 	var answers []entity.Answer
+	var createdAt time.Time
 	for rows.Next() {
 		var answer entity.Answer
-		if err := rows.Scan(&answer.ID, &answer.Value, &answer.QuestionID, &answer.UserID); err != nil {
+		if err := rows.Scan(&answer.ID, &answer.QuestionID, &answer.UserID, &answer.Value, &createdAt); err != nil {
 			r.logger.Error("failed to scan answer", zap.Error(err))
 			return nil, entity.PSQLWrap(err, err)
 		}

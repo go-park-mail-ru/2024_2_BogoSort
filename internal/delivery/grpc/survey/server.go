@@ -75,8 +75,6 @@ func (s *GrpcSurveyServer) GetQuestions(ctx context.Context, req *proto.GetQuest
 		Questions: protoQuestions,
 	}
 
-	zap.L().Info("protoResp", zap.Any("protoResp", protoResp))
-
 	return protoResp, nil
 }
 
@@ -87,6 +85,8 @@ func (s *GrpcSurveyServer) GetStats(ctx context.Context, req *proto.NoContent) (
 	}
 
 	protoStats := ConvertDBStatsToProto(stats)
+
+	zap.L().Info("protoStats", zap.Any("protoStats", protoStats))
 
 	return &proto.GetStatsResponse{
 		PageStats: protoStats,

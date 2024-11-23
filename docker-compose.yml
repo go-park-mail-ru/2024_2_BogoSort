@@ -39,7 +39,7 @@ services:
       "migrate",
       "-path=/db/migrations",
       "-database=postgres://postgres:postgres@postgres:5432/emporiumdb?sslmode=disable",
-      "up"
+      "force 1", "up"
     ]
     volumes:
       - ./db/migrations:/db/migrations

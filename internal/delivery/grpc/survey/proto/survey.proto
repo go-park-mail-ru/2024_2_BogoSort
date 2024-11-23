@@ -53,6 +53,7 @@ message QuestionStats {
   string id = 1;
   string title = 2;
   repeated AnswerStats answer_stats = 3;
+  int32 avg_value = 4;
 }
 
 message AnswerStats {

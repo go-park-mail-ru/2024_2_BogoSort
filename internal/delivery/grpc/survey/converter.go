@@ -56,11 +56,35 @@ func ConvertEnumToDBPageType(pageType pb.PageType) string {
 	}
 }
 
+func ConvertDBAnswerStatsToProto(answerStats []dto.AnswerStats) []*pb.AnswerStats {
+	protoAnswerStats := []*pb.AnswerStats{}
+	for _, answerStats := range answerStats {
+		protoAnswerStats = append(protoAnswerStats, &pb.AnswerStats{
+			Value: int32(answerStats.Value),
+			Count: int32(answerStats.Count),
+		})
+	}
+	return protoAnswerStats
+}
+
+func ConvertDBQuestionStatsToProto(questionStats []dto.QuestionStats) []*pb.QuestionStats {
+	protoQuestionStats := []*pb.QuestionStats{}
+	for _, questionStats := range questionStats {
+		protoQuestionStats = append(protoQuestionStats, &pb.QuestionStats{
+			AnswerStats: ConvertDBAnswerStatsToProto(questionStats.AnswerStats),
+			AvgValue:    int32(questionStats.AvgValue),
+			Title:       questionStats.Title,
+		})
+	}
+	return protoQuestionStats
+}
+
 func ConvertDBStatsToProto(stats *dto.GetStatsResponse) []*pb.PageStats {
 	protoStats := []*pb.PageStats{}
 	for _, pageStats := range stats.PageStats {
 		protoStats = append(protoStats, &pb.PageStats{
 			Page: pageStats.Page,
+			QuestionStats: ConvertDBQuestionStatsToProto(pageStats.QuestionStats),
 		})
 	}
 	return protoStats

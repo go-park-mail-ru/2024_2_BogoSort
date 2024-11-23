@@ -103,6 +103,7 @@ func (c *SurveyClient) GetQuestions(ctx context.Context, request *dto.GetQuestio
 
 func (c *SurveyClient) GetStats(ctx context.Context) (*dto.GetStatsResponse, error) {
 	resp, err := c.client.GetStats(ctx, &pb.NoContent{})
+	zap.L().Info("resp", zap.Any("resp", resp))
 	if err != nil {
 		return nil, errors.Wrap(ErrSurveyNotFound, err.Error())
 	}
