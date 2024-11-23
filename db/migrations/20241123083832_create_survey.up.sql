@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS answer (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4() NOT NULL,
     question_id UUID NOT NULL,
     user_id UUID NOT NULL,
-    value INT NOT NULL,
+    value INT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (question_id) REFERENCES question(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES "user"(id) ON DELETE CASCADE
