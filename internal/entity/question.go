@@ -10,7 +10,7 @@ type Question struct {
 	TriggerValue     int
 	LowerDescription string
 	UpperDescription string
-	ParentID         uuid.UUID
+	ParentID         uuid.NullUUID
 }
 
 type PageType string
