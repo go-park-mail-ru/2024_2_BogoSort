@@ -2,11 +2,12 @@ package survey
 
 import (
 	"context"
+
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 
 	pb "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/survey/proto"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
@@ -79,17 +80,26 @@ func (c *SurveyClient) GetQuestions(ctx context.Context, request *dto.GetQuestio
 		questionPageType := ConvertEnumToDBPageType(pq.Page)
 
 		questions = append(questions, &entity.Question{
-			ID:             uuid.MustParse(pq.Id),
-			Page:           entity.PageType(questionPageType),
-			Description:    pq.Description,
-			TriggerValue:   int(pq.TriggerValue),
+			ID:               uuid.MustParse(pq.Id),
+			Page:             entity.PageType(questionPageType),
+			Description:      pq.Description,
+			TriggerValue:     int(pq.TriggerValue),
 			LowerDescription: pq.LowerDescription,
 			UpperDescription: pq.UpperDescription,
-			ParentID: uuid.MustParse(pq.ParentId),
+			ParentID:         uuid.MustParse(pq.ParentId),
 		})
 	}
 
 	return questions, nil
+}
+
+func (c *SurveyClient) GetStats(ctx context.Context) (*dto.GetStatsResponse, error) {
+	resp, err := c.client.GetStats(ctx, &pb.NoContent{})
+	if err != nil {
+		return nil, errors.Wrap(ErrSurveyNotFound, err.Error())
+	}
+	protoStats := ConvertProtoStatsToDB(resp)
+	return protoStats, nil
 }
 
 func (c *SurveyClient) Ping(ctx context.Context) error {

@@ -21,6 +21,7 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	SurveyService_AddAnswer_FullMethodName    = "/survey.SurveyService/AddAnswer"
 	SurveyService_GetQuestions_FullMethodName = "/survey.SurveyService/GetQuestions"
+	SurveyService_GetStats_FullMethodName     = "/survey.SurveyService/GetStats"
 	SurveyService_Ping_FullMethodName         = "/survey.SurveyService/Ping"
 )
 
@@ -30,6 +31,7 @@ const (
 type SurveyServiceClient interface {
 	AddAnswer(ctx context.Context, in *AddAnswerRequest, opts ...grpc.CallOption) (*AddAnswerResponse, error)
 	GetQuestions(ctx context.Context, in *GetQuestionsRequest, opts ...grpc.CallOption) (*GetQuestionsResponse, error)
+	GetStats(ctx context.Context, in *NoContent, opts ...grpc.CallOption) (*GetStatsResponse, error)
 	Ping(ctx context.Context, in *NoContent, opts ...grpc.CallOption) (*NoContent, error)
 }
 
@@ -61,6 +63,16 @@ func (c *surveyServiceClient) GetQuestions(ctx context.Context, in *GetQuestions
 	return out, nil
 }
 
+func (c *surveyServiceClient) GetStats(ctx context.Context, in *NoContent, opts ...grpc.CallOption) (*GetStatsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetStatsResponse)
+	err := c.cc.Invoke(ctx, SurveyService_GetStats_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *surveyServiceClient) Ping(ctx context.Context, in *NoContent, opts ...grpc.CallOption) (*NoContent, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(NoContent)
@@ -77,6 +89,7 @@ func (c *surveyServiceClient) Ping(ctx context.Context, in *NoContent, opts ...g
 type SurveyServiceServer interface {
 	AddAnswer(context.Context, *AddAnswerRequest) (*AddAnswerResponse, error)
 	GetQuestions(context.Context, *GetQuestionsRequest) (*GetQuestionsResponse, error)
+	GetStats(context.Context, *NoContent) (*GetStatsResponse, error)
 	Ping(context.Context, *NoContent) (*NoContent, error)
 	mustEmbedUnimplementedSurveyServiceServer()
 }
@@ -93,6 +106,9 @@ func (UnimplementedSurveyServiceServer) AddAnswer(context.Context, *AddAnswerReq
 }
 func (UnimplementedSurveyServiceServer) GetQuestions(context.Context, *GetQuestionsRequest) (*GetQuestionsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetQuestions not implemented")
+}
+func (UnimplementedSurveyServiceServer) GetStats(context.Context, *NoContent) (*GetStatsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetStats not implemented")
 }
 func (UnimplementedSurveyServiceServer) Ping(context.Context, *NoContent) (*NoContent, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
@@ -154,6 +170,24 @@ func _SurveyService_GetQuestions_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SurveyService_GetStats_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(NoContent)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SurveyServiceServer).GetStats(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SurveyService_GetStats_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SurveyServiceServer).GetStats(ctx, req.(*NoContent))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _SurveyService_Ping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(NoContent)
 	if err := dec(in); err != nil {
@@ -186,6 +220,10 @@ var SurveyService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetQuestions",
 			Handler:    _SurveyService_GetQuestions_Handler,
+		},
+		{
+			MethodName: "GetStats",
+			Handler:    _SurveyService_GetStats_Handler,
 		},
 		{
 			MethodName: "Ping",

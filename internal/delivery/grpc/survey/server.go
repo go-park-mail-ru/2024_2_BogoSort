@@ -2,27 +2,30 @@ package survey
 
 import (
 	"context"
+
 	proto "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/survey/proto"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase"
 	"github.com/google/uuid"
+	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"go.uber.org/zap"
 )
 
 type GrpcSurveyServer struct {
 	proto.UnimplementedSurveyServiceServer
-	answerUC usecase.AnswerUsecase
+	answerUC     usecase.AnswerUsecase
 	questionRepo repository.QuestionRepository
+	statisticUC  usecase.StatisticUsecase
 }
 
-func NewSurveyGrpcServer(answerUC usecase.AnswerUsecase, questionRepo repository.QuestionRepository) *GrpcSurveyServer {
+func NewSurveyGrpcServer(answerUC usecase.AnswerUsecase, questionRepo repository.QuestionRepository, statisticUC usecase.StatisticUsecase) *GrpcSurveyServer {
 	return &GrpcSurveyServer{
-		answerUC: answerUC,
+		answerUC:     answerUC,
 		questionRepo: questionRepo,
+		statisticUC:  statisticUC,
 	}
 }
 
@@ -61,6 +64,19 @@ func (s *GrpcSurveyServer) GetQuestions(ctx context.Context, req *proto.GetQuest
 
 	return &proto.GetQuestionsResponse{
 		Questions: protoQuestions,
+	}, nil
+}
+
+func (s *GrpcSurveyServer) GetStats(ctx context.Context, req *proto.NoContent) (*proto.GetStatsResponse, error) {
+	stats, err := s.statisticUC.GetStats()
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get stats: %v", err)
+	}
+
+	protoStats := ConvertDBStatsToProto(stats)
+
+	return &proto.GetStatsResponse{
+		PageStats: protoStats,
 	}, nil
 }
 

@@ -2,6 +2,7 @@ package survey
 
 import (
 	pb "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/survey/proto"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
 	"github.com/pkg/errors"
 )
 
@@ -53,4 +54,24 @@ func ConvertEnumToDBPageType(pageType pb.PageType) string {
 	default:
 		return "unknown"
 	}
+}
+
+func ConvertDBStatsToProto(stats *dto.GetStatsResponse) []*pb.PageStats {
+	protoStats := []*pb.PageStats{}
+	for _, pageStats := range stats.PageStats {
+		protoStats = append(protoStats, &pb.PageStats{
+			Page: pageStats.Page,
+		})
+	}
+	return protoStats
+}
+
+func ConvertProtoStatsToDB(protoStats *pb.GetStatsResponse) *dto.GetStatsResponse {
+	stats := &dto.GetStatsResponse{}
+	for _, pageStats := range protoStats.PageStats {
+		stats.PageStats = append(stats.PageStats, dto.PageStats{
+			Page: pageStats.Page,
+		})
+	}
+	return stats
 }
