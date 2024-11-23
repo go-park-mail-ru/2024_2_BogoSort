@@ -37,11 +37,11 @@ VALUES
 -- Заполнение таблицы "user"
 INSERT INTO "user" (id, username, email, password_hash, password_salt, phone_number, image_id, status, created_at, updated_at)
 VALUES
-    (uuid_generate_v4(), 'ivan_petrov', 'ivan.petrov@example.com', 'hash1', 'salt1', '+79261234567', (SELECT id FROM static WHERE name = 'default.jpg'), 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    (uuid_generate_v4(), 'anna_smirnova', 'anna.smirnova@example.com', 'hash2', 'salt2', '+79269876543', (SELECT id FROM static WHERE name = 'default.jpg'), 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    (uuid_generate_v4(), 'pavel_ivanov', 'pavel.ivanov@example.com', 'hash3', 'salt3', '+79261239876', (SELECT id FROM static WHERE name = 'default.jpg'), 'inactive', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    (uuid_generate_v4(), 'elena_kuznetsova', 'elena.kuznetsova@example.com', 'hash4', 'salt4', '+79261231234', (SELECT id FROM static WHERE name = 'default.jpg'), 'banned', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    (uuid_generate_v4(), 'dmitry_sokolov', 'dmitry.sokolov@example.com', 'hash5', 'salt5', '+79261234568', (SELECT id FROM static WHERE name = 'default.jpg'), 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+    ('d4e5f6a7-b8c9-0123-def0-4567890123bc', 'ivan_petrov', 'ivan.petrov@example.com', 'hash1', 'salt1', '+79261234567', (SELECT id FROM static WHERE name = 'default.jpg'), 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('e5f6a7b8-c9d0-1234-ef01-5678901234cd', 'anna_smirnova', 'anna.smirnova@example.com', 'hash2', 'salt2', '+79269876543', (SELECT id FROM static WHERE name = 'default.jpg'), 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'pavel_ivanov', 'pavel.ivanov@example.com', 'hash3', 'salt3', '+79261239876', (SELECT id FROM static WHERE name = 'default.jpg'), 'inactive', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('b2c3d4e5-f6a7-8901-bcde-f2345678901a', 'elena_kuznetsova', 'elena.kuznetsova@example.com', 'hash4', 'salt4', '+79261231234', (SELECT id FROM static WHERE name = 'default.jpg'), 'banned', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('c3d4e5f6-a7b8-9012-cdef-3456789012ab', 'dmitry_sokolov', 'dmitry.sokolov@example.com', 'hash5', 'salt5', '+79261234568', (SELECT id FROM static WHERE name = 'default.jpg'), 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
 -- Заполнение таблицы "seller"
 INSERT INTO seller (id, user_id, description, created_at, updated_at)
