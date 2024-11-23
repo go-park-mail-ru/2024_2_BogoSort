@@ -9,4 +9,6 @@ type AnswerRepository interface {
 	// Возможные ошибки:
 	// ErrAnswerBadRequest - некорректные данные для создания ответа
 	Add(answer *entity.Answer) (*entity.Answer, error)
+	// GetAnswersByQuestionID возвращает все ответы для конкретного вопроса
+	GetByQuestionID(questionID string) ([]entity.Answer, error)
 }

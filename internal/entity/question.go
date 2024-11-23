@@ -4,6 +4,7 @@ import "github.com/google/uuid"
 
 type Question struct {
 	ID               uuid.UUID
+	Title            string
 	Description      string
 	Page             PageType
 	TriggerValue     int
