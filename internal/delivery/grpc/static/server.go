@@ -11,15 +11,17 @@ import (
 
 	staticProto "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/static/proto"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase"
+	"go.uber.org/zap"
 )
 
 type Grpc struct {
 	staticProto.UnimplementedStaticServiceServer
 	staticUC usecase.StaticUseCase
+	logger   *zap.Logger
 }
 
-func NewStaticGrpc(staticUC usecase.StaticUseCase) *Grpc {
-	return &Grpc{staticUC: staticUC}
+func NewStaticGrpc(staticUC usecase.StaticUseCase, logger *zap.Logger) *Grpc {
+	return &Grpc{staticUC: staticUC, logger: logger}
 }
 
 func (service *Grpc) GetStatic(_ context.Context, static *staticProto.Static) (*staticProto.Static, error) {
@@ -35,6 +37,7 @@ func (service *Grpc) GetStatic(_ context.Context, static *staticProto.Static) (*
 }
 
 func (service *Grpc) UploadStatic(stream staticProto.StaticService_UploadStaticServer) error {
+	zap.L().Info("Begin upload static")
 	var bytesAvatar []byte
 
 	for {
@@ -43,31 +46,32 @@ func (service *Grpc) UploadStatic(stream staticProto.StaticService_UploadStaticS
 			break
 		}
 		if err != nil {
+			zap.L().Error("Error getting chunk", zap.Error(err))
 			return err
 		}
 		bytesAvatar = append(bytesAvatar, chunk.GetChunk()...)
 	}
 
+	zap.L().Info("All chunks received, begin processing")
 	reader := bytes.NewReader(bytesAvatar)
 	staticID, err := service.staticUC.UploadStatic(reader)
 	if err != nil {
-		return err
+		zap.L().Error("Error uploading static", zap.Error(err))
+		switch {
+		case errors.Is(err, usecase.ErrStaticTooBigFile):
+			return stream.SendAndClose(&staticProto.Static{Error: "ErrStaticTooBigFile"})
+		case errors.Is(err, usecase.ErrStaticNotImage):
+			return stream.SendAndClose(&staticProto.Static{Error: "ErrStaticNotImage"})
+		case errors.Is(err, usecase.ErrStaticImageDimensions):
+			return stream.SendAndClose(&staticProto.Static{Error: "ErrStaticImageDimensions"})
+		default:
+			return err
+		}
 	}
 
-	switch {
-	case errors.Is(err, usecase.ErrStaticTooBigFile):
-		return stream.SendAndClose(&staticProto.Static{Error: "ErrStaticTooBigFile"})
-	case errors.Is(err, usecase.ErrStaticNotImage):
-		return stream.SendAndClose(&staticProto.Static{Error: "ErrStaticNotImage"})
-	case errors.Is(err, usecase.ErrStaticImageDimensions):
-		return stream.SendAndClose(&staticProto.Static{Error: "ErrStaticImageDimensions"})
-	case err != nil:
-		return err
-	default:
-		return stream.SendAndClose(&staticProto.Static{Id: staticID.String()})
-	}
+	zap.L().Info("Static file uploaded", zap.String("id", staticID.String()))
+	return stream.SendAndClose(&staticProto.Static{Id: staticID.String()})
 }
-
 func (service *Grpc) GetStaticFile(
 	static *staticProto.Static,
 	stream staticProto.StaticService_GetStaticFileServer,

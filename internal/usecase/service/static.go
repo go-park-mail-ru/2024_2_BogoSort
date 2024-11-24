@@ -61,7 +61,7 @@ func (s *StaticService) UploadStatic(reader io.ReadSeeker) (uuid.UUID, error) {
 		return uuid.Nil, entity.UsecaseWrap(err, errors.New("error reading file header"))
 	}
 	contentType := http.DetectContentType(headerBytes)
-	if contentType != "image/jpeg" && contentType != "image/png" && contentType != "image/gif" {
+	if contentType != "image/jpeg" && contentType != "image/png" && contentType != "image/gif" && contentType != "image/webp" {
 		return uuid.Nil, usecase.ErrStaticNotImage
 	}
 	_, err = reader.Seek(0, io.SeekStart)
@@ -107,10 +107,18 @@ func (s *StaticService) UploadStatic(reader io.ReadSeeker) (uuid.UUID, error) {
 		return uuid.Nil, errors.Wrap(err, "error converting image to WEBP format")
 	}
 
-	id, err := s.staticRepo.Upload("images", uuid.New().String()+".webp", out.Bytes())
+	newUUID := uuid.New()
+	id, err := s.staticRepo.Upload("images", newUUID.String()+".webp", out.Bytes())
 	if err != nil {
 		return uuid.Nil, err
 	}
+
+	if id == uuid.Nil {
+		zap.L().Error("Repository returned UUID as nil")
+		return uuid.Nil, errors.New("failed to generate UUID for static file")
+	}
+
+	zap.L().Info("UploadStatic received id from repository", zap.String("id", id.String()))
 	return id, nil
 }
 
