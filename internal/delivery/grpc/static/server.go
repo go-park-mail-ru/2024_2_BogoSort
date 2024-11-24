@@ -3,10 +3,11 @@ package static
 import (
 	"bytes"
 	"context"
-	"io"
-	"github.com/google/uuid"
 	"errors"
+	"io"
 	"net/url"
+
+	"github.com/google/uuid"
 
 	staticProto "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/static/proto"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase"

@@ -33,7 +33,7 @@ csrf_secret: "2b7e151628aed2a6abf7158809cf4f3c"
 
 static:
   path: "static_files/"
-  max_size: 10485760
+  max_size: 31457280
   timeout: 5s
   port: 8081
 

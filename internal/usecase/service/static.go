@@ -11,7 +11,7 @@ import (
 	"os"
 	"path/filepath"
 
-	_ "github.com/chai2010/webp"
+	"github.com/chai2010/webp"
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
@@ -100,12 +100,12 @@ func (s *StaticService) UploadStatic(reader io.ReadSeeker) (uuid.UUID, error) {
 	draw.Draw(squareImage, squareImage.Bounds(), img, start, draw.Src)
 
 	var out bytes.Buffer
-	// var opts webp.Options
-	// opts.Lossless = false
-	// opts.Quality = 60
-	// if err = webp.Encode(&out, squareImage, &opts); err != nil {
-	// 	return uuid.Nil, errors.Wrap(err, "error converting image to WEBP format")
-	// }
+	var opts webp.Options
+	opts.Lossless = false
+	opts.Quality = 60
+	if err = webp.Encode(&out, squareImage, &opts); err != nil {
+		return uuid.Nil, errors.Wrap(err, "error converting image to WEBP format")
+	}
 
 	id, err := s.staticRepo.Upload("images", uuid.New().String()+".webp", out.Bytes())
 	if err != nil {

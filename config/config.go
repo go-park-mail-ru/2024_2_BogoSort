@@ -48,7 +48,7 @@ type Config struct {
 
 type StaticConfig struct {
 	IP      string        `yaml:"ip"            default:"0.0.0.0"`
-	Port    int           `yaml:"port"          default:"8081"`
+	Port    int           `yaml:"port"`
 	Path    string        `yaml:"path"`
 	MaxSize int           `yaml:"max_size"`
 	Timeout time.Duration `yaml:"timeout"`
@@ -102,7 +102,15 @@ func Init() (Config, error) {
 		cfg.SearchBatchSize, _ = strconv.Atoi(batchSize)
 	}
 
+	if maxSize := os.Getenv("STATIC_MAX_SIZE"); maxSize != "" {
+		cfg.Static.MaxSize, _ = strconv.Atoi(maxSize)
+	}
+
 	return cfg, nil
+}
+
+func GetStaticMaxSize() int {
+	return cfg.Static.MaxSize
 }
 
 func GetSearchBatchSize() int {
