@@ -16,6 +16,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	"github.com/gorilla/mux"
+	"net/http"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	healthProto "google.golang.org/grpc/health/grpc_health_v1"
 )
@@ -59,6 +60,17 @@ func main() {
 
 	router := mux.NewRouter()
 	router.PathPrefix("/metrics").Handler(promhttp.Handler())
+
+	httpServer := &http.Server{
+		Addr:    ":8080",
+		Handler: router,
+	}
+
+	go func() {
+		if err := httpServer.ListenAndServe(); err != nil {
+			zap.L().Fatal("Ошибка при запуске HTTP сервера", zap.Error(err))
+		}
+	}()
 
 	address := config.GetAuthAddress()
 	lis, err := net.Listen("tcp", address)
