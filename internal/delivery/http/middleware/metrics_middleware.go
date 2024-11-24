@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"context"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/utils/metrics"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/metrics"
 	"github.com/gorilla/mux"
 	"net/http"
 	"strconv"
@@ -25,12 +25,13 @@ func CreateMetricsMiddleware(metric *metrics.HTTPMetrics) mux.MiddlewareFunc {
 			codeStr := strconv.Itoa(*code)
 			route := mux.CurrentRoute(request)
 			path, _ := route.GetPathTemplate()
+			method := request.Method
 
 			if path != "/metrics" {
-				metric.AddRequestDuration(path, codeStr, end)
-				metric.IncTotalHits(path, codeStr)
+				metric.AddRequestDuration(path, method, codeStr, end)
+				metric.IncTotalHits(path, method, codeStr)
 				if *code >= 400 {
-					metric.IncTotalErrors(path, codeStr)
+					metric.IncTotalErrors(path, method, codeStr)
 				}
 			}
 		})

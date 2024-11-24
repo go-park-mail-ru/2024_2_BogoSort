@@ -5,15 +5,15 @@ import (
 	"time"
 )
 
-type HTTPMetrics struct {
+type GRPCMetrics struct {
 	totalHits   *prometheus.CounterVec
-	totalErrors *prometheus.CounterVec
 	serviceName string
 	duration    *prometheus.HistogramVec
+	totalErrors *prometheus.CounterVec
 }
 
-func CreateHTTPMetrics(service string) (*HTTPMetrics, error) {
-	var metric HTTPMetrics
+func NewGRPCMetrics(service string) (*GRPCMetrics, error) {
+	var metric GRPCMetrics
 	metric.serviceName = service
 
 	metric.totalHits = prometheus.NewCounterVec(
@@ -21,7 +21,7 @@ func CreateHTTPMetrics(service string) (*HTTPMetrics, error) {
 			Name: service + "_total_hits_count",
 			Help: "Number of total http requests",
 		},
-		[]string{"path", "service", "code"})
+		[]string{"service", "method", "code"})
 	if err := prometheus.Register(metric.totalHits); err != nil {
 		return nil, err
 	}
@@ -31,7 +31,7 @@ func CreateHTTPMetrics(service string) (*HTTPMetrics, error) {
 			Name: service + "_error_hits_count",
 			Help: "Number of total http error requests",
 		},
-		[]string{"path", "service", "code"})
+		[]string{"service", "method", "code"})
 	if err := prometheus.Register(metric.totalErrors); err != nil {
 		return nil, err
 	}
@@ -41,7 +41,7 @@ func CreateHTTPMetrics(service string) (*HTTPMetrics, error) {
 			Name: service + "_code",
 			Help: "Request time",
 		},
-		[]string{"path", "service", "code"})
+		[]string{"service", "method", "code"})
 	if err := prometheus.Register(metric.duration); err != nil {
 		return nil, err
 	}
@@ -49,14 +49,14 @@ func CreateHTTPMetrics(service string) (*HTTPMetrics, error) {
 	return &metric, nil
 }
 
-func (m *HTTPMetrics) IncTotalHits(path, code string) {
-	m.totalHits.WithLabelValues(path, m.serviceName, code).Inc()
+func (m *GRPCMetrics) IncTotalHits(code, method string) {
+	m.totalHits.WithLabelValues(m.serviceName, method, code).Inc()
 }
 
-func (m *HTTPMetrics) IncTotalErrors(path, code string) {
-	m.totalErrors.WithLabelValues(path, m.serviceName, code).Inc()
+func (m *GRPCMetrics) IncTotalErrors(code, method string) {
+	m.totalErrors.WithLabelValues(m.serviceName, method, code).Inc()
 }
 
-func (m *HTTPMetrics) AddRequestDuration(path, code string, duration time.Duration) {
-	m.duration.WithLabelValues(path, m.serviceName, code).Observe(duration.Seconds())
+func (m *GRPCMetrics) AddDuration(code, method string, duration time.Duration) {
+	m.duration.WithLabelValues(m.serviceName, method, code).Observe(duration.Seconds())
 }

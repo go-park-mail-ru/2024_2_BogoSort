@@ -18,6 +18,8 @@ import (
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase/service"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/pkg/connector"
 	static "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/static"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/metrics"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/gorilla/mux"
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/rs/cors"
@@ -88,10 +90,12 @@ func Init(cfg config.Config) (*mux.Router, error) {
 	router := mux.NewRouter()
 	router.Use(recoveryMiddleware)
 
-
-	// metric := metrics.NewHTTPMetrics()
-	// metricsMiddleware := middleware.CreateMetricsMiddleware(metric)
-	// router.Use(metricsMiddleware)
+	metric, err := metrics.NewHTTPMetrics("app")
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create http metrics")
+	}
+	metricsMiddleware := middleware.CreateMetricsMiddleware(metric)
+	router.Use(metricsMiddleware)
 
 	policy := bluemonday.UGCPolicy()
 
@@ -179,6 +183,7 @@ func Init(cfg config.Config) (*mux.Router, error) {
 	purchaseHandler.ConfigureRoutes(authRouter)
 	staticHandler.ConfigureRoutes(router)
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+	router.PathPrefix("/metrics").Handler(promhttp.Handler())
 
 	return router, nil
 }

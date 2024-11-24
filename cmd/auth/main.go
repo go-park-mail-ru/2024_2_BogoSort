@@ -9,6 +9,8 @@ import (
 	authProto "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/auth/proto"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository/redis"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase/service"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/metrics"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/interceptors"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/pkg/connector"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -37,7 +39,14 @@ func main() {
 
 	authService := service.NewAuthService(sessionRepo, zap.L())
 
-	server := grpc.NewServer()
+	metrics, err := metrics.NewGRPCMetrics("auth")
+	if err != nil {
+		zap.L().Fatal("Ошибка при инициализации метрик", zap.Error(err))
+	}
+
+	server := grpc.NewServer(
+		grpc.UnaryInterceptor(interceptors.CreateMetricsInterceptor(*metrics).ServeMetricsInterceptor),
+	)
 	authServer := auth.NewGrpcServer(authService)
 
 	healthServer := health.NewServer()

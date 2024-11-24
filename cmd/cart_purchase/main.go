@@ -10,6 +10,8 @@ import (
 	cartPurchaseProto "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/cart_purchase/proto"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository/postgres"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase/service"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/metrics"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/interceptors"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/pkg/connector"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -48,7 +50,14 @@ func main() {
 		return
 	}
 
-	server := grpc.NewServer()
+	metrics, err := metrics.NewGRPCMetrics("cart_purchase")
+	if err != nil {
+		zap.L().Fatal("Ошибка при инициализации метрик", zap.Error(err))
+	}
+
+	server := grpc.NewServer(
+		grpc.UnaryInterceptor(interceptors.CreateMetricsInterceptor(*metrics).ServeMetricsInterceptor),
+	)
 	cartUC := service.NewCartService(cartRepo, advertRepo, zap.L())
 	purchaseUC := service.NewPurchaseService(purchaseRepo, advertRepo, cartRepo, zap.L())
 	cartPurchaseServer := cart_purchase.NewGrpcServer(cartUC, purchaseUC)

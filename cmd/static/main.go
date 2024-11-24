@@ -14,6 +14,8 @@ import (
 	staticProto "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/static/proto"
 	"google.golang.org/grpc"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/static"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/metrics"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/interceptors"
 )
 
 func main() {
@@ -38,8 +40,16 @@ func main() {
 	}
 
 	staticUseCase := service.NewStaticService(staticRepo, zap.L())
+
+	metrics, err := metrics.NewGRPCMetrics("static")
+	if err != nil {
+		zap.L().Fatal("Ошибка при инициализации метрик", zap.Error(err))
+	}
+
 	staticService := static.NewStaticGrpc(staticUseCase)
-	server := grpc.NewServer()
+	server := grpc.NewServer(
+		grpc.UnaryInterceptor(interceptors.CreateMetricsInterceptor(*metrics).ServeMetricsInterceptor),
+	)
 	staticProto.RegisterStaticServiceServer(server, staticService)
 	addr := cfg.StaticHost + ":" + strconv.Itoa(cfg.StaticPort)
 
