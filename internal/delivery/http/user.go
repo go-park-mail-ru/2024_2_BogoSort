@@ -42,12 +42,12 @@ type UserEndpoint struct {
 
 func NewUserEndpoint(userUC usecase.User, authUC usecase.Auth, sessionManager *utils.SessionManager, staticGrpcClient static.StaticGrpcClient, logger *zap.Logger, policy *bluemonday.Policy) *UserEndpoint {
 	return &UserEndpoint{
-		userUC:         userUC,
-		authUC:         authUC,
-		sessionManager: sessionManager,
+		userUC:           userUC,
+		authUC:           authUC,
+		sessionManager:   sessionManager,
 		staticGrpcClient: staticGrpcClient,
-		logger:         logger,
-		policy:         policy,
+		logger:           logger,
+		policy:           policy,
 	}
 }
 

@@ -11,7 +11,7 @@ import (
 	"os"
 	"path/filepath"
 
-	_ "github.com/chai2010/webp"
+	"github.com/chai2010/webp"
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
@@ -61,7 +61,7 @@ func (s *StaticService) UploadStatic(reader io.ReadSeeker) (uuid.UUID, error) {
 		return uuid.Nil, entity.UsecaseWrap(err, errors.New("error reading file header"))
 	}
 	contentType := http.DetectContentType(headerBytes)
-	if contentType != "image/jpeg" && contentType != "image/png" && contentType != "image/gif" {
+	if contentType != "image/jpeg" && contentType != "image/png" && contentType != "image/gif" && contentType != "image/webp" {
 		return uuid.Nil, usecase.ErrStaticNotImage
 	}
 	_, err = reader.Seek(0, io.SeekStart)
@@ -100,17 +100,25 @@ func (s *StaticService) UploadStatic(reader io.ReadSeeker) (uuid.UUID, error) {
 	draw.Draw(squareImage, squareImage.Bounds(), img, start, draw.Src)
 
 	var out bytes.Buffer
-	// var opts webp.Options
-	// opts.Lossless = false
-	// opts.Quality = 60
-	// if err = webp.Encode(&out, squareImage, &opts); err != nil {
-	// 	return uuid.Nil, errors.Wrap(err, "error converting image to WEBP format")
-	// }
+	var opts webp.Options
+	opts.Lossless = false
+	opts.Quality = 60
+	if err = webp.Encode(&out, squareImage, &opts); err != nil {
+		return uuid.Nil, errors.Wrap(err, "error converting image to WEBP format")
+	}
 
-	id, err := s.staticRepo.Upload("images", uuid.New().String()+".webp", out.Bytes())
+	newUUID := uuid.New()
+	id, err := s.staticRepo.Upload("images", newUUID.String()+".webp", out.Bytes())
 	if err != nil {
 		return uuid.Nil, err
 	}
+
+	if id == uuid.Nil {
+		zap.L().Error("Repository returned UUID as nil")
+		return uuid.Nil, errors.New("failed to generate UUID for static file")
+	}
+
+	zap.L().Info("UploadStatic received id from repository", zap.String("id", id.String()))
 	return id, nil
 }
 
