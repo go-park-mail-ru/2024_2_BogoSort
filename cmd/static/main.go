@@ -16,6 +16,8 @@ import (
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/static"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/metrics"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/interceptors"
+	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func main() {
@@ -52,6 +54,9 @@ func main() {
 	)
 	staticProto.RegisterStaticServiceServer(server, staticService)
 	addr := cfg.StaticHost + ":" + strconv.Itoa(cfg.StaticPort)
+
+	router := mux.NewRouter()
+	router.PathPrefix("/metrics").Handler(promhttp.Handler())
 
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {

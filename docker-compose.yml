@@ -174,3 +174,4 @@ networks:
 
 volumes:
   pgdata:
+  prometheus_data:

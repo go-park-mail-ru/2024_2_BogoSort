@@ -15,6 +15,8 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
+	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	healthProto "google.golang.org/grpc/health/grpc_health_v1"
 )
 
@@ -54,6 +56,9 @@ func main() {
 	healthServer.SetServingStatus("", healthProto.HealthCheckResponse_SERVING)
 
 	authProto.RegisterAuthServiceServer(server, authServer)
+
+	router := mux.NewRouter()
+	router.PathPrefix("/metrics").Handler(promhttp.Handler())
 
 	address := config.GetAuthAddress()
 	lis, err := net.Listen("tcp", address)

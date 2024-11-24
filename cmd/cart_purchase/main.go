@@ -14,6 +14,8 @@ import (
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/interceptors"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/pkg/connector"
 	"go.uber.org/zap"
+	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	healthProto "google.golang.org/grpc/health/grpc_health_v1"
@@ -68,6 +70,10 @@ func main() {
 
 	cartPurchaseProto.RegisterCartPurchaseServiceServer(server, cartPurchaseServer)
 	address := config.GetCartPurchaseAddress()
+
+	router := mux.NewRouter()
+	router.PathPrefix("/metrics").Handler(promhttp.Handler())
+	
 	lis, err := net.Listen("tcp", address)
 	if err != nil {
 		zap.L().Fatal("Failed to listen on port", zap.Error(err))
