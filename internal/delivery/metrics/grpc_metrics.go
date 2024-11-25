@@ -21,7 +21,7 @@ func NewGRPCMetrics(service string) (*GRPCMetrics, error) {
 			Name: service + "_total_hits_count",
 			Help: "Number of total http requests",
 		},
-		[]string{"service", "path", "method", "code"})
+		[]string{"service", "method", "code"})
 	if err := prometheus.Register(metric.totalHits); err != nil {
 		return nil, err
 	}
@@ -31,7 +31,7 @@ func NewGRPCMetrics(service string) (*GRPCMetrics, error) {
 			Name: service + "_error_hits_count",
 			Help: "Number of total http error requests",
 		},
-		[]string{"service", "path", "method", "code"})
+		[]string{"service", "method", "code"})
 	if err := prometheus.Register(metric.totalErrors); err != nil {
 		return nil, err
 	}
@@ -41,7 +41,7 @@ func NewGRPCMetrics(service string) (*GRPCMetrics, error) {
 			Name: service + "_code",
 			Help: "Request time",
 		},
-		[]string{"service", "path", "method", "code"})
+		[]string{"service", "method", "code"})
 	if err := prometheus.Register(metric.duration); err != nil {
 		return nil, err
 	}
