@@ -16,7 +16,7 @@ import (
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/static"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/metrics"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/interceptors"
-	"github.com/gorilla/mux"
+	"net/http"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -55,8 +55,12 @@ func main() {
 	staticProto.RegisterStaticServiceServer(server, staticService)
 	addr := cfg.StaticHost + ":" + strconv.Itoa(cfg.StaticPort)
 
-	router := mux.NewRouter()
-	router.PathPrefix("/metrics").Handler(promhttp.Handler())
+	http.Handle("/api/v1/metrics", promhttp.Handler())
+    go func() {
+        if err := http.ListenAndServe(":7053", nil); err != nil {
+            zap.L().Fatal("Failed to start metrics HTTP server", zap.Error(err))
+        }
+    }()
 
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {

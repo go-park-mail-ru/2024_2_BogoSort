@@ -183,7 +183,7 @@ func Init(cfg config.Config) (*mux.Router, error) {
 	purchaseHandler.ConfigureRoutes(authRouter)
 	staticHandler.ConfigureRoutes(router)
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
-	router.PathPrefix("/metrics").Handler(promhttp.Handler())
+	router.PathPrefix("/api/v1/metrics").Handler(promhttp.Handler())
 
 	return router, nil
 }

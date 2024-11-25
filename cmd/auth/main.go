@@ -15,7 +15,6 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
-	"github.com/gorilla/mux"
 	"net/http"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	healthProto "google.golang.org/grpc/health/grpc_health_v1"
@@ -27,24 +26,24 @@ func main() {
 
 	cfg, err := config.Init()
 	if err != nil {
-		zap.L().Fatal("Ошибка при инициализации конфигурации", zap.Error(err))
+		zap.L().Fatal("Error initializing configuration", zap.Error(err))
 	}
 
 	rdb, err := connector.GetRedisConnector(cfg.RdAddr, cfg.RdPass, cfg.RdDB)
 	if err != nil {
-		zap.L().Fatal("Ошибка при подключении к Redis", zap.Error(err))
+		zap.L().Fatal("Error connecting to Redis", zap.Error(err))
 	}
 
 	sessionRepo, err := redis.NewSessionRepository(rdb, int(cfg.Session.ExpirationTime.Seconds()), context.Background(), zap.L())
 	if err != nil {
-		zap.L().Fatal("Ошибка при инициализации репозитория сессий", zap.Error(err))
+		zap.L().Fatal("Error initializing session repository", zap.Error(err))
 	}
 
 	authService := service.NewAuthService(sessionRepo, zap.L())
 
 	metrics, err := metrics.NewGRPCMetrics("auth")
 	if err != nil {
-		zap.L().Fatal("Ошибка при инициализации метрик", zap.Error(err))
+		zap.L().Fatal("Error initializing metrics", zap.Error(err))
 	}
 
 	server := grpc.NewServer(
@@ -58,28 +57,21 @@ func main() {
 
 	authProto.RegisterAuthServiceServer(server, authServer)
 
-	router := mux.NewRouter()
-	router.PathPrefix("/metrics").Handler(promhttp.Handler())
-
-	httpServer := &http.Server{
-		Addr:    ":8080",
-		Handler: router,
-	}
-
-	go func() {
-		if err := httpServer.ListenAndServe(); err != nil {
-			zap.L().Fatal("Ошибка при запуске HTTP сервера", zap.Error(err))
-		}
-	}()
+	http.Handle("/api/v1/metrics", promhttp.Handler())
+    go func() {
+        if err := http.ListenAndServe(":7051", nil); err != nil {
+            zap.L().Fatal("Failed to start metrics HTTP server", zap.Error(err))
+        }
+    }()
 
 	address := config.GetAuthAddress()
 	lis, err := net.Listen("tcp", address)
 	if err != nil {
-		zap.L().Fatal("Не удалось прослушивать порт", zap.Error(err))
+		zap.L().Fatal("Failed to listen on port", zap.Error(err))
 	}
 
-	zap.L().Info("Auth сервер запущен на " + address)
+	zap.L().Info("Auth server started on " + address)
 	if err := server.Serve(lis); err != nil {
-		zap.L().Fatal("Ошибка при запуске gRPC сервера", zap.Error(err))
+		zap.L().Fatal("Error starting gRPC server", zap.Error(err))
 	}
 }

@@ -27,6 +27,10 @@ func getCode(err string) int {
 		return http.StatusUnauthorized
 	case "user not authorized":
 		return http.StatusUnauthorized
+	case "invalid input":
+		return http.StatusBadRequest
+	case "resource not found":
+		return http.StatusNotFound
 	}
 
 	return http.StatusBadRequest
@@ -46,7 +50,7 @@ func (interceptor *Interceptor) ServeMetricsInterceptor(ctx context.Context, req
 	codeStr := strconv.Itoa(code)
 	interceptor.metrics.AddDuration(codeStr, info.FullMethod, end)
 	interceptor.metrics.IncTotalHits(codeStr, info.FullMethod)
-	if code >= 400 {
+	if code >= 400  {
 		interceptor.metrics.IncTotalErrors(codeStr, info.FullMethod)
 	}
 
