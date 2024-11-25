@@ -42,12 +42,12 @@ type UserEndpoint struct {
 
 func NewUserEndpoint(userUC usecase.User, authUC usecase.Auth, sessionManager *utils.SessionManager, staticGrpcClient static.StaticGrpcClient, logger *zap.Logger, policy *bluemonday.Policy) *UserEndpoint {
 	return &UserEndpoint{
-		userUC:         userUC,
-		authUC:         authUC,
-		sessionManager: sessionManager,
+		userUC:           userUC,
+		authUC:           authUC,
+		sessionManager:   sessionManager,
 		staticGrpcClient: staticGrpcClient,
-		logger:         logger,
-		policy:         policy,
+		logger:           logger,
+		policy:           policy,
 	}
 }
 
@@ -105,6 +105,9 @@ func (u *UserEndpoint) sendError(w http.ResponseWriter, statusCode int, err erro
 // @Failure 500 {object} utils.ErrResponse "Internal server error"
 // @Router /api/v1/signup [post]
 func (u *UserEndpoint) Signup(w http.ResponseWriter, r *http.Request) {
+	logger := middleware.GetLogger(r.Context())
+
+	logger.Info("signup request")
 	var credentials dto.Signup
 	if err := json.NewDecoder(r.Body).Decode(&credentials); err != nil {
 		u.sendError(w, http.StatusBadRequest, err, "error decoding signup request", nil)

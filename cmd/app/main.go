@@ -10,18 +10,19 @@ import (
 	"github.com/go-park-mail-ru/2024_2_BogoSort/config"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/auth"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/cart_purchase"
+	static "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/static"
 	http3 "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/middleware"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/utils"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/metrics"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository/postgres"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository/redis"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase/service"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/pkg/connector"
-	static "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/static"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/metrics"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
+
 	"github.com/gorilla/mux"
 	"github.com/microcosm-cc/bluemonday"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/cors"
 	"go.uber.org/zap"
 
@@ -29,8 +30,22 @@ import (
 )
 
 func main() {
-	zap.ReplaceGlobals(zap.Must(zap.NewProduction()))
-	defer zap.L().Sync()
+	logger, err := zap.NewProduction()
+	if err != nil {
+		panic(err)
+	}
+	defer logger.Sync()
+
+	// Установка глобального логгера
+	zap.ReplaceGlobals(logger)
+
+	lokiConfig := client.Config{
+		URL: "http://loki:3100/loki/api/v1/push",
+	}
+	lokiClient, err := client.New(lokiConfig)
+	if err != nil {
+		logger.Fatal("Не удалось инициализировать клиента Loki", zap.Error(err))
+	}
 
 	cfg, err := config.Init()
 	if err != nil {
@@ -41,6 +56,10 @@ func main() {
 	if err != nil {
 		zap.L().Error("failed to initialize router", zap.Error(err))
 	}
+
+	router.Use(middleware.RequestIDMiddleware)
+	router.Use(middleware.LoggerMiddleware)
+	router.Use(middleware.NewLokiMiddleware(lokiClient, logger).Handler)
 
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins: []string{
