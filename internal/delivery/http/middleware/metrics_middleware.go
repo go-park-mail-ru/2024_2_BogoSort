@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 func CreateMetricsMiddleware(metric *metrics.HTTPMetrics) mux.MiddlewareFunc {
@@ -26,6 +28,8 @@ func CreateMetricsMiddleware(metric *metrics.HTTPMetrics) mux.MiddlewareFunc {
 			route := mux.CurrentRoute(request)
 			path, _ := route.GetPathTemplate()
 			method := request.Method
+
+			zap.L().Info("metrics", zap.String("path", path), zap.String("method", method), zap.String("code", codeStr), zap.Duration("duration", end))
 
 			if path != "/metrics" {
 				metric.AddRequestDuration(path, method, codeStr, end)

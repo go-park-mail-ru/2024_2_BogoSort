@@ -10,7 +10,7 @@ scrape_configs:
 
   - job_name: 'app'
     static_configs:
-      - targets: ['main:8080']
+      - targets: ['app:8080']
 
   - job_name: 'auth'
     static_configs:
@@ -23,3 +23,7 @@ scrape_configs:
   - job_name: 'static'
     static_configs:
       - targets: ['static:50053']
+  
+  - job_name: 'node'
+    static_configs:
+      - targets: [ 'node_exporter:9100' ]
