@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"net/http"
-	"net/url"
+	_ "net/url"
 	"os"
 	"os/signal"
 	"syscall"
@@ -21,8 +21,8 @@ import (
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase/service"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/pkg/connector"
 	"github.com/gorilla/mux"
-	"github.com/grafana/loki-client-go/loki"
-	"github.com/grafana/loki-client-go/pkg/urlutil"
+	_ "github.com/grafana/loki-client-go/loki"
+	_ "github.com/grafana/loki-client-go/pkg/urlutil"
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/cors"
@@ -40,17 +40,17 @@ func main() {
 
 	zap.ReplaceGlobals(logger)
 
-	lokiURL, err := url.Parse("http://loki:3100/loki/api/v1/push")
-	if err != nil {
-		logger.Fatal("failed to parse loki url", zap.Error(err))
-	}
-	lokiConfig := loki.Config{
-		URL: urlutil.URLValue{URL: lokiURL},
-	}
-	lokiClient, err := loki.New(lokiConfig)
-	if err != nil {
-		logger.Fatal("failed to create loki client", zap.Error(err))
-	}
+	// lokiURL, err := url.Parse("http://loki:3100/loki/api/v1/push")
+	// if err != nil {
+	// 	logger.Fatal("failed to parse loki url", zap.Error(err))
+	// }
+	// lokiConfig := loki.Config{
+	// 	URL: urlutil.URLValue{URL: lokiURL},
+	// }
+	// lokiClient, err := loki.New(lokiConfig)
+	// if err != nil {
+	// 	logger.Fatal("failed to create loki client", zap.Error(err))
+	// }
 
 	cfg, err := config.Init()
 	if err != nil {
@@ -64,7 +64,7 @@ func main() {
 
 	router.Use(middleware.RequestIDMiddleware)
 	router.Use(middleware.LoggerMiddleware)
-	router.Use(middleware.NewLokiMiddleware(lokiClient, logger).Handler)
+	// router.Use(middleware.NewLokiMiddleware(lokiClient, logger).Handler)
 
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins: []string{
