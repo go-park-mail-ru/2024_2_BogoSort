@@ -187,7 +187,7 @@ services:
     image: grafana/grafana
     restart: always
     ports:
-      - "3000:3000"
+      - "8010:3000"
     networks:
       - app-network
 
