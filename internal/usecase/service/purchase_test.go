@@ -1,137 +1,77 @@
 package service
 
-// import (
-// 	"context"
-// 	"errors"
-// 	"testing"
+import (
+	"errors"
+	"testing"
 
-// 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
-// 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
-// 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository/mocks"
-// 	"github.com/golang/mock/gomock"
-// 	"github.com/google/uuid"
-// 	"github.com/stretchr/testify/assert"
-// )
+	"github.com/golang/mock/gomock"
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 
-// func setupPurchaseService(t *testing.T) (*PurchaseService, *mocks.MockPurchaseRepository, *mocks.MockCart, *mocks.MockAdvertRepository, *gomock.Controller) {
-// 	ctrl := gomock.NewController(t)
-// 	purchaseRepo := mocks.NewMockPurchaseRepository(ctrl)
-// 	cartRepo := mocks.NewMockCart(ctrl)
-// 	advertRepo := mocks.NewMockAdvertRepository(ctrl)
-// 	service := NewPurchaseService(purchaseRepo, advertRepo, cartRepo)
-// 	return service, purchaseRepo, cartRepo, advertRepo, ctrl
-// }
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository/mocks"
+)
 
-// func TestPurchaseService_Add(t *testing.T) {
-// 	service, purchaseRepo, cartRepo, advertRepo, ctrl := setupPurchaseService(t)
-// 	defer ctrl.Finish()
+func setup(t *testing.T) (*PurchaseService, *mocks.MockPurchaseRepository, *mocks.MockCart, *mocks.MockAdvertRepository, *gomock.Controller) {
+	ctrl := gomock.NewController(t)
+	purchaseRepo := mocks.NewMockPurchaseRepository(ctrl)
+	cartRepo := mocks.NewMockCart(ctrl)
+	advertRepo := mocks.NewMockAdvertRepository(ctrl)
+	service := NewPurchaseService(purchaseRepo, advertRepo, cartRepo)
+	return service, purchaseRepo, cartRepo, advertRepo, ctrl
+}
 
-// 	userID := uuid.New()
-// 	cartID := uuid.New()
-// 	purchaseRequest := dto.PurchaseRequest{
-// 		CartID:         cartID,
-// 		Address:        "123 Test St",
-// 		PaymentMethod:  dto.PaymentMethodCard,
-// 		DeliveryMethod: dto.DeliveryMethodDelivery,
-// 	}
+func TestPurchaseService_AddPurchase_FailureInBeginTransaction(t *testing.T) {
+	service, purchaseRepo, _, _, ctrl := setup(t)
+	defer ctrl.Finish()
 
-// 	testCases := []struct {
-// 		name          string
-// 		setupMocks    func()
-// 		expectedError error
-// 	}{
-// 		{
-// 			name: "Success",
-// 			setupMocks: func() {
-// 				tx := mocks.NewMockTransaction(ctrl)
-// 				purchaseRepo.EXPECT().BeginTransaction().Return(tx, nil)
-// 				purchaseRepo.EXPECT().Add(tx, gomock.Any()).Return(&entity.Purchase{ID: uuid.New(), CartID: cartID}, nil)
-// 				cartRepo.EXPECT().UpdateStatus(tx, cartID, entity.CartStatusInactive).Return(nil)
-// 				advertRepo.EXPECT().GetByCartId(cartID, userID).Return([]*entity.Advert{{ID: uuid.New()}}, nil)
-// 				advertRepo.EXPECT().UpdateStatus(tx, gomock.Any(), entity.AdvertStatusReserved).Return(nil)
-// 				tx.EXPECT().Commit(context.Background()).Return(nil)
-// 			},
-// 			expectedError: nil,
-// 		},
-// 		{
-// 			name: "Transaction Begin Error",
-// 			setupMocks: func() {
-// 				purchaseRepo.EXPECT().BeginTransaction().Return(nil, errors.New("transaction error"))
-// 			},
-// 			expectedError: errors.New("transaction error"),
-// 		},
-// 		{
-// 			name: "Add Purchase Error",
-// 			setupMocks: func() {
-// 				tx := mocks.NewMockTransaction(ctrl)
-// 				purchaseRepo.EXPECT().BeginTransaction().Return(tx, nil)
-// 				purchaseRepo.EXPECT().Add(tx, gomock.Any()).Return(nil, errors.New("add purchase error"))
-// 				tx.EXPECT().Rollback(context.Background()).Return(nil)
-// 			},
-// 			expectedError: errors.New("add purchase error"),
-// 		},
-// 	}
+	purchaseRepo.EXPECT().BeginTransaction().Return(nil, errors.New("begin transaction error"))
 
-// 	for _, tc := range testCases {
-// 		t.Run(tc.name, func(t *testing.T) {
-// 			tc.setupMocks()
+	purchaseRequest := dto.PurchaseRequest{
+		CartID:         uuid.New(),
+		Address:        "123 Street",
+		PaymentMethod:  dto.PaymentMethodCard,
+		DeliveryMethod: dto.DeliveryMethodPickup,
+	}
 
-// 			purchase, err := service.Add(purchaseRequest, userID)
+	resp, err := service.Add(purchaseRequest, uuid.New())
 
-// 			if tc.expectedError != nil {
-// 				assert.Error(t, err)
-// 				assert.True(t, errors.Is(err, tc.expectedError), "expected error: %v, got: %v", tc.expectedError, err)
-// 			} else {
-// 				assert.NoError(t, err)
-// 				assert.NotNil(t, purchase)
-// 			}
-// 		})
-// 	}
-// }
+	assert.Error(t, err)
+	assert.Nil(t, resp)
+	assert.Contains(t, err.Error(), "failed to begin transaction")
+}
 
-// func TestPurchaseService_GetByUserId(t *testing.T) {
-// 	service, purchaseRepo, _, _, ctrl := setupPurchaseService(t)
-// 	defer ctrl.Finish()
+func TestPurchaseService_GetPurchasesByUserID_Success(t *testing.T) {
+	service, purchaseRepo, _, _, ctrl := setup(t)
+	defer ctrl.Finish()
 
-// 	userID := uuid.New()
-// 	expectedPurchases := []*entity.Purchase{
-// 		{ID: uuid.New(), CartID: uuid.New(), Address: "123 Test St"},
-// 	}
+	userID := uuid.New()
+	mockPurchases := []*entity.Purchase{
+		{ID: uuid.New(), CartID: uuid.New(), Status: entity.StatusCompleted},
+	}
 
-// 	testCases := []struct {
-// 		name          string
-// 		setupMocks    func()
-// 		expectedError error
-// 	}{
-// 		{
-// 			name: "Success",
-// 			setupMocks: func() {
-// 				purchaseRepo.EXPECT().GetByUserId(userID).Return(expectedPurchases, nil)
-// 			},
-// 			expectedError: nil,
-// 		},
-// 		{
-// 			name: "Get Purchases Error",
-// 			setupMocks: func() {
-// 				purchaseRepo.EXPECT().GetByUserId(userID).Return(nil, errors.New("get purchases error"))
-// 			},
-// 			expectedError: errors.New("get purchases error"),
-// 		},
-// 	}
+	purchaseRepo.EXPECT().GetByUserId(userID).Return(mockPurchases, nil)
 
-// 	for _, tc := range testCases {
-// 		t.Run(tc.name, func(t *testing.T) {
-// 			tc.setupMocks()
+	resp, err := service.GetByUserId(userID)
 
-// 			purchases, err := service.GetByUserId(userID)
+	assert.NoError(t, err)
+	assert.NotNil(t, resp)
+	assert.Equal(t, len(mockPurchases), len(resp))
+	assert.Equal(t, mockPurchases[0].ID, resp[0].ID)
+}
 
-// 			if tc.expectedError != nil {
-// 				assert.Error(t, err)
-// 				assert.True(t, errors.Is(err, tc.expectedError), "expected error: %v, got: %v", tc.expectedError, err)
-// 			} else {
-// 				assert.NoError(t, err)
-// 				assert.Equal(t, len(expectedPurchases), len(purchases))
-// 			}
-// 		})
-// 	}
-// }
+func TestPurchaseService_GetPurchasesByUserID_Failure(t *testing.T) {
+	service, purchaseRepo, _, _, ctrl := setup(t)
+	defer ctrl.Finish()
+
+	userID := uuid.New()
+
+	purchaseRepo.EXPECT().GetByUserId(userID).Return(nil, errors.New("database error"))
+
+	resp, err := service.GetByUserId(userID)
+
+	assert.Error(t, err)
+	assert.Nil(t, resp)
+	assert.Contains(t, err.Error(), "failed to get purchases")
+}

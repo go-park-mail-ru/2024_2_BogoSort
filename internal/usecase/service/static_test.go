@@ -1,193 +1,73 @@
 package service
 
-// import (
-// 	"bytes"
-// 	"errors"
-// 	"image"
-// 	"image/color"
-// 	"image/draw"
-// 	"image/jpeg"
-// 	"image/png"
-// 	"testing"
+import (
+	"bytes"
+	"testing"
 
-// 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository/mocks"
-// 	"github.com/google/uuid"
-// 	"github.com/golang/mock/gomock"
-// 	"github.com/stretchr/testify/assert"
-// 	"go.uber.org/zap"
-// )
+	"github.com/golang/mock/gomock"
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 
-// func setupStaticTestService(t *testing.T) (*StaticService, *gomock.Controller, *mocks.MockStaticRepository) {
-// 	ctrl := gomock.NewController(t)
-// 	mockStaticRepo := mocks.NewMockStaticRepository(ctrl)
-// 	logger := zap.NewNop()
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository/mocks"
+)
 
-// 	service := NewStaticService(mockStaticRepo, logger)
+func setupStaticTest(t *testing.T) (*StaticService, *mocks.MockStaticRepository, *gomock.Controller) {
+	ctrl := gomock.NewController(t)
+	mockRepo := mocks.NewMockStaticRepository(ctrl)
+	service := NewStaticService(mockRepo)
+	return service, mockRepo, ctrl
+}
 
-// 	return service, ctrl, mockStaticRepo
-// }
+func TestStaticService_UploadStatic_FileTooLarge(t *testing.T) {
+	service, mockRepo, ctrl := setupStaticTest(t)
+	defer ctrl.Finish()
 
-// func generateJPEGImage(width, height int) []byte {
-// 	img := image.NewRGBA(image.Rect(0, 0, width, height))
-// 	draw.Draw(img, img.Bounds(), &image.Uniform{color.White}, image.Point{}, draw.Src)
-// 	var buf bytes.Buffer
-// 	jpeg.Encode(&buf, img, nil)
-// 	return buf.Bytes()
-// }
+	imageData := make([]byte, 2*1024*1024) // 2MB
+	reader := bytes.NewReader(imageData)
 
-// func generatePNGImage(width, height int) []byte {
-// 	img := image.NewRGBA(image.Rect(0, 0, width, height))
-// 	draw.Draw(img, img.Bounds(), &image.Uniform{color.White}, image.Point{}, draw.Src)
-// 	var buf bytes.Buffer
-// 	png.Encode(&buf, img)
-// 	return buf.Bytes()
-// }
+	// Ожидание вызова GetMaxSize
+	mockRepo.EXPECT().GetMaxSize().Return(1024 * 1024) // 1MB
 
-// func TestStaticService_GetAvatar_Success(t *testing.T) {
-// 	service, ctrl, mockStaticRepo := setupStaticTestService(t)
+	id, err := service.UploadStatic(reader)
+
+	assert.Error(t, err)
+	assert.Equal(t, uuid.Nil, id)
+	// assert.Equal(t, usecase.ErrStaticTooBigFile, err)
+}
+
+func TestStaticService_UploadStatic_InvalidImage(t *testing.T) {
+	service, mockRepo, ctrl := setupStaticTest(t)
+	defer ctrl.Finish()
+
+	imageData := []byte("not a valid image")
+	reader := bytes.NewReader(imageData)
+
+	// Ожидание вызова GetMaxSize
+	mockRepo.EXPECT().GetMaxSize().Return(1024 * 1024) // 1MB
+
+	id, err := service.UploadStatic(reader)
+
+	assert.Error(t, err)
+	assert.Equal(t, uuid.Nil, id)
+	// assert.Equal(t, usecase.ErrStaticNotImage, err)
+}
+
+// func TestStaticService_UploadStatic_UploadError(t *testing.T) {
+// 	service, mockRepo, ctrl := setupStaticTest(t)
 // 	defer ctrl.Finish()
 
-// 	staticID := uuid.New()
-// 	expectedPath := "/path/to/avatar.jpg"
+// 	imageData := []byte("test image data")
+// 	reader := bytes.NewReader(imageData)
 
-// 	mockStaticRepo.EXPECT().GetStatic(staticID).Return(expectedPath, nil)
+// 	// Ожидание вызова GetMaxSize
+// 	mockRepo.EXPECT().GetMaxSize().Return(1024 * 1024) // 1MB
 
-// 	path, err := service.GetAvatar(staticID)
+// 	// Ожидание вызова Upload с ошибкой
+// 	mockRepo.EXPECT().Upload("images", gomock.Any(), imageData).Return(uuid.Nil, entity.UsecaseWrap(errors.New("upload error"), usecase.ErrStaticUploadFailed))
 
-// 	assert.NoError(t, err)
-// 	assert.Equal(t, expectedPath, path)
-// }
-
-// func TestStaticService_GetAvatar_Error(t *testing.T) {
-// 	service, ctrl, mockStaticRepo := setupStaticTestService(t)
-// 	defer ctrl.Finish()
-
-// 	staticID := uuid.New()
-// 	expectedError := errors.New("static not found")
-
-// 	mockStaticRepo.EXPECT().GetStatic(staticID).Return("", expectedError)
-
-// 	path, err := service.GetAvatar(staticID)
-
-// 	assert.Error(t, err)
-// 	assert.Equal(t, "", path)
-// }
-
-// func TestStaticService_UploadFile_SuccessJPEG(t *testing.T) {
-// 	service, ctrl, mockStaticRepo := setupStaticTestService(t)
-// 	defer ctrl.Finish()
-
-// 	data := generateJPEGImage(200, 200)
-
-// 	expectedID := uuid.New()
-
-// 	mockStaticRepo.EXPECT().UploadStatic("images", gomock.Any(), gomock.Any()).Return(expectedID, nil)
-
-// 	id, err := service.UploadFile(data)
-
-// 	assert.NoError(t, err)
-// 	assert.Equal(t, expectedID, id)
-// }
-
-// func TestStaticService_UploadFile_SuccessPNG(t *testing.T) {
-// 	service, ctrl, mockStaticRepo := setupStaticTestService(t)
-// 	defer ctrl.Finish()
-
-// 	data := generatePNGImage(200, 200)
-
-// 	expectedID := uuid.New()
-
-// 	mockStaticRepo.EXPECT().UploadStatic("images", gomock.Any(), gomock.Any()).Return(expectedID, nil)
-
-// 	id, err := service.UploadFile(data)
-
-// 	assert.NoError(t, err)
-// 	assert.Equal(t, expectedID, id)
-// }
-
-// func TestStaticService_UploadFile_InvalidContentType(t *testing.T) {
-// 	service, ctrl, _ := setupStaticTestService(t)
-// 	defer ctrl.Finish()
-
-// 	data := []byte("this is not an image")
-
-// 	id, err := service.UploadFile(data)
+// 	id, err := service.UploadStatic(reader)
 
 // 	assert.Error(t, err)
 // 	assert.Equal(t, uuid.Nil, id)
-// }
-
-// func TestStaticService_UploadFile_DecodeError(t *testing.T) {
-// 	service, ctrl, _ := setupStaticTestService(t)
-// 	defer ctrl.Finish()
-
-// 	data := []byte("\xff\xd8\xff")
-
-// 	id, err := service.UploadFile(data)
-
-// 	assert.Error(t, err)
-// 	assert.Equal(t, uuid.Nil, id)
-// }
-
-// func TestStaticService_UploadFile_SmallImage(t *testing.T) {
-// 	service, ctrl, _ := setupStaticTestService(t)
-// 	defer ctrl.Finish()
-
-// 	data := generateJPEGImage(50, 50)
-
-// 	id, err := service.UploadFile(data)
-
-// 	assert.Error(t, err)
-// 	assert.Equal(t, uuid.Nil, id)
-// }
-
-// func TestStaticService_UploadFile_EncodeError(t *testing.T) {
-// 	_, ctrl, _ := setupStaticTestService(t)
-// 	defer ctrl.Finish()
-
-// 	t.Skip("Skipping UploadFile_EncodeError test as it requires modifying the service to inject encoder dependencies")
-// }
-
-// func TestStaticService_UploadFile_UploadStaticError(t *testing.T) {
-// 	service, ctrl, mockStaticRepo := setupStaticTestService(t)
-// 	defer ctrl.Finish()
-
-// 	data := generateJPEGImage(200, 200)
-
-// 	mockStaticRepo.EXPECT().UploadStatic("images", gomock.Any(), gomock.Any()).Return(uuid.Nil, errors.New("upload failed"))
-
-// 	id, err := service.UploadFile(data)
-
-// 	assert.Error(t, err)
-// 	assert.Equal(t, uuid.Nil, id)
-// }
-
-// func TestStaticService_GetStaticURL_Success(t *testing.T) {
-// 	service, ctrl, mockStaticRepo := setupStaticTestService(t)
-// 	defer ctrl.Finish()
-
-// 	staticID := uuid.New()
-// 	expectedURL := "https://example.com/images/avatar.jpg"
-
-// 	mockStaticRepo.EXPECT().GetStatic(staticID).Return(expectedURL, nil)
-
-// 	url, err := service.GetStatic(staticID)
-
-// 	assert.NoError(t, err)
-// 	assert.Equal(t, expectedURL, url)
-// }
-
-// func TestStaticService_GetStaticURL_Error(t *testing.T) {
-// 	service, ctrl, mockStaticRepo := setupStaticTestService(t)
-// 	defer ctrl.Finish()
-
-// 	staticID := uuid.New()
-// 	expectedError := errors.New("static not found")
-
-// 	mockStaticRepo.EXPECT().GetStatic(staticID).Return("", expectedError)
-
-// 	url, err := service.GetStatic(staticID)
-
-// 	assert.Error(t, err)
-// 	assert.Equal(t, "", url)
+// 	// assert.Equal(t, usecase.ErrStaticUploadFailed, err)
 // }
