@@ -10,7 +10,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/pashagolub/pgxmock/v4"
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap"
 )
 
 func setupCategoryMockDB(t *testing.T) (pgxmock.PgxPoolIface, *mocks.PgxMockAdapter) {
@@ -26,7 +25,6 @@ func setupCategoryTest(t *testing.T) (pgxmock.PgxPoolIface, *mocks.PgxMockAdapte
 
 	repo := &CategoryDB{
 		DB:      adapter,
-		logger:  zap.L(),
 		ctx:     ctx,
 		timeout: 10 * time.Second,
 	}

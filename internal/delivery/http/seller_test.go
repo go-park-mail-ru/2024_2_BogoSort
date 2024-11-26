@@ -15,7 +15,6 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
-	"go.uber.org/zap"
 )
 
 func parseJSONResponse(body *bytes.Buffer, v interface{}) error {
@@ -25,11 +24,7 @@ func parseJSONResponse(body *bytes.Buffer, v interface{}) error {
 func setupSellerEndpoints(t *testing.T) (*SellerEndpoint, *mocks.MockSeller, *gomock.Controller) {
 	ctrl := gomock.NewController(t)
 	mockSellerRepo := mocks.NewMockSeller(ctrl)
-	logger, err := zap.NewDevelopment()
-	if err != nil {
-		t.Fatalf("failed to create logger: %v", err)
-	}
-	endpoints := NewSellerEndpoint(mockSellerRepo, logger)
+	endpoints := NewSellerEndpoint(mockSellerRepo)
 	return endpoints, mockSellerRepo, ctrl
 }
 

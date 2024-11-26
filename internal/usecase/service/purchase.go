@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/middleware"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
@@ -15,11 +16,10 @@ type PurchaseService struct {
 	purchaseRepo repository.PurchaseRepository
 	cartRepo     repository.Cart
 	advertRepo   repository.AdvertRepository
-	logger       *zap.Logger
 }
 
-func NewPurchaseService(purchaseRepo repository.PurchaseRepository, advertRepo repository.AdvertRepository, cartRepo repository.Cart, logger *zap.Logger) *PurchaseService {
-	return &PurchaseService{purchaseRepo: purchaseRepo, advertRepo: advertRepo, cartRepo: cartRepo, logger: logger}
+func NewPurchaseService(purchaseRepo repository.PurchaseRepository, advertRepo repository.AdvertRepository, cartRepo repository.Cart) *PurchaseService {
+	return &PurchaseService{purchaseRepo: purchaseRepo, advertRepo: advertRepo, cartRepo: cartRepo}
 }
 
 func (s *PurchaseService) purchaseEntityToDTO(purchase *entity.Purchase) (*dto.PurchaseResponse, error) {
@@ -37,7 +37,8 @@ func (s *PurchaseService) Add(purchaseRequest dto.PurchaseRequest, userId uuid.U
 	ctx := context.Background()
 	tx, err := s.purchaseRepo.BeginTransaction()
 	if err != nil {
-		s.logger.Error("failed to begin transaction", zap.Error(err))
+		logger := middleware.GetLogger(ctx)
+		logger.Error("failed to begin transaction", zap.Error(err), zap.String("userId", userId.String()))
 		return nil, entity.UsecaseWrap(errors.New("failed to begin transaction"), err)
 	}
 	defer func() {
@@ -89,12 +90,14 @@ func (s *PurchaseService) GetByUserId(userID uuid.UUID) ([]*dto.PurchaseResponse
 }
 
 func (s *PurchaseService) purchaseEntitiesToDTO(purchases []*entity.Purchase) ([]*dto.PurchaseResponse, error) {
+	ctx := context.Background()
 	var purchaseDTOs []*dto.PurchaseResponse
 
 	for _, purchase := range purchases {
 		dto, err := s.purchaseEntityToDTO(purchase)
 		if err != nil {
-			s.logger.Error("failed to convert purchase entity to DTO", zap.Error(err))
+			logger := middleware.GetLogger(ctx)
+			logger.Error("failed to convert purchase entity to DTO", zap.Error(err))
 			return nil, err
 		}
 		purchaseDTOs = append(purchaseDTOs, dto)

@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/cart_purchase"
-
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/middleware"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/utils"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
 	"github.com/google/uuid"
@@ -18,13 +18,11 @@ import (
 
 type CartEndpoint struct {
 	cartClient *cart_purchase.CartPurchaseClient
-	logger     *zap.Logger
 }
 
-func NewCartEndpoint(cartClient *cart_purchase.CartPurchaseClient, logger *zap.Logger) *CartEndpoint {
+func NewCartEndpoint(cartClient *cart_purchase.CartPurchaseClient) *CartEndpoint {
 	return &CartEndpoint{
 		cartClient: cartClient,
-		logger:     logger,
 	}
 }
 
@@ -48,6 +46,8 @@ func (h *CartEndpoint) Configure(router *mux.Router) {
 // @Failure 500 {object} utils.ErrResponse "Internal server error"
 // @Router /api/v1/cart/{cart_id} [get]
 func (h *CartEndpoint) GetByID(w http.ResponseWriter, r *http.Request) {
+	logger := middleware.GetLogger(r.Context())
+	logger.Info("get cart by id request")
 	vars := mux.Vars(r)
 	cartIDStr, ok := vars["cart_id"]
 	if !ok {
@@ -57,7 +57,7 @@ func (h *CartEndpoint) GetByID(w http.ResponseWriter, r *http.Request) {
 
 	cartID, err := uuid.Parse(cartIDStr)
 	if err != nil {
-		h.logger.Error("failed to parse cart_id", zap.Error(err))
+		logger.Error("failed to parse cart_id", zap.Error(err))
 		utils.SendErrorResponse(w, http.StatusBadRequest, "invalid cart_id")
 		return
 	}
@@ -66,17 +66,17 @@ func (h *CartEndpoint) GetByID(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	cart, err := h.cartClient.GetCartByID(ctx, cartID)
 	if errors.Is(err, cart_purchase.ErrCartNotFound) {
-		h.logger.Error("cart not found", zap.Error(err))
+		logger.Error("cart not found", zap.Error(err))
 		utils.SendErrorResponse(w, http.StatusNotFound, "cart not found")
 		return
 	}
 	if err != nil {
-		h.logger.Error("failed to get cart", zap.Error(err))
+		logger.Error("failed to get cart", zap.Error(err))
 		utils.SendErrorResponse(w, http.StatusInternalServerError, "failed to get adverts from cart")
 		return
 	}
 
-	h.logger.Info("cart", zap.Any("cart", cart))
+	logger.Info("cart", zap.Any("cart", cart))
 	utils.SendJSONResponse(w, http.StatusOK, cart)
 }
 
@@ -92,6 +92,8 @@ func (h *CartEndpoint) GetByID(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} utils.ErrResponse "Internal server error"
 // @Router /cart/user/{user_id} [get]
 func (h *CartEndpoint) GetByUserID(w http.ResponseWriter, r *http.Request) {
+	logger := middleware.GetLogger(r.Context())
+	logger.Info("get cart by user id request")
 	vars := mux.Vars(r)
 	userIDStr, ok := vars["user_id"]
 	if !ok {
@@ -101,7 +103,7 @@ func (h *CartEndpoint) GetByUserID(w http.ResponseWriter, r *http.Request) {
 
 	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
-		h.logger.Error("failed to parse user_id", zap.Error(err))
+		logger.Error("failed to parse user_id", zap.Error(err))
 		utils.SendErrorResponse(w, http.StatusBadRequest, "invalid user_id")
 		return
 	}
@@ -110,17 +112,16 @@ func (h *CartEndpoint) GetByUserID(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	cart, err := h.cartClient.GetCartByUserID(ctx, userID)
 	if errors.Is(err, cart_purchase.ErrCartNotFound) {
-		h.logger.Error("cart not found", zap.Error(err))
+		logger.Error("cart not found", zap.Error(err))
 		utils.SendErrorResponse(w, http.StatusNotFound, "cart not found")
 		return
 	}
 	if err != nil {
 		h.logger.Error("failed to get cart", zap.Error(err))
-		utils.SendErrorResponse(w, http.StatusInternalServerError, "failed to get adverts from cart")
+		utils.SendErrorResponse(w, http.StatusInternalServerError, "failed to get cart")
 		return
 	}
 
-	h.logger.Info("cart", zap.Any("cart", cart))
 	utils.SendJSONResponse(w, http.StatusOK, cart)
 }
 
@@ -136,6 +137,8 @@ func (h *CartEndpoint) GetByUserID(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} utils.ErrResponse "Internal server error"
 // @Router /api/v1/cart/add [post]
 func (h *CartEndpoint) AddToCart(w http.ResponseWriter, r *http.Request) {
+	logger := middleware.GetLogger(r.Context())
+	logger.Info("add advert to user cart request")
 	var req dto.AddAdvertToUserCartRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		utils.SendErrorResponse(w, http.StatusBadRequest, "invalid request body")
@@ -152,6 +155,7 @@ func (h *CartEndpoint) AddToCart(w http.ResponseWriter, r *http.Request) {
 		utils.SendErrorResponse(w, http.StatusInternalServerError, "failed to add advert to user cart")
 	}
 
+	logger.Info("advert added to user cart")
 	utils.SendJSONResponse(w, http.StatusOK, map[string]string{"message": "advert added to user cart"})
 }
 
@@ -168,6 +172,8 @@ func (h *CartEndpoint) AddToCart(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} utils.ErrResponse "Internal server error"
 // @Router /api/v1/cart/delete [delete]
 func (h *CartEndpoint) DeleteFromCart(w http.ResponseWriter, r *http.Request) {
+	logger := middleware.GetLogger(r.Context())
+	logger.Info("delete advert from user cart request")
 	var req dto.DeleteAdvertFromUserCartRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		utils.SendErrorResponse(w, http.StatusBadRequest, "invalid request body")
@@ -184,6 +190,7 @@ func (h *CartEndpoint) DeleteFromCart(w http.ResponseWriter, r *http.Request) {
 		utils.SendErrorResponse(w, http.StatusInternalServerError, "failed to delete advert from user cart")
 	}
 
+	logger.Info("advert deleted from user cart")
 	utils.SendJSONResponse(w, http.StatusOK, map[string]string{"message": "advert deleted from user cart"})
 }
 
@@ -199,6 +206,8 @@ func (h *CartEndpoint) DeleteFromCart(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} utils.ErrResponse "Internal server error"
 // @Router /api/v1/cart/exists/{user_id} [get]
 func (h *CartEndpoint) CheckExists(w http.ResponseWriter, r *http.Request) {
+	logger := middleware.GetLogger(r.Context())
+	logger.Info("check cart existence request")
 	vars := mux.Vars(r)
 	userIDStr, ok := vars["user_id"]
 	if !ok {
@@ -221,6 +230,5 @@ func (h *CartEndpoint) CheckExists(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.logger.Info("cart exists", zap.String("cart_id", exists.String()))
-	utils.SendJSONResponse(w, http.StatusOK, map[string]string{"cart_id": exists.String()})
+	utils.SendJSONResponse(w, http.StatusOK, map[string]bool{"exists": exists})
 }

@@ -7,20 +7,17 @@ import (
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
 	"github.com/google/uuid"
-	"go.uber.org/zap"
 )
 
 type CartService struct {
 	cartRepo   repository.Cart
 	advertRepo repository.AdvertRepository
-	logger     *zap.Logger
 }
 
-func NewCartService(cartRepo repository.Cart, advertRepo repository.AdvertRepository, logger *zap.Logger) *CartService {
+func NewCartService(cartRepo repository.Cart, advertRepo repository.AdvertRepository) *CartService {
 	return &CartService{
 		cartRepo:   cartRepo,
 		advertRepo: advertRepo,
-		logger:     logger,
 	}
 }
 

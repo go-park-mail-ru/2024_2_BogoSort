@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/middleware"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
 	"github.com/google/uuid"
@@ -14,7 +15,6 @@ import (
 
 type PurchaseDB struct {
 	db      DBExecutor
-	logger  *zap.Logger
 	ctx     context.Context
 	timeout time.Duration
 }
@@ -39,22 +39,24 @@ const (
 		ORDER BY p.created_at DESC`
 )
 
-func NewPurchaseRepository(db *pgxpool.Pool, logger *zap.Logger, ctx context.Context, timeout time.Duration) (repository.PurchaseRepository, error) {
+func NewPurchaseRepository(db *pgxpool.Pool, ctx context.Context, timeout time.Duration) (repository.PurchaseRepository, error) {
 	if err := db.Ping(ctx); err != nil {
 		return nil, err
 	}
 	return &PurchaseDB{
 		db:      db,
-		logger:  logger,
 		ctx:     ctx,
 		timeout: timeout,
 	}, nil
 }
 
 func (c *PurchaseDB) BeginTransaction() (pgx.Tx, error) {
+	logger := middleware.GetLogger(c.ctx)
+	logger.Info("beginning transaction")
+
 	tx, err := c.db.Begin(c.ctx)
 	if err != nil {
-		c.logger.Error("failed to begin transaction", zap.Error(err))
+		logger.Error("failed to begin transaction", zap.Error(err))
 		return nil, err
 	}
 	return tx, nil
@@ -62,11 +64,13 @@ func (c *PurchaseDB) BeginTransaction() (pgx.Tx, error) {
 
 func (r *PurchaseDB) Add(tx pgx.Tx, purchase *entity.Purchase) (*entity.Purchase, error) {
 	var entityPurchase entity.Purchase
+	logger := middleware.GetLogger(r.ctx)
+	logger.Info("adding purchase to db", zap.String("cart_id", purchase.CartID.String()))
 
 	err := tx.QueryRow(r.ctx, addPurchaseQuery, purchase.CartID, purchase.Address, purchase.Status, purchase.PaymentMethod, purchase.DeliveryMethod).
 		Scan(&entityPurchase.ID, &entityPurchase.CartID, &entityPurchase.Address, &entityPurchase.Status, &entityPurchase.PaymentMethod, &entityPurchase.DeliveryMethod)
 	if err != nil {
-		r.logger.Error("failed to create purchase", zap.Error(err))
+		logger.Error("failed to create purchase", zap.Error(err))
 		return nil, entity.PSQLWrap(err, err)
 	}
 
@@ -76,10 +80,12 @@ func (r *PurchaseDB) Add(tx pgx.Tx, purchase *entity.Purchase) (*entity.Purchase
 func (r *PurchaseDB) GetByUserId(userID uuid.UUID) ([]*entity.Purchase, error) {
 	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
 	defer cancel()
+	logger := middleware.GetLogger(r.ctx)
+	logger.Info("getting purchases by user id from db", zap.String("user_id", userID.String()))
 
 	rows, err := r.db.Query(ctx, getPurchasesByUserIDQuery, userID)
 	if err != nil {
-		r.logger.Error("failed to execute getPurchasesByUserIDQuery", zap.Error(err))
+		logger.Error("failed to execute getPurchasesByUserIDQuery", zap.Error(err))
 		return nil, entity.PSQLWrap(err, err)
 	}
 	defer rows.Close()
@@ -97,7 +103,7 @@ func (r *PurchaseDB) GetByUserId(userID uuid.UUID) ([]*entity.Purchase, error) {
 			&purchase.DeliveryMethod,
 		)
 		if err != nil {
-			r.logger.Error("failed to scan purchase row", zap.Error(err))
+			logger.Error("failed to scan purchase row", zap.Error(err))
 			return nil, entity.PSQLWrap(err, err)
 		}
 
@@ -105,7 +111,7 @@ func (r *PurchaseDB) GetByUserId(userID uuid.UUID) ([]*entity.Purchase, error) {
 	}
 
 	if err := rows.Err(); err != nil {
-		r.logger.Error("rows iteration error", zap.Error(err))
+		logger.Error("rows iteration error", zap.Error(err))
 		return nil, entity.PSQLWrap(err, err)
 	}
 

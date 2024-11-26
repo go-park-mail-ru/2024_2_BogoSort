@@ -1,12 +1,14 @@
 package http
 
 import (
-    "net/http"
-    "time"
+	"net/http"
+	"time"
 
-    "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/utils"
-    "github.com/google/uuid"
-    "github.com/gorilla/mux"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/middleware"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/utils"
+	"github.com/google/uuid"
+	"github.com/gorilla/mux"
+	"go.uber.org/zap"
 )
 
 type CSRFEndpoint struct {
@@ -15,10 +17,10 @@ type CSRFEndpoint struct {
 }
 
 func NewCSRFEndpoint(csrfTokenUtil *utils.CryptToken, sessionManager *utils.SessionManager) *CSRFEndpoint {
-    return &CSRFEndpoint{
-        csrfTokenUtil:  csrfTokenUtil,
-        sessionManager: sessionManager,
-    }
+	return &CSRFEndpoint{
+		csrfTokenUtil:  csrfTokenUtil,
+		sessionManager: sessionManager,
+	}
 }
 
 func (c *CSRFEndpoint) Configure(router *mux.Router) {
@@ -36,24 +38,32 @@ func (c *CSRFEndpoint) Configure(router *mux.Router) {
 // @Failure 500 {object} utils.ErrResponse "Failed to create CSRF token"
 // @Router /api/v1/csrf-token [get]
 func (c *CSRFEndpoint) Get(w http.ResponseWriter, r *http.Request) {
+	logger := middleware.GetLogger(r.Context())
+
+	logger.Info("get csrf token request")
+
 	sessionID, err := r.Cookie("session_id")
 	if err != nil {
-        http.Error(w, "Unauthorized", http.StatusUnauthorized)
-        return
-    }
+		logger.Error("unauthorized", zap.Error(err))
+		utils.SendErrorResponse(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
 
-    userID, err := c.sessionManager.GetUserID(r)
-    if err != nil {
-        http.Error(w, "Unauthorized", http.StatusUnauthorized)
-        return
-    }
+	userID, err := c.sessionManager.GetUserID(r)
+	if err != nil {
+		logger.Error("unauthorized", zap.Error(err))
+		utils.SendErrorResponse(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
 
-    token, err := c.csrfTokenUtil.Create(uuid.MustParse(sessionID.Value), userID, time.Now().Add(24*time.Hour).Unix())
-    if err != nil {
-        http.Error(w, "Failed to create CSRF token", http.StatusInternalServerError)
-        return
-    }
+	token, err := c.csrfTokenUtil.Create(uuid.MustParse(sessionID.Value), userID, time.Now().Add(24*time.Hour).Unix())
+	if err != nil {
+		logger.Error("failed to create csrf token", zap.Error(err))
+		utils.SendErrorResponse(w, http.StatusInternalServerError, "Failed to create CSRF token")
+		return
+	}
 
-    w.Header().Set("X-CSRF-Token", token)
-    w.WriteHeader(http.StatusOK)
+	w.Header().Set("X-CSRF-Token", token)
+	logger.Info("csrf token created", zap.String("token", token))
+	w.WriteHeader(http.StatusOK)
 }

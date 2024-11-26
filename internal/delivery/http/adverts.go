@@ -2,6 +2,7 @@ package http
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
@@ -43,20 +44,17 @@ type AdvertEndpoint struct {
 	advertUC         usecase.AdvertUseCase
 	staticGrpcClient static.StaticGrpcClient
 	sessionManager   *utils.SessionManager
-	logger           *zap.Logger
 	policy           *bluemonday.Policy
 }
 
 func NewAdvertEndpoint(advertUC usecase.AdvertUseCase,
 	staticGrpcClient static.StaticGrpcClient,
 	sessionManager *utils.SessionManager,
-	logger *zap.Logger,
 	policy *bluemonday.Policy) *AdvertEndpoint {
 	return &AdvertEndpoint{
 		advertUC:         advertUC,
 		staticGrpcClient: staticGrpcClient,
 		sessionManager:   sessionManager,
-		logger:           logger,
 		policy:           policy,
 	}
 }
@@ -99,8 +97,11 @@ func (h *AdvertEndpoint) ConfigureProtectedRoutes(router *mux.Router) {
 // @Failure 500 {object} utils.ErrResponse "Failed to retrieve adverts"
 // @Router /api/v1/adverts [get]
 func (h *AdvertEndpoint) Get(writer http.ResponseWriter, r *http.Request) {
+	logger := middleware.GetLogger(r.Context())
+	logger.Info("get adverts request")
 	userId, err := h.sessionManager.GetUserID(r)
 	if err != nil {
+		logger.Error("user not found", zap.Error(err))
 		userId = uuid.Nil
 	}
 
@@ -126,6 +127,7 @@ func (h *AdvertEndpoint) Get(writer http.ResponseWriter, r *http.Request) {
 		utils.SanitizePreviewAdvert(&advert.Preview, h.policy)
 	}
 
+	logger.Info("adverts sent", zap.Any("adverts", adverts))
 	utils.SendJSONResponse(writer, http.StatusOK, adverts)
 }
 
@@ -141,6 +143,8 @@ func (h *AdvertEndpoint) Get(writer http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} utils.ErrResponse "Failed to retrieve adverts by seller ID"
 // @Router /api/v1/adverts/seller/{sellerId} [get]
 func (h *AdvertEndpoint) GetBySellerId(writer http.ResponseWriter, r *http.Request) {
+	logger := middleware.GetLogger(r.Context())
+	logger.Info("get adverts by seller id request")
 	userId, err := h.sessionManager.GetUserID(r)
 	if err != nil {
 		h.sendError(writer, http.StatusUnauthorized, err, "user not found", nil)
@@ -163,6 +167,7 @@ func (h *AdvertEndpoint) GetBySellerId(writer http.ResponseWriter, r *http.Reque
 	for _, advert := range adverts {
 		utils.SanitizePreviewAdvert(&advert.Preview, h.policy)
 	}
+	logger.Info("adverts sent", zap.Any("adverts", adverts))
 	utils.SendJSONResponse(writer, http.StatusOK, adverts)
 }
 
@@ -178,6 +183,8 @@ func (h *AdvertEndpoint) GetBySellerId(writer http.ResponseWriter, r *http.Reque
 // @Failure 500 {object} utils.ErrResponse "Failed to retrieve adverts by cart ID"
 // @Router /api/v1/adverts/cart/{cartId} [get]
 func (h *AdvertEndpoint) GetByCartId(writer http.ResponseWriter, r *http.Request) {
+	logger := middleware.GetLogger(r.Context())
+	logger.Info("get adverts by cart id request")
 	userId, err := h.sessionManager.GetUserID(r)
 	if err != nil {
 		h.sendError(writer, http.StatusUnauthorized, err, "user not found", nil)
@@ -200,6 +207,7 @@ func (h *AdvertEndpoint) GetByCartId(writer http.ResponseWriter, r *http.Request
 	for _, advert := range adverts {
 		utils.SanitizePreviewAdvert(&advert.Preview, h.policy)
 	}
+	logger.Info("adverts sent", zap.Any("adverts", adverts))
 	utils.SendJSONResponse(writer, http.StatusOK, adverts)
 }
 
@@ -215,6 +223,8 @@ func (h *AdvertEndpoint) GetByCartId(writer http.ResponseWriter, r *http.Request
 // @Failure 500 {object} utils.ErrResponse "Failed to retrieve adverts by user ID"
 // @Router /api/v1/adverts/saved [get]
 func (h *AdvertEndpoint) GetSavedByUserId(writer http.ResponseWriter, r *http.Request) {
+	logger := middleware.GetLogger(r.Context())
+	logger.Info("get adverts by user id request")
 	userId, err := h.sessionManager.GetUserID(r)
 	if err != nil {
 		h.sendError(writer, http.StatusUnauthorized, err, "user not found", nil)
@@ -230,6 +240,7 @@ func (h *AdvertEndpoint) GetSavedByUserId(writer http.ResponseWriter, r *http.Re
 	for _, advert := range adverts {
 		utils.SanitizePreviewAdvert(&advert.Preview, h.policy)
 	}
+	logger.Info("adverts sent", zap.Any("adverts", adverts))
 	utils.SendJSONResponse(writer, http.StatusOK, adverts)
 }
 
@@ -245,6 +256,8 @@ func (h *AdvertEndpoint) GetSavedByUserId(writer http.ResponseWriter, r *http.Re
 // @Failure 500 {object} utils.ErrResponse "Failed to retrieve advert by ID"
 // @Router /api/v1/adverts/{advertId} [get]
 func (h *AdvertEndpoint) GetById(writer http.ResponseWriter, r *http.Request) {
+	logger := middleware.GetLogger(r.Context())
+	logger.Info("get advert by id request")
 	userId, err := h.sessionManager.GetUserID(r)
 	if err != nil {
 		userId = uuid.Nil
@@ -262,7 +275,7 @@ func (h *AdvertEndpoint) GetById(writer http.ResponseWriter, r *http.Request) {
 		h.handleError(writer, err, "failed to get advert by ID")
 		return
 	}
-
+	logger.Info("advert sent", zap.Any("advert", advert))
 	utils.SanitizeAdvert(&advert.Advert, h.policy)
 	utils.SendJSONResponse(writer, http.StatusOK, advert)
 }
@@ -279,6 +292,8 @@ func (h *AdvertEndpoint) GetById(writer http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} utils.ErrResponse "Failed to create advert"
 // @Router /api/v1/adverts [post]
 func (h *AdvertEndpoint) Add(writer http.ResponseWriter, r *http.Request) {
+	logger := middleware.GetLogger(r.Context())
+	logger.Info("add advert request")
 	var advert dto.AdvertRequest
 	if err := json.NewDecoder(r.Body).Decode(&advert); err != nil {
 		h.sendError(writer, http.StatusBadRequest, ErrInvalidAdvertData, "invalid advert data", nil)
@@ -299,6 +314,7 @@ func (h *AdvertEndpoint) Add(writer http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logger.Info("advert created", zap.Any("advert", newAdvert))
 	utils.SendJSONResponse(writer, http.StatusCreated, newAdvert)
 }
 
@@ -317,6 +333,8 @@ func (h *AdvertEndpoint) Add(writer http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} utils.ErrResponse "Failed to update advert"
 // @Router /api/v1/adverts/{advertId} [put]
 func (h *AdvertEndpoint) Update(writer http.ResponseWriter, r *http.Request) {
+	logger := middleware.GetLogger(r.Context())
+	logger.Info("update advert request")
 	var advert dto.AdvertRequest
 	if err := json.NewDecoder(r.Body).Decode(&advert); err != nil {
 		h.sendError(writer, http.StatusBadRequest, ErrInvalidAdvertData, "invalid advert data", nil)
@@ -343,6 +361,7 @@ func (h *AdvertEndpoint) Update(writer http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logger.Info("advert updated", zap.Any("advert", advert))
 	utils.SendJSONResponse(writer, http.StatusOK, "Advert updated successfully")
 }
 
@@ -358,6 +377,8 @@ func (h *AdvertEndpoint) Update(writer http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} utils.ErrResponse "Failed to delete advert"
 // @Router /api/v1/adverts/{advertId} [delete]
 func (h *AdvertEndpoint) Delete(writer http.ResponseWriter, r *http.Request) {
+	logger := middleware.GetLogger(r.Context())
+	logger.Info("delete advert request")
 	advertIdStr := mux.Vars(r)["advertId"]
 	advertId, err := uuid.Parse(advertIdStr)
 	if err != nil {
@@ -376,6 +397,7 @@ func (h *AdvertEndpoint) Delete(writer http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logger.Info("advert deleted")
 	utils.SendJSONResponse(writer, http.StatusOK, "Advert deleted")
 }
 
@@ -392,6 +414,8 @@ func (h *AdvertEndpoint) Delete(writer http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} utils.ErrResponse "Failed to update advert status"
 // @Router /api/v1/adverts/{advertId}/status [put]
 func (h *AdvertEndpoint) UpdateStatus(writer http.ResponseWriter, r *http.Request) {
+	logger := middleware.GetLogger(r.Context())
+	logger.Info("update advert status request")
 	advertIdStr := mux.Vars(r)["advertId"]
 	advertId, err := uuid.Parse(advertIdStr)
 	if err != nil {
@@ -416,6 +440,7 @@ func (h *AdvertEndpoint) UpdateStatus(writer http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	logger.Info("advert status updated")
 	utils.SendJSONResponse(writer, http.StatusOK, "Advert status updated")
 }
 
@@ -430,6 +455,8 @@ func (h *AdvertEndpoint) UpdateStatus(writer http.ResponseWriter, r *http.Reques
 // @Failure 500 {object} utils.ErrResponse "Failed to retrieve adverts by category ID"
 // @Router /api/v1/adverts/category/{categoryId} [get]
 func (h *AdvertEndpoint) GetByCategoryId(writer http.ResponseWriter, r *http.Request) {
+	logger := middleware.GetLogger(r.Context())
+	logger.Info("get adverts by category id request")
 	categoryIdStr := mux.Vars(r)["categoryId"]
 	categoryId, err := uuid.Parse(categoryIdStr)
 	if err != nil {
@@ -451,6 +478,7 @@ func (h *AdvertEndpoint) GetByCategoryId(writer http.ResponseWriter, r *http.Req
 	for _, advert := range adverts {
 		utils.SanitizePreviewAdvert(&advert.Preview, h.policy)
 	}
+	logger.Info("adverts sent", zap.Any("adverts", adverts))
 	utils.SendJSONResponse(writer, http.StatusOK, adverts)
 }
 
@@ -465,6 +493,8 @@ func (h *AdvertEndpoint) GetByCategoryId(writer http.ResponseWriter, r *http.Req
 // @Failure 500 {object} utils.ErrResponse "Failed to upload image"
 // @Router /api/v1/adverts/{advertId}/image [put]
 func (h *AdvertEndpoint) UploadImage(writer http.ResponseWriter, r *http.Request) {
+	logger := middleware.GetLogger(r.Context())
+	logger.Info("upload image request")
 	userID, err := h.sessionManager.GetUserID(r)
 	if err != nil {
 		h.sendError(writer, http.StatusUnauthorized, ErrInvalidCredentials, "user not found", nil)
@@ -523,6 +553,7 @@ func (h *AdvertEndpoint) UploadImage(writer http.ResponseWriter, r *http.Request
 		return
 	}
 
+	logger.Info("image uploaded")
 	utils.SendJSONResponse(writer, http.StatusOK, "Image uploaded")
 }
 
@@ -537,6 +568,8 @@ func (h *AdvertEndpoint) UploadImage(writer http.ResponseWriter, r *http.Request
 // @Failure 500 {object} utils.ErrResponse "Failed to add advert to saved"
 // @Router /api/v1/adverts/saved/{advertId} [post]
 func (h *AdvertEndpoint) AddToSaved(writer http.ResponseWriter, r *http.Request) {
+	logger := middleware.GetLogger(r.Context())
+	logger.Info("add advert to saved request")
 	userId, err := h.sessionManager.GetUserID(r)
 	if err != nil {
 		h.sendError(writer, http.StatusUnauthorized, ErrInvalidCredentials, "user not found", nil)
@@ -555,6 +588,7 @@ func (h *AdvertEndpoint) AddToSaved(writer http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	logger.Info("advert added to saved")
 	utils.SendJSONResponse(writer, http.StatusOK, "Advert added to saved")
 }
 
@@ -569,6 +603,8 @@ func (h *AdvertEndpoint) AddToSaved(writer http.ResponseWriter, r *http.Request)
 // @Failure 500 {object} utils.ErrResponse "Failed to remove advert from saved"
 // @Router /api/v1/adverts/saved/{advertId} [delete]
 func (h *AdvertEndpoint) RemoveFromSaved(writer http.ResponseWriter, r *http.Request) {
+	logger := middleware.GetLogger(r.Context())
+	logger.Info("remove advert from saved request")
 	userId, err := h.sessionManager.GetUserID(r)
 	if err != nil {
 		h.sendError(writer, http.StatusUnauthorized, ErrInvalidCredentials, "user not found", nil)
@@ -587,11 +623,14 @@ func (h *AdvertEndpoint) RemoveFromSaved(writer http.ResponseWriter, r *http.Req
 		return
 	}
 
+	logger.Info("advert removed from saved")
 	utils.SendJSONResponse(writer, http.StatusOK, "Advert removed from saved")
 }
 
-func (h *AdvertEndpoint) sendError(w http.ResponseWriter, statusCode int, err error, context string, additionalInfo map[string]string) {
-	h.logger.Error(err.Error(), zap.String("context", context), zap.Any("info", additionalInfo))
+func (h *AdvertEndpoint) sendError(w http.ResponseWriter, statusCode int, err error, contextInfo string, additionalInfo map[string]string) {
+	logger := middleware.GetLogger(context.Background())
+
+	logger.Error(err.Error(), zap.String("context", contextInfo), zap.Any("info", additionalInfo))
 	utils.SendErrorResponse(w, statusCode, err.Error())
 }
 
@@ -607,6 +646,8 @@ func (h *AdvertEndpoint) handleError(writer http.ResponseWriter, err error, cont
 }
 
 func (h *AdvertEndpoint) AddToViewed(writer http.ResponseWriter, r *http.Request) {
+	logger := middleware.GetLogger(r.Context())
+	logger.Info("add advert to viewed request")
 	userId, err := h.sessionManager.GetUserID(r)
 	if err != nil {
 		userId = uuid.Nil
@@ -624,6 +665,7 @@ func (h *AdvertEndpoint) AddToViewed(writer http.ResponseWriter, r *http.Request
 		return
 	}
 
+	logger.Info("advert added to viewed")
 	utils.SendJSONResponse(writer, http.StatusOK, "Advert added to viewed")
 }
 
@@ -636,6 +678,8 @@ func (h *AdvertEndpoint) AddToViewed(writer http.ResponseWriter, r *http.Request
 // @Failure 500 {object} utils.ErrResponse "Failed to retrieve adverts by user ID"
 // @Router /api/v1/adverts/my [get]
 func (h *AdvertEndpoint) GetByUserId(writer http.ResponseWriter, r *http.Request) {
+	logger := middleware.GetLogger(r.Context())
+	logger.Info("get adverts by user id request")
 	userId, err := h.sessionManager.GetUserID(r)
 	if err != nil {
 		h.sendError(writer, http.StatusUnauthorized, ErrInvalidCredentials, "user not found", nil)
@@ -652,6 +696,7 @@ func (h *AdvertEndpoint) GetByUserId(writer http.ResponseWriter, r *http.Request
 		utils.SanitizePreviewAdvert(&advert.Preview, h.policy)
 	}
 
+	logger.Info("adverts sent", zap.Any("adverts", adverts))
 	utils.SendJSONResponse(writer, http.StatusOK, adverts)
 }
 
@@ -668,6 +713,8 @@ func (h *AdvertEndpoint) GetByUserId(writer http.ResponseWriter, r *http.Request
 // @Failure 500 {object} utils.ErrResponse "Ошибка сервера"
 // @Router /api/v1/adverts/search [get]
 func (h *AdvertEndpoint) Search(writer http.ResponseWriter, r *http.Request) {
+	logger := middleware.GetLogger(r.Context())
+	logger.Info("search adverts request")
 	query := r.URL.Query().Get("query")
 	if strings.TrimSpace(query) == "" {
 		h.sendError(writer, http.StatusBadRequest, errors.New("search query is empty"), "empty search query", nil)
@@ -697,5 +744,6 @@ func (h *AdvertEndpoint) Search(writer http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logger.Info("adverts sent", zap.Any("adverts", adverts))
 	utils.SendJSONResponse(writer, http.StatusOK, adverts)
 }

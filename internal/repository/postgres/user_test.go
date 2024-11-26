@@ -14,7 +14,6 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/pashagolub/pgxmock/v4"
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap"
 )
 
 func setupUserMockDB(t *testing.T) (pgxmock.PgxPoolIface, *mocks.PgxMockAdapter) {
@@ -30,7 +29,6 @@ func setupUserTest(t *testing.T) (pgxmock.PgxPoolIface, *mocks.PgxMockAdapter, *
 
 	repo := &UserDB{
 		DB:      adapter,
-		logger:  zap.L(),
 		ctx:     ctx,
 		timeout: 10 * time.Second,
 	}

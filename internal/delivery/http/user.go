@@ -2,6 +2,7 @@ package http
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
@@ -36,17 +37,18 @@ type UserEndpoint struct {
 	authUC           usecase.Auth
 	sessionManager   *utils.SessionManager
 	staticGrpcClient static.StaticGrpcClient
-	logger           *zap.Logger
 	policy           *bluemonday.Policy
 }
 
-func NewUserEndpoint(userUC usecase.User, authUC usecase.Auth, sessionManager *utils.SessionManager, staticGrpcClient static.StaticGrpcClient, logger *zap.Logger, policy *bluemonday.Policy) *UserEndpoint {
+func NewUserEndpoint(userUC usecase.User, authUC usecase.Auth, sessionManager *utils.SessionManager, staticGrpcClient static.StaticGrpcClient, policy *bluemonday.Policy) *UserEndpoint {
 	return &UserEndpoint{
 		userUC:           userUC,
 		authUC:           authUC,
 		sessionManager:   sessionManager,
+		userUC:           userUC,
+		authUC:           authUC,
+		sessionManager:   sessionManager,
 		staticGrpcClient: staticGrpcClient,
-		logger:           logger,
 		policy:           policy,
 	}
 }
@@ -87,8 +89,10 @@ func (u *UserEndpoint) handleError(w http.ResponseWriter, err error, context str
 	}
 }
 
-func (u *UserEndpoint) sendError(w http.ResponseWriter, statusCode int, err error, context string, additionalInfo map[string]string) {
-	u.logger.Error(err.Error(), zap.String("context", context), zap.Any("info", additionalInfo))
+func (u *UserEndpoint) sendError(w http.ResponseWriter, statusCode int, err error, contextInfo string, additionalInfo map[string]string) {
+	logger := middleware.GetLogger(context.Background())
+
+	logger.Error(err.Error(), zap.String("context", contextInfo), zap.Any("info", additionalInfo))
 	utils.SendErrorResponse(w, statusCode, err.Error())
 }
 
@@ -105,6 +109,10 @@ func (u *UserEndpoint) sendError(w http.ResponseWriter, statusCode int, err erro
 // @Failure 500 {object} utils.ErrResponse "Internal server error"
 // @Router /api/v1/signup [post]
 func (u *UserEndpoint) Signup(w http.ResponseWriter, r *http.Request) {
+	logger := middleware.GetLogger(r.Context())
+
+	logger.Info("signup request")
+
 	var credentials dto.Signup
 	if err := json.NewDecoder(r.Body).Decode(&credentials); err != nil {
 		u.sendError(w, http.StatusBadRequest, err, "error decoding signup request", nil)
@@ -124,16 +132,17 @@ func (u *UserEndpoint) Signup(w http.ResponseWriter, r *http.Request) {
 		u.sendError(w, http.StatusInternalServerError, err, "error creating session", map[string]string{"userID": userID.String()})
 		return
 	}
-	u.logger.Info("session created", zap.String("sessionID", sessionID), zap.String("userID", userID.String()))
+	logger.Info("session created", zap.String("sessionID", sessionID), zap.String("userID", userID.String()))
 
 	cookie, err := u.sessionManager.SetSession(sessionID)
 	if err != nil {
-		u.logger.Error("error setting session cookie", zap.Error(err))
+		logger.Error("error setting session cookie", zap.Error(err))
 		u.sendError(w, http.StatusInternalServerError, err, "error setting session cookie", nil)
 		return
 	}
 	http.SetCookie(w, cookie)
 
+	logger.Info("signup successful", zap.String("sessionID", sessionID))
 	w.Header().Set("X-authenticated", "true")
 	utils.SendJSONResponse(w, http.StatusOK, "Signup successful")
 }
@@ -152,6 +161,10 @@ func (u *UserEndpoint) Signup(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} utils.ErrResponse "Internal server error"
 // @Router /api/v1/login [post]
 func (u *UserEndpoint) Login(w http.ResponseWriter, r *http.Request) {
+	logger := middleware.GetLogger(r.Context())
+
+	logger.Info("login request")
+
 	var credentials dto.Login
 	if err := json.NewDecoder(r.Body).Decode(&credentials); err != nil {
 		u.sendError(w, http.StatusBadRequest, err, "error decoding login request", nil)
@@ -170,7 +183,7 @@ func (u *UserEndpoint) Login(w http.ResponseWriter, r *http.Request) {
 		u.sendError(w, http.StatusInternalServerError, err, "error creating session", map[string]string{"userID": userID.String()})
 		return
 	}
-	u.logger.Info("session created", zap.String("sessionID", sessionID), zap.String("userID", userID.String()))
+	logger.Info("session created", zap.String("sessionID", sessionID), zap.String("userID", userID.String()))
 
 	cookie, err := u.sessionManager.SetSession(sessionID)
 	if err != nil {
@@ -178,6 +191,7 @@ func (u *UserEndpoint) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.SetCookie(w, cookie)
+	logger.Info("login successful", zap.String("sessionID", sessionID))
 	w.Header().Set("X-authenticated", "true")
 	utils.SendJSONResponse(w, http.StatusOK, sessionID)
 }
@@ -196,6 +210,10 @@ func (u *UserEndpoint) Login(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} utils.ErrResponse "Internal server error"
 // @Router /api/v1/password [post]
 func (u *UserEndpoint) ChangePassword(w http.ResponseWriter, r *http.Request) {
+	logger := middleware.GetLogger(r.Context())
+
+	logger.Info("change password request")
+
 	var updatePassword dto.UpdatePassword
 	if err := json.NewDecoder(r.Body).Decode(&updatePassword); err != nil {
 		u.sendError(w, http.StatusBadRequest, err, "error decoding change password request", nil)
@@ -214,7 +232,7 @@ func (u *UserEndpoint) ChangePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u.logger.Info("password changed", zap.String("userID", userID.String()))
+	logger.Info("password changed", zap.String("userID", userID.String()))
 	utils.SendJSONResponse(w, http.StatusOK, "Пароль изменен успешно")
 }
 
@@ -232,6 +250,10 @@ func (u *UserEndpoint) ChangePassword(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} utils.ErrResponse "Internal server error"
 // @Router /api/v1/profile [put]
 func (u *UserEndpoint) UpdateProfile(w http.ResponseWriter, r *http.Request) {
+	logger := middleware.GetLogger(r.Context())
+
+	logger.Info("update profile request")
+
 	var user dto.UserUpdate
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		u.sendError(w, http.StatusBadRequest, err, "error decoding update profile request", nil)
@@ -250,7 +272,7 @@ func (u *UserEndpoint) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u.logger.Info("profile updated", zap.String("userID", userID.String()))
+	logger.Info("profile updated", zap.String("userID", userID.String()))
 	utils.SendJSONResponse(w, http.StatusOK, "Профиль обновлен успешно")
 }
 
@@ -266,6 +288,10 @@ func (u *UserEndpoint) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} utils.ErrResponse "Internal server error"
 // @Router /api/v1/profile/{user_id} [get]
 func (u *UserEndpoint) GetProfile(w http.ResponseWriter, r *http.Request) {
+	logger := middleware.GetLogger(r.Context())
+
+	logger.Info("get profile request")
+
 	vars := mux.Vars(r)
 	userID, err := uuid.Parse(vars["user_id"])
 	if err != nil {
@@ -279,6 +305,8 @@ func (u *UserEndpoint) GetProfile(w http.ResponseWriter, r *http.Request) {
 	case err != nil:
 		u.handleError(w, err, "GetProfile", map[string]string{"userID": userID.String()})
 	}
+
+	logger.Info("get profile successful", zap.String("userID", userID.String()))
 	utils.SanitizeResponseUser(user, u.policy)
 	utils.SendJSONResponse(w, http.StatusOK, user)
 }
@@ -294,6 +322,10 @@ func (u *UserEndpoint) GetProfile(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} utils.ErrResponse "Internal server error"
 // @Router /api/v1/me [get]
 func (u *UserEndpoint) GetMe(w http.ResponseWriter, r *http.Request) {
+	logger := middleware.GetLogger(r.Context())
+
+	logger.Info("get me request")
+
 	userID, err := u.sessionManager.GetUserID(r)
 	if err != nil {
 		u.sendError(w, http.StatusUnauthorized, err, "unauthorized request", nil)
@@ -304,6 +336,8 @@ func (u *UserEndpoint) GetMe(w http.ResponseWriter, r *http.Request) {
 		u.handleError(w, err, "GetMe", map[string]string{"userID": userID.String()})
 		return
 	}
+
+	logger.Info("get me successful", zap.String("userID", userID.String()))
 	utils.SanitizeResponseUser(user, u.policy)
 	utils.SendJSONResponse(w, http.StatusOK, user)
 }
@@ -319,6 +353,10 @@ func (u *UserEndpoint) GetMe(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} utils.ErrResponse "Failed to upload image"
 // @Router /api/v1/user/{user_id}/image [put]
 func (u *UserEndpoint) UploadImage(writer http.ResponseWriter, r *http.Request) {
+	logger := middleware.GetLogger(r.Context())
+
+	logger.Info("upload image request")
+
 	userIDStr := mux.Vars(r)["user_id"]
 	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
@@ -365,5 +403,6 @@ func (u *UserEndpoint) UploadImage(writer http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	logger.Info("image uploaded", zap.String("userID", userID.String()), zap.String("imageID", imageId.String()))
 	utils.SendJSONResponse(writer, http.StatusOK, "Image uploaded")
 }

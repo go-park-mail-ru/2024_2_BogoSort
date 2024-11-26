@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/middleware"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
@@ -15,33 +16,26 @@ import (
 type UserService struct {
 	userRepo   repository.User
 	sellerRepo repository.Seller
-	logger     *zap.Logger
 }
 
-func NewUserService(userRepo repository.User, sellerRepo repository.Seller, logger *zap.Logger) *UserService {
+func NewUserService(userRepo repository.User, sellerRepo repository.Seller) *UserService {
 	return &UserService{
 		userRepo:   userRepo,
 		sellerRepo: sellerRepo,
-		logger:     logger,
 	}
 }
 
-func (u *UserService) handleRepoError(err error, context string) error {
+func (u *UserService) handleRepoError(err error) error {
 	switch {
 	case errors.Is(err, repository.ErrUserAlreadyExists):
-		u.logger.Error("user already exists", zap.String("context", context))
 		return usecase.ErrUserAlreadyExists
 	case errors.Is(err, repository.ErrUserNotFound):
-		u.logger.Error("user not found", zap.String("context", context))
 		return usecase.ErrUserNotFound
 	case errors.Is(err, repository.ErrSellerAlreadyExists):
-		u.logger.Error("seller already exists", zap.String("context", context))
 		return repository.ErrSellerAlreadyExists
 	case errors.Is(err, repository.ErrSellerNotFound):
-		u.logger.Error("seller not found", zap.String("context", context))
 		return repository.ErrSellerNotFound
 	case err != nil:
-		u.logger.Error("repository error", zap.String("context", context), zap.Error(err))
 		return entity.UsecaseWrap(errors.New("repository error"), err)
 	}
 	return nil
@@ -63,7 +57,8 @@ func (u *UserService) Signup(signupInfo *dto.Signup) (uuid.UUID, error) {
 	ctx := context.Background()
 	tx, err := u.userRepo.BeginTransaction()
 	if err != nil {
-		u.logger.Error("failed to begin transaction", zap.Error(err))
+		logger := middleware.GetLogger(ctx)
+		logger.Error("failed to begin transaction", zap.Error(err))
 		return uuid.Nil, entity.UsecaseWrap(errors.New("failed to begin transaction"), err)
 	}
 	defer func() {
@@ -76,13 +71,13 @@ func (u *UserService) Signup(signupInfo *dto.Signup) (uuid.UUID, error) {
 
 	userID, err := u.userRepo.Add(tx, signupInfo.Email, hash, salt)
 	if err != nil {
-		err = u.handleRepoError(err, "Signup")
+		err = u.handleRepoError(err)
 		return uuid.Nil, err
 	}
 
 	_, err = u.sellerRepo.Add(tx, userID)
 	if err != nil {
-		err = u.handleRepoError(err, "Signup_CreateSeller")
+		err = u.handleRepoError(err)
 		return uuid.Nil, err
 	}
 
@@ -99,14 +94,13 @@ func (u *UserService) Login(loginInfo *dto.Login) (uuid.UUID, error) {
 
 	user, err := u.userRepo.GetByEmail(loginInfo.Email)
 	if err != nil {
-		return uuid.Nil, u.handleRepoError(err, "Login")
+		return uuid.Nil, u.handleRepoError(err)
 	}
 
 	if !user.CheckPassword(loginInfo.Password) {
 		return uuid.Nil, usecase.ErrInvalidCredentials
 	}
 
-	u.logger.Info("user logged in", zap.String("email", loginInfo.Email), zap.String("userID", user.ID.String()))
 	return user.ID, nil
 }
 
@@ -120,7 +114,7 @@ func (u *UserService) UpdateInfo(user *dto.UserUpdate) error {
 
 	err := u.userRepo.Update(entityUser)
 	if err != nil {
-		return u.handleRepoError(err, "UpdateInfo")
+		return u.handleRepoError(err)
 	}
 	return nil
 }
@@ -128,7 +122,7 @@ func (u *UserService) UpdateInfo(user *dto.UserUpdate) error {
 func (u *UserService) Delete(userID uuid.UUID) error {
 	err := u.userRepo.Delete(userID)
 	if err != nil {
-		return u.handleRepoError(err, "DeleteUser")
+		return u.handleRepoError(err)
 	}
 	return nil
 }
@@ -136,7 +130,7 @@ func (u *UserService) Delete(userID uuid.UUID) error {
 func (u *UserService) Get(userID uuid.UUID) (*dto.User, error) {
 	entityUser, err := u.userRepo.GetById(userID)
 	if err != nil {
-		return nil, u.handleRepoError(err, "Get")
+		return nil, u.handleRepoError(err)
 	}
 	return &dto.User{
 		ID:        entityUser.ID,
@@ -157,7 +151,7 @@ func (u *UserService) ChangePassword(userID uuid.UUID, password *dto.UpdatePassw
 	user, err := u.userRepo.GetById(userID)
 	switch {
 	case err != nil:
-		return u.handleRepoError(err, "ChangePassword")
+		return u.handleRepoError(err)
 	case password.OldPassword == password.NewPassword:
 		return usecase.ErrOldAndNewPasswordAreTheSame
 	case !user.CheckPassword(password.OldPassword):
@@ -177,7 +171,7 @@ func (u *UserService) ChangePassword(userID uuid.UUID, password *dto.UpdatePassw
 
 	err = u.userRepo.Update(entityUser)
 	if err != nil {
-		return u.handleRepoError(err, "ChangePassword")
+		return u.handleRepoError(err)
 	}
 	return nil
 }
