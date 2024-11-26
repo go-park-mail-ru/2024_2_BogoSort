@@ -3,15 +3,16 @@ package postgres
 import (
 	"context"
 	"time"
+
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/middleware"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"go.uber.org/zap"
 )
 
 type CategoryDB struct {
 	DB      DBExecutor
-	logger  *zap.Logger
 	ctx     context.Context
 	timeout time.Duration
 }
@@ -27,7 +28,6 @@ func NewCategoryRepository(db *pgxpool.Pool, logger *zap.Logger, ctx context.Con
 	}
 	return &CategoryDB{
 		DB:      db,
-		logger:  logger,
 		ctx:     ctx,
 		timeout: timeout,
 	}, nil
@@ -38,25 +38,27 @@ func (c *CategoryDB) Get() ([]*entity.Category, error) {
 
 	ctx, cancel := context.WithTimeout(c.ctx, c.timeout)
 	defer cancel()
+	logger := middleware.GetLogger(c.ctx)
+	logger.Info("getting categories from db")
 
-	rows, err := c.DB.Query(ctx, getCategoryQuery) 
+	rows, err := c.DB.Query(ctx, getCategoryQuery)
 	if err != nil {
-		c.logger.Error("failed to execute query", zap.Error(err))
+		logger.Error("failed to execute query", zap.Error(err))
 		return nil, entity.PSQLWrap(err)
 	}
 	defer rows.Close()
 
 	for rows.Next() {
-		var dbCategory entity.Category 
-		if err := rows.Scan(&dbCategory.ID, &dbCategory.Title); err != nil { 
-			c.logger.Error("failed to scan row", zap.Error(err))
+		var dbCategory entity.Category
+		if err := rows.Scan(&dbCategory.ID, &dbCategory.Title); err != nil {
+			logger.Error("failed to scan row", zap.Error(err))
 			return nil, entity.PSQLWrap(err)
 		}
 		categories = append(categories, &dbCategory)
 	}
 
 	if err := rows.Err(); err != nil {
-		c.logger.Error("error iterating over rows", zap.Error(err))
+		logger.Error("error iterating over rows", zap.Error(err))
 		return nil, entity.PSQLWrap(err)
 	}
 

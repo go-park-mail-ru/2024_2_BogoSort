@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/middleware"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
 	"github.com/google/uuid"
@@ -33,7 +34,6 @@ const (
 
 type StaticDB struct {
 	DB        DBExecutor
-	Logger    *zap.Logger
 	BasicPath string
 	MaxSize   int
 	Ctx       context.Context
@@ -52,7 +52,6 @@ func NewStaticRepository(ctx context.Context, dbpool *pgxpool.Pool, basicPath st
 		DB:        dbpool,
 		BasicPath: basicPath,
 		MaxSize:   maxSize,
-		Logger:    logger,
 		Ctx:       ctx,
 		timeout:   timeout,
 	}, nil
@@ -63,14 +62,16 @@ func (s StaticDB) Get(staticID uuid.UUID) (string, error) {
 
 	ctx, cancel := context.WithTimeout(s.Ctx, s.timeout)
 	defer cancel()
+	logger := middleware.GetLogger(s.Ctx)
+	logger.Info("getting static by id from db", zap.String("static_id", staticID.String()))
 
 	err := s.DB.QueryRow(ctx, getStaticQuery, staticID).Scan(&path, &name)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			s.Logger.Error("postgres: static not found", zap.String("static_id", staticID.String()))
+			logger.Error("postgres: static not found", zap.String("static_id", staticID.String()))
 			return "", entity.PSQLWrap(repository.ErrStaticNotFound)
 		}
-		s.Logger.Error("postgres: error getting static", zap.String("static_id", staticID.String()), zap.Error(err))
+		logger.Error("postgres: error getting static", zap.String("static_id", staticID.String()), zap.Error(err))
 		return "", entity.PSQLWrap(err, errors.New("error executing SQL query GetStatic"))
 	}
 
@@ -80,9 +81,11 @@ func (s StaticDB) Get(staticID uuid.UUID) (string, error) {
 func (s StaticDB) Upload(path, filename string, data []byte) (uuid.UUID, error) {
 	ctx, cancel := context.WithTimeout(s.Ctx, s.timeout)
 	defer cancel()
+	logger := middleware.GetLogger(s.Ctx)
+	logger.Info("uploading static to db", zap.String("path", path), zap.String("filename", filename))
 
 	if len(data) > s.MaxSize {
-		s.Logger.Error("postgres: static too large", zap.Int("size", len(data)), zap.Int("max_size", s.MaxSize))
+		logger.Error("postgres: static too large", zap.Int("size", len(data)), zap.Int("max_size", s.MaxSize))
 		return uuid.UUID{}, entity.PSQLWrap(repository.ErrStaticTooLarge)
 	}
 
@@ -93,7 +96,7 @@ func (s StaticDB) Upload(path, filename string, data []byte) (uuid.UUID, error) 
 	dir := filepath.Dir(fmt.Sprintf("%s/%s/", s.BasicPath, path))
 	err := os.MkdirAll(dir, 0755)
 	if err != nil {
-		s.Logger.Error("error creating static directory", zap.String("path", dir), zap.Error(err))
+		logger.Error("error creating static directory", zap.String("path", dir), zap.Error(err))
 		return uuid.UUID{}, entity.PSQLWrap(
 			err,
 			errors.New("failed to create a directory for storing static files"),
@@ -102,7 +105,7 @@ func (s StaticDB) Upload(path, filename string, data []byte) (uuid.UUID, error) 
 
 	dst, err := os.Create(fmt.Sprintf("%s/%s/%s", s.BasicPath, path, filename))
 	if err != nil {
-		s.Logger.Error("error creating static file", zap.String("path", fmt.Sprintf("%s/%s/%s", s.BasicPath, path, filename)), zap.Error(err))
+		logger.Error("error creating static file", zap.String("path", fmt.Sprintf("%s/%s/%s", s.BasicPath, path, filename)), zap.Error(err))
 		return uuid.UUID{}, entity.PSQLWrap(
 			err,
 			errors.New("failed to create file"),
@@ -110,23 +113,24 @@ func (s StaticDB) Upload(path, filename string, data []byte) (uuid.UUID, error) 
 	}
 
 	if _, err = dst.Write(data); err != nil {
-		s.Logger.Error("error writing data to static file", zap.String("path", fmt.Sprintf("%s/%s/%s", s.BasicPath, path, filename)), zap.Error(err))
+		logger.Error("error writing data to static file", zap.String("path", fmt.Sprintf("%s/%s/%s", s.BasicPath, path, filename)), zap.Error(err))
 		return uuid.UUID{}, entity.PSQLWrap(
 			err,
 			errors.New("failed to write data to file"),
 		)
 	}
 	if err = dst.Close(); err != nil {
-		s.Logger.Error("error closing static file", zap.String("path", fmt.Sprintf("%s/%s/%s", s.BasicPath, path, filename)), zap.Error(err))
+		logger.Error("error closing static file", zap.String("path", fmt.Sprintf("%s/%s/%s", s.BasicPath, path, filename)), zap.Error(err))
 		return uuid.UUID{}, entity.PSQLWrap(
 			err,
 			errors.New("failed to close file"),
 		)
 	}
 
+	logger.Info("static uploaded", zap.String("path", fmt.Sprintf("%s/%s/%s", s.BasicPath, path, filename)))
 	var id uuid.UUID
 	if err = s.DB.QueryRow(ctx, uploadStaticQuery, s.BasicPath+path, filename).Scan(&id); err != nil {
-		s.Logger.Error("error uploading static", zap.String("path", fmt.Sprintf("%s/%s/%s", s.BasicPath, path, filename)), zap.Error(err))
+		logger.Error("error uploading static", zap.String("path", fmt.Sprintf("%s/%s/%s", s.BasicPath, path, filename)), zap.Error(err))
 		return uuid.UUID{}, entity.PSQLWrap(err, errors.New("error executing SQL query UploadStatic"))
 	}
 

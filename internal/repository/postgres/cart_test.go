@@ -13,7 +13,6 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/pashagolub/pgxmock/v4"
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap"
 )
 
 func setupCartMockDB(t *testing.T) (pgxmock.PgxPoolIface, *mocks.PgxMockAdapter) {
@@ -28,9 +27,8 @@ func setupCartTest(t *testing.T) (pgxmock.PgxPoolIface, *mocks.PgxMockAdapter, *
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 
 	repo := &CartDB{
-		DB:     adapter,
-		ctx:    ctx,
-		logger: zap.NewNop(),
+		DB:  adapter,
+		ctx: ctx,
 	}
 
 	return mockPool, adapter, repo, func() {

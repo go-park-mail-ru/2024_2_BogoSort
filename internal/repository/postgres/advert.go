@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/middleware"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
 	"github.com/google/uuid"
@@ -15,7 +16,6 @@ import (
 
 type AdvertDB struct {
 	DB      DBExecutor
-	logger  *zap.Logger
 	ctx     context.Context
 	timeout time.Duration
 }
@@ -144,13 +144,12 @@ type SavedAdvertRepoModel struct {
 	CreatedAt time.Time
 }
 
-func NewAdvertRepository(db *pgxpool.Pool, logger *zap.Logger, ctx context.Context, timeout time.Duration) (repository.AdvertRepository, error) {
+func NewAdvertRepository(db *pgxpool.Pool, ctx context.Context, timeout time.Duration) (repository.AdvertRepository, error) {
 	if err := db.Ping(ctx); err != nil {
 		return nil, err
 	}
 	return &AdvertDB{
 		DB:      db,
-		logger:  logger,
 		ctx:     ctx,
 		timeout: timeout,
 	}, nil
@@ -163,9 +162,11 @@ func (r *AdvertDB) getSavedCount(advertId uuid.UUID, userId uuid.UUID) (int, boo
 	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
 	defer cancel()
 
+	logger := middleware.GetLogger(r.ctx)
+	logger.Info("getting saved count from db", zap.String("advert_id", advertId.String()), zap.String("user_id", userId.String()))
 	err := r.DB.QueryRow(ctx, selectSavedCountAndIsSavedQuery, advertId, userId).Scan(&savedCount, &isSaved)
 	if err != nil {
-		r.logger.Error("failed to execute query", zap.Error(err), zap.String("advert_id", advertId.String()), zap.String("user_id", userId.String()))
+		logger.Error("failed to execute query", zap.Error(err), zap.String("advert_id", advertId.String()), zap.String("user_id", userId.String()))
 		return 0, false, err
 	}
 
@@ -179,9 +180,12 @@ func (r *AdvertDB) getViewedCount(advertId uuid.UUID, userId uuid.UUID) (int, bo
 	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
 	defer cancel()
 
+	logger := middleware.GetLogger(r.ctx)
+	logger.Info("getting viewed count from db", zap.String("advert_id", advertId.String()), zap.String("user_id", userId.String()))
+
 	err := r.DB.QueryRow(ctx, selectViewedCountAndIsViewedQuery, advertId, userId).Scan(&viewedCount, &isViewed)
 	if err != nil {
-		r.logger.Error("failed to execute query", zap.Error(err), zap.String("advert_id", advertId.String()), zap.String("user_id", userId.String()))
+		logger.Error("failed to execute query", zap.Error(err), zap.String("advert_id", advertId.String()), zap.String("user_id", userId.String()))
 		return 0, false, err
 	}
 
@@ -190,14 +194,17 @@ func (r *AdvertDB) getViewedCount(advertId uuid.UUID, userId uuid.UUID) (int, bo
 
 func (r *AdvertDB) convertToEntityAdvert(dbAdvert AdvertRepoModel, userId uuid.UUID) *entity.Advert {
 	savedCount, isSaved, err := r.getSavedCount(dbAdvert.ID, userId)
+	logger := middleware.GetLogger(r.ctx)
+	logger.Info("getting saved count", zap.String("advert_id", dbAdvert.ID.String()), zap.String("user_id", userId.String()))
 	if err != nil {
-		r.logger.Error("failed to get saved count", zap.Error(err), zap.String("advert_id", dbAdvert.ID.String()), zap.String("user_id", userId.String()))
+		logger.Error("failed to get saved count", zap.Error(err), zap.String("advert_id", dbAdvert.ID.String()), zap.String("user_id", userId.String()))
 		return nil
 	}
 
+	logger.Info("getting viewed count", zap.String("advert_id", dbAdvert.ID.String()), zap.String("user_id", userId.String()))
 	viewedCount, isViewed, err := r.getViewedCount(dbAdvert.ID, userId)
 	if err != nil {
-		r.logger.Error("failed to get viewed count", zap.Error(err), zap.String("advert_id", dbAdvert.ID.String()), zap.String("user_id", userId.String()))
+		logger.Error("failed to get viewed count", zap.Error(err), zap.String("advert_id", dbAdvert.ID.String()), zap.String("user_id", userId.String()))
 		return nil
 	}
 
@@ -227,6 +234,9 @@ func (r *AdvertDB) Add(a *entity.Advert) (*entity.Advert, error) {
 	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
 	defer cancel()
 
+	logger := middleware.GetLogger(r.ctx)
+	logger.Info("adding advert to db", zap.Any("advert", a))
+
 	err := r.DB.QueryRow(ctx, insertAdvertQuery,
 		a.Title,
 		a.Description,
@@ -249,11 +259,11 @@ func (r *AdvertDB) Add(a *entity.Advert) (*entity.Advert, error) {
 	)
 
 	if err != nil {
-		r.logger.Error("error adding advert", zap.Error(err))
+		logger.Error("error adding advert", zap.Error(err))
 		return nil, entity.PSQLWrap(err)
 	}
 
-	r.logger.Info("advert added", zap.Any("advert", dbAdvert))
+	logger.Info("advert added", zap.Any("advert", dbAdvert))
 
 	return &entity.Advert{
 		ID:          dbAdvert.ID,
@@ -275,9 +285,12 @@ func (r *AdvertDB) Get(limit, offset int, userId uuid.UUID) ([]*entity.Advert, e
 	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
 	defer cancel()
 
+	logger := middleware.GetLogger(r.ctx)
+	logger.Info("getting adverts from db", zap.Int("limit", limit), zap.Int("offset", offset))
+
 	rows, err := r.DB.Query(ctx, selectAdvertsQuery, limit, offset)
 	if err != nil {
-		r.logger.Error("failed to execute query", zap.Error(err))
+		logger.Error("failed to execute query", zap.Error(err))
 		return nil, entity.PSQLWrap(err)
 	}
 	defer rows.Close()
@@ -297,14 +310,14 @@ func (r *AdvertDB) Get(limit, offset int, userId uuid.UUID) ([]*entity.Advert, e
 			&dbAdvert.CreatedAt,
 			&dbAdvert.UpdatedAt,
 		); err != nil {
-			r.logger.Error("failed to scan row", zap.Error(err))
+			logger.Error("failed to scan row", zap.Error(err))
 			return nil, entity.PSQLWrap(err)
 		}
 		adverts = append(adverts, r.convertToEntityAdvert(dbAdvert, userId))
 	}
 
 	if err := rows.Err(); err != nil {
-		r.logger.Error("error iterating over rows", zap.Error(err))
+		logger.Error("error iterating over rows", zap.Error(err))
 		return nil, entity.PSQLWrap(err)
 	}
 
@@ -317,9 +330,12 @@ func (r *AdvertDB) GetByCategoryId(categoryId, userId uuid.UUID) ([]*entity.Adve
 	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
 	defer cancel()
 
+	logger := middleware.GetLogger(r.ctx)
+	logger.Info("getting adverts by category id from db", zap.String("category_id", categoryId.String()))
+
 	rows, err := r.DB.Query(ctx, selectAdvertsByCategoryIdQuery, categoryId)
 	if err != nil {
-		r.logger.Error("failed to execute query", zap.Error(err), zap.String("category_id", categoryId.String()))
+		logger.Error("failed to execute query", zap.Error(err), zap.String("category_id", categoryId.String()))
 		return nil, entity.PSQLWrap(err)
 	}
 
@@ -339,14 +355,14 @@ func (r *AdvertDB) GetByCategoryId(categoryId, userId uuid.UUID) ([]*entity.Adve
 			&dbAdvert.CreatedAt,
 			&dbAdvert.UpdatedAt,
 		); err != nil {
-			r.logger.Error("failed to scan row", zap.Error(err), zap.String("category_id", categoryId.String()))
+			logger.Error("failed to scan row", zap.Error(err), zap.String("category_id", categoryId.String()))
 			return nil, entity.PSQLWrap(err)
 		}
 		adverts = append(adverts, r.convertToEntityAdvert(dbAdvert, userId))
 	}
 
 	if err := rows.Err(); err != nil {
-		r.logger.Error("error iterating over rows", zap.Error(err), zap.String("category_id", categoryId.String()))
+		logger.Error("error iterating over rows", zap.Error(err), zap.String("category_id", categoryId.String()))
 		return nil, entity.PSQLWrap(err)
 	}
 
@@ -359,9 +375,12 @@ func (r *AdvertDB) GetBySellerId(sellerId, userId uuid.UUID) ([]*entity.Advert, 
 	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
 	defer cancel()
 
+	logger := middleware.GetLogger(r.ctx)
+	logger.Info("getting adverts by seller id from db", zap.String("seller_id", sellerId.String()))
+
 	rows, err := r.DB.Query(ctx, selectAdvertsBySellerIdQuery, sellerId)
 	if err != nil {
-		r.logger.Error("failed to execute query", zap.Error(err), zap.String("seller_id", sellerId.String()))
+		logger.Error("failed to execute query", zap.Error(err), zap.String("seller_id", sellerId.String()))
 		return nil, entity.PSQLWrap(err)
 	}
 	defer rows.Close()
@@ -382,14 +401,14 @@ func (r *AdvertDB) GetBySellerId(sellerId, userId uuid.UUID) ([]*entity.Advert, 
 			&dbAdvert.CreatedAt,
 			&dbAdvert.UpdatedAt,
 		); err != nil {
-			r.logger.Error("failed to scan row", zap.Error(err), zap.String("seller_id", sellerId.String()))
+			logger.Error("failed to scan row", zap.Error(err), zap.String("seller_id", sellerId.String()))
 			return nil, entity.PSQLWrap(err)
 		}
 		adverts = append(adverts, r.convertToEntityAdvert(dbAdvert, userId))
 	}
 
 	if err := rows.Err(); err != nil {
-		r.logger.Error("error iterating over rows", zap.Error(err), zap.String("seller_id", sellerId.String()))
+		logger.Error("error iterating over rows", zap.Error(err), zap.String("seller_id", sellerId.String()))
 		return nil, entity.PSQLWrap(err)
 	}
 
@@ -402,9 +421,12 @@ func (r *AdvertDB) GetByCartId(cartId, userId uuid.UUID) ([]*entity.Advert, erro
 	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
 	defer cancel()
 
+	logger := middleware.GetLogger(r.ctx)
+	logger.Info("getting adverts by cart id from db", zap.String("cart_id", cartId.String()))
+
 	rows, err := r.DB.Query(ctx, selectAdvertsByCartIdQuery, cartId)
 	if err != nil {
-		r.logger.Error("failed to execute query", zap.Error(err), zap.String("cart_id", cartId.String()))
+		logger.Error("failed to execute query", zap.Error(err), zap.String("cart_id", cartId.String()))
 		return nil, entity.PSQLWrap(err)
 	}
 	defer rows.Close()
@@ -425,14 +447,14 @@ func (r *AdvertDB) GetByCartId(cartId, userId uuid.UUID) ([]*entity.Advert, erro
 			&dbAdvert.CreatedAt,
 			&dbAdvert.UpdatedAt,
 		); err != nil {
-			r.logger.Error("failed to scan row", zap.Error(err), zap.String("cart_id", cartId.String()))
+			logger.Error("failed to scan row", zap.Error(err), zap.String("cart_id", cartId.String()))
 			return nil, entity.PSQLWrap(err)
 		}
 		adverts = append(adverts, r.convertToEntityAdvert(dbAdvert, userId))
 	}
 
 	if err := rows.Err(); err != nil {
-		r.logger.Error("error iterating over rows", zap.Error(err), zap.String("user_id", cartId.String()))
+		logger.Error("error iterating over rows", zap.Error(err), zap.String("user_id", cartId.String()))
 		return nil, entity.PSQLWrap(err)
 	}
 
@@ -440,9 +462,12 @@ func (r *AdvertDB) GetByCartId(cartId, userId uuid.UUID) ([]*entity.Advert, erro
 }
 
 func (r *AdvertDB) BeginTransaction() (pgx.Tx, error) {
+	logger := middleware.GetLogger(r.ctx)
+	logger.Info("beginning transaction")
+
 	tx, err := r.DB.Begin(r.ctx)
 	if err != nil {
-		r.logger.Error("failed to begin transaction", zap.Error(err))
+		logger.Error("failed to begin transaction", zap.Error(err))
 		return nil, err
 	}
 	return tx, nil
@@ -453,6 +478,9 @@ func (r *AdvertDB) GetById(advertId, userId uuid.UUID) (*entity.Advert, error) {
 
 	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
 	defer cancel()
+
+	logger := middleware.GetLogger(r.ctx)
+	logger.Info("getting advert by id from db", zap.String("advert_id", advertId.String()))
 
 	err := r.DB.QueryRow(ctx, selectAdvertByIdQuery, advertId).Scan(
 		&dbAdvert.ID,
@@ -470,10 +498,10 @@ func (r *AdvertDB) GetById(advertId, userId uuid.UUID) (*entity.Advert, error) {
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			r.logger.Error("advert not found", zap.Error(err), zap.String("advert_id", advertId.String()))
+			logger.Error("advert not found", zap.Error(err), zap.String("advert_id", advertId.String()))
 			return nil, entity.PSQLWrap(repository.ErrAdvertNotFound)
 		}
-		r.logger.Error("failed to query advert by id", zap.Error(err), zap.String("advert_id", advertId.String()))
+		logger.Error("failed to query advert by id", zap.Error(err), zap.String("advert_id", advertId.String()))
 		return nil, entity.PSQLWrap(err)
 	}
 
@@ -483,6 +511,9 @@ func (r *AdvertDB) GetById(advertId, userId uuid.UUID) (*entity.Advert, error) {
 func (r *AdvertDB) Update(advert *entity.Advert) error {
 	ctx, cancel := context.WithTimeout(r.ctx, 5*time.Minute)
 	defer cancel()
+
+	logger := middleware.GetLogger(r.ctx)
+	logger.Info("updating advert in db", zap.String("advert_id", advert.ID.String()))
 
 	result, err := r.DB.Exec(ctx, updateAdvertQuery,
 		advert.Title,
@@ -495,13 +526,13 @@ func (r *AdvertDB) Update(advert *entity.Advert) error {
 		advert.ID,
 	)
 	if err != nil {
-		r.logger.Error("failed to update advert", zap.Error(err), zap.String("advert_id", advert.ID.String()))
+		logger.Error("failed to update advert", zap.Error(err), zap.String("advert_id", advert.ID.String()))
 		return entity.PSQLWrap(err)
 	}
 
 	rowsAffected := result.RowsAffected()
 	if rowsAffected == 0 {
-		r.logger.Error("advert not found", zap.String("advert_id", advert.ID.String()))
+		logger.Error("advert not found", zap.String("advert_id", advert.ID.String()))
 		return entity.PSQLWrap(repository.ErrAdvertNotFound)
 	}
 
@@ -512,15 +543,18 @@ func (r *AdvertDB) DeleteById(advertId uuid.UUID) error {
 	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
 	defer cancel()
 
+	logger := middleware.GetLogger(r.ctx)
+	logger.Info("deleting advert from db", zap.String("advert_id", advertId.String()))
+
 	result, err := r.DB.Exec(ctx, deleteAdvertByIdQuery, advertId)
 	if err != nil {
-		r.logger.Error("failed to delete advert", zap.Error(err), zap.String("advert_id", advertId.String()))
+		logger.Error("failed to delete advert", zap.Error(err), zap.String("advert_id", advertId.String()))
 		return entity.PSQLWrap(err)
 	}
 
 	rowsAffected := result.RowsAffected()
 	if rowsAffected == 0 {
-		r.logger.Error("advert not found", zap.String("advert_id", advertId.String()))
+		logger.Error("advert not found", zap.String("advert_id", advertId.String()))
 		return entity.PSQLWrap(repository.ErrAdvertNotFound)
 	}
 
@@ -531,15 +565,18 @@ func (r *AdvertDB) UpdateStatus(tx pgx.Tx, advertId uuid.UUID, status entity.Adv
 	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
 	defer cancel()
 
+	logger := middleware.GetLogger(r.ctx)
+	logger.Info("updating advert status in db", zap.String("advert_id", advertId.String()))
+
 	result, err := tx.Exec(ctx, updateAdvertStatusQuery, status, advertId)
 	if err != nil {
-		r.logger.Error("failed to update advert status", zap.Error(err), zap.String("advert_id", advertId.String()))
+		logger.Error("failed to update advert status", zap.Error(err), zap.String("advert_id", advertId.String()))
 		return entity.PSQLWrap(err)
 	}
 
 	rowsAffected := result.RowsAffected()
 	if rowsAffected == 0 {
-		r.logger.Error("advert not found", zap.String("advert_id", advertId.String()))
+		logger.Error("advert not found", zap.String("advert_id", advertId.String()))
 		return entity.PSQLWrap(repository.ErrAdvertNotFound)
 	}
 
@@ -550,15 +587,18 @@ func (r *AdvertDB) UploadImage(advertId uuid.UUID, imageId uuid.UUID) error {
 	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
 	defer cancel()
 
+	logger := middleware.GetLogger(r.ctx)
+	logger.Info("uploading image to db", zap.String("advert_id", advertId.String()))
+
 	result, err := r.DB.Exec(ctx, uploadImageQuery, imageId, advertId)
 	if err != nil {
-		r.logger.Error("failed to upload image", zap.Error(err), zap.String("advert_id", advertId.String()))
+		logger.Error("failed to upload image", zap.Error(err), zap.String("advert_id", advertId.String()))
 		return entity.PSQLWrap(err)
 	}
 
 	rowsAffected := result.RowsAffected()
 	if rowsAffected == 0 {
-		r.logger.Error("advert not found", zap.String("advert_id", advertId.String()))
+		logger.Error("advert not found", zap.String("advert_id", advertId.String()))
 		return entity.PSQLWrap(repository.ErrAdvertNotFound)
 	}
 
@@ -571,6 +611,9 @@ func (r *AdvertDB) AddToSaved(advertId, userId uuid.UUID) error {
 	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
 	defer cancel()
 
+	logger := middleware.GetLogger(r.ctx)
+	logger.Info("adding advert to saved in db", zap.String("advert_id", advertId.String()))
+
 	err := r.DB.QueryRow(ctx, insertSavedAdvertQuery, userId, advertId).Scan(
 		&savedAdvert.ID,
 		&savedAdvert.UserId,
@@ -579,11 +622,11 @@ func (r *AdvertDB) AddToSaved(advertId, userId uuid.UUID) error {
 	)
 
 	if err != nil {
-		r.logger.Error("error adding advert to saved", zap.Error(err))
+		logger.Error("error adding advert to saved", zap.Error(err))
 		return entity.PSQLWrap(err)
 	}
 
-	r.logger.Info("advert added to saved", zap.Any("saved_advert", savedAdvert))
+	logger.Info("advert added to saved", zap.Any("saved_advert", savedAdvert))
 
 	return nil
 }
@@ -592,15 +635,18 @@ func (r *AdvertDB) DeleteFromSaved(userId uuid.UUID, advertId uuid.UUID) error {
 	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
 	defer cancel()
 
+	logger := middleware.GetLogger(r.ctx)
+	logger.Info("deleting advert from saved in db", zap.String("advert_id", advertId.String()))
+
 	result, err := r.DB.Exec(ctx, deleteSavedAdvertQuery, advertId, userId)
 	if err != nil {
-		r.logger.Error("failed to delete advert", zap.Error(err), zap.String("advert_id", advertId.String()))
+		logger.Error("failed to delete advert", zap.Error(err), zap.String("advert_id", advertId.String()))
 		return entity.PSQLWrap(err)
 	}
 
 	rowsAffected := result.RowsAffected()
 	if rowsAffected == 0 {
-		r.logger.Error("advert not found", zap.String("advert_id", advertId.String()))
+		logger.Error("advert not found", zap.String("advert_id", advertId.String()))
 		return entity.PSQLWrap(repository.ErrAdvertNotFound)
 	}
 
@@ -611,6 +657,9 @@ func (r *AdvertDB) AddViewed(userId, advertId uuid.UUID) error {
 	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
 	defer cancel()
 
+	logger := middleware.GetLogger(r.ctx)
+	logger.Info("adding viewed advert to db", zap.String("advert_id", advertId.String()))
+
 	var userIdToInsert interface{}
 	if userId == uuid.Nil {
 		userIdToInsert = nil
@@ -620,7 +669,7 @@ func (r *AdvertDB) AddViewed(userId, advertId uuid.UUID) error {
 
 	_, err := r.DB.Exec(ctx, insertViewedAdvertQuery, advertId, userIdToInsert)
 	if err != nil {
-		r.logger.Error("failed to add viewed advert", zap.Error(err), zap.String("advert_id", advertId.String()))
+		logger.Error("failed to add viewed advert", zap.Error(err), zap.String("advert_id", advertId.String()))
 		return entity.PSQLWrap(err)
 	}
 
@@ -630,6 +679,9 @@ func (r *AdvertDB) AddViewed(userId, advertId uuid.UUID) error {
 func (r *AdvertDB) CheckIfExists(advertId uuid.UUID) (bool, error) {
 	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
 	defer cancel()
+
+	logger := middleware.GetLogger(r.ctx)
+	logger.Info("checking if advert exists in db", zap.String("advert_id", advertId.String()))
 
 	var exists bool
 	err := r.DB.QueryRow(ctx, checkIfExistsQuery, advertId).Scan(&exists)
@@ -646,9 +698,12 @@ func (r *AdvertDB) GetSavedByUserId(userId uuid.UUID) ([]*entity.Advert, error) 
 	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
 	defer cancel()
 
+	logger := middleware.GetLogger(r.ctx)
+	logger.Info("getting saved adverts by user id from db", zap.String("user_id", userId.String()))
+
 	rows, err := r.DB.Query(ctx, selectSavedAdvertsByUserIdQuery, userId)
 	if err != nil {
-		r.logger.Error("failed to execute query", zap.Error(err), zap.String("user_id", userId.String()))
+		logger.Error("failed to execute query", zap.Error(err), zap.String("user_id", userId.String()))
 		return nil, entity.PSQLWrap(err)
 	}
 	defer rows.Close()
@@ -669,14 +724,14 @@ func (r *AdvertDB) GetSavedByUserId(userId uuid.UUID) ([]*entity.Advert, error) 
 			&dbAdvert.CreatedAt,
 			&dbAdvert.UpdatedAt,
 		); err != nil {
-			r.logger.Error("failed to scan row", zap.Error(err), zap.String("user_id", userId.String()))
+			logger.Error("failed to scan row", zap.Error(err), zap.String("user_id", userId.String()))
 			return nil, entity.PSQLWrap(err)
 		}
 		adverts = append(adverts, r.convertToEntityAdvert(dbAdvert, userId))
 	}
 
 	if err := rows.Err(); err != nil {
-		r.logger.Error("error iterating over rows", zap.Error(err), zap.String("user_id", userId.String()))
+		logger.Error("error iterating over rows", zap.Error(err), zap.String("user_id", userId.String()))
 		return nil, entity.PSQLWrap(err)
 	}
 
@@ -689,9 +744,12 @@ func (r *AdvertDB) Search(query string, limit, offset int, userId uuid.UUID) ([]
 	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
 	defer cancel()
 
+	logger := middleware.GetLogger(r.ctx)
+	logger.Info("searching adverts in db", zap.String("query", query))
+
 	rows, err := r.DB.Query(ctx, searchAdvertsQuery, query, limit, offset)
 	if err != nil {
-		r.logger.Error("failed to execute query", zap.Error(err), zap.String("query", query))
+		logger.Error("failed to execute query", zap.Error(err), zap.String("query", query))
 		return nil, entity.PSQLWrap(err)
 	}
 	defer rows.Close()
@@ -712,14 +770,14 @@ func (r *AdvertDB) Search(query string, limit, offset int, userId uuid.UUID) ([]
 			&dbAdvert.CreatedAt,
 			&dbAdvert.UpdatedAt,
 		); err != nil {
-			r.logger.Error("failed to scan row", zap.Error(err), zap.String("query", query))
+			logger.Error("failed to scan row", zap.Error(err), zap.String("query", query))
 			return nil, entity.PSQLWrap(err)
 		}
 		adverts = append(adverts, r.convertToEntityAdvert(dbAdvert, userId))
 	}
 
 	if err := rows.Err(); err != nil {
-		r.logger.Error("error iterating over rows", zap.Error(err), zap.String("query", query))
+		logger.Error("error iterating over rows", zap.Error(err), zap.String("query", query))
 		return nil, entity.PSQLWrap(err)
 	}
 
@@ -730,9 +788,13 @@ func (r *AdvertDB) Count() (int, error) {
 	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
 	defer cancel()
 
+	logger := middleware.GetLogger(r.ctx)
+	logger.Info("counting adverts in db")
+
 	var count int
 	err := r.DB.QueryRow(ctx, countAdvertsQuery).Scan(&count)
 	if err != nil {
+		logger.Error("failed to count adverts", zap.Error(err))
 		return 0, err
 	}
 	return count, nil
@@ -744,9 +806,12 @@ func (r *AdvertDB) GetByUserId(sellerId, userId uuid.UUID) ([]*entity.Advert, er
 	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
 	defer cancel()
 
+	logger := middleware.GetLogger(r.ctx)
+	logger.Info("getting adverts by user id from db", zap.String("seller_id", sellerId.String()))
+
 	rows, err := r.DB.Query(ctx, selectAdvertsByUserIdQuery, sellerId)
 	if err != nil {
-		r.logger.Error("failed to execute query", zap.Error(err), zap.String("seller_id", sellerId.String()))
+		logger.Error("failed to execute query", zap.Error(err), zap.String("seller_id", sellerId.String()))
 		return nil, entity.PSQLWrap(err)
 	}
 	defer rows.Close()
@@ -767,14 +832,14 @@ func (r *AdvertDB) GetByUserId(sellerId, userId uuid.UUID) ([]*entity.Advert, er
 			&dbAdvert.CreatedAt,
 			&dbAdvert.UpdatedAt,
 		); err != nil {
-			r.logger.Error("failed to scan row", zap.Error(err), zap.String("seller_id", sellerId.String()))
+			logger.Error("failed to scan row", zap.Error(err), zap.String("seller_id", sellerId.String()))
 			return nil, entity.PSQLWrap(err)
 		}
 		adverts = append(adverts, r.convertToEntityAdvert(dbAdvert, userId))
 	}
 
 	if err := rows.Err(); err != nil {
-		r.logger.Error("error iterating over rows", zap.Error(err), zap.String("seller_id", sellerId.String()))
+		logger.Error("error iterating over rows", zap.Error(err), zap.String("seller_id", sellerId.String()))
 		return nil, entity.PSQLWrap(err)
 	}
 

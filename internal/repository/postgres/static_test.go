@@ -16,7 +16,6 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/pashagolub/pgxmock/v4"
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap"
 )
 
 func setupMockDB(t *testing.T) (pgxmock.PgxPoolIface, *postgres2.PgxMockAdapter) {
@@ -37,8 +36,7 @@ func setupTest(t *testing.T) (pgxmock.PgxPoolIface, *postgres2.PgxMockAdapter, s
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 
 	repo := &StaticDB{
-		DB:      adapter,
-		Logger:  zap.L(),
+		DB:        adapter,
 		BasicPath: tempDir,
 		MaxSize:   10 * 1024 * 1024,
 		Ctx:       ctx,
