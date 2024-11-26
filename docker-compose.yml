@@ -182,7 +182,7 @@ services:
         condition: service_started
     networks:
       - app-network
-  
+
   loki:
     image: grafana/loki:2.7.1
     ports:
@@ -190,6 +190,7 @@ services:
     command: -config.file=/etc/loki/local-config.yaml
     volumes:
       - ./loki-config.yml:/etc/loki/local-config.yaml
+      - loki_data:/loki
     networks:
       - app-network
 
@@ -206,7 +207,7 @@ services:
     image: grafana/grafana
     restart: always
     ports:
-      - "3000:3000"
+      - "3001:3000"
     networks:
       - app-network
 
@@ -217,3 +218,4 @@ networks:
 volumes:
   pgdata:
   prometheus_data:
+  loki_data:
