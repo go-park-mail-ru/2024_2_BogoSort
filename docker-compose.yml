@@ -164,15 +164,23 @@ services:
     networks:
       - app-network
 
+  prometheus:
+    image: prom/prometheus
+    restart: always
+    ports:
+      - "9090:9090"
+    networks:
+      - app-network
+
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
     ports:
       - "3000:3000"
     volumes:
-      - /path/to/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
-      - /path/to/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
-      - /path/to/grafana/dashboards:/var/lib/grafana/dashboards
+      - ./grafana.json:/etc/grafana/provisioning/datasources/prometheus.yml
+      - ./grafana.json:/etc/grafana/provisioning/dashboards/dashboard.yml
+      - /var/lib/grafana:/var/lib/grafana
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
