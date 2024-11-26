@@ -173,19 +173,20 @@ services:
       - app-network
 
   grafana:
-    image: grafana/grafana:latest
-    container_name: grafana
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./grafana.json:/etc/grafana/provisioning/datasources/prometheus.yml
-      - ./grafana.json:/etc/grafana/provisioning/dashboards/dashboard.yml
-      - /var/lib/grafana:/var/lib/grafana
-    environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=admin
-    depends_on:
-      - prometheus
+      image: grafana/grafana:latest
+      container_name: grafana
+      ports:
+        - "3000:3000"
+      volumes:
+        - /grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+        - /grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+        - /grafana/dashboards:/var/lib/grafana/dashboards
+      environment:
+        - GF_SECURITY_ADMIN_USER=admin
+        - GF_SECURITY_ADMIN_PASSWORD=admin
+      depends_on:
+        - prometheus
+
 
 networks:
   app-network:
