@@ -1,14 +1,17 @@
 package http
 
 import (
+	"context"
 	"errors"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/utils"
+	"io"
+	"net/http"
+
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/static"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/middleware"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/utils"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
-	"net/http"
-	"io"
 )
 
 var (
@@ -18,15 +21,12 @@ var (
 )
 
 type StaticEndpoint struct {
-	staticGrpcClient  static.StaticGrpcClient
-	logger        *zap.Logger
+	staticGrpcClient static.StaticGrpcClient
 }
 
-func NewStaticEndpoint(staticGrpcClient static.StaticGrpcClient, 
-	logger *zap.Logger) *StaticEndpoint {
+func NewStaticEndpoint(staticGrpcClient static.StaticGrpcClient) *StaticEndpoint {
 	return &StaticEndpoint{
 		staticGrpcClient: staticGrpcClient,
-		logger:        logger,
 	}
 }
 
@@ -47,6 +47,10 @@ func (h *StaticEndpoint) ConfigureRoutes(router *mux.Router) {
 // @Failure 500 {object} utils.ErrResponse "Failed to get static file"
 // @Router /api/v1/files/{fileId} [get]
 func (h *StaticEndpoint) GetById(writer http.ResponseWriter, r *http.Request) {
+	logger := middleware.GetLogger(r.Context())
+
+	logger.Info("get static by id request")
+
 	staticIdStr := mux.Vars(r)["fileId"]
 	staticId, err := uuid.Parse(staticIdStr)
 	if err != nil {
@@ -64,6 +68,8 @@ func (h *StaticEndpoint) GetById(writer http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logger.Info("static file found", zap.String("staticURL", staticURL))
+
 	utils.SendJSONResponse(writer, http.StatusOK, staticURL)
 }
 
@@ -79,6 +85,10 @@ func (h *StaticEndpoint) GetById(writer http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} utils.ErrResponse "Failed to get static file"
 // @Router /api/v1/files/stream/{fileId} [get]
 func (h *StaticEndpoint) GetFileStream(writer http.ResponseWriter, r *http.Request) {
+	logger := middleware.GetLogger(r.Context())
+
+	logger.Info("get static file stream request")
+
 	fileIdStr := mux.Vars(r)["fileId"]
 	fileId, err := uuid.Parse(fileIdStr)
 	if err != nil {
@@ -105,13 +115,17 @@ func (h *StaticEndpoint) GetFileStream(writer http.ResponseWriter, r *http.Reque
 	writer.Header().Set("Content-Type", "image/webp")
 	writer.WriteHeader(http.StatusOK)
 
-	_, err = io.Copy(writer, fileStream) 
+	_, err = io.Copy(writer, fileStream)
 	if err != nil {
 		h.sendError(writer, http.StatusInternalServerError, err, "failed to write file stream", nil)
 	}
+
+	logger.Info("static file stream sent")
 }
 
-func (e *StaticEndpoint) sendError(w http.ResponseWriter, statusCode int, err error, context string, additionalInfo map[string]string) {
-	e.logger.Error(err.Error(), zap.String("context", context), zap.Any("info", additionalInfo))
+func (e *StaticEndpoint) sendError(w http.ResponseWriter, statusCode int, err error, contextInfo string, additionalInfo map[string]string) {
+	logger := middleware.GetLogger(context.Background())
+
+	logger.Error(err.Error(), zap.String("context", contextInfo), zap.Any("info", additionalInfo))
 	utils.SendErrorResponse(w, statusCode, err.Error())
 }

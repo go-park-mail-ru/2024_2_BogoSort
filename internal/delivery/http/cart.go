@@ -47,6 +47,7 @@ func (h *CartEndpoint) Configure(router *mux.Router) {
 // @Router /api/v1/cart/{cart_id} [get]
 func (h *CartEndpoint) GetByID(w http.ResponseWriter, r *http.Request) {
 	logger := middleware.GetLogger(r.Context())
+	logger.Info("get cart by id request")
 	vars := mux.Vars(r)
 	cartIDStr, ok := vars["cart_id"]
 	if !ok {
@@ -92,7 +93,7 @@ func (h *CartEndpoint) GetByID(w http.ResponseWriter, r *http.Request) {
 // @Router /cart/user/{user_id} [get]
 func (h *CartEndpoint) GetByUserID(w http.ResponseWriter, r *http.Request) {
 	logger := middleware.GetLogger(r.Context())
-
+	logger.Info("get cart by user id request")
 	vars := mux.Vars(r)
 	userIDStr, ok := vars["user_id"]
 	if !ok {
@@ -138,7 +139,7 @@ func (h *CartEndpoint) GetByUserID(w http.ResponseWriter, r *http.Request) {
 // @Router /api/v1/cart/add [post]
 func (h *CartEndpoint) AddToCart(w http.ResponseWriter, r *http.Request) {
 	logger := middleware.GetLogger(r.Context())
-
+	logger.Info("add advert to user cart request")
 	var req dto.AddAdvertToUserCartRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		utils.SendErrorResponse(w, http.StatusBadRequest, "invalid request body")
@@ -173,7 +174,7 @@ func (h *CartEndpoint) AddToCart(w http.ResponseWriter, r *http.Request) {
 // @Router /api/v1/cart/delete [delete]
 func (h *CartEndpoint) DeleteFromCart(w http.ResponseWriter, r *http.Request) {
 	logger := middleware.GetLogger(r.Context())
-
+	logger.Info("delete advert from user cart request")
 	var req dto.DeleteAdvertFromUserCartRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		utils.SendErrorResponse(w, http.StatusBadRequest, "invalid request body")
@@ -207,7 +208,7 @@ func (h *CartEndpoint) DeleteFromCart(w http.ResponseWriter, r *http.Request) {
 // @Router /api/v1/cart/exists/{user_id} [get]
 func (h *CartEndpoint) CheckExists(w http.ResponseWriter, r *http.Request) {
 	logger := middleware.GetLogger(r.Context())
-
+	logger.Info("check cart existence request")
 	vars := mux.Vars(r)
 	userIDStr, ok := vars["user_id"]
 	if !ok {

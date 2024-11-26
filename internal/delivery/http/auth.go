@@ -50,6 +50,7 @@ func (a *AuthEndpoint) handleError(w http.ResponseWriter, err error, method stri
 // @Router /api/v1/logout [post]
 func (a *AuthEndpoint) Logout(w http.ResponseWriter, r *http.Request) {
 	logger := middleware.GetLogger(r.Context())
+	logger.Info("logout request")
 	userID, err := a.sessionManager.GetUserID(r)
 	if err != nil {
 		a.handleError(w, err, "Logout", nil)

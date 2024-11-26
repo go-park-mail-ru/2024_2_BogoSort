@@ -98,8 +98,7 @@ func (h *AdvertEndpoint) ConfigureProtectedRoutes(router *mux.Router) {
 // @Router /api/v1/adverts [get]
 func (h *AdvertEndpoint) Get(writer http.ResponseWriter, r *http.Request) {
 	logger := middleware.GetLogger(r.Context())
-
-	logger.Info("get adverts")
+	logger.Info("get adverts request")
 	userId, err := h.sessionManager.GetUserID(r)
 	if err != nil {
 		logger.Error("user not found", zap.Error(err))
@@ -145,7 +144,7 @@ func (h *AdvertEndpoint) Get(writer http.ResponseWriter, r *http.Request) {
 // @Router /api/v1/adverts/seller/{sellerId} [get]
 func (h *AdvertEndpoint) GetBySellerId(writer http.ResponseWriter, r *http.Request) {
 	logger := middleware.GetLogger(r.Context())
-
+	logger.Info("get adverts by seller id request")
 	userId, err := h.sessionManager.GetUserID(r)
 	if err != nil {
 		h.sendError(writer, http.StatusUnauthorized, err, "user not found", nil)
@@ -185,7 +184,7 @@ func (h *AdvertEndpoint) GetBySellerId(writer http.ResponseWriter, r *http.Reque
 // @Router /api/v1/adverts/cart/{cartId} [get]
 func (h *AdvertEndpoint) GetByCartId(writer http.ResponseWriter, r *http.Request) {
 	logger := middleware.GetLogger(r.Context())
-
+	logger.Info("get adverts by cart id request")
 	userId, err := h.sessionManager.GetUserID(r)
 	if err != nil {
 		h.sendError(writer, http.StatusUnauthorized, err, "user not found", nil)
@@ -225,7 +224,7 @@ func (h *AdvertEndpoint) GetByCartId(writer http.ResponseWriter, r *http.Request
 // @Router /api/v1/adverts/saved [get]
 func (h *AdvertEndpoint) GetSavedByUserId(writer http.ResponseWriter, r *http.Request) {
 	logger := middleware.GetLogger(r.Context())
-
+	logger.Info("get adverts by user id request")
 	userId, err := h.sessionManager.GetUserID(r)
 	if err != nil {
 		h.sendError(writer, http.StatusUnauthorized, err, "user not found", nil)
@@ -258,7 +257,7 @@ func (h *AdvertEndpoint) GetSavedByUserId(writer http.ResponseWriter, r *http.Re
 // @Router /api/v1/adverts/{advertId} [get]
 func (h *AdvertEndpoint) GetById(writer http.ResponseWriter, r *http.Request) {
 	logger := middleware.GetLogger(r.Context())
-
+	logger.Info("get advert by id request")
 	userId, err := h.sessionManager.GetUserID(r)
 	if err != nil {
 		userId = uuid.Nil
@@ -294,7 +293,7 @@ func (h *AdvertEndpoint) GetById(writer http.ResponseWriter, r *http.Request) {
 // @Router /api/v1/adverts [post]
 func (h *AdvertEndpoint) Add(writer http.ResponseWriter, r *http.Request) {
 	logger := middleware.GetLogger(r.Context())
-
+	logger.Info("add advert request")
 	var advert dto.AdvertRequest
 	if err := json.NewDecoder(r.Body).Decode(&advert); err != nil {
 		h.sendError(writer, http.StatusBadRequest, ErrInvalidAdvertData, "invalid advert data", nil)
@@ -335,6 +334,7 @@ func (h *AdvertEndpoint) Add(writer http.ResponseWriter, r *http.Request) {
 // @Router /api/v1/adverts/{advertId} [put]
 func (h *AdvertEndpoint) Update(writer http.ResponseWriter, r *http.Request) {
 	logger := middleware.GetLogger(r.Context())
+	logger.Info("update advert request")
 	var advert dto.AdvertRequest
 	if err := json.NewDecoder(r.Body).Decode(&advert); err != nil {
 		h.sendError(writer, http.StatusBadRequest, ErrInvalidAdvertData, "invalid advert data", nil)
@@ -378,7 +378,7 @@ func (h *AdvertEndpoint) Update(writer http.ResponseWriter, r *http.Request) {
 // @Router /api/v1/adverts/{advertId} [delete]
 func (h *AdvertEndpoint) Delete(writer http.ResponseWriter, r *http.Request) {
 	logger := middleware.GetLogger(r.Context())
-
+	logger.Info("delete advert request")
 	advertIdStr := mux.Vars(r)["advertId"]
 	advertId, err := uuid.Parse(advertIdStr)
 	if err != nil {
@@ -415,7 +415,7 @@ func (h *AdvertEndpoint) Delete(writer http.ResponseWriter, r *http.Request) {
 // @Router /api/v1/adverts/{advertId}/status [put]
 func (h *AdvertEndpoint) UpdateStatus(writer http.ResponseWriter, r *http.Request) {
 	logger := middleware.GetLogger(r.Context())
-
+	logger.Info("update advert status request")
 	advertIdStr := mux.Vars(r)["advertId"]
 	advertId, err := uuid.Parse(advertIdStr)
 	if err != nil {
@@ -456,7 +456,7 @@ func (h *AdvertEndpoint) UpdateStatus(writer http.ResponseWriter, r *http.Reques
 // @Router /api/v1/adverts/category/{categoryId} [get]
 func (h *AdvertEndpoint) GetByCategoryId(writer http.ResponseWriter, r *http.Request) {
 	logger := middleware.GetLogger(r.Context())
-
+	logger.Info("get adverts by category id request")
 	categoryIdStr := mux.Vars(r)["categoryId"]
 	categoryId, err := uuid.Parse(categoryIdStr)
 	if err != nil {
@@ -494,7 +494,7 @@ func (h *AdvertEndpoint) GetByCategoryId(writer http.ResponseWriter, r *http.Req
 // @Router /api/v1/adverts/{advertId}/image [put]
 func (h *AdvertEndpoint) UploadImage(writer http.ResponseWriter, r *http.Request) {
 	logger := middleware.GetLogger(r.Context())
-
+	logger.Info("upload image request")
 	userID, err := h.sessionManager.GetUserID(r)
 	if err != nil {
 		h.sendError(writer, http.StatusUnauthorized, ErrInvalidCredentials, "user not found", nil)
@@ -569,7 +569,7 @@ func (h *AdvertEndpoint) UploadImage(writer http.ResponseWriter, r *http.Request
 // @Router /api/v1/adverts/saved/{advertId} [post]
 func (h *AdvertEndpoint) AddToSaved(writer http.ResponseWriter, r *http.Request) {
 	logger := middleware.GetLogger(r.Context())
-
+	logger.Info("add advert to saved request")
 	userId, err := h.sessionManager.GetUserID(r)
 	if err != nil {
 		h.sendError(writer, http.StatusUnauthorized, ErrInvalidCredentials, "user not found", nil)
@@ -604,7 +604,7 @@ func (h *AdvertEndpoint) AddToSaved(writer http.ResponseWriter, r *http.Request)
 // @Router /api/v1/adverts/saved/{advertId} [delete]
 func (h *AdvertEndpoint) RemoveFromSaved(writer http.ResponseWriter, r *http.Request) {
 	logger := middleware.GetLogger(r.Context())
-
+	logger.Info("remove advert from saved request")
 	userId, err := h.sessionManager.GetUserID(r)
 	if err != nil {
 		h.sendError(writer, http.StatusUnauthorized, ErrInvalidCredentials, "user not found", nil)
@@ -647,7 +647,7 @@ func (h *AdvertEndpoint) handleError(writer http.ResponseWriter, err error, cont
 
 func (h *AdvertEndpoint) AddToViewed(writer http.ResponseWriter, r *http.Request) {
 	logger := middleware.GetLogger(r.Context())
-
+	logger.Info("add advert to viewed request")
 	userId, err := h.sessionManager.GetUserID(r)
 	if err != nil {
 		userId = uuid.Nil
@@ -679,7 +679,7 @@ func (h *AdvertEndpoint) AddToViewed(writer http.ResponseWriter, r *http.Request
 // @Router /api/v1/adverts/my [get]
 func (h *AdvertEndpoint) GetByUserId(writer http.ResponseWriter, r *http.Request) {
 	logger := middleware.GetLogger(r.Context())
-
+	logger.Info("get adverts by user id request")
 	userId, err := h.sessionManager.GetUserID(r)
 	if err != nil {
 		h.sendError(writer, http.StatusUnauthorized, ErrInvalidCredentials, "user not found", nil)
@@ -714,7 +714,7 @@ func (h *AdvertEndpoint) GetByUserId(writer http.ResponseWriter, r *http.Request
 // @Router /api/v1/adverts/search [get]
 func (h *AdvertEndpoint) Search(writer http.ResponseWriter, r *http.Request) {
 	logger := middleware.GetLogger(r.Context())
-
+	logger.Info("search adverts request")
 	query := r.URL.Query().Get("query")
 	if strings.TrimSpace(query) == "" {
 		h.sendError(writer, http.StatusBadRequest, errors.New("search query is empty"), "empty search query", nil)

@@ -1,9 +1,11 @@
 package http
 
 import (
+	"context"
 	"errors"
 	"net/http"
 
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/middleware"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/utils"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
 	"github.com/google/uuid"
@@ -20,13 +22,11 @@ var (
 
 type SellerEndpoint struct {
 	sellerRepo repository.Seller
-	logger     *zap.Logger
 }
 
-func NewSellerEndpoint(sellerRepo repository.Seller, logger *zap.Logger) *SellerEndpoint {
+func NewSellerEndpoint(sellerRepo repository.Seller) *SellerEndpoint {
 	return &SellerEndpoint{
 		sellerRepo: sellerRepo,
-		logger:     logger,
 	}
 }
 
@@ -48,6 +48,10 @@ func (s *SellerEndpoint) Configure(router *mux.Router) {
 // @Failure 500 {object} utils.ErrResponse "Внутренняя ошибка сервера"
 // @Router /api/v1/seller/{seller_id} [get]
 func (s *SellerEndpoint) GetByID(w http.ResponseWriter, r *http.Request) {
+	logger := middleware.GetLogger(r.Context())
+
+	logger.Info("get seller by id request")
+
 	vars := mux.Vars(r)
 	sellerID, err := uuid.Parse(vars["seller_id"])
 	if err != nil {
@@ -63,7 +67,7 @@ func (s *SellerEndpoint) GetByID(w http.ResponseWriter, r *http.Request) {
 		s.handleError(w, err, "error getting seller by id")
 	}
 
-	s.logger.Info("seller found", zap.String("seller_id", sellerID.String()))
+	logger.Info("seller found", zap.String("seller_id", sellerID.String()))
 	utils.SendJSONResponse(w, http.StatusOK, seller)
 }
 
@@ -80,6 +84,10 @@ func (s *SellerEndpoint) GetByID(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} utils.ErrResponse "Внутренняя ошибка сервера"
 // @Router /api/v1/seller/user/{user_id} [get]
 func (s *SellerEndpoint) GetByUserID(w http.ResponseWriter, r *http.Request) {
+	logger := middleware.GetLogger(r.Context())
+
+	logger.Info("get seller by user id request")
+
 	vars := mux.Vars(r)
 	userID, err := uuid.Parse(vars["user_id"])
 	if err != nil {
@@ -95,7 +103,7 @@ func (s *SellerEndpoint) GetByUserID(w http.ResponseWriter, r *http.Request) {
 		s.handleError(w, err, "error getting seller by user_id")
 	}
 
-	s.logger.Info("seller found", zap.String("user_id", userID.String()))
+	logger.Info("seller found", zap.String("user_id", userID.String()))
 	utils.SendJSONResponse(w, http.StatusOK, seller)
 }
 
@@ -110,7 +118,9 @@ func (s *SellerEndpoint) handleError(w http.ResponseWriter, err error, context s
 	}
 }
 
-func (s *SellerEndpoint) sendError(w http.ResponseWriter, statusCode int, err error, context string, additionalInfo map[string]string) {
-	s.logger.Error(err.Error(), zap.String("context", context), zap.Any("info", additionalInfo))
+func (s *SellerEndpoint) sendError(w http.ResponseWriter, statusCode int, err error, contextInfo string, additionalInfo map[string]string) {
+	logger := middleware.GetLogger(context.Background())
+
+	logger.Error(err.Error(), zap.String("context", contextInfo), zap.Any("info", additionalInfo))
 	utils.SendErrorResponse(w, statusCode, err.Error())
 }
