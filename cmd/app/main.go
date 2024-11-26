@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"syscall"
@@ -19,8 +20,9 @@ import (
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository/redis"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase/service"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/pkg/connector"
-
 	"github.com/gorilla/mux"
+	"github.com/grafana/loki-client-go/loki"
+	"github.com/grafana/loki-client-go/pkg/urlutil"
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/cors"
@@ -38,13 +40,17 @@ func main() {
 
 	zap.ReplaceGlobals(logger)
 
-	// lokiConfig := client.Config{
-	// 	URL: "http://loki:3100/loki/api/v1/push",
-	// }
-	// lokiClient, err := client.New(lokiConfig)
-	// if err != nil {
-	// 	logger.Fatal("Не удалось инициализировать клиента Loki", zap.Error(err))
-	// }
+	lokiURL, err := url.Parse("http://loki:3100/loki/api/v1/push")
+	if err != nil {
+		logger.Fatal("failed to parse loki url", zap.Error(err))
+	}
+	lokiConfig := loki.Config{
+		URL: urlutil.URLValue{URL: lokiURL},
+	}
+	lokiClient, err := loki.New(lokiConfig)
+	if err != nil {
+		logger.Fatal("failed to create loki client", zap.Error(err))
+	}
 
 	cfg, err := config.Init()
 	if err != nil {
@@ -58,7 +64,7 @@ func main() {
 
 	router.Use(middleware.RequestIDMiddleware)
 	router.Use(middleware.LoggerMiddleware)
-	// router.Use(middleware.NewLokiMiddleware(lokiClient, logger).Handler)
+	router.Use(middleware.NewLokiMiddleware(lokiClient, logger).Handler)
 
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins: []string{
@@ -132,7 +138,7 @@ func Init(cfg config.Config) (*mux.Router, error) {
 
 	ctx := context.Background()
 
-	advertsRepo, err := postgres.NewAdvertRepository(dbPool, zap.L(), ctx, cfg.PGTimeout)
+	advertsRepo, err := postgres.NewAdvertRepository(dbPool, ctx, cfg.PGTimeout)
 	if err != nil {
 		return nil, handleRepoError(err, "unable to create advert repository")
 	}
@@ -144,11 +150,11 @@ func Init(cfg config.Config) (*mux.Router, error) {
 	if err != nil {
 		return nil, handleRepoError(err, "unable to create session repository")
 	}
-	userRepo, err := postgres.NewUserRepository(dbPool, ctx, zap.L(), cfg.PGTimeout)
+	userRepo, err := postgres.NewUserRepository(dbPool, ctx, cfg.PGTimeout)
 	if err != nil {
 		return nil, handleRepoError(err, "unable to create user repository")
 	}
-	sellerRepo, err := postgres.NewSellerRepository(dbPool, ctx, zap.L())
+	sellerRepo, err := postgres.NewSellerRepository(dbPool, ctx)
 	if err != nil {
 		return nil, handleRepoError(err, "unable to create seller repository")
 	}
@@ -169,21 +175,21 @@ func Init(cfg config.Config) (*mux.Router, error) {
 		return nil, handleRepoError(err, "unable to create static client")
 	}
 
-	advertsUseCase := service.NewAdvertService(advertsRepo, sellerRepo, userRepo, logger)
-	categoryUseCase := service.NewCategoryService(categoryRepo, logger)
-	userUC := service.NewUserService(userRepo, sellerRepo, logger)
-	sessionUC := service.NewAuthService(sessionRepo, logger)
+	advertsUseCase := service.NewAdvertService(advertsRepo, sellerRepo, userRepo)
+	categoryUseCase := service.NewCategoryService(categoryRepo)
+	userUC := service.NewUserService(userRepo, sellerRepo)
+	sessionUC := service.NewAuthService(sessionRepo)
 	sessionManager := utils.NewSessionManager(authGrpcClient, int(cfg.Session.ExpirationTime.Seconds()), cfg.Session.SecureCookie, logger)
 	router.Use(middleware.NewAuthMiddleware(sessionManager).AuthMiddleware)
 
 	advertsHandler := http3.NewAdvertEndpoint(advertsUseCase, *staticClient, sessionManager, policy)
-	authHandler := http3.NewAuthEndpoint(sessionUC, sessionManager, logger)
-	userHandler := http3.NewUserEndpoint(userUC, sessionUC, sessionManager, *staticClient, logger, policy)
-	sellerHandler := http3.NewSellerEndpoint(sellerRepo, logger)
-	purchaseHandler := http3.NewPurchaseEndpoint(cartPurchaseClient, logger)
-	cartHandler := http3.NewCartEndpoint(cartPurchaseClient, logger)
-	categoryHandler := http3.NewCategoryEndpoint(categoryUseCase, logger)
-	staticHandler := http3.NewStaticEndpoint(*staticClient, logger)
+	authHandler := http3.NewAuthEndpoint(sessionUC, sessionManager)
+	userHandler := http3.NewUserEndpoint(userUC, sessionUC, sessionManager, *staticClient, policy)
+	sellerHandler := http3.NewSellerEndpoint(sellerRepo)
+	purchaseHandler := http3.NewPurchaseEndpoint(cartPurchaseClient)
+	cartHandler := http3.NewCartEndpoint(cartPurchaseClient)
+	categoryHandler := http3.NewCategoryEndpoint(categoryUseCase)
+	staticHandler := http3.NewStaticEndpoint(*staticClient)
 
 	csrfEndpoints := http3.NewCSRFEndpoint(csrfToken, sessionManager)
 	csrfEndpoints.Configure(router)

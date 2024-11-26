@@ -45,7 +45,7 @@ func main() {
 		logger.Error("Error initializing session repository", zap.Error(err))
 	}
 
-	authService := service.NewAuthService(sessionRepo, zap.L())
+	authService := service.NewAuthService(sessionRepo)
 
 	metrics, err := metrics.NewGRPCMetrics("auth")
 	if err != nil {
