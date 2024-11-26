@@ -36,30 +36,29 @@ func main() {
 	}
 	defer logger.Sync()
 
-	// Установка глобального логгера
 	zap.ReplaceGlobals(logger)
 
-	lokiConfig := client.Config{
-		URL: "http://loki:3100/loki/api/v1/push",
-	}
-	lokiClient, err := client.New(lokiConfig)
-	if err != nil {
-		logger.Fatal("Не удалось инициализировать клиента Loki", zap.Error(err))
-	}
+	// lokiConfig := client.Config{
+	// 	URL: "http://loki:3100/loki/api/v1/push",
+	// }
+	// lokiClient, err := client.New(lokiConfig)
+	// if err != nil {
+	// 	logger.Fatal("Не удалось инициализировать клиента Loki", zap.Error(err))
+	// }
 
 	cfg, err := config.Init()
 	if err != nil {
-		zap.L().Error("failed to init config", zap.Error(err))
+		logger.Error("failed to init config", zap.Error(err))
 	}
 
 	router, err := Init(cfg)
 	if err != nil {
-		zap.L().Error("failed to initialize router", zap.Error(err))
+		logger.Error("failed to initialize router", zap.Error(err))
 	}
 
 	router.Use(middleware.RequestIDMiddleware)
 	router.Use(middleware.LoggerMiddleware)
-	router.Use(middleware.NewLokiMiddleware(lokiClient, logger).Handler)
+	// router.Use(middleware.NewLokiMiddleware(lokiClient, logger).Handler)
 
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins: []string{
@@ -72,7 +71,7 @@ func main() {
 		AllowCredentials: true,
 	}).Handler(router)
 
-	zap.L().Info("Server started on " + config.GetServerAddress())
+	logger.Info("Server started on " + config.GetServerAddress())
 
 	server := &http.Server{
 		Addr:         config.GetServerAddress(),
@@ -86,21 +85,21 @@ func main() {
 
 	go func() {
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			zap.L().Error("server failed", zap.Error(err))
+			logger.Error("server failed", zap.Error(err))
 		}
 	}()
 
 	<-stop
-	zap.L().Info("shutting down server...")
+	logger.Info("shutting down server...")
 
 	ctx, cancel := context.WithTimeout(context.Background(), config.GetShutdownTimeout())
 	defer cancel()
 
 	if err := server.Shutdown(ctx); err != nil {
-		zap.L().Error("server forced to shutdown", zap.Error(err))
+		logger.Error("server forced to shutdown", zap.Error(err))
 	}
 
-	zap.L().Info("server exiting")
+	logger.Info("server exiting")
 }
 
 func Init(cfg config.Config) (*mux.Router, error) {
@@ -177,7 +176,7 @@ func Init(cfg config.Config) (*mux.Router, error) {
 	sessionManager := utils.NewSessionManager(authGrpcClient, int(cfg.Session.ExpirationTime.Seconds()), cfg.Session.SecureCookie, logger)
 	router.Use(middleware.NewAuthMiddleware(sessionManager).AuthMiddleware)
 
-	advertsHandler := http3.NewAdvertEndpoint(advertsUseCase, *staticClient, sessionManager, logger, policy)
+	advertsHandler := http3.NewAdvertEndpoint(advertsUseCase, *staticClient, sessionManager, policy)
 	authHandler := http3.NewAuthEndpoint(sessionUC, sessionManager, logger)
 	userHandler := http3.NewUserEndpoint(userUC, sessionUC, sessionManager, *staticClient, logger, policy)
 	sellerHandler := http3.NewSellerEndpoint(sellerRepo, logger)
