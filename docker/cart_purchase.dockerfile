@@ -4,8 +4,7 @@
 # Этап сборки
 FROM golang:1.23-alpine AS build
 
-RUN apk add --no-cache gcc
-RUN apk add libc-dev
+RUN apk add --no-cache gcc libc-dev git
 WORKDIR /src
 COPY cmd cmd
 COPY internal internal
