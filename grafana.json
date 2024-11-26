@@ -35,10 +35,7 @@
         "type": "row"
       },
       {
-        "datasource": {
-          "type": "prometheus",
-          "uid": "ee51u3quy5qm8d"
-        },
+        "datasource": "Prometheus",
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -148,10 +145,7 @@
             "refId": "App"
           },
           {
-            "datasource": {
-              "type": "prometheus",
-              "uid": "ee51u3quy5qm8d"
-            },
+            "datasource": "Prometheus",
             "editorMode": "code",
             "expr": "histogram_quantile(0.95, sum by (service, method, le) (\n  rate(static_code_bucket{service=~\"$service\", method=~\"$method\"}[5m])\n))",
             "hide": false,
@@ -161,10 +155,7 @@
             "refId": "Static"
           },
           {
-            "datasource": {
-              "type": "prometheus",
-              "uid": "ee51u3quy5qm8d"
-            },
+            "datasource": "Prometheus",
             "editorMode": "code",
             "expr": "histogram_quantile(0.95, sum by (service, method, le) (\n  rate(auth_code_bucket{service=~\"$service\", method=~\"$method\"}[5m])\n))",
             "hide": false,
@@ -174,10 +165,7 @@
             "refId": "Auth"
           },
           {
-            "datasource": {
-              "type": "prometheus",
-              "uid": "ee51u3quy5qm8d"
-            },
+            "datasource": "Prometheus",
             "editorMode": "code",
             "expr": "histogram_quantile(0.95, sum by (service, method, le) (\n  rate(cart_purchase_code_bucket{service=~\"$service\", method=~\"$method\"}[5m])\n))",
             "hide": false,
@@ -191,10 +179,7 @@
         "type": "timeseries"
       },
       {
-        "datasource": {
-          "type": "prometheus",
-          "uid": "ee51u3quy5qm8d"
-        },
+        "datasource": "Prometheus",
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -304,10 +289,7 @@
             "refId": "App"
           },
           {
-            "datasource": {
-              "type": "prometheus",
-              "uid": "ee51u3quy5qm8d"
-            },
+            "datasource": "Prometheus",
             "editorMode": "code",
             "expr": "sum by (service, method) (\n  rate(static_code_sum{service=~\"$service\", method=~\"$method\"}[5m])\n) / sum by (service, method) (\n  rate(static_code_count{service=~\"$service\", method=~\"$method\"}[5m])\n)",
             "hide": true,
@@ -317,10 +299,7 @@
             "refId": "Static"
           },
           {
-            "datasource": {
-              "type": "prometheus",
-              "uid": "ee51u3quy5qm8d"
-            },
+            "datasource": "Prometheus",
             "editorMode": "code",
             "expr": "sum by (service, method, path) (\n  rate(cart_purchase_code_sum{service=~\"$service\", method=~\"$method\"}[5m])\n) / sum by (service, method) (\n  rate(cart_purchase_code_count{service=~\"$service\", method=~\"$method\"}[5m])\n)",
             "hide": true,
@@ -330,10 +309,7 @@
             "refId": "Cart_purchase"
           },
           {
-            "datasource": {
-              "type": "prometheus",
-              "uid": "ee51u3quy5qm8d"
-            },
+            "datasource": "Prometheus",
             "editorMode": "code",
             "expr": "sum by (service, method) (\n  rate(auth_code_sum{service=~\"$service\", method=~\"$method\"}[5m])\n) / sum by (service, method) (\n  rate(auth_code_count{service=~\"$service\", method=~\"$method\"}[5m])\n)",
             "hide": false,
@@ -360,10 +336,7 @@
         "type": "row"
       },
       {
-        "datasource": {
-          "type": "prometheus",
-          "uid": "ee51u3quy5qm8d"
-        },
+        "datasource": "Prometheus",
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -426,10 +399,7 @@
         "type": "gauge"
       },
       {
-        "datasource": {
-          "type": "prometheus",
-          "uid": "ee51u3quy5qm8d"
-        },
+        "datasource": "Prometheus",
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -547,10 +517,7 @@
         "type": "timeseries"
       },
       {
-        "datasource": {
-          "type": "prometheus",
-          "uid": "ee51u3quy5qm8d"
-        },
+        "datasource": "Prometheus",
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -630,10 +597,7 @@
         "type": "row"
       },
       {
-        "datasource": {
-          "type": "prometheus",
-          "uid": "ee51u3quy5qm8d"
-        },
+        "datasource": "Prometheus",
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -696,10 +660,7 @@
         "type": "gauge"
       },
       {
-        "datasource": {
-          "type": "prometheus",
-          "uid": "ee51u3quy5qm8d"
-        },
+        "datasource": "Prometheus",
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -805,10 +766,7 @@
         "type": "row"
       },
       {
-        "datasource": {
-          "type": "prometheus",
-          "uid": "ee51u3quy5qm8d"
-        },
+        "datasource": "Prometheus",
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -871,10 +829,7 @@
         "type": "gauge"
       },
       {
-        "datasource": {
-          "type": "prometheus",
-          "uid": "ee51u3quy5qm8d"
-        },
+        "datasource": "Prometheus",
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -1000,10 +955,7 @@
         "type": "row"
       },
       {
-        "datasource": {
-          "type": "prometheus",
-          "uid": "ee51u3quy5qm8d"
-        },
+        "datasource": "Prometheus",
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -1081,10 +1033,7 @@
         "pluginVersion": "11.3.1",
         "targets": [
           {
-            "datasource": {
-              "type": "prometheus",
-              "uid": "ee51u3quy5qm8d"
-            },
+            "datasource": "Prometheus",
             "editorMode": "code",
             "expr": "sum by (service, method, path) (\n  rate(app_error_hits_count{service=~\"$service\", method=~\"$method\", path=~\"$path\"}[5m])\n)",
             "hide": false,
@@ -1098,10 +1047,7 @@
         "type": "timeseries"
       },
       {
-        "datasource": {
-          "type": "prometheus",
-          "uid": "ee51u3quy5qm8d"
-        },
+        "datasource": "Prometheus",
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -1189,10 +1135,7 @@
         "type": "timeseries"
       },
       {
-        "datasource": {
-          "type": "prometheus",
-          "uid": "ee51u3quy5qm8d"
-        },
+        "datasource": "Prometheus",
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -1280,10 +1223,7 @@
         "type": "timeseries"
       },
       {
-        "datasource": {
-          "type": "prometheus",
-          "uid": "ee51u3quy5qm8d"
-        },
+        "datasource": "Prometheus",
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -1384,10 +1324,7 @@
         "type": "row"
       },
       {
-        "datasource": {
-          "type": "prometheus",
-          "uid": "ee51u3quy5qm8d"
-        },
+        "datasource": "Prometheus",
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -1490,10 +1427,7 @@
         "pluginVersion": "11.3.1",
         "targets": [
           {
-            "datasource": {
-              "type": "prometheus",
-              "uid": "ee51u3quy5qm8d"
-            },
+            "datasource": "Prometheus",
             "editorMode": "code",
             "expr": "sum by (service, method, path) (\n  rate(app_total_hits_count{service=~\"$service\", method=~\"$method\", path=~\"$path\"}[5m])\n)",
             "hide": false,
@@ -1502,10 +1436,7 @@
             "refId": "App"
           },
           {
-            "datasource": {
-              "type": "prometheus",
-              "uid": "ee51u3quy5qm8d"
-            },
+            "datasource": "Prometheus",
             "editorMode": "code",
             "expr": "sum by (service, method) (rate(auth_total_hits_count{service=~\"$service\", method=~\"$method\"}[5m]))",
             "hide": false,
@@ -1515,10 +1446,7 @@
             "refId": "Auth"
           },
           {
-            "datasource": {
-              "type": "prometheus",
-              "uid": "ee51u3quy5qm8d"
-            },
+            "datasource": "Prometheus",
             "editorMode": "code",
             "expr": "sum by (service, method) (rate(static_total_hits_count{service=~\"$service\", method=~\"$method\"}[5m]))",
             "hide": false,
@@ -1528,10 +1456,7 @@
             "refId": "Static"
           },
           {
-            "datasource": {
-              "type": "prometheus",
-              "uid": "ee51u3quy5qm8d"
-            },
+            "datasource": "Prometheus",
             "editorMode": "code",
             "expr": "sum by (service, method) (rate(cart_purchase_total_hits_count{service=~\"$service\", method=~\"$method\"}[5m]))",
             "hide": false,
