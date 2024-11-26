@@ -165,10 +165,21 @@ services:
       - app-network
 
   prometheus:
-    image: prom/prometheus
+    image: prom/prometheus:latest
     restart: always
     ports:
       - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    depends_on:
+      node_exporter:
+        condition: service_started
+      app:
+        condition: service_started
     networks:
       - app-network
 
@@ -178,15 +189,15 @@ services:
       ports:
         - "3000:3000"
       volumes:
-        - /grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
-        - /grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
-        - /grafana/dashboards:/var/lib/grafana/dashboards
+        - /path/to/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+        - /path/to/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+        - /path/to/grafana/dashboards:/var/lib/grafana/dashboards
       environment:
         - GF_SECURITY_ADMIN_USER=admin
         - GF_SECURITY_ADMIN_PASSWORD=admin
       depends_on:
         - prometheus
-
+  
 
 networks:
   app-network:
