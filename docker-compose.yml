@@ -189,15 +189,17 @@ services:
     ports:
       - "8010:3000"
     volumes:
-      - /path/to/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
-      - /path/to/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
-      - /path/to/grafana/dashboards:/var/lib/grafana/dashboards
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
     depends_on:
       - prometheus
-
+    networks:
+      - app-network
+      
 networks:
   app-network:
     driver: bridge
