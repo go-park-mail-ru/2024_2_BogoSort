@@ -134,6 +134,6 @@ func (s StaticDB) Upload(path, filename string, data []byte) (uuid.UUID, error) 
 		return uuid.UUID{}, entity.PSQLWrap(err, errors.New("error executing SQL query UploadStatic"))
 	}
 
-	s.Logger.Info("Static file uploaded to DB", zap.String("id", id.String()))
+	logger.Info("Static file uploaded to DB", zap.String("id", id.String()))
 	return id, nil
 }

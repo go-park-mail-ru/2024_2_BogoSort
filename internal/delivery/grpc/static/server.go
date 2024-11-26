@@ -17,11 +17,10 @@ import (
 type Grpc struct {
 	staticProto.UnimplementedStaticServiceServer
 	staticUC usecase.StaticUseCase
-	logger   *zap.Logger
 }
 
-func NewStaticGrpc(staticUC usecase.StaticUseCase, logger *zap.Logger) *Grpc {
-	return &Grpc{staticUC: staticUC, logger: logger}
+func NewStaticGrpc(staticUC usecase.StaticUseCase) *Grpc {
+	return &Grpc{staticUC: staticUC}
 }
 
 func (service *Grpc) GetStatic(_ context.Context, static *staticProto.Static) (*staticProto.Static, error) {

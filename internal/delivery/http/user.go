@@ -45,9 +45,6 @@ func NewUserEndpoint(userUC usecase.User, authUC usecase.Auth, sessionManager *u
 		userUC:           userUC,
 		authUC:           authUC,
 		sessionManager:   sessionManager,
-		userUC:           userUC,
-		authUC:           authUC,
-		sessionManager:   sessionManager,
 		staticGrpcClient: staticGrpcClient,
 		policy:           policy,
 	}

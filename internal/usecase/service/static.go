@@ -2,6 +2,7 @@ package service
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"image"
 	"image/draw"
@@ -13,11 +14,13 @@ import (
 
 	"github.com/chai2010/webp"
 
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/middleware"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 )
 
 type StaticService struct {
@@ -31,6 +34,8 @@ func NewStaticService(staticRepo repository.StaticRepository) *StaticService {
 }
 
 func (s *StaticService) GetAvatar(staticID uuid.UUID) (string, error) {
+	logger := middleware.GetLogger(context.Background())
+	logger.Info("GetAvatar request", zap.String("staticID", staticID.String()))
 	path, err := s.staticRepo.Get(staticID)
 	if err != nil {
 		return "", err
@@ -110,11 +115,9 @@ func (s *StaticService) UploadStatic(reader io.ReadSeeker) (uuid.UUID, error) {
 	}
 
 	if id == uuid.Nil {
-		zap.L().Error("Repository returned UUID as nil")
 		return uuid.Nil, errors.New("failed to generate UUID for static file")
 	}
 
-	zap.L().Info("UploadStatic received id from repository", zap.String("id", id.String()))
 	return id, nil
 }
 

@@ -117,7 +117,7 @@ func (h *CartEndpoint) GetByUserID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		h.logger.Error("failed to get cart", zap.Error(err))
+		logger.Error("failed to get cart", zap.Error(err))
 		utils.SendErrorResponse(w, http.StatusInternalServerError, "failed to get cart")
 		return
 	}
@@ -225,10 +225,10 @@ func (h *CartEndpoint) CheckExists(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	exists, err := h.cartClient.CheckCartExists(ctx, userID)
 	if err != nil {
-		h.logger.Error("failed to check cart existence", zap.Error(err))
+		logger.Error("failed to check cart existence", zap.Error(err))
 		utils.SendErrorResponse(w, http.StatusInternalServerError, "failed to check cart existence")
 		return
 	}
 
-	utils.SendJSONResponse(w, http.StatusOK, map[string]bool{"exists": exists})
+	utils.SendJSONResponse(w, http.StatusOK, map[string]string{"exists": exists.String()})
 }
