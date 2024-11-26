@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/middleware"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
@@ -13,22 +14,21 @@ import (
 
 type PurchaseService struct {
 	purchaseRepo repository.PurchaseRepository
-	cartRepo repository.Cart
-	advertRepo repository.AdvertRepository
-	logger       *zap.Logger
+	cartRepo     repository.Cart
+	advertRepo   repository.AdvertRepository
 }
 
-func NewPurchaseService(purchaseRepo repository.PurchaseRepository, advertRepo repository.AdvertRepository, cartRepo repository.Cart, logger *zap.Logger) *PurchaseService {
-	return &PurchaseService{purchaseRepo: purchaseRepo, advertRepo: advertRepo, cartRepo: cartRepo, logger: logger}
+func NewPurchaseService(purchaseRepo repository.PurchaseRepository, advertRepo repository.AdvertRepository, cartRepo repository.Cart) *PurchaseService {
+	return &PurchaseService{purchaseRepo: purchaseRepo, advertRepo: advertRepo, cartRepo: cartRepo}
 }
 
 func (s *PurchaseService) purchaseEntityToDTO(purchase *entity.Purchase) (*dto.PurchaseResponse, error) {
 	return &dto.PurchaseResponse{
-		ID: purchase.ID,
-		CartID: purchase.CartID,
-		Address: purchase.Address,
-		Status: dto.PurchaseStatus(purchase.Status),
-		PaymentMethod: dto.PaymentMethod(purchase.PaymentMethod),
+		ID:             purchase.ID,
+		CartID:         purchase.CartID,
+		Address:        purchase.Address,
+		Status:         dto.PurchaseStatus(purchase.Status),
+		PaymentMethod:  dto.PaymentMethod(purchase.PaymentMethod),
 		DeliveryMethod: dto.DeliveryMethod(purchase.DeliveryMethod),
 	}, nil
 }
@@ -37,7 +37,8 @@ func (s *PurchaseService) Add(purchaseRequest dto.PurchaseRequest, userId uuid.U
 	ctx := context.Background()
 	tx, err := s.purchaseRepo.BeginTransaction()
 	if err != nil {
-		s.logger.Error("failed to begin transaction", zap.Error(err))
+		logger := middleware.GetLogger(ctx)
+		logger.Error("failed to begin transaction", zap.Error(err), zap.String("userId", userId.String()))
 		return nil, entity.UsecaseWrap(errors.New("failed to begin transaction"), err)
 	}
 	defer func() {
@@ -49,10 +50,10 @@ func (s *PurchaseService) Add(purchaseRequest dto.PurchaseRequest, userId uuid.U
 	}()
 
 	purchase, err := s.purchaseRepo.Add(tx, &entity.Purchase{
-		CartID: purchaseRequest.CartID,
-		Address: purchaseRequest.Address,
-		Status: entity.StatusPending,
-		PaymentMethod: entity.PaymentMethod(purchaseRequest.PaymentMethod),
+		CartID:         purchaseRequest.CartID,
+		Address:        purchaseRequest.Address,
+		Status:         entity.StatusPending,
+		PaymentMethod:  entity.PaymentMethod(purchaseRequest.PaymentMethod),
 		DeliveryMethod: entity.DeliveryMethod(purchaseRequest.DeliveryMethod),
 	})
 	if err != nil {
@@ -89,12 +90,14 @@ func (s *PurchaseService) GetByUserId(userID uuid.UUID) ([]*dto.PurchaseResponse
 }
 
 func (s *PurchaseService) purchaseEntitiesToDTO(purchases []*entity.Purchase) ([]*dto.PurchaseResponse, error) {
+	ctx := context.Background()
 	var purchaseDTOs []*dto.PurchaseResponse
 
 	for _, purchase := range purchases {
 		dto, err := s.purchaseEntityToDTO(purchase)
 		if err != nil {
-			s.logger.Error("failed to convert purchase entity to DTO", zap.Error(err))
+			logger := middleware.GetLogger(ctx)
+			logger.Error("failed to convert purchase entity to DTO", zap.Error(err))
 			return nil, err
 		}
 		purchaseDTOs = append(purchaseDTOs, dto)

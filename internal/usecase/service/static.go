@@ -3,7 +3,6 @@ package service
 import (
 	"bytes"
 	"fmt"
-	"github.com/chai2010/webp"
 	"image"
 	"image/draw"
 	_ "image/png"
@@ -12,22 +11,21 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/chai2010/webp"
+
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
-	"go.uber.org/zap"
 )
 
 type StaticService struct {
-	logger     *zap.Logger
 	staticRepo repository.StaticRepository
 }
 
-func NewStaticService(staticRepo repository.StaticRepository, logger *zap.Logger) *StaticService {
+func NewStaticService(staticRepo repository.StaticRepository) *StaticService {
 	return &StaticService{
-		logger:     logger,
 		staticRepo: staticRepo,
 	}
 }
@@ -35,7 +33,6 @@ func NewStaticService(staticRepo repository.StaticRepository, logger *zap.Logger
 func (s *StaticService) GetAvatar(staticID uuid.UUID) (string, error) {
 	path, err := s.staticRepo.Get(staticID)
 	if err != nil {
-		s.logger.Error("failed to get static", zap.Error(err), zap.String("static_id", staticID.String()))
 		return "", err
 	}
 	return path, nil
