@@ -184,12 +184,19 @@ services:
       - app-network
   
   grafana:
-    image: grafana/grafana
-    restart: always
+    image: grafana/grafana:latest
+    container_name: grafana
     ports:
       - "8010:3000"
-    networks:
-      - app-network
+    volumes:
+      - /path/to/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - /path/to/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - /path/to/grafana/dashboards:/var/lib/grafana/dashboards
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
 
 networks:
   app-network:
