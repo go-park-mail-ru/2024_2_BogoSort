@@ -1,195 +1,241 @@
 package service
 
-// import (
-// 	"errors"
-// 	"testing"
+import (
+	"errors"
+	"testing"
 
-// 	"github.com/golang/mock/gomock"
-// 	"github.com/google/uuid"
-// 	"github.com/stretchr/testify/assert"
-// 	"go.uber.org/zap"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository/mocks"
+	"github.com/golang/mock/gomock"
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+)
 
-// 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
-// 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
-// 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
-// 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository/mocks"
-// )
+func setupCartService(t *testing.T) (*CartService, *mocks.MockCart, *mocks.MockAdvertRepository, *gomock.Controller) {
+	ctrl := gomock.NewController(t)
+	cartRepo := mocks.NewMockCart(ctrl)
+	advertRepo := mocks.NewMockAdvertRepository(ctrl)
+	service := NewCartService(cartRepo, advertRepo)
+	return service, cartRepo, advertRepo, ctrl
+}
 
-// func setupCartService(t *testing.T) (*CartService, *mocks.MockCart, *mocks.MockAdvertRepository, *gomock.Controller) {
-// 	ctrl := gomock.NewController(t)
-// 	cartRepo := mocks.NewMockCart(ctrl)
-// 	advertRepo := mocks.NewMockAdvertRepository(ctrl)
-// 	logger := zap.NewNop()
-// 	service := NewCartService(cartRepo, advertRepo, logger)
-// 	return service, cartRepo, advertRepo, ctrl
-// }
+func TestCartService_AddAdvert(t *testing.T) {
+	service, cartRepo, advertRepo, ctrl := setupCartService(t)
+	defer ctrl.Finish()
 
-// func TestCartService_AddAdvertToUserCart_CartExists(t *testing.T) {
-// 	service, cartRepo, _, ctrl := setupCartService(t)
-// 	defer ctrl.Finish()
+	userID := uuid.New()
+	advertID := uuid.New()
+	cartID := uuid.New()
 
-// 	userID := uuid.New()
-// 	advertID := uuid.New()
-// 	cartID := uuid.New()
+	testCases := []struct {
+		name          string
+		setupMocks    func()
+		expectedError error
+	}{
+		{
+			name: "Success",
+			setupMocks: func() {
+				cartRepo.EXPECT().GetByUserId(userID).Return(entity.Cart{ID: cartID}, nil)
+				advertRepo.EXPECT().GetById(advertID, userID).Return(&entity.Advert{Status: entity.AdvertStatusActive}, nil)
+				cartRepo.EXPECT().AddAdvert(cartID, advertID).Return(nil)
+			},
+			expectedError: nil,
+		},
+		{
+			name: "Cart Not Found",
+			setupMocks: func() {
+				cartRepo.EXPECT().GetByUserId(userID).Return(entity.Cart{}, repository.ErrCartNotFound)
+				cartRepo.EXPECT().Create(userID).Return(cartID, nil)
+				cartRepo.EXPECT().AddAdvert(cartID, advertID).Return(nil)
+			},
+			expectedError: nil,
+		},
+	}
 
-// 	cartRepo.EXPECT().GetByUserId(userID).Return(entity.Cart{ID: cartID}, nil)
-// 	cartRepo.EXPECT().AddAdvert(cartID, advertID).Return(nil)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setupMocks()
 
-// 	err := service.AddAdvert(userID, advertID)
+			err := service.AddAdvert(userID, advertID)
 
-// 	assert.NoError(t, err)
-// }
+			if tc.expectedError != nil {
+				assert.Error(t, err)
+				assert.True(t, errors.Is(err, tc.expectedError), "expected error: %v, got: %v", tc.expectedError, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
 
-// func TestCartService_DeleteAdvertFromCart(t *testing.T) {
-// 	service, cartRepo, _, ctrl := setupCartService(t)
-// 	defer ctrl.Finish()
+func TestCartService_DeleteAdvert(t *testing.T) {
+	service, cartRepo, _, ctrl := setupCartService(t)
+	defer ctrl.Finish()
 
-// 	cartID := uuid.New()
-// 	advertID := uuid.New()
+	cartID := uuid.New()
+	advertID := uuid.New()
 
-// 	cartRepo.EXPECT().DeleteAdvert(cartID, advertID).Return(nil)
+	testCases := []struct {
+		name          string
+		setupMocks    func()
+		expectedError error
+	}{
+		{
+			name: "Success",
+			setupMocks: func() {
+				cartRepo.EXPECT().DeleteAdvert(cartID, advertID).Return(nil)
+			},
+			expectedError: nil,
+		},
+	}
 
-// 	err := service.DeleteAdvert(cartID, advertID)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setupMocks()
 
-// 	assert.NoError(t, err)
-// }
+			err := service.DeleteAdvert(cartID, advertID)
 
-// func TestCartService_GetCartByID_Success(t *testing.T) {
-// 	service, cartRepo, _, ctrl := setupCartService(t)
-// 	defer ctrl.Finish()
+			if tc.expectedError != nil {
+				assert.Error(t, err)
+				assert.True(t, errors.Is(err, tc.expectedError), "expected error: %v, got: %v", tc.expectedError, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
 
-// 	cartID := uuid.New()
-// 	userID := uuid.New()
-// 	adverts := []entity.Advert{
-// 		{ID: uuid.New(), Title: "Advert 1", Price: 100},
-// 		{ID: uuid.New(), Title: "Advert 2", Price: 200},
-// 	}
+func TestCartService_GetById(t *testing.T) {
+	service, cartRepo, _, ctrl := setupCartService(t)
+	defer ctrl.Finish()
 
-// 	cartRepo.EXPECT().GetAdvertsByCartId(cartID).Return(adverts, nil)
-// 	cartRepo.EXPECT().GetById(cartID).Return(entity.Cart{ID: cartID, UserID: userID, Status: entity.CartStatusActive}, nil)
+	cartID := uuid.New()
+	expectedAdverts := []entity.Advert{
+		{
+			ID:          uuid.New(),
+			Title:       "Advert 1",
+			Price:       100,
+			Status:      entity.AdvertStatusActive,
+			HasDelivery: true,
+			Location:    "Location 1",
+		},
+	}
 
-// 	cart, err := service.GetById(cartID)
+	testCases := []struct {
+		name          string
+		setupMocks    func()
+		expectedError error
+	}{
+		{
+			name: "Success",
+			setupMocks: func() {
+				cartRepo.EXPECT().GetAdvertsByCartId(cartID).Return(expectedAdverts, nil)
+				cartRepo.EXPECT().GetById(cartID).Return(entity.Cart{ID: cartID, UserID: uuid.New(), Status: "active"}, nil)
+			},
+			expectedError: nil,
+		},
+	}
 
-// 	assert.NoError(t, err)
-// 	assert.Equal(t, cartID, cart.ID)
-// 	assert.Equal(t, userID, cart.UserID)
-// 	assert.Equal(t, len(adverts), len(cart.Adverts))
-// }
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setupMocks()
 
-// func TestCartService_GetCartByUserID_Success(t *testing.T) {
-// 	service, cartRepo, _, ctrl := setupCartService(t)
-// 	defer ctrl.Finish()
+			cart, err := service.GetById(cartID)
 
-// 	userID := uuid.New()
-// 	cartID := uuid.New()
+			if tc.expectedError != nil {
+				assert.Error(t, err)
+				assert.True(t, errors.Is(err, tc.expectedError), "expected error: %v, got: %v", tc.expectedError, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, len(expectedAdverts), len(cart.Adverts))
+			}
+		})
+	}
+}
 
-// 	cartRepo.EXPECT().GetByUserId(userID).Return(entity.Cart{ID: cartID}, nil)
-// 	cartRepo.EXPECT().GetAdvertsByCartId(cartID).Return([]entity.Advert{
-// 		{ID: uuid.New(), Title: "Advert 1", Price: 100},
-// 	}, nil)
-// 	cartRepo.EXPECT().GetById(cartID).Return(entity.Cart{ID: cartID, UserID: userID, Status: entity.CartStatusActive}, nil)
+func TestCartService_GetByUserId(t *testing.T) {
+	service, cartRepo, _, ctrl := setupCartService(t)
+	defer ctrl.Finish()
 
-// 	cart, err := service.GetByUserId(userID)
+	userID := uuid.New()
 
-// 	assert.NoError(t, err)
-// 	assert.Equal(t, cartID, cart.ID)
-// }
+	testCases := []struct {
+		name          string
+		setupMocks    func()
+		expectedError error
+	}{
+		{
+			name: "Success",
+			setupMocks: func() {
+				cartRepo.EXPECT().GetByUserId(userID).Return(entity.Cart{ID: uuid.New(), UserID: userID, Status: "active"}, nil)
+			},
+			expectedError: nil,
+		},
+	}
 
-// func TestCartService_CheckCartExists_Found(t *testing.T) {
-// 	service, cartRepo, _, ctrl := setupCartService(t)
-// 	defer ctrl.Finish()
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setupMocks()
 
-// 	userID := uuid.New()
+			cart, err := service.GetByUserId(userID)
 
-// 	cartRepo.EXPECT().GetByUserId(userID).Return(entity.Cart{ID: uuid.New()}, nil)
+			if tc.expectedError != nil {
+				assert.Error(t, err)
+				assert.True(t, errors.Is(err, tc.expectedError), "expected error: %v, got: %v", tc.expectedError, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, userID, cart.UserID)
+			}
+		})
+	}
+}
 
-// 	exists, err := service.CheckExists(userID)
+func TestCartService_CheckExists(t *testing.T) {
+	service, cartRepo, _, ctrl := setupCartService(t)
+	defer ctrl.Finish()
 
-// 	assert.NoError(t, err)
-// 	assert.True(t, exists)
-// }
+	userID := uuid.New()
+	cartID := uuid.New()
 
-// func TestCartService_CheckCartExists_NotFound(t *testing.T) {
-// 	service, cartRepo, _, ctrl := setupCartService(t)
-// 	defer ctrl.Finish()
+	testCases := []struct {
+		name          string
+		setupMocks    func()
+		expectedError error
+	}{
+		{
+			name: "Exists",
+			setupMocks: func() {
+				cartRepo.EXPECT().GetByUserId(userID).Return(entity.Cart{ID: cartID}, nil)
+			},
+			expectedError: nil,
+		},
+		{
+			name: "Does Not Exist",
+			setupMocks: func() {
+				cartRepo.EXPECT().GetByUserId(userID).Return(entity.Cart{}, repository.ErrCartNotFound)
+			},
+			expectedError: nil,
+		},
+	}
 
-// 	userID := uuid.New()
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setupMocks()
 
-// 	cartRepo.EXPECT().GetByUserId(userID).Return(entity.Cart{}, repository.ErrCartNotFound)
+			cartID, err := service.CheckExists(userID)
 
-// 	exists, err := service.CheckExists(userID)
-
-// 	assert.NoError(t, err)
-// 	assert.False(t, exists)
-// }
-
-// func TestCartService_AddAdvertToUserCart_CartNotExists(t *testing.T) {
-// 	service, cartRepo, advertRepo, ctrl := setupCartService(t)
-// 	defer ctrl.Finish()
-
-// 	userID := uuid.New()
-// 	advertID := uuid.New()
-// 	newCartID := uuid.New()
-
-// 	// Настройка ожидаемых вызовов
-// 	cartRepo.EXPECT().GetByUserId(userID).Return(entity.Cart{}, repository.ErrCartNotFound)
-// 	cartRepo.EXPECT().Create(userID).Return(newCartID, nil)
-// 	advert := entity.Advert{
-// 		ID:     advertID,
-// 		Title:  "New Advert",
-// 		Price:  150,
-// 		Status: entity.AdvertStatusActive,
-// 	}
-// 	advertRepo.EXPECT().GetById(advertID).Return(&advert, nil)
-// 	cartRepo.EXPECT().AddAdvert(newCartID, advertID).Return(nil)
-
-// 	// Выполнение действия
-// 	err := service.AddAdvert(userID, advertID)
-
-// 	// Проверка результата
-// 	assert.NoError(t, err)
-// }
-
-// func TestCartService_GetCartByID_NotFound(t *testing.T) {
-// 	service, cartRepo, _, ctrl := setupCartService(t)
-// 	defer ctrl.Finish()
-
-// 	cartID := uuid.New()
-
-// 	cartRepo.EXPECT().GetAdvertsByCartId(cartID).Return(nil, repository.ErrCartNotFound)
-
-// 	cart, err := service.GetById(cartID)
-
-// 	assert.Error(t, err)
-// 	assert.Equal(t, dto.Cart{}, cart)
-// }
-
-// func TestCartService_GetCartByUserID_ErrorGettingAdverts(t *testing.T) {
-// 	service, cartRepo, _, ctrl := setupCartService(t)
-// 	defer ctrl.Finish()
-
-// 	userID := uuid.New()
-// 	cartID := uuid.New()
-
-// 	cartRepo.EXPECT().GetByUserId(userID).Return(entity.Cart{ID: cartID}, nil)
-// 	cartRepo.EXPECT().GetAdvertsByCartId(cartID).Return(nil, errors.New("database error"))
-
-// 	cart, err := service.cartRepo.GetByUserId(userID)
-
-// 	assert.Error(t, err)
-// 	assert.Equal(t, dto.Cart{}, cart)
-// }
-
-// func TestCartService_CheckCartExists_Error(t *testing.T) {
-// 	service, cartRepo, _, ctrl := setupCartService(t)
-// 	defer ctrl.Finish()
-
-// 	userID := uuid.New()
-
-// 	cartRepo.EXPECT().GetByUserId(userID).Return(entity.Cart{}, errors.New("database error"))
-
-// 	exists, err := service.CheckExists(userID)
-
-// 	assert.Error(t, err)
-// 	assert.False(t, exists)
-// }
+			if tc.expectedError != nil {
+				assert.Error(t, err)
+				assert.True(t, errors.Is(err, tc.expectedError), "expected error: %v, got: %v", tc.expectedError, err)
+			} else {
+				assert.NoError(t, err)
+				if tc.name == "Exists" {
+					assert.Equal(t, cartID, cartID)
+				} else {
+					assert.Equal(t, uuid.Nil, cartID)
+				}
+			}
+		})
+	}
+}
