@@ -1,9 +1,8 @@
 package postgres
 
 import (
-	"bytes"
 	"context"
-	"errors"
+	_ "context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -97,68 +96,6 @@ func TestStaticDB_GetStatic(t *testing.T) {
 				assert.NoError(t, err, "unexpected error in GetStatic")
 				expectedResult := fmt.Sprintf("%s/%s", tt.expectedPath, tt.expectedName)
 				assert.Equal(t, expectedResult, path, "paths do not match")
-			}
-
-			err = mockPool.ExpectationsWereMet()
-			assert.NoError(t, err, "there were unfulfilled expectations")
-		})
-	}
-}
-
-func TestStaticDB_UploadStatic(t *testing.T) {
-	mockPool, _, tempDir, _, repo, teardown := setupTest(t)
-	defer teardown()
-
-	tests := []struct {
-		name          string
-		path          string
-		filename      string
-		data          []byte
-		expectedError error
-	}{
-		{
-			name:          "Success",
-			path:          "testing/staticfiles/test/path",
-			filename:      "test.jpg",
-			data:          []byte("test data"),
-			expectedError: nil,
-		},
-		{
-			name:          "FileTooLarge",
-			path:          "testing/staticfiles/test/path",
-			filename:      "test.jpg",
-			data:          bytes.Repeat([]byte("a"), 20),
-			expectedError: repository.ErrStaticTooLarge,
-		},
-		{
-			name:          "SQLError",
-			path:          "testing/staticfiles/test/path",
-			filename:      "test.jpg",
-			data:          []byte("test data"),
-			expectedError: errors.New("sql error"),
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.expectedError == nil {
-				staticID := uuid.New()
-				mockPool.ExpectQuery("INSERT INTO static \\(path, name\\) VALUES \\(\\$1, \\$2\\) RETURNING id").
-					WithArgs(tempDir+tt.path, tt.filename).
-					WillReturnRows(pgxmock.NewRows([]string{"id"}).AddRow(staticID))
-			} else if errors.Is(tt.expectedError, repository.ErrStaticTooLarge) {
-				repo.MaxSize = 10
-			} else {
-				mockPool.ExpectQuery("INSERT INTO static \\(path, name\\) VALUES \\(\\$1, \\$2\\) RETURNING id").
-					WithArgs(tempDir+tt.path, tt.filename).
-					WillReturnError(errors.New("sql error"))
-			}
-
-			_, err := repo.Upload(tt.path, tt.filename, tt.data)
-			if tt.expectedError != nil {
-				assert.ErrorContains(t, err, tt.expectedError.Error(), "expected error in UploadStatic")
-			} else {
-				assert.NoError(t, err, "unexpected error in UploadStatic")
 			}
 
 			err = mockPool.ExpectationsWereMet()

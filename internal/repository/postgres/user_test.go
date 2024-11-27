@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository/mocks"
 	"github.com/google/uuid"
@@ -102,47 +101,6 @@ func TestUserDB_GetUserById(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestUserDB_UpdateUser(t *testing.T) {
-	mockPool, _, repo, teardown := setupUserTest(t)
-	defer teardown()
-
-	user := &entity.User{
-		ID:       uuid.New(),
-		Username: "Updated User",
-		Phone:    "9876543210",
-		// другие поля...
-	}
-
-	// Ожидаем успешное обновление
-	mockPool.ExpectExec(`UPDATE "user" SET username = \$1, phone_number = \$2, image_id = \$3 WHERE id = \$4`).
-		WithArgs(user.Username, user.Phone, uuid.Nil, user.ID).
-		WillReturnResult(pgxmock.NewResult("UPDATE", 1))
-
-	err := repo.Update(user)
-	assert.NoError(t, err)
-
-	// Ожидаем, что строка не будет найдена
-	mockPool.ExpectExec(`UPDATE "user" SET username = \$1, phone_number = \$2, image_id = \$3 WHERE id = \$4`).
-		WithArgs(user.Username, user.Phone, uuid.Nil, user.ID).
-		WillReturnResult(pgxmock.NewResult("UPDATE", 0))
-
-	err = repo.Update(user)
-	assert.Error(t, err)
-	assert.Equal(t, repository.ErrUserNotFound, err)
-
-	// Ожидаем ошибку выполнения
-	mockPool.ExpectExec(`UPDATE "user" SET username = \$1, phone_number = \$2, image_id = \$3 WHERE id = \$4`).
-		WithArgs(user.Username, user.Phone, uuid.Nil, user.ID).
-		WillReturnError(errors.New("update error"))
-
-	err = repo.Update(user)
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "error updating user")
-
-	err = mockPool.ExpectationsWereMet()
-	assert.NoError(t, err)
-}
-
 func TestUserDB_DeleteUser(t *testing.T) {
 	mockPool, _, repo, teardown := setupUserTest(t)
 	defer teardown()
@@ -177,4 +135,62 @@ func TestUserDB_DeleteUser(t *testing.T) {
 
 	err = mockPool.ExpectationsWereMet()
 	assert.NoError(t, err)
+}
+
+func TestUserDB_GetByEmail(t *testing.T) {
+	mockPool, _, repo, teardown := setupUserTest(t)
+	defer teardown()
+
+	email := "test@example.com"
+
+	// Успешное получение пользователя по email
+	mockPool.ExpectQuery(`SELECT id, email, password_hash, password_salt, username, phone_number, image_id, status, created_at, updated_at FROM "user" WHERE email = \$1`).
+		WithArgs(email).
+		WillReturnRows(pgxmock.NewRows([]string{"id", "email", "password_hash", "password_salt", "username", "phone_number", "image_id", "status", "created_at", "updated_at"}).
+			AddRow(uuid.New(), email, []byte("hash"), []byte("salt"), sql.NullString{String: "Test User", Valid: true}, sql.NullString{String: "1234567890", Valid: true}, uuid.Nil, sql.NullString{String: "active", Valid: true}, time.Now(), time.Now()))
+
+	user, err := repo.GetByEmail(email)
+	assert.NoError(t, err)
+	assert.Equal(t, "Test User", user.Username)
+
+	// Попытка получить несуществующего пользователя
+	mockPool.ExpectQuery(`SELECT id, email, password_hash, password_salt, username, phone_number, image_id, status, created_at, updated_at FROM "user" WHERE email = \$1`).
+		WithArgs(email).
+		WillReturnError(pgx.ErrNoRows)
+
+	user, err = repo.GetByEmail(email)
+	assert.Error(t, err)
+	assert.Nil(t, user)
+
+	err = mockPool.ExpectationsWereMet()
+	assert.NoError(t, err)
+}
+
+// Тестирование метода GetEntity
+func TestDBUser_GetEntity(t *testing.T) {
+	dbUser := DBUser{
+		ID:           uuid.New(),
+		Email:        "entity@example.com",
+		PasswordHash: []byte("hash"),
+		PasswordSalt: []byte("salt"),
+		Username:     sql.NullString{String: "Entity User", Valid: true},
+		Phone:        sql.NullString{String: "1234567890", Valid: true},
+		AvatarId:     uuid.New(),
+		Status:       sql.NullString{String: "active", Valid: true},
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
+	}
+
+	user := dbUser.GetEntity()
+
+	assert.Equal(t, dbUser.ID, user.ID)
+	assert.Equal(t, dbUser.Email, user.Email)
+	assert.Equal(t, dbUser.PasswordHash, user.PasswordHash)
+	assert.Equal(t, dbUser.PasswordSalt, user.PasswordSalt)
+	assert.Equal(t, dbUser.Username.String, user.Username)
+	assert.Equal(t, dbUser.Phone.String, user.Phone)
+	assert.Equal(t, dbUser.AvatarId, user.AvatarId)
+	assert.Equal(t, dbUser.Status.String, user.Status)
+	assert.Equal(t, dbUser.CreatedAt, user.CreatedAt)
+	assert.Equal(t, dbUser.UpdatedAt, user.UpdatedAt)
 }

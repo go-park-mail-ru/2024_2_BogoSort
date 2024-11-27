@@ -1,254 +1,735 @@
 package service
 
-// import (
-// 	"errors"
-// 	"testing"
+import (
+	"errors"
+	"testing"
 
-// 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
-// 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
-// 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository/mocks"
-// 	"github.com/golang/mock/gomock"
-// 	"github.com/google/uuid"
-// 	"github.com/stretchr/testify/assert"
-// 	"go.uber.org/zap"
-// )
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository/mocks"
+	"github.com/golang/mock/gomock"
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+)
 
-// func setupAdvertTestService(t *testing.T) (*AdvertService, *gomock.Controller, *mocks.MockAdvertRepository, *mocks.MockStaticRepository, *mocks.MockSeller) {
-// 	ctrl := gomock.NewController(t)
-// 	mockRepo := mocks.NewMockAdvertRepository(ctrl)
-// 	mockStaticRepo := mocks.NewMockStaticRepository(ctrl)
-// 	mockSellerRepo := mocks.NewMockSeller(ctrl)
-// 	logger := zap.NewNop()
+func setupAdvertService(t *testing.T) (*AdvertService, *mocks.MockAdvertRepository, *mocks.MockSeller, *mocks.MockUser, *gomock.Controller) {
+	ctrl := gomock.NewController(t)
+	advertRepo := mocks.NewMockAdvertRepository(ctrl)
+	sellerRepo := mocks.NewMockSeller(ctrl)
+	userRepo := mocks.NewMockUser(ctrl)
+	service := NewAdvertService(advertRepo, sellerRepo, userRepo)
+	return service, advertRepo, sellerRepo, userRepo, ctrl
+}
 
-// 	service := &AdvertService{
-// 		advertRepo: mockRepo,
-// 		staticRepo: mockStaticRepo,
-// 		sellerRepo: mockSellerRepo,
-// 		logger:     logger,
-// 	}
+func TestAdvertService_GetById(t *testing.T) {
+	service, advertRepo, _, _, ctrl := setupAdvertService(t)
+	defer ctrl.Finish()
 
-// 	return service, ctrl, mockRepo, mockStaticRepo, mockSellerRepo
-// }
+	userID := uuid.New()
+	advertID := uuid.New()
+	expectedAdvert := &entity.Advert{
+		ID:          advertID,
+		SellerId:    uuid.New(),
+		CategoryId:  uuid.New(),
+		Title:       "Test Advert",
+		Price:       100,
+		Status:      entity.AdvertStatusActive,
+		HasDelivery: true,
+		Location:    "Test Location",
+	}
 
-// func TestAdvertService_AddAdvert(t *testing.T) {
-// 	service, ctrl, mockRepo, _, mockSellerRepo := setupAdvertTestService(t)
-// 	defer ctrl.Finish()
+	testCases := []struct {
+		name          string
+		setupMocks    func()
+		expectedError error
+	}{
+		{
+			name: "Success",
+			setupMocks: func() {
+				advertRepo.EXPECT().GetById(advertID, userID).Return(expectedAdvert, nil)
+			},
+			expectedError: nil,
+		},
+		{
+			name: "Advert Not Found",
+			setupMocks: func() {
+				advertRepo.EXPECT().GetById(advertID, userID).Return(nil, repository.ErrAdvertNotFound)
+			},
+			expectedError: ErrAdvertNotFound,
+		},
+	}
 
-// 	advertRequest := &dto.AdvertRequest{
-// 		Title:       "Test Advert",
-// 		Description: "Test Description",
-// 		Price:       100,
-// 		Location:    "Test Location",
-// 		HasDelivery: true,
-// 		CategoryId:  uuid.New(),
-// 		Status:      "active",
-// 	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setupMocks()
 
-// 	sellerId := uuid.New()
-// 	mockSellerRepo.EXPECT().GetSellerByUserID(sellerId).Return(&entity.Seller{ID: sellerId}, nil)
-// 	mockRepo.EXPECT().AddAdvert(gomock.Any()).Return(&entity.Advert{ID: uuid.New()}, nil)
+			advert, err := service.GetById(advertID, userID)
 
-// 	result, err := service.AddAdvert(advertRequest, sellerId)
-// 	assert.NoError(t, err)
-// 	assert.NotNil(t, result)
-// }
+			if tc.expectedError != nil {
+				assert.Error(t, err)
+				assert.True(t, errors.Is(err, tc.expectedError), "expected error: %v, got: %v", tc.expectedError, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, expectedAdvert.ID, advert.Advert.ID)
+			}
+		})
+	}
+}
 
-// func TestAdvertService_Cases(t *testing.T) {
-// 	service, ctrl, mockRepo, _, mockSellerRepo := setupAdvertTestService(t)
-// 	defer ctrl.Finish()
+func TestAdvertService_Add(t *testing.T) {
+	service, advertRepo, sellerRepo, _, ctrl := setupAdvertService(t)
+	defer ctrl.Finish()
 
-// 	testCases := []struct {
-// 		name     string
-// 		testFunc func()
-// 	}{
-// 		{
-// 			name: "GetAdverts",
-// 			testFunc: func() {
-// 				mockRepo.EXPECT().GetAdverts(10, 0).Return([]*entity.Advert{{}}, nil)
-// 				adverts, err := service.GetAdverts(10, 0)
-// 				assert.NoError(t, err)
-// 				assert.Len(t, adverts, 1)
-// 			},
-// 		},
-// 		{
-// 			name: "GetAdvertById",
-// 			testFunc: func() {
-// 				advertId := uuid.New()
-// 				mockRepo.EXPECT().GetAdvertById(advertId).Return(&entity.Advert{ID: advertId}, nil)
-// 				advert, err := service.GetAdvertById(advertId)
-// 				assert.NoError(t, err)
-// 				assert.Equal(t, advertId, advert.ID)
-// 			},
-// 		},
-// 		{
-// 			name: "UpdateAdvert",
-// 			testFunc: func() {
-// 				advertId := uuid.New()
-// 				advertRequest := &dto.AdvertRequest{
-// 					Title:       "Updated Advert",
-// 					Description: "Updated Description",
-// 					Price:       150,
-// 					Location:    "Updated Location",
-// 					HasDelivery: false,
-// 					CategoryId:  uuid.New(),
-// 					Status:      "inactive",
-// 				}
-// 				sellerId := uuid.New()
-// 				mockSellerRepo.EXPECT().GetSellerByUserID(sellerId).Return(&entity.Seller{ID: sellerId}, nil)
-// 				mockRepo.EXPECT().GetAdvertById(advertId).Return(&entity.Advert{ID: advertId, SellerId: sellerId}, nil)
-// 				mockRepo.EXPECT().UpdateAdvert(gomock.Any()).Return(nil)
-// 				err := service.UpdateAdvert(advertRequest, sellerId, advertId)
-// 				assert.NoError(t, err)
-// 			},
-// 		},
-// 		{
-// 			name: "DeleteAdvertById",
-// 			testFunc: func() {
-// 				advertId := uuid.New()
-// 				sellerId := uuid.New()
-// 				mockSellerRepo.EXPECT().GetSellerByUserID(sellerId).Return(&entity.Seller{ID: sellerId}, nil)
-// 				mockRepo.EXPECT().GetAdvertById(advertId).Return(&entity.Advert{ID: advertId, SellerId: sellerId}, nil)
-// 				mockRepo.EXPECT().DeleteAdvertById(advertId).Return(nil)
-// 				err := service.DeleteAdvertById(advertId, sellerId)
-// 				assert.NoError(t, err)
-// 			},
-// 		},
-// 		// {
-// 		// 	name: "UpdateAdvertStatus",
-// 		// 	testFunc: func() {
-// 		// 		advertId := uuid.New()
-// 		// 		sellerId := uuid.New()
-// 		// 		mockSellerRepo.EXPECT().GetSellerByUserID(sellerId).Return(&entity.Seller{ID: sellerId}, nil)
-// 		// 		mockRepo.EXPECT().GetAdvertById(advertId).Return(&entity.Advert{ID: advertId, SellerId: sellerId}, nil)
-// 		// 		mockRepo.EXPECT().UpdateAdvertStatus(advertId, "inactive").Return(nil)
-// 		// 		err := service.UpdateAdvertStatus(advertId, "inactive", sellerId)
-// 		// 		assert.NoError(t, err)
-// 		// 	},
-// 		// },
-// 	}
+	userID := uuid.New()
+	sellerID := uuid.New()
+	advertRequest := &dto.AdvertRequest{
+		Title:       "New Advert",
+		Description: "Description",
+		Price:       200,
+		Status:      dto.AdvertStatusActive,
+		Location:    "Location",
+	}
+	expectedAdvert := &entity.Advert{
+		ID:          uuid.New(),
+		SellerId:    sellerID,
+		CategoryId:  uuid.New(),
+		Title:       advertRequest.Title,
+		Description: advertRequest.Description,
+		Price:       advertRequest.Price,
+		Status:      entity.AdvertStatus(advertRequest.Status),
+		HasDelivery: advertRequest.HasDelivery,
+		Location:    advertRequest.Location,
+	}
 
-// 	for _, tc := range testCases {
-// 		t.Run(tc.name, func(t *testing.T) {
-// 			tc.testFunc()
-// 		})
-// 	}
-// }
+	testCases := []struct {
+		name          string
+		setupMocks    func()
+		expectedError error
+	}{
+		{
+			name: "Success",
+			setupMocks: func() {
+				sellerRepo.EXPECT().GetByUserId(userID).Return(&entity.Seller{ID: sellerID}, nil)
+				advertRepo.EXPECT().Add(gomock.Any()).Return(expectedAdvert, nil)
+			},
+			expectedError: nil,
+		},
+		{
+			name: "Seller Not Found",
+			setupMocks: func() {
+				sellerRepo.EXPECT().GetByUserId(userID).Return(nil, repository.ErrSellerNotFound)
+			},
+			expectedError: repository.ErrSellerNotFound,
+		},
+		{
+			name: "Invalid Advert Data",
+			setupMocks: func() {
+				sellerRepo.EXPECT().GetByUserId(userID).Return(&entity.Seller{ID: sellerID}, nil)
+				advertRepo.EXPECT().Add(gomock.Any()).Return(nil, ErrAdvertBadRequest)
+			},
+			expectedError: ErrAdvertBadRequest,
+		},
+	}
 
-// func TestAdvertService_GetAdvertsByUserId(t *testing.T) {
-// 	service, ctrl, mockRepo, _, mockSellerRepo := setupAdvertTestService(t)
-// 	defer ctrl.Finish()
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setupMocks()
 
-// 	sellerId := uuid.New()
-// 	mockSellerRepo.EXPECT().GetSellerByUserID(sellerId).Return(&entity.Seller{ID: sellerId}, nil)
-// 	mockRepo.EXPECT().GetAdvertsBySellerId(sellerId).Return([]*entity.Advert{{ID: uuid.New()}}, nil)
+			advert, err := service.Add(advertRequest, userID)
 
-// 	adverts, err := service.GetAdvertsByUserId(sellerId)
-// 	assert.NoError(t, err)
-// 	assert.Len(t, adverts, 1)
-// }
+			if tc.expectedError != nil {
+				assert.Error(t, err)
+				assert.True(t, errors.Is(err, tc.expectedError), "expected error: %v, got: %v", tc.expectedError, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, expectedAdvert.ID, advert.ID)
+			}
+		})
+	}
+}
 
-// func TestAdvertService_GetAdvertsByCartId(t *testing.T) {
-// 	service, ctrl, mockRepo, _, _ := setupAdvertTestService(t)
-// 	defer ctrl.Finish()
+func TestAdvertService_Update(t *testing.T) {
+	service, advertRepo, sellerRepo, _, ctrl := setupAdvertService(t)
+	defer ctrl.Finish()
 
-// 	cartId := uuid.New()
-// 	mockRepo.EXPECT().GetAdvertsByCartId(cartId).Return([]*entity.Advert{{ID: uuid.New()}}, nil)
+	userID := uuid.New()
+	advertID := uuid.New()
+	sellerID := uuid.New()
+	advertRequest := &dto.AdvertRequest{
+		Title:       "Updated Advert",
+		Description: "Updated Description",
+		Price:       300,
+		Status:      dto.AdvertStatusActive,
+		Location:    "Updated Location",
+	}
 
-// 	adverts, err := service.GetAdvertsByCartId(cartId)
-// 	assert.NoError(t, err)
-// 	assert.Len(t, adverts, 1)
-// }
+	testCases := []struct {
+		name          string
+		setupMocks    func()
+		expectedError error
+	}{
+		{
+			name: "Success",
+			setupMocks: func() {
+				sellerRepo.EXPECT().GetByUserId(userID).Return(&entity.Seller{ID: sellerID}, nil)
+				advertRepo.EXPECT().GetById(advertID, userID).Return(&entity.Advert{SellerId: sellerID}, nil)
+				advertRepo.EXPECT().Update(gomock.Any()).Return(nil)
+			},
+			expectedError: nil,
+		},
+		{
+			name: "Advert Not Found",
+			setupMocks: func() {
+				sellerRepo.EXPECT().GetByUserId(userID).Return(&entity.Seller{ID: sellerID}, nil)
+				advertRepo.EXPECT().GetById(advertID, userID).Return(nil, repository.ErrAdvertNotFound)
+			},
+			expectedError: ErrAdvertNotFound,
+		},
+		{
+			name: "Forbidden",
+			setupMocks: func() {
+				sellerRepo.EXPECT().GetByUserId(userID).Return(&entity.Seller{ID: sellerID}, nil)
+				advertRepo.EXPECT().GetById(advertID, userID).Return(&entity.Advert{SellerId: uuid.New()}, nil)
+			},
+			expectedError: ErrForbidden,
+		},
+	}
 
-// func TestAdvertService_GetAdvertsByCategoryId(t *testing.T) {
-// 	service, ctrl, mockRepo, _, _ := setupAdvertTestService(t)
-// 	defer ctrl.Finish()
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setupMocks()
 
-// 	categoryId := uuid.New()
-// 	mockRepo.EXPECT().GetAdvertsByCategoryId(categoryId).Return([]*entity.Advert{{ID: uuid.New()}}, nil)
+			err := service.Update(advertRequest, userID, advertID)
 
-// 	adverts, err := service.GetAdvertsByCategoryId(categoryId)
-// 	assert.NoError(t, err)
-// 	assert.Len(t, adverts, 1)
-// }
+			if tc.expectedError != nil {
+				assert.Error(t, err)
+				assert.True(t, errors.Is(err, tc.expectedError), "expected error: %v, got: %v", tc.expectedError, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
 
-// func TestAdvertService_UploadImage(t *testing.T) {
-// 	service, ctrl, mockRepo, _, mockSellerRepo := setupAdvertTestService(t)
-// 	defer ctrl.Finish()
+func TestAdvertService_DeleteById(t *testing.T) {
+	service, advertRepo, sellerRepo, _, ctrl := setupAdvertService(t)
+	defer ctrl.Finish()
 
-// 	advertId := uuid.New()
-// 	imageId := uuid.New()
-// 	sellerId := uuid.New()
+	userID := uuid.New()
+	advertID := uuid.New()
+	sellerID := uuid.New()
 
-// 	mockSellerRepo.EXPECT().GetSellerByUserID(sellerId).Return(&entity.Seller{ID: sellerId}, nil)
-// 	mockRepo.EXPECT().GetAdvertById(advertId).Return(&entity.Advert{ID: advertId, SellerId: sellerId}, nil)
-// 	mockRepo.EXPECT().UploadImage(advertId, imageId).Return(nil)
+	testCases := []struct {
+		name          string
+		setupMocks    func()
+		expectedError error
+	}{
+		{
+			name: "Success",
+			setupMocks: func() {
+				sellerRepo.EXPECT().GetByUserId(userID).Return(&entity.Seller{ID: sellerID}, nil)
+				advertRepo.EXPECT().GetById(advertID, userID).Return(&entity.Advert{SellerId: sellerID}, nil)
+				advertRepo.EXPECT().DeleteById(advertID).Return(nil)
+			},
+			expectedError: nil,
+		},
+		{
+			name: "Advert Not Found",
+			setupMocks: func() {
+				sellerRepo.EXPECT().GetByUserId(userID).Return(&entity.Seller{ID: sellerID}, nil)
+				advertRepo.EXPECT().GetById(advertID, userID).Return(nil, repository.ErrAdvertNotFound)
+			},
+			expectedError: repository.ErrAdvertNotFound,
+		},
+		{
+			name: "Forbidden",
+			setupMocks: func() {
+				sellerRepo.EXPECT().GetByUserId(userID).Return(&entity.Seller{ID: sellerID}, nil)
+				advertRepo.EXPECT().GetById(advertID, userID).Return(&entity.Advert{SellerId: uuid.New()}, nil)
+			},
+			expectedError: ErrForbidden,
+		},
+	}
 
-// 	err := service.UploadImage(advertId, imageId, sellerId)
-// 	assert.NoError(t, err)
-// }
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setupMocks()
 
-// func TestAdvertService_UpdateAdvert_NotFound(t *testing.T) {
-// 	service, ctrl, mockRepo, _, mockSellerRepo := setupAdvertTestService(t)
-// 	defer ctrl.Finish()
+			err := service.DeleteById(advertID, userID)
 
-// 	advertRequest := &dto.AdvertRequest{
-// 		Title:       "Updated Advert",
-// 		Description: "Updated Description",
-// 		Price:       150,
-// 		Location:    "Updated Location",
-// 		HasDelivery: false,
-// 		CategoryId:  uuid.New(),
-// 		Status:      "inactive",
-// 	}
-// 	sellerId := uuid.New()
-// 	advertId := uuid.New()
+			if tc.expectedError != nil {
+				assert.Error(t, err)
+				assert.True(t, errors.Is(err, tc.expectedError), "expected error: %v, got: %v", tc.expectedError, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
 
-// 	mockSellerRepo.EXPECT().GetSellerByUserID(sellerId).Return(&entity.Seller{ID: sellerId}, nil)
-// 	mockRepo.EXPECT().GetAdvertById(advertId).Return(nil, errors.New("advert not found"))
+func TestAdvertService_GetByUserId(t *testing.T) {
+	service, advertRepo, sellerRepo, _, ctrl := setupAdvertService(t)
+	defer ctrl.Finish()
 
-// 	err := service.UpdateAdvert(advertRequest, sellerId, advertId)
-// 	assert.Error(t, err)
-// }
+	userID := uuid.New()
+	sellerID := uuid.New()
+	expectedAdverts := []*entity.Advert{
+		{
+			ID:          uuid.New(),
+			SellerId:    sellerID,
+			CategoryId:  uuid.New(),
+			Title:       "Advert 1",
+			Price:       100,
+			Status:      entity.AdvertStatusActive,
+			HasDelivery: true,
+			Location:    "Location 1",
+		},
+		{
+			ID:          uuid.New(),
+			SellerId:    sellerID,
+			CategoryId:  uuid.New(),
+			Title:       "Advert 2",
+			Price:       200,
+			Status:      entity.AdvertStatusInactive,
+			HasDelivery: false,
+			Location:    "Location 2",
+		},
+	}
 
-// func TestAdvertService_DeleteAdvertById_NotFound(t *testing.T) {
-// 	service, ctrl, mockRepo, _, mockSellerRepo := setupAdvertTestService(t)
-// 	defer ctrl.Finish()
+	testCases := []struct {
+		name          string
+		setupMocks    func()
+		expectedError error
+	}{
+		{
+			name: "Success",
+			setupMocks: func() {
+				sellerRepo.EXPECT().GetByUserId(userID).Return(&entity.Seller{ID: sellerID}, nil)
+				advertRepo.EXPECT().GetByUserId(sellerID, userID).Return(expectedAdverts, nil)
+			},
+			expectedError: nil,
+		},
+		{
+			name: "Seller Not Found",
+			setupMocks: func() {
+				sellerRepo.EXPECT().GetByUserId(userID).Return(nil, repository.ErrSellerNotFound)
+			},
+			expectedError: repository.ErrSellerNotFound,
+		},
+	}
 
-// 	advertId := uuid.New()
-// 	sellerId := uuid.New()
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setupMocks()
 
-// 	mockSellerRepo.EXPECT().GetSellerByUserID(sellerId).Return(&entity.Seller{ID: sellerId}, nil)
-// 	mockRepo.EXPECT().GetAdvertById(advertId).Return(nil, errors.New("advert not found"))
+			adverts, err := service.GetByUserId(userID)
 
-// 	err := service.DeleteAdvertById(advertId, sellerId)
-// 	assert.Error(t, err)
-// }
+			if tc.expectedError != nil {
+				assert.Error(t, err)
+				assert.True(t, errors.Is(err, tc.expectedError), "expected error: %v, got: %v", tc.expectedError, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, len(expectedAdverts), len(adverts))
+			}
+		})
+	}
+}
 
-// func TestAdvertService_GetAdvertsByUserId_NoAdverts(t *testing.T) {
-// 	service, ctrl, mockRepo, _, mockSellerRepo := setupAdvertTestService(t)
-// 	defer ctrl.Finish()
+func TestAdvertService_Get(t *testing.T) {
+	service, advertRepo, _, _, ctrl := setupAdvertService(t)
+	defer ctrl.Finish()
 
-// 	sellerId := uuid.New()
-// 	mockSellerRepo.EXPECT().GetSellerByUserID(sellerId).Return(&entity.Seller{ID: sellerId}, nil)
-// 	mockRepo.EXPECT().GetAdvertsBySellerId(sellerId).Return([]*entity.Advert{}, nil)
+	userID := uuid.New()
+	expectedAdverts := []*entity.Advert{
+		{
+			ID:          uuid.New(),
+			SellerId:    uuid.New(),
+			CategoryId:  uuid.New(),
+			Title:       "Advert 1",
+			Price:       100,
+			Status:      entity.AdvertStatusActive,
+			HasDelivery: true,
+			Location:    "Location 1",
+		},
+		{
+			ID:          uuid.New(),
+			SellerId:    uuid.New(),
+			CategoryId:  uuid.New(),
+			Title:       "Advert 2",
+			Price:       200,
+			Status:      entity.AdvertStatusInactive,
+			HasDelivery: false,
+			Location:    "Location 2",
+		},
+	}
 
-// 	adverts, err := service.GetAdvertsByUserId(sellerId)
-// 	assert.NoError(t, err)
-// 	assert.Len(t, adverts, 0)
-// }
+	testCases := []struct {
+		name          string
+		setupMocks    func()
+		expectedError error
+	}{
+		{
+			name: "Success",
+			setupMocks: func() {
+				advertRepo.EXPECT().Get(10, 0, userID).Return(expectedAdverts, nil)
+			},
+			expectedError: nil,
+		},
+	}
 
-// func TestAdvertService_UploadImage_Failure(t *testing.T) {
-// 	service, ctrl, mockRepo, _, mockSellerRepo := setupAdvertTestService(t)
-// 	defer ctrl.Finish()
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setupMocks()
 
-// 	advertId := uuid.New()
-// 	imageId := uuid.New()
-// 	sellerId := uuid.New()
+			adverts, err := service.Get(10, 0, userID)
 
-// 	mockSellerRepo.EXPECT().GetSellerByUserID(sellerId).Return(&entity.Seller{ID: sellerId}, nil)
-// 	mockRepo.EXPECT().GetAdvertById(advertId).Return(&entity.Advert{ID: advertId, SellerId: sellerId}, nil)
-// 	mockRepo.EXPECT().UploadImage(advertId, imageId).Return(errors.New("upload failed"))
+			if tc.expectedError != nil {
+				assert.Error(t, err)
+				assert.True(t, errors.Is(err, tc.expectedError), "expected error: %v, got: %v", tc.expectedError, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, len(expectedAdverts), len(adverts))
+			}
+		})
+	}
+}
 
-// 	err := service.UploadImage(advertId, imageId, sellerId)
-// 	assert.Error(t, err)
-// }
+func TestAdvertService_GetByCartId(t *testing.T) {
+	service, advertRepo, _, _, ctrl := setupAdvertService(t)
+	defer ctrl.Finish()
+
+	userID := uuid.New()
+	cartID := uuid.New()
+	expectedAdverts := []*entity.Advert{
+		{
+			ID:          uuid.New(),
+			SellerId:    uuid.New(),
+			CategoryId:  uuid.New(),
+			Title:       "Advert 1",
+			Price:       100,
+			Status:      entity.AdvertStatusActive,
+			HasDelivery: true,
+			Location:    "Location 1",
+		},
+		{
+			ID:          uuid.New(),
+			SellerId:    uuid.New(),
+			CategoryId:  uuid.New(),
+			Title:       "Advert 2",
+			Price:       200,
+			Status:      entity.AdvertStatusInactive,
+			HasDelivery: false,
+			Location:    "Location 2",
+		},
+	}
+
+	testCases := []struct {
+		name          string
+		setupMocks    func()
+		expectedError error
+	}{
+		{
+			name: "Success",
+			setupMocks: func() {
+				advertRepo.EXPECT().GetByCartId(cartID, userID).Return(expectedAdverts, nil)
+			},
+			expectedError: nil,
+		},
+		{
+			name: "Cart not found",
+			setupMocks: func() {
+				advertRepo.EXPECT().GetByCartId(cartID, userID).Return(nil, repository.ErrCartNotFound)
+			},
+			expectedError: repository.ErrCartNotFound,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setupMocks()
+
+			adverts, err := service.GetByCartId(cartID, userID)
+
+			if tc.expectedError != nil {
+				assert.Error(t, err)
+				assert.True(t, errors.Is(err, tc.expectedError), "expected error: %v, got: %v", tc.expectedError, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, len(expectedAdverts), len(adverts))
+			}
+		})
+	}
+}
+
+func TestAdvertService_UploadImage(t *testing.T) {
+	service, advertRepo, sellerRepo, _, ctrl := setupAdvertService(t)
+	defer ctrl.Finish()
+
+	userID := uuid.New()
+	advertID := uuid.New()
+	imageID := uuid.New()
+	sellerID := uuid.New()
+
+	testCases := []struct {
+		name          string
+		setupMocks    func()
+		expectedError error
+	}{
+		{
+			name: "Success",
+			setupMocks: func() {
+				sellerRepo.EXPECT().GetByUserId(userID).Return(&entity.Seller{ID: sellerID}, nil)
+				advertRepo.EXPECT().GetById(advertID, userID).Return(&entity.Advert{SellerId: sellerID}, nil)
+				advertRepo.EXPECT().UploadImage(advertID, imageID).Return(nil)
+			},
+			expectedError: nil,
+		},
+		{
+			name: "Advert Not Found",
+			setupMocks: func() {
+				sellerRepo.EXPECT().GetByUserId(userID).Return(&entity.Seller{ID: sellerID}, nil)
+				advertRepo.EXPECT().GetById(advertID, userID).Return(nil, repository.ErrAdvertNotFound)
+			},
+			expectedError: repository.ErrAdvertNotFound,
+		},
+		{
+			name: "Forbidden",
+			setupMocks: func() {
+				sellerRepo.EXPECT().GetByUserId(userID).Return(&entity.Seller{ID: sellerID}, nil)
+				advertRepo.EXPECT().GetById(advertID, userID).Return(&entity.Advert{SellerId: uuid.New()}, nil)
+			},
+			expectedError: ErrForbidden,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setupMocks()
+
+			err := service.UploadImage(advertID, imageID, userID)
+
+			if tc.expectedError != nil {
+				assert.Error(t, err)
+				assert.True(t, errors.Is(err, tc.expectedError), "expected error: %v, got: %v", tc.expectedError, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestAdvertService_DeleteFromSaved(t *testing.T) {
+	service, advertRepo, _, _, ctrl := setupAdvertService(t)
+	defer ctrl.Finish()
+
+	userID := uuid.New()
+	advertID := uuid.New()
+
+	testCases := []struct {
+		name          string
+		setupMocks    func()
+		expectedError error
+	}{
+		{
+			name: "Success",
+			setupMocks: func() {
+				advertRepo.EXPECT().CheckIfExists(advertID).Return(true, nil)
+				advertRepo.EXPECT().DeleteFromSaved(advertID, userID).Return(nil)
+			},
+			expectedError: nil,
+		},
+		{
+			name: "Advert Not Found",
+			setupMocks: func() {
+				advertRepo.EXPECT().CheckIfExists(advertID).Return(false, nil)
+			},
+			expectedError: ErrAdvertNotFound,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setupMocks()
+
+			err := service.RemoveFromSaved(advertID, userID)
+
+			if tc.expectedError != nil {
+				assert.Error(t, err)
+				assert.True(t, errors.Is(err, tc.expectedError), "expected error: %v, got: %v", tc.expectedError, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestAdvertService_GetSavedByUserId(t *testing.T) {
+	service, advertRepo, _, _, ctrl := setupAdvertService(t)
+	defer ctrl.Finish()
+
+	userID := uuid.New()
+	expectedAdverts := []*entity.Advert{
+		{
+			ID:          uuid.New(),
+			SellerId:    uuid.New(),
+			CategoryId:  uuid.New(),
+			Title:       "Advert 1",
+			Price:       100,
+			Status:      entity.AdvertStatusActive,
+			HasDelivery: true,
+			Location:    "Location 1",
+		},
+		{
+			ID:          uuid.New(),
+			SellerId:    uuid.New(),
+			CategoryId:  uuid.New(),
+			Title:       "Advert 2",
+			Price:       200,
+			Status:      entity.AdvertStatusInactive,
+			HasDelivery: false,
+			Location:    "Location 2",
+		},
+	}
+
+	testCases := []struct {
+		name          string
+		setupMocks    func()
+		expectedError error
+	}{
+		{
+			name: "Success",
+			setupMocks: func() {
+				advertRepo.EXPECT().GetSavedByUserId(userID).Return(expectedAdverts, nil)
+			},
+			expectedError: nil,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setupMocks()
+
+			adverts, err := service.GetSavedByUserId(userID)
+
+			if tc.expectedError != nil {
+				assert.Error(t, err)
+				assert.True(t, errors.Is(err, tc.expectedError), "expected error: %v, got: %v", tc.expectedError, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, len(expectedAdverts), len(adverts))
+			}
+		})
+	}
+}
+
+func TestAdvertService_Search(t *testing.T) {
+	service, advertRepo, _, _, ctrl := setupAdvertService(t)
+	defer ctrl.Finish()
+
+	userID := uuid.New()
+	query := "test"
+	expectedAdverts := []*entity.Advert{
+		{
+			ID:          uuid.New(),
+			SellerId:    uuid.New(),
+			CategoryId:  uuid.New(),
+			Title:       "Advert 1",
+			Price:       100,
+			Status:      entity.AdvertStatusActive,
+			HasDelivery: true,
+			Location:    "Location 1",
+		},
+		{
+			ID:          uuid.New(),
+			SellerId:    uuid.New(),
+			CategoryId:  uuid.New(),
+			Title:       "Advert 2",
+			Price:       200,
+			Status:      entity.AdvertStatusInactive,
+			HasDelivery: false,
+			Location:    "Location 2",
+		},
+	}
+
+	testCases := []struct {
+		name          string
+		setupMocks    func()
+		expectedError error
+	}{
+		{
+			name: "Success",
+			setupMocks: func() {
+				advertRepo.EXPECT().Count().Return(2, nil)
+				advertRepo.EXPECT().Search(query, gomock.Any(), gomock.Any(), userID).Return(expectedAdverts, nil).AnyTimes()
+			},
+			expectedError: nil,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setupMocks()
+
+			adverts, err := service.Search(query, 10, 10, 0, userID)
+
+			if tc.expectedError != nil {
+				assert.Error(t, err)
+				assert.True(t, errors.Is(err, tc.expectedError), "expected error: %v, got: %v", tc.expectedError, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, len(expectedAdverts), len(adverts))
+			}
+		})
+	}
+}
+
+func TestAdvertService_GetByCategoryId(t *testing.T) {
+	service, advertRepo, _, _, ctrl := setupAdvertService(t)
+	defer ctrl.Finish()
+
+	categoryID := uuid.New()
+	userID := uuid.New()
+	expectedAdverts := []*entity.Advert{
+		{
+			ID:          uuid.New(),
+			SellerId:    uuid.New(),
+			CategoryId:  categoryID,
+			Title:       "Advert 1",
+			Price:       100,
+			Status:      entity.AdvertStatusActive,
+			HasDelivery: true,
+			Location:    "Location 1",
+		},
+	}
+
+	testCases := []struct {
+		name          string
+		setupMocks    func()
+		expectedError error
+	}{
+		{
+			name: "Success",
+			setupMocks: func() {
+				advertRepo.EXPECT().GetByCategoryId(categoryID, userID).Return(expectedAdverts, nil)
+			},
+			expectedError: nil,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setupMocks()
+
+			adverts, err := service.GetByCategoryId(categoryID, userID)
+
+			if tc.expectedError != nil {
+				assert.Error(t, err)
+				assert.True(t, errors.Is(err, tc.expectedError), "expected error: %v, got: %v", tc.expectedError, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, len(expectedAdverts), len(adverts))
+			}
+		})
+	}
+}
