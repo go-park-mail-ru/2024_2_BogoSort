@@ -151,8 +151,10 @@ func (h *CartEndpoint) AddToCart(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case errors.Is(err, cart_purchase.ErrCartNotFound):
 		utils.SendErrorResponse(w, http.StatusNotFound, "cart not found")
+		return
 	case err != nil:
 		utils.SendErrorResponse(w, http.StatusInternalServerError, "failed to add advert to user cart")
+		return
 	}
 
 	logger.Info("advert added to user cart")
@@ -230,5 +232,5 @@ func (h *CartEndpoint) CheckExists(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.SendJSONResponse(w, http.StatusOK, map[string]string{"exists": exists.String()})
+	utils.SendJSONResponse(w, http.StatusOK, map[string]string{"cart_id": exists.String()})
 }
