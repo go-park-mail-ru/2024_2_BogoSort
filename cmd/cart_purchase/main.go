@@ -73,8 +73,8 @@ func main() {
 	defer grpcConn.Close()
 
 	server := grpc.NewServer()
-	cartUC := service.NewCartService(cartRepo, advertRepo, zap.L())
-	purchaseUC := service.NewPurchaseService(purchaseRepo, advertRepo, cartRepo, zap.L())
+	cartUC := service.NewCartService(cartRepo, advertRepo)
+	purchaseUC := service.NewPurchaseService(purchaseRepo, advertRepo, cartRepo)
 	cartPurchaseServer := cart_purchase.NewGrpcServer(cartUC, purchaseUC)
 
 	healthServer := health.NewServer()
