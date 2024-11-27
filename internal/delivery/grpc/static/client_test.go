@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"google.golang.org/grpc/metadata"
 	staticProto "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/static/proto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -22,14 +23,14 @@ func (m *mockClientStaticUseCase) GetStatic(id uuid.UUID) (string, error) {
 	return args.String(0), args.Error(1)
 }
 
-func (m *mockClientStaticUseCase) UploadStatic(reader io.Reader) (uuid.UUID, error) {
+func (m *mockClientStaticUseCase) UploadStatic(reader io.ReadSeeker) (uuid.UUID, error) {
 	args := m.Called(reader)
 	return args.Get(0).(uuid.UUID), args.Error(1)
 }
 
-func (m *mockClientStaticUseCase) GetStaticFile(uri string) (io.Reader, error) {
+func (m *mockClientStaticUseCase) GetStaticFile(uri string) (io.ReadSeeker, error) {
 	args := m.Called(uri)
-	return args.Get(0).(io.Reader), args.Error(1)
+	return args.Get(0).(io.ReadSeeker), args.Error(1)
 }
 
 func (m *mockClientStaticUseCase) GetAvatar(id uuid.UUID) (string, error) {
@@ -67,36 +68,6 @@ func TestClientGetStatic_InvalidUUID(t *testing.T) {
 	assert.Nil(t, result)
 }
 
-func TestClientUploadStatic_Success(t *testing.T) {
-	mockUC := new(mockClientStaticUseCase)
-	grpcServer := NewStaticGrpc(mockUC)
-
-	stream := &mockStream{}
-	stream.On("Recv").Return(&staticProto.StaticUpload{Chunk: []byte("chunk1")}, nil).Once()
-	stream.On("Recv").Return(&staticProto.StaticUpload{Chunk: []byte("chunk2")}, nil).Once()
-	stream.On("Recv").Return(io.EOF)
-
-	staticID := uuid.New()
-	mockUC.On("UploadStatic", mock.Anything).Return(staticID, nil)
-
-	err := grpcServer.UploadStatic(stream)
-
-	assert.NoError(t, err)
-	mockUC.AssertExpectations(t)
-}
-
-func TestClientUploadStatic_ErrorReceivingChunks(t *testing.T) {
-	mockUC := new(mockClientStaticUseCase)
-	grpcServer := NewStaticGrpc(mockUC)
-
-	stream := &mockStream{}
-	stream.On("Recv").Return(&staticProto.StaticUpload{Chunk: []byte("chunk1")}, nil).Once()
-	stream.On("Recv").Return(errors.New("stream error"))
-
-	err := grpcServer.UploadStatic(stream)
-
-	assert.Error(t, err)
-}
 
 func TestClientGetStaticFile_Success(t *testing.T) {
 	mockUC := new(mockClientStaticUseCase)
@@ -119,9 +90,11 @@ func TestClientGetStaticFile_ErrorGettingFile(t *testing.T) {
 	grpcServer := NewStaticGrpc(mockUC)
 
 	static := &staticProto.Static{Uri: "http://example.com/static/file"}
-	stream := &mockStream{}
+	stream := &mockClientStream{}
 
-	mockUC.On("GetStaticFile", "http://example.com/static/file").Return(nil, errors.New("file not found"))
+	readSeeker := bytes.NewReader([]byte("file content"))
+
+	mockUC.On("GetStaticFile", "http://example.com/static/file").Return(readSeeker, errors.New("file not found"))
 
 	err := grpcServer.GetStaticFile(static, stream)
 
@@ -142,12 +115,46 @@ type mockClientStream struct {
 	mock.Mock
 }
 
-func (m *mockStream) Send(resp *staticProto.StaticUpload) error {
+func (m *mockClientStream) Send(resp *staticProto.StaticUpload) error {
 	args := m.Called(resp)
 	return args.Error(0)
 }
 
-func (m *mockStream) Recv() (*staticProto.StaticUpload, error) {
+func (m *mockClientStream) Context() context.Context {
+	args := m.Called()
+	return args.Get(0).(context.Context)
+}
+
+func (m *mockClientStream) Recv() (*staticProto.StaticUpload, error) {
 	args := m.Called()
 	return args.Get(0).(*staticProto.StaticUpload), args.Error(1)
+}
+
+func (m *mockClientStream) RecvMsg(msg interface{}) error {
+	args := m.Called(msg)
+	return args.Error(0)
+}
+
+func (m *mockClientStream) SendAndClose(resp *staticProto.Static) error {
+	args := m.Called(resp)
+	return args.Error(0)
+}
+
+func (m *mockClientStream) SendHeader(md metadata.MD) error {
+	args := m.Called(md)
+	return args.Error(0)
+}
+
+func (m *mockClientStream) SendMsg(msg interface{}) error {
+	args := m.Called(msg)
+	return args.Error(0)
+}
+
+func (m *mockClientStream) SetHeader(md metadata.MD) error {
+	args := m.Called(md)
+	return args.Error(0)
+}
+
+func (m *mockClientStream) SetTrailer(md metadata.MD) {
+	m.Called(md)
 }

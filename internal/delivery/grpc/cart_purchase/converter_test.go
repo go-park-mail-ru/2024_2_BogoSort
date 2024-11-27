@@ -5,6 +5,7 @@ import (
 
 	proto "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/cart_purchase/proto"
 	"github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestConvertDBPurchaseStatusToEnum(t *testing.T) {
@@ -28,6 +29,40 @@ func TestConvertDBPurchaseStatusToEnum(t *testing.T) {
 	}
 }
 
+func TestConvertDBPurchaseStatusToEnum_InvalidInput(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected proto.PurchaseStatus
+		err      error
+	}{
+		{"", proto.PurchaseStatus_PURCHASE_STATUS_PENDING, errors.New("unknown purchase status")},
+	}
+
+	for _, test := range tests {
+		result, err := ConvertDBPurchaseStatusToEnum(test.input)
+		if result != test.expected || (err != nil && err.Error() != test.err.Error()) {
+			t.Errorf("ConvertDBPurchaseStatusToEnum(%q) = %v, %v; want %v, %v", test.input, result, err, test.expected, test.err)
+		}
+	}
+}
+
+func TestConvertPurchaseStatusToDB(t *testing.T) {
+	tests := []struct {
+		input    proto.PurchaseStatus
+		expected string
+	}{
+		{proto.PurchaseStatus_PURCHASE_STATUS_PENDING, "pending"},
+		{proto.PurchaseStatus_PURCHASE_STATUS_IN_PROGRESS, "in_progress"},
+		{proto.PurchaseStatus_PURCHASE_STATUS_COMPLETED, "completed"},
+		{proto.PurchaseStatus_PURCHASE_STATUS_CANCELED, "canceled"},
+	}
+
+	for _, test := range tests {
+		result := ConvertPurchaseStatusToDB(test.input)
+		assert.Equal(t, test.expected, result)
+	}
+}
+
 func TestConvertDBPaymentMethodToEnum(t *testing.T) {
 	tests := []struct {
 		input    string
@@ -47,6 +82,21 @@ func TestConvertDBPaymentMethodToEnum(t *testing.T) {
 	}
 }
 
+func TestConvertPaymentMethodToDB(t *testing.T) {
+	tests := []struct {
+		input    proto.PaymentMethod
+		expected string
+	}{
+		{proto.PaymentMethod_PAYMENT_METHOD_CARD, "card"},
+		{proto.PaymentMethod_PAYMENT_METHOD_CASH, "cash"},
+	}
+
+	for _, test := range tests {
+		result := ConvertPaymentMethodToDB(test.input)
+		assert.Equal(t, test.expected, result)
+	}
+}
+
 func TestConvertDBDeliveryMethodToEnum(t *testing.T) {
 	tests := []struct {
 		input    string
@@ -63,6 +113,21 @@ func TestConvertDBDeliveryMethodToEnum(t *testing.T) {
 		if result != test.expected || (err != nil && err.Error() != test.err.Error()) {
 			t.Errorf("ConvertDBDeliveryMethodToEnum(%q) = %v, %v; want %v, %v", test.input, result, err, test.expected, test.err)
 		}
+	}
+}
+
+func TestConvertDeliveryMethodToDB(t *testing.T) {
+	tests := []struct {
+		input    proto.DeliveryMethod
+		expected string
+	}{
+		{proto.DeliveryMethod_DELIVERY_METHOD_PICKUP, "pickup"},
+		{proto.DeliveryMethod_DELIVERY_METHOD_DELIVERY, "delivery"},
+	}
+
+	for _, test := range tests {
+		result := ConvertDeliveryMethodToDB(test.input)
+		assert.Equal(t, test.expected, result)
 	}
 }
 
@@ -86,6 +151,22 @@ func TestConvertDBCartStatusToEnum(t *testing.T) {
 	}
 }
 
+func TestConvertCartStatusToDB(t *testing.T) {
+	tests := []struct {
+		input    proto.CartStatus
+		expected string
+	}{
+		{proto.CartStatus_CART_STATUS_ACTIVE, "active"},
+		{proto.CartStatus_CART_STATUS_INACTIVE, "inactive"},
+		{proto.CartStatus_CART_STATUS_DELETED, "deleted"},
+	}
+
+	for _, test := range tests {
+		result := ConvertCartStatusToDB(test.input)
+		assert.Equal(t, test.expected, result)
+	}
+}
+
 func TestConvertDBAdvertStatusToEnum(t *testing.T) {
 	tests := []struct {
 		input    string
@@ -103,5 +184,21 @@ func TestConvertDBAdvertStatusToEnum(t *testing.T) {
 		if result != test.expected || (err != nil && err.Error() != test.err.Error()) {
 			t.Errorf("ConvertDBAdvertStatusToEnum(%q) = %v, %v; want %v, %v", test.input, result, err, test.expected, test.err)
 		}
+	}
+}
+
+func TestConvertAdvertStatusToDB(t *testing.T) {
+	tests := []struct {
+		input    proto.AdvertStatus
+		expected string
+	}{
+		{proto.AdvertStatus_ADVERT_STATUS_ACTIVE, "active"},
+		{proto.AdvertStatus_ADVERT_STATUS_INACTIVE, "inactive"},
+		{proto.AdvertStatus_ADVERT_STATUS_RESERVED, "reserved"},
+	}
+
+	for _, test := range tests {
+		result := ConvertAdvertStatusToDB(test.input)
+		assert.Equal(t, test.expected, result)
 	}
 }

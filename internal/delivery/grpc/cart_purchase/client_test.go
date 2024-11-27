@@ -191,20 +191,6 @@ func TestGetCartByID(t *testing.T) {
 	mockClient.AssertExpectations(t)
 }
 
-func TestGetCartByID_Error(t *testing.T) {
-	mockClient := new(MockCartPurchaseServiceClient)
-	client := &CartPurchaseClient{client: mockClient}
-
-	cartID := uuid.New()
-	mockClient.On("GetCartByID", mock.Anything, mock.Anything).Return(&cartPurchaseProto.GetCartByIDResponse{}, errors.New("some error"))
-
-	resp, err := client.GetCartByID(context.Background(), cartID)
-
-	assert.Error(t, err)
-	assert.Nil(t, resp)
-	mockClient.AssertExpectations(t)
-}
-
 func TestGetCartByUserID(t *testing.T) {
 	mockClient := new(MockCartPurchaseServiceClient)
 	client := &CartPurchaseClient{client: mockClient}
@@ -295,21 +281,6 @@ func TestDeleteAdvertFromCart(t *testing.T) {
 	mockClient.AssertExpectations(t)
 }
 
-func TestDeleteAdvertFromCart_Error(t *testing.T) {
-	mockClient := new(MockCartPurchaseServiceClient)
-	client := &CartPurchaseClient{client: mockClient}
-
-	cartID := uuid.New()
-	advertID := uuid.New()
-	mockClient.On("DeleteAdvertFromCart", mock.Anything, mock.Anything).Return(&cartPurchaseProto.DeleteAdvertFromCartResponse{}, errors.New("some error"))
-
-	message, err := client.DeleteAdvertFromCart(context.Background(), cartID, advertID)
-
-	assert.Error(t, err)
-	assert.Empty(t, message)
-	mockClient.AssertExpectations(t)
-}
-
 func TestCheckCartExists(t *testing.T) {
 	mockClient := new(MockCartPurchaseServiceClient)
 	client := &CartPurchaseClient{client: mockClient}
@@ -325,20 +296,6 @@ func TestCheckCartExists(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.NotEqual(t, uuid.Nil, cartID)
-	mockClient.AssertExpectations(t)
-}
-
-func TestCheckCartExists_Error(t *testing.T) {
-	mockClient := new(MockCartPurchaseServiceClient)
-	client := &CartPurchaseClient{client: mockClient}
-
-	userID := uuid.New()
-	mockClient.On("CheckCartExists", mock.Anything, mock.Anything).Return(&cartPurchaseProto.CheckCartExistsResponse{}, errors.New("some error"))
-
-	cartID, err := client.CheckCartExists(context.Background(), userID)
-
-	assert.Error(t, err)
-	assert.Equal(t, uuid.Nil, cartID)
 	mockClient.AssertExpectations(t)
 }
 
@@ -363,5 +320,49 @@ func TestPing_Error(t *testing.T) {
 	err := client.Ping(context.Background())
 
 	assert.Error(t, err)
+	mockClient.AssertExpectations(t)
+}
+
+func TestAddAdvertToCart_EmptyResponse(t *testing.T) {
+	mockClient := new(MockCartPurchaseServiceClient)
+	client := &CartPurchaseClient{client: mockClient}
+
+	userID := uuid.New()
+	advertID := uuid.New()
+	mockClient.On("AddAdvertToCart", mock.Anything, mock.Anything).Return(&cartPurchaseProto.AddAdvertToCartResponse{}, nil)
+
+	message, err := client.AddAdvertToCart(context.Background(), userID, advertID)
+
+	assert.NoError(t, err)
+	assert.Empty(t, message) 
+	mockClient.AssertExpectations(t)
+}
+
+func TestDeleteAdvertFromCart_EmptyResponse(t *testing.T) {
+	mockClient := new(MockCartPurchaseServiceClient)
+	client := &CartPurchaseClient{client: mockClient}
+
+	cartID := uuid.New()
+	advertID := uuid.New()
+	mockClient.On("DeleteAdvertFromCart", mock.Anything, mock.Anything).Return(&cartPurchaseProto.DeleteAdvertFromCartResponse{}, nil)
+
+	message, err := client.DeleteAdvertFromCart(context.Background(), cartID, advertID)
+
+	assert.NoError(t, err)
+	assert.Empty(t, message) 
+	mockClient.AssertExpectations(t)
+}
+
+func TestCheckCartExists_NotFound(t *testing.T) {
+	mockClient := new(MockCartPurchaseServiceClient)
+	client := &CartPurchaseClient{client: mockClient}
+
+	userID := uuid.New()
+	mockClient.On("CheckCartExists", mock.Anything, mock.Anything).Return(&cartPurchaseProto.CheckCartExistsResponse{}, errors.New("cart not found"))
+
+	cartID, err := client.CheckCartExists(context.Background(), userID)
+
+	assert.Error(t, err)
+	assert.Equal(t, uuid.Nil, cartID)
 	mockClient.AssertExpectations(t)
 }

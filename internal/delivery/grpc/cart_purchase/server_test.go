@@ -203,6 +203,60 @@ func TestServerDeleteAdvertFromCart(t *testing.T) {
 	mockServer.AssertExpectations(t)
 }
 
+func TestServerAddPurchase_Error(t *testing.T) {
+	mockServer := new(MockCartPurchaseServiceServer)
+
+	req := &cartPurchaseProto.AddPurchaseRequest{
+		CartId:        uuid.New().String(),
+		Address:       "123 Test St",
+		PaymentMethod: cartPurchaseProto.PaymentMethod(cartPurchaseProto.PaymentMethod_value["CREDIT_CARD"]),
+		DeliveryMethod: cartPurchaseProto.DeliveryMethod(cartPurchaseProto.DeliveryMethod_value["STANDARD"]),
+		UserId:       uuid.New().String(),
+	}
+
+	mockServer.On("AddPurchase", mock.Anything, req).Return(&cartPurchaseProto.AddPurchaseResponse{}, assert.AnError)
+
+	result, err := mockServer.AddPurchase(context.Background(), req)
+
+	assert.Error(t, err)
+	assert.NotNil(t, result)
+	mockServer.AssertExpectations(t)
+}
+
+func TestServerGetPurchasesByUserID_Error(t *testing.T) {
+	mockServer := new(MockCartPurchaseServiceServer)
+
+	userID := uuid.New()
+	req := &cartPurchaseProto.GetPurchasesByUserIDRequest{
+		UserId: userID.String(),
+	}
+
+	mockServer.On("GetPurchasesByUserID", mock.Anything, req).Return(&cartPurchaseProto.GetPurchasesByUserIDResponse{}, assert.AnError)
+
+	result, err := mockServer.GetPurchasesByUserID(context.Background(), req)
+
+	assert.Error(t, err)
+	assert.NotNil(t, result)
+	mockServer.AssertExpectations(t)
+}
+
+func TestServerGetCartByID_Error(t *testing.T) {
+	mockServer := new(MockCartPurchaseServiceServer)
+
+	cartID := uuid.New()
+	req := &cartPurchaseProto.GetCartByIDRequest{
+		CartId: cartID.String(),
+	}
+
+	mockServer.On("GetCartByID", mock.Anything, req).Return(&cartPurchaseProto.GetCartByIDResponse{}, assert.AnError)
+
+	result, err := mockServer.GetCartByID(context.Background(), req)
+
+	assert.Error(t, err)
+	assert.NotNil(t, result)
+	mockServer.AssertExpectations(t)
+}
+
 func TestServerCheckCartExists(t *testing.T) {
 	mockServer := new(MockCartPurchaseServiceServer)
 
