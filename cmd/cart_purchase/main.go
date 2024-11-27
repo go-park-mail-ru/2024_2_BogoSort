@@ -18,6 +18,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/health"
 	healthProto "google.golang.org/grpc/health/grpc_health_v1"
 )
@@ -58,11 +59,22 @@ func main() {
 		zap.L().Fatal("Ошибка при инициализации метрик", zap.Error(err))
 	}
 
-	server := grpc.NewServer(
-		grpc.UnaryInterceptor(interceptors.CreateMetricsInterceptor(*metrics).ServeMetricsInterceptor),
+	metricsInterceptor := interceptors.NewMetricsInterceptor(*metrics)
+	grpcConn, err := grpc.NewClient(
+		config.GetAuthAddress(),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithUnaryInterceptor(metricsInterceptor.ServeMetricsClientInterceptor),
 	)
-	cartUC := service.NewCartService(cartRepo, advertRepo)
-	purchaseUC := service.NewPurchaseService(purchaseRepo, advertRepo, cartRepo)
+	if err != nil {
+		zap.L().Fatal("Error occurred while starting grpc connection on auth service", zap.Error(err))
+
+		return
+	}
+	defer grpcConn.Close()
+
+	server := grpc.NewServer()
+	cartUC := service.NewCartService(cartRepo, advertRepo, zap.L())
+	purchaseUC := service.NewPurchaseService(purchaseRepo, advertRepo, cartRepo, zap.L())
 	cartPurchaseServer := cart_purchase.NewGrpcServer(cartUC, purchaseUC)
 
 	healthServer := health.NewServer()
