@@ -277,8 +277,6 @@ definitions:
     type: object
 info:
   contact: {}
-  title: Emporium API
-  version: 1.0.0
 paths:
   /api/v1/adverts:
     get:
@@ -971,7 +969,7 @@ paths:
         "200":
           description: Static file content
           schema:
-            type: string
+            type: binary
         "400":
           description: Invalid file ID
           schema:

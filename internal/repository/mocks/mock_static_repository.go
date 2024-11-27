@@ -49,6 +49,20 @@ func (mr *MockStaticRepositoryMockRecorder) Get(staticID interface{}) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockStaticRepository)(nil).Get), staticID)
 }
 
+// GetMaxSize mocks base method.
+func (m *MockStaticRepository) GetMaxSize() int {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetMaxSize")
+	ret0, _ := ret[0].(int)
+	return ret0
+}
+
+// GetMaxSize indicates an expected call of GetMaxSize.
+func (mr *MockStaticRepositoryMockRecorder) GetMaxSize() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMaxSize", reflect.TypeOf((*MockStaticRepository)(nil).GetMaxSize))
+}
+
 // Upload mocks base method.
 func (m *MockStaticRepository) Upload(path, filename string, data []byte) (uuid.UUID, error) {
 	m.ctrl.T.Helper()

@@ -8,15 +8,13 @@ import (
 	"github.com/golang/mock/gomock"
 	uuid "github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap"
 )
 
 func setupCategoryTestService(t *testing.T) (*CategoryService, *gomock.Controller, *mocks.MockCategoryRepository) {
 	ctrl := gomock.NewController(t)
 	mockRepo := mocks.NewMockCategoryRepository(ctrl)
-	logger := zap.NewNop()
 
-	service := NewCategoryService(mockRepo, logger)
+	service := NewCategoryService(mockRepo)
 
 	return service, ctrl, mockRepo
 }

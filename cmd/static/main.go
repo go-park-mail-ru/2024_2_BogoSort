@@ -14,6 +14,10 @@ import (
 	staticProto "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/static/proto"
 	"google.golang.org/grpc"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/static"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/metrics"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/interceptors"
+	"net/http"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func main() {
@@ -37,11 +41,26 @@ func main() {
 		zap.L().Error("Failed to create static repository", zap.Error(err))
 	}
 
-	staticUseCase := service.NewStaticService(staticRepo, zap.L())
+	staticUseCase := service.NewStaticService(staticRepo)
+
+	metrics, err := metrics.NewGRPCMetrics("static")
+	if err != nil {
+		zap.L().Fatal("Ошибка при инициализации метрик", zap.Error(err))
+	}
+
 	staticService := static.NewStaticGrpc(staticUseCase)
-	server := grpc.NewServer()
+	server := grpc.NewServer(
+		grpc.UnaryInterceptor(interceptors.NewMetricsInterceptor(*metrics).NewMetricsInterceptor),
+	)
 	staticProto.RegisterStaticServiceServer(server, staticService)
 	addr := cfg.StaticHost + ":" + strconv.Itoa(cfg.StaticPort)
+
+	http.Handle("/api/v1/metrics", promhttp.Handler())
+    go func() {
+        if err := http.ListenAndServe(":7053", nil); err != nil {
+            zap.L().Fatal("Failed to start metrics HTTP server", zap.Error(err))
+        }
+    }()
 
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {

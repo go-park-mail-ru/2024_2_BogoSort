@@ -38,7 +38,7 @@ type AdvertRepository interface {
 	Add(advert *entity.Advert) (*entity.Advert, error)
 
 	// AddToSaved добавляет объявление в сохраненные
-	AddToSaved(userId, advertId uuid.UUID) error
+	AddToSaved(advertId, userId uuid.UUID) error
 
 	// DeleteFromSaved удаляет объявление из сохраненных
 	DeleteFromSaved(userId, advertId uuid.UUID) error

@@ -1,6 +1,7 @@
 package http
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/middleware"
@@ -13,14 +14,12 @@ import (
 type AuthEndpoint struct {
 	authUC         usecase.Auth
 	sessionManager *utils.SessionManager
-	logger         *zap.Logger
 }
 
-func NewAuthEndpoint(authUC usecase.Auth, sessionManager *utils.SessionManager, logger *zap.Logger) *AuthEndpoint {
+func NewAuthEndpoint(authUC usecase.Auth, sessionManager *utils.SessionManager) *AuthEndpoint {
 	return &AuthEndpoint{
 		authUC:         authUC,
 		sessionManager: sessionManager,
-		logger:         logger,
 	}
 }
 
@@ -33,7 +32,8 @@ func (a *AuthEndpoint) Configure(router *mux.Router) {
 }
 
 func (a *AuthEndpoint) handleError(w http.ResponseWriter, err error, method string, data map[string]string) {
-	a.logger.Error(method+" error", zap.Error(err), zap.Any("data", data))
+	logger := middleware.GetLogger(context.Background())
+	logger.Error(method+" error", zap.Error(err), zap.Any("data", data))
 	utils.SendErrorResponse(w, http.StatusInternalServerError, err.Error())
 }
 
@@ -49,6 +49,8 @@ func (a *AuthEndpoint) handleError(w http.ResponseWriter, err error, method stri
 // @Failure 500 {object} utils.ErrResponse "Internal server error"
 // @Router /api/v1/logout [post]
 func (a *AuthEndpoint) Logout(w http.ResponseWriter, r *http.Request) {
+	logger := middleware.GetLogger(r.Context())
+	logger.Info("logout request")
 	userID, err := a.sessionManager.GetUserID(r)
 	if err != nil {
 		a.handleError(w, err, "Logout", nil)
@@ -65,7 +67,7 @@ func (a *AuthEndpoint) Logout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	a.logger.Info("user logged out", zap.String("userID", userID.String()))
+	logger.Info("user logged out", zap.String("userID", userID.String()))
 	w.Header().Set("X-authenticated", "false")
 	utils.SendJSONResponse(w, http.StatusOK, "You have successfully logged out")
 }

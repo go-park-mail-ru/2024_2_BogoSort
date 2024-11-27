@@ -7,20 +7,17 @@ import (
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
 	"github.com/google/uuid"
-	"go.uber.org/zap"
 )
 
 type CartService struct {
 	cartRepo   repository.Cart
 	advertRepo repository.AdvertRepository
-	logger     *zap.Logger
 }
 
-func NewCartService(cartRepo repository.Cart, advertRepo repository.AdvertRepository, logger *zap.Logger) *CartService {
+func NewCartService(cartRepo repository.Cart, advertRepo repository.AdvertRepository) *CartService {
 	return &CartService{
 		cartRepo:   cartRepo,
 		advertRepo: advertRepo,
-		logger:     logger,
 	}
 }
 
@@ -35,7 +32,7 @@ func convertAdvertToResponse(advert entity.Advert) dto.PreviewAdvertCard {
 			Location:    advert.Location,
 			HasDelivery: advert.HasDelivery,
 		},
-		IsSaved: advert.IsSaved,
+		IsSaved:  advert.IsSaved,
 		IsViewed: advert.IsViewed,
 	}
 }
@@ -88,19 +85,27 @@ func (c *CartService) GetById(cartID uuid.UUID) (dto.Cart, error) {
 
 func (c *CartService) GetByUserId(userID uuid.UUID) (dto.Cart, error) {
 	cart, err := c.cartRepo.GetByUserId(userID)
-	if err != nil {
-		return dto.Cart{}, entity.PSQLWrap(errors.New("error getting cart by user id"), err)
-	}
-	return c.GetById(cart.ID)
-}
-
-func (c *CartService) CheckExists(userID uuid.UUID) (bool, error) {
-	_, err := c.cartRepo.GetByUserId(userID)
 	switch {
 	case errors.Is(err, repository.ErrCartNotFound):
-		return false, nil
+		return dto.Cart{}, entity.UsecaseWrap(errors.New("cart not found"), err)
 	case err != nil:
-		return false, entity.PSQLWrap(errors.New("error checking cart existence"), err)
+		return dto.Cart{}, entity.PSQLWrap(errors.New("error getting cart by user id"), err)
 	}
-	return true, nil
+	return dto.Cart{
+		ID:      cart.ID,
+		UserID:  cart.UserID,
+		Status:  cart.Status,
+		Adverts: []dto.PreviewAdvertCard{},
+	}, nil
+}
+
+func (c *CartService) CheckExists(userID uuid.UUID) (uuid.UUID, error) {
+	cart, err := c.cartRepo.GetByUserId(userID)
+	switch {
+	case errors.Is(err, repository.ErrCartNotFound):
+		return uuid.Nil, nil
+	case err != nil:
+		return uuid.Nil, entity.PSQLWrap(errors.New("error checking cart existence"), err)
+	}
+	return cart.ID, nil
 }

@@ -12,20 +12,20 @@ session:
 auth_port: 50051
 auth_host: "auth"
 
-cart_purchase_host: "cart_purchase"
+cart_purchase_host: "localhost"
 cart_purchase_port: 50052
 
-static_host: "static"
+static_host: "localhost"
 static_port: 50053
 
-pg_ip: "postgres"
+pg_ip: "localhost"
 pg_port: 5432
 pg_user: "postgres"
 pg_password: "postgres"
 pg_db: "emporiumdb"
 pg_timeout: 5s
 
-rd_addr: "redis:6379"
+rd_addr: "localhost:6379"
 rd_password: ""
 rd_db: 0
 
@@ -33,7 +33,7 @@ csrf_secret: "2b7e151628aed2a6abf7158809cf4f3c"
 
 static:
   path: "static_files/"
-  max_size: 10485760
+  max_size: 31457280
   timeout: 5s
   port: 8081
 

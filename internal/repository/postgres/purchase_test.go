@@ -11,7 +11,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/pashagolub/pgxmock/v4"
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap"
 )
 
 func setupPurchaseMockDB(t *testing.T) (pgxmock.PgxPoolIface, *mocks.PgxMockAdapter) {
@@ -27,7 +26,6 @@ func setupPurchaseTest(t *testing.T) (pgxmock.PgxPoolIface, *mocks.PgxMockAdapte
 
 	repo := &PurchaseDB{
 		db:      adapter,
-		logger:  zap.L(),
 		ctx:     ctx,
 		timeout: 10 * time.Second,
 	}

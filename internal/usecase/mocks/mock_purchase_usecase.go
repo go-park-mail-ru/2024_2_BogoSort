@@ -36,18 +36,18 @@ func (m *MockPurchase) EXPECT() *MockPurchaseMockRecorder {
 }
 
 // Add mocks base method.
-func (m *MockPurchase) Add(purchaseRequest dto.PurchaseRequest) (*dto.PurchaseResponse, error) {
+func (m *MockPurchase) Add(purchaseRequest dto.PurchaseRequest, userId uuid.UUID) (*dto.PurchaseResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Add", purchaseRequest)
+	ret := m.ctrl.Call(m, "Add", purchaseRequest, userId)
 	ret0, _ := ret[0].(*dto.PurchaseResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Add indicates an expected call of Add.
-func (mr *MockPurchaseMockRecorder) Add(purchaseRequest interface{}) *gomock.Call {
+func (mr *MockPurchaseMockRecorder) Add(purchaseRequest, userId interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Add", reflect.TypeOf((*MockPurchase)(nil).Add), purchaseRequest)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Add", reflect.TypeOf((*MockPurchase)(nil).Add), purchaseRequest, userId)
 }
 
 // GetByUserId mocks base method.

@@ -2,8 +2,8 @@ package service
 
 import (
 	"bytes"
+	"context"
 	"fmt"
-	"github.com/chai2010/webp"
 	"image"
 	"image/draw"
 	_ "image/png"
@@ -12,6 +12,9 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/chai2010/webp"
+
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/middleware"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase"
@@ -21,21 +24,20 @@ import (
 )
 
 type StaticService struct {
-	logger     *zap.Logger
 	staticRepo repository.StaticRepository
 }
 
-func NewStaticService(staticRepo repository.StaticRepository, logger *zap.Logger) *StaticService {
+func NewStaticService(staticRepo repository.StaticRepository) *StaticService {
 	return &StaticService{
-		logger:     logger,
 		staticRepo: staticRepo,
 	}
 }
 
 func (s *StaticService) GetAvatar(staticID uuid.UUID) (string, error) {
+	logger := middleware.GetLogger(context.Background())
+	logger.Info("GetAvatar request", zap.String("staticID", staticID.String()))
 	path, err := s.staticRepo.Get(staticID)
 	if err != nil {
-		s.logger.Error("failed to get static", zap.Error(err), zap.String("static_id", staticID.String()))
 		return "", err
 	}
 	return path, nil
@@ -60,7 +62,7 @@ func (s *StaticService) UploadStatic(reader io.ReadSeeker) (uuid.UUID, error) {
 		return uuid.Nil, entity.UsecaseWrap(err, errors.New("error reading file header"))
 	}
 	contentType := http.DetectContentType(headerBytes)
-	if contentType != "image/jpeg" && contentType != "image/png" && contentType != "image/gif" {
+	if contentType != "image/jpeg" && contentType != "image/png" && contentType != "image/gif" && contentType != "image/webp" {
 		return uuid.Nil, usecase.ErrStaticNotImage
 	}
 	_, err = reader.Seek(0, io.SeekStart)
@@ -106,10 +108,16 @@ func (s *StaticService) UploadStatic(reader io.ReadSeeker) (uuid.UUID, error) {
 		return uuid.Nil, errors.Wrap(err, "error converting image to WEBP format")
 	}
 
-	id, err := s.staticRepo.Upload("images", uuid.New().String()+".webp", out.Bytes())
+	newUUID := uuid.New()
+	id, err := s.staticRepo.Upload("images", newUUID.String()+".webp", out.Bytes())
 	if err != nil {
 		return uuid.Nil, err
 	}
+
+	if id == uuid.Nil {
+		return uuid.Nil, errors.New("failed to generate UUID for static file")
+	}
+
 	return id, nil
 }
 

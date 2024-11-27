@@ -15,5 +15,5 @@ type Cart interface {
 	// DeleteAdvert удаляет товар из корзины по ID корзины и ID товара
 	DeleteAdvert(cartID uuid.UUID, AdvertID uuid.UUID) error
 	// CheckExists проверяет, существует ли корзина для пользователя
-	CheckExists(userID uuid.UUID) (bool, error)
+	CheckExists(userID uuid.UUID) (uuid.UUID, error)
 }

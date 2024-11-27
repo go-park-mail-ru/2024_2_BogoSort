@@ -50,10 +50,10 @@ func (mr *MockCartMockRecorder) AddAdvert(userID, AdvertID interface{}) *gomock.
 }
 
 // CheckExists mocks base method.
-func (m *MockCart) CheckExists(userID uuid.UUID) (bool, error) {
+func (m *MockCart) CheckExists(userID uuid.UUID) (uuid.UUID, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CheckExists", userID)
-	ret0, _ := ret[0].(bool)
+	ret0, _ := ret[0].(uuid.UUID)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

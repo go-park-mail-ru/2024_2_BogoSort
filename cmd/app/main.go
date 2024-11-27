@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"net/http"
+	_ "net/url"
 	"os"
 	"os/signal"
 	"syscall"
@@ -10,16 +11,20 @@ import (
 	"github.com/go-park-mail-ru/2024_2_BogoSort/config"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/auth"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/cart_purchase"
+	static "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/static"
 	http3 "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/middleware"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/utils"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/metrics"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository/postgres"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository/redis"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase/service"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/pkg/connector"
-	static "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/static"
 	"github.com/gorilla/mux"
+	_ "github.com/grafana/loki-client-go/loki"
+	_ "github.com/grafana/loki-client-go/pkg/urlutil"
 	"github.com/microcosm-cc/bluemonday"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/cors"
 	"go.uber.org/zap"
 
@@ -27,18 +32,39 @@ import (
 )
 
 func main() {
-	zap.ReplaceGlobals(zap.Must(zap.NewProduction()))
-	defer zap.L().Sync()
+	logger, err := zap.NewProduction()
+	if err != nil {
+		panic(err)
+	}
+	defer logger.Sync()
+
+	zap.ReplaceGlobals(logger)
+
+	// lokiURL, err := url.Parse("http://loki:3100/loki/api/v1/push")
+	// if err != nil {
+	// 	logger.Fatal("failed to parse loki url", zap.Error(err))
+	// }
+	// lokiConfig := loki.Config{
+	// 	URL: urlutil.URLValue{URL: lokiURL},
+	// }
+	// lokiClient, err := loki.New(lokiConfig)
+	// if err != nil {
+	// 	logger.Fatal("failed to create loki client", zap.Error(err))
+	// }
 
 	cfg, err := config.Init()
 	if err != nil {
-		zap.L().Error("failed to init config", zap.Error(err))
+		logger.Error("failed to init config", zap.Error(err))
 	}
 
 	router, err := Init(cfg)
 	if err != nil {
-		zap.L().Error("failed to initialize router", zap.Error(err))
+		logger.Error("failed to initialize router", zap.Error(err))
 	}
+
+	router.Use(middleware.RequestIDMiddleware)
+	router.Use(middleware.LoggerMiddleware)
+	// router.Use(middleware.NewLokiMiddleware(lokiClient, logger).Handler)
 
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins: []string{
@@ -51,7 +77,7 @@ func main() {
 		AllowCredentials: true,
 	}).Handler(router)
 
-	zap.L().Info("Server started on " + config.GetServerAddress())
+	logger.Info("Server started on " + config.GetServerAddress())
 
 	server := &http.Server{
 		Addr:         config.GetServerAddress(),
@@ -65,21 +91,21 @@ func main() {
 
 	go func() {
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			zap.L().Error("server failed", zap.Error(err))
+			logger.Error("server failed", zap.Error(err))
 		}
 	}()
 
 	<-stop
-	zap.L().Info("shutting down server...")
+	logger.Info("shutting down server...")
 
 	ctx, cancel := context.WithTimeout(context.Background(), config.GetShutdownTimeout())
 	defer cancel()
 
 	if err := server.Shutdown(ctx); err != nil {
-		zap.L().Error("server forced to shutdown", zap.Error(err))
+		logger.Error("server forced to shutdown", zap.Error(err))
 	}
 
-	zap.L().Info("server exiting")
+	logger.Info("server exiting")
 }
 
 func Init(cfg config.Config) (*mux.Router, error) {
@@ -87,6 +113,13 @@ func Init(cfg config.Config) (*mux.Router, error) {
 
 	router := mux.NewRouter()
 	router.Use(recoveryMiddleware)
+
+	metric, err := metrics.NewHTTPMetrics("app")
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create http metrics")
+	}
+	metricsMiddleware := middleware.CreateMetricsMiddleware(metric)
+	router.Use(metricsMiddleware)
 
 	policy := bluemonday.UGCPolicy()
 
@@ -105,7 +138,7 @@ func Init(cfg config.Config) (*mux.Router, error) {
 
 	ctx := context.Background()
 
-	advertsRepo, err := postgres.NewAdvertRepository(dbPool, zap.L(), ctx, cfg.PGTimeout)
+	advertsRepo, err := postgres.NewAdvertRepository(dbPool, ctx, cfg.PGTimeout)
 	if err != nil {
 		return nil, handleRepoError(err, "unable to create advert repository")
 	}
@@ -117,11 +150,11 @@ func Init(cfg config.Config) (*mux.Router, error) {
 	if err != nil {
 		return nil, handleRepoError(err, "unable to create session repository")
 	}
-	userRepo, err := postgres.NewUserRepository(dbPool, ctx, zap.L(), cfg.PGTimeout)
+	userRepo, err := postgres.NewUserRepository(dbPool, ctx, cfg.PGTimeout)
 	if err != nil {
 		return nil, handleRepoError(err, "unable to create user repository")
 	}
-	sellerRepo, err := postgres.NewSellerRepository(dbPool, ctx, zap.L())
+	sellerRepo, err := postgres.NewSellerRepository(dbPool, ctx)
 	if err != nil {
 		return nil, handleRepoError(err, "unable to create seller repository")
 	}
@@ -133,6 +166,7 @@ func Init(cfg config.Config) (*mux.Router, error) {
 	if err != nil {
 		return nil, handleRepoError(err, "unable to create grpc client")
 	}
+	
 	cartPurchaseClient, err := cart_purchase.NewCartPurchaseClient(config.GetCartPurchaseAddress())
 	if err != nil {
 		return nil, handleRepoError(err, "unable to create cart purchase client")
@@ -142,21 +176,21 @@ func Init(cfg config.Config) (*mux.Router, error) {
 		return nil, handleRepoError(err, "unable to create static client")
 	}
 
-	advertsUseCase := service.NewAdvertService(advertsRepo, sellerRepo, userRepo, logger)
-	categoryUseCase := service.NewCategoryService(categoryRepo, logger)
-	userUC := service.NewUserService(userRepo, sellerRepo, logger)
-	sessionUC := service.NewAuthService(sessionRepo, logger)
+	advertsUseCase := service.NewAdvertService(advertsRepo, sellerRepo, userRepo)
+	categoryUseCase := service.NewCategoryService(categoryRepo)
+	userUC := service.NewUserService(userRepo, sellerRepo)
+	sessionUC := service.NewAuthService(sessionRepo)
 	sessionManager := utils.NewSessionManager(authGrpcClient, int(cfg.Session.ExpirationTime.Seconds()), cfg.Session.SecureCookie, logger)
 	router.Use(middleware.NewAuthMiddleware(sessionManager).AuthMiddleware)
 
-	advertsHandler := http3.NewAdvertEndpoint(advertsUseCase, *staticClient, sessionManager, logger, policy)
-	authHandler := http3.NewAuthEndpoint(sessionUC, sessionManager, logger)
-	userHandler := http3.NewUserEndpoint(userUC, sessionUC, sessionManager, *staticClient, logger, policy)
-	sellerHandler := http3.NewSellerEndpoint(sellerRepo, logger)
-	purchaseHandler := http3.NewPurchaseEndpoint(cartPurchaseClient, logger)
-	cartHandler := http3.NewCartEndpoint(cartPurchaseClient, logger)
-	categoryHandler := http3.NewCategoryEndpoint(categoryUseCase, logger)
-	staticHandler := http3.NewStaticEndpoint(*staticClient, logger)
+	advertsHandler := http3.NewAdvertEndpoint(advertsUseCase, *staticClient, sessionManager, policy)
+	authHandler := http3.NewAuthEndpoint(sessionUC, sessionManager)
+	userHandler := http3.NewUserEndpoint(userUC, sessionUC, sessionManager, *staticClient, policy)
+	sellerHandler := http3.NewSellerEndpoint(sellerRepo)
+	purchaseHandler := http3.NewPurchaseEndpoint(cartPurchaseClient)
+	cartHandler := http3.NewCartEndpoint(cartPurchaseClient)
+	categoryHandler := http3.NewCategoryEndpoint(categoryUseCase)
+	staticHandler := http3.NewStaticEndpoint(*staticClient)
 
 	csrfEndpoints := http3.NewCSRFEndpoint(csrfToken, sessionManager)
 	csrfEndpoints.Configure(router)
@@ -174,6 +208,7 @@ func Init(cfg config.Config) (*mux.Router, error) {
 	purchaseHandler.ConfigureRoutes(authRouter)
 	staticHandler.ConfigureRoutes(router)
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+	router.PathPrefix("/api/v1/metrics").Handler(promhttp.Handler())
 
 	return router, nil
 }

@@ -5,6 +5,7 @@
 package mocks
 
 import (
+	io "io"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
@@ -64,17 +65,32 @@ func (mr *MockStaticUseCaseMockRecorder) GetStatic(id interface{}) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStatic", reflect.TypeOf((*MockStaticUseCase)(nil).GetStatic), id)
 }
 
-// UploadFile mocks base method.
-func (m *MockStaticUseCase) UploadFile(data []byte) (uuid.UUID, error) {
+// GetStaticFile mocks base method.
+func (m *MockStaticUseCase) GetStaticFile(uri string) (io.ReadSeeker, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UploadFile", data)
+	ret := m.ctrl.Call(m, "GetStaticFile", uri)
+	ret0, _ := ret[0].(io.ReadSeeker)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetStaticFile indicates an expected call of GetStaticFile.
+func (mr *MockStaticUseCaseMockRecorder) GetStaticFile(uri interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStaticFile", reflect.TypeOf((*MockStaticUseCase)(nil).GetStaticFile), uri)
+}
+
+// UploadStatic mocks base method.
+func (m *MockStaticUseCase) UploadStatic(data io.ReadSeeker) (uuid.UUID, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UploadStatic", data)
 	ret0, _ := ret[0].(uuid.UUID)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// UploadFile indicates an expected call of UploadFile.
-func (mr *MockStaticUseCaseMockRecorder) UploadFile(data interface{}) *gomock.Call {
+// UploadStatic indicates an expected call of UploadStatic.
+func (mr *MockStaticUseCaseMockRecorder) UploadStatic(data interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UploadFile", reflect.TypeOf((*MockStaticUseCase)(nil).UploadFile), data)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UploadStatic", reflect.TypeOf((*MockStaticUseCase)(nil).UploadStatic), data)
 }

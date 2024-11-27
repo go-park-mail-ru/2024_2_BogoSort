@@ -6,6 +6,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/middleware"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
@@ -24,13 +25,11 @@ type AdvertService struct {
 	advertRepo repository.AdvertRepository
 	sellerRepo repository.Seller
 	userRepo   repository.User
-	logger     *zap.Logger
 }
 
 func NewAdvertService(advertRepo repository.AdvertRepository,
 	sellerRepo repository.Seller,
-	userRepo repository.User,
-	logger *zap.Logger) *AdvertService {
+	userRepo repository.User) *AdvertService {
 	return &AdvertService{
 		advertRepo: advertRepo,
 		sellerRepo: sellerRepo,
@@ -144,6 +143,7 @@ func (s *AdvertService) GetById(advertId, userId uuid.UUID) (*dto.AdvertCard, er
 			ID:          advert.ID,
 			SellerId:    advert.SellerId,
 			CategoryId:  advert.CategoryId,
+			Description: advert.Description,
 			Title:       advert.Title,
 			Price:       advert.Price,
 			ImageId:     advert.ImageId,
@@ -279,7 +279,8 @@ func (s *AdvertService) UpdateStatus(advertId, userId uuid.UUID, status dto.Adve
 	ctx := context.Background()
 	tx, err := s.advertRepo.BeginTransaction()
 	if err != nil {
-		s.logger.Error("failed to begin transaction", zap.Error(err))
+		logger := middleware.GetLogger(ctx)
+		logger.Error("failed to begin transaction", zap.Error(err))
 		return entity.UsecaseWrap(errors.New("failed to begin transaction"), err)
 	}
 	defer func() {

@@ -7,16 +7,14 @@ import (
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase"
 	"github.com/google/uuid"
-	"go.uber.org/zap"
 )
 
 type AuthService struct {
 	sessionRepo repository.Session
-	logger      *zap.Logger
 }
 
-func NewAuthService(authRepo repository.Session, logger *zap.Logger) *AuthService {
-	return &AuthService{sessionRepo: authRepo, logger: logger}
+func NewAuthService(authRepo repository.Session) *AuthService {
+	return &AuthService{sessionRepo: authRepo}
 }
 
 func (a *AuthService) Logout(session string) error {
@@ -27,7 +25,7 @@ func (a *AuthService) Logout(session string) error {
 	case err != nil:
 		return entity.UsecaseWrap(errors.New("error deleting session"), err)
 	}
-	a.logger.Info("session deleted", zap.String("sessionID", session))
+
 	return nil
 }
 

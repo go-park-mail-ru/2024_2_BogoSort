@@ -66,6 +66,21 @@ func (mr *MockUserMockRecorder) BeginTransaction() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BeginTransaction", reflect.TypeOf((*MockUser)(nil).BeginTransaction))
 }
 
+// CheckIfExists mocks base method.
+func (m *MockUser) CheckIfExists(userId uuid.UUID) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CheckIfExists", userId)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CheckIfExists indicates an expected call of CheckIfExists.
+func (mr *MockUserMockRecorder) CheckIfExists(userId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckIfExists", reflect.TypeOf((*MockUser)(nil).CheckIfExists), userId)
+}
+
 // Delete mocks base method.
 func (m *MockUser) Delete(userID uuid.UUID) error {
 	m.ctrl.T.Helper()

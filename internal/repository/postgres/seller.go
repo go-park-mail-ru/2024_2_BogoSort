@@ -6,6 +6,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/middleware"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
 	"github.com/google/uuid"
@@ -35,9 +36,8 @@ const (
 )
 
 type SellerDB struct {
-	DB     DBExecutor
-	ctx    context.Context
-	logger *zap.Logger
+	DB  DBExecutor
+	ctx context.Context
 }
 
 type DBSeller struct {
@@ -48,14 +48,13 @@ type DBSeller struct {
 	UpdatedAt   time.Time
 }
 
-func NewSellerRepository(db *pgxpool.Pool, ctx context.Context, logger *zap.Logger) (repository.Seller, error) {
+func NewSellerRepository(db *pgxpool.Pool, ctx context.Context) (repository.Seller, error) {
 	if err := db.Ping(ctx); err != nil {
 		return nil, err
 	}
 	return &SellerDB{
-		DB:     db,
-		ctx:    ctx,
-		logger: logger,
+		DB:  db,
+		ctx: ctx,
 	}, nil
 }
 
@@ -69,6 +68,9 @@ func (dbSeller *DBSeller) GetEntity() entity.Seller {
 
 func (s *SellerDB) Add(tx pgx.Tx, userID uuid.UUID) (uuid.UUID, error) {
 	var dbSeller DBSeller
+	logger := middleware.GetLogger(s.ctx)
+	logger.Info("adding seller to db", zap.String("user_id", userID.String()))
+
 	err := tx.QueryRow(s.ctx, queryAddSeller, userID).Scan(
 		&dbSeller.ID,
 		&dbSeller.UserID,
@@ -79,10 +81,10 @@ func (s *SellerDB) Add(tx pgx.Tx, userID uuid.UUID) (uuid.UUID, error) {
 
 	switch {
 	case errors.Is(err, pgx.ErrNoRows):
-		s.logger.Error("seller already exists", zap.String("user_id", userID.String()))
+		logger.Error("seller already exists", zap.String("user_id", userID.String()))
 		return uuid.Nil, repository.ErrSellerAlreadyExists
 	case err != nil:
-		s.logger.Error("error adding seller", zap.String("user_id", userID.String()), zap.Error(err))
+		logger.Error("error adding seller", zap.String("user_id", userID.String()), zap.Error(err))
 		return uuid.Nil, entity.PSQLWrap(errors.New("error adding seller"), err)
 	}
 
@@ -91,6 +93,9 @@ func (s *SellerDB) Add(tx pgx.Tx, userID uuid.UUID) (uuid.UUID, error) {
 
 func (s *SellerDB) GetById(sellerID uuid.UUID) (*entity.Seller, error) {
 	var dbSeller DBSeller
+	logger := middleware.GetLogger(s.ctx)
+	logger.Info("getting seller by id from db", zap.String("seller_id", sellerID.String()))
+
 	err := s.DB.QueryRow(s.ctx, queryGetSellerByID, sellerID).Scan(
 		&dbSeller.ID,
 		&dbSeller.UserID,
@@ -101,20 +106,23 @@ func (s *SellerDB) GetById(sellerID uuid.UUID) (*entity.Seller, error) {
 
 	switch {
 	case errors.Is(err, pgx.ErrNoRows):
-		s.logger.Error("seller not found", zap.String("seller_id", sellerID.String()))
+		logger.Error("seller not found", zap.String("seller_id", sellerID.String()))
 		return nil, repository.ErrSellerNotFound
 	case err != nil:
-		s.logger.Error("error getting seller by ID", zap.String("seller_id", sellerID.String()), zap.Error(err))
+		logger.Error("error getting seller by ID", zap.String("seller_id", sellerID.String()), zap.Error(err))
 		return nil, entity.PSQLWrap(errors.New("error getting seller by ID"), err)
 	}
 
-	s.logger.Info("seller found", zap.String("seller_id", sellerID.String()))
+	logger.Info("seller found", zap.String("seller_id", sellerID.String()))
 	seller := dbSeller.GetEntity()
 	return &seller, nil
 }
 
 func (s *SellerDB) GetByUserId(userID uuid.UUID) (*entity.Seller, error) {
 	var dbSeller DBSeller
+	logger := middleware.GetLogger(s.ctx)
+	logger.Info("getting seller by user id from db", zap.String("user_id", userID.String()))
+
 	err := s.DB.QueryRow(s.ctx, queryGetSellerByUserID, userID).Scan(
 		&dbSeller.ID,
 		&dbSeller.UserID,
@@ -125,10 +133,10 @@ func (s *SellerDB) GetByUserId(userID uuid.UUID) (*entity.Seller, error) {
 
 	switch {
 	case errors.Is(err, pgx.ErrNoRows):
-		s.logger.Error("seller not found by user_id", zap.String("user_id", userID.String()))
+		logger.Error("seller not found by user_id", zap.String("user_id", userID.String()))
 		return nil, repository.ErrSellerNotFound
 	case err != nil:
-		s.logger.Error("error getting seller by user_id", zap.String("user_id", userID.String()), zap.Error(err))
+		logger.Error("error getting seller by user_id", zap.String("user_id", userID.String()), zap.Error(err))
 		return nil, entity.PSQLWrap(errors.New("error getting seller by user_id"), err)
 	}
 
