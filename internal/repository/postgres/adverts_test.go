@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"regexp"
 	"testing"
 	"time"
 
@@ -125,6 +126,131 @@ func TestUpdateAdvertStatus(t *testing.T) {
 	assert.NoError(t, err)
 
 	err = mockPool.ExpectationsWereMet()
+	assert.NoError(t, err)
+}
+
+func TestGet(t *testing.T) {
+	mockPool, _, repo, teardown := setupAdvertTest(t)
+	defer teardown()
+
+	userID := uuid.New()
+	limit, offset := 10, 0
+
+	rows := pgxmock.NewRows([]string{"id", "title", "description", "price", "location", "has_delivery", "category_id", "seller_id", "image_id", "status", "created_at", "updated_at"}).
+		AddRow(uuid.New(), "Advert 1", "Description 1", uint(100), "Location 1", true, uuid.New(), uuid.New(), uuid.Nil, "active", time.Now(), time.Now())
+
+	mockPool.ExpectQuery(regexp.QuoteMeta(selectAdvertsQuery)).
+		WithArgs(limit, offset).
+		WillReturnRows(rows)
+
+	adverts, err := repo.Get(limit, offset, userID)
+	assert.NoError(t, err)
+	assert.Len(t, adverts, 1)
+}
+
+func TestGetByCategoryId(t *testing.T) {
+	mockPool, _, repo, teardown := setupAdvertTest(t)
+	defer teardown()
+
+	categoryID, userID := uuid.New(), uuid.New()
+
+	rows := pgxmock.NewRows([]string{"id", "title", "description", "price", "location", "has_delivery", "category_id", "seller_id", "image_id", "status", "created_at", "updated_at"}).
+		AddRow(uuid.New(), "Advert 1", "Description 1", uint(100), "Location 1", true, categoryID, uuid.New(), uuid.Nil, "active", time.Now(), time.Now())
+
+	mockPool.ExpectQuery(regexp.QuoteMeta(selectAdvertsByCategoryIdQuery)).
+		WithArgs(categoryID).
+		WillReturnRows(rows)
+
+	adverts, err := repo.GetByCategoryId(categoryID, userID)
+	assert.NoError(t, err)
+	assert.Len(t, adverts, 1)
+}
+
+func TestGetBySellerId(t *testing.T) {
+	mockPool, _, repo, teardown := setupAdvertTest(t)
+	defer teardown()
+
+	sellerID, userID := uuid.New(), uuid.New()
+
+	rows := pgxmock.NewRows([]string{"id", "title", "description", "price", "location", "has_delivery", "category_id", "seller_id", "image_id", "status", "created_at", "updated_at"}).
+		AddRow(uuid.New(), "Advert 1", "Description 1", uint(100), "Location 1", true, uuid.New(), sellerID, uuid.Nil, "active", time.Now(), time.Now())
+
+	mockPool.ExpectQuery(regexp.QuoteMeta(selectAdvertsBySellerIdQuery)).
+		WithArgs(sellerID).
+		WillReturnRows(rows)
+
+	adverts, err := repo.GetBySellerId(sellerID, userID)
+	assert.NoError(t, err)
+	assert.Len(t, adverts, 1)
+}
+
+func TestSearch(t *testing.T) {
+	mockPool, _, repo, teardown := setupAdvertTest(t)
+	defer teardown()
+
+	query := "test"
+	limit, offset := 10, 0
+	userID := uuid.New()
+
+	rows := pgxmock.NewRows([]string{"id", "title", "description", "price", "location", "has_delivery", "category_id", "seller_id", "image_id", "status", "created_at", "updated_at"}).
+		AddRow(uuid.New(), "Advert 1", "Description 1", uint(100), "Location 1", true, uuid.New(), uuid.New(), uuid.Nil, "active", time.Now(), time.Now())
+
+	mockPool.ExpectQuery(regexp.QuoteMeta(searchAdvertsQuery)).
+		WithArgs(query, limit, offset).
+		WillReturnRows(rows)
+
+	adverts, err := repo.Search(query, limit, offset, userID)
+	assert.NoError(t, err)
+	assert.Len(t, adverts, 1)
+}
+
+func TestGetByCartId(t *testing.T) {
+	mockPool, _, repo, teardown := setupAdvertTest(t)
+	defer teardown()
+
+	cartId, userId := uuid.New(), uuid.New()
+
+	rows := pgxmock.NewRows([]string{"id", "title", "description", "price", "location", "has_delivery", "category_id", "seller_id", "image_id", "status", "created_at", "updated_at"}).
+		AddRow(uuid.New(), "Advert 1", "Description 1", uint(100), "Location 1", true, uuid.New(), uuid.New(), uuid.Nil, "active", time.Now(), time.Now())
+
+	mockPool.ExpectQuery(regexp.QuoteMeta(selectAdvertsByCartIdQuery)).
+		WithArgs(cartId).
+		WillReturnRows(rows)
+
+	adverts, err := repo.GetByCartId(cartId, userId)
+	assert.NoError(t, err)
+	assert.Len(t, adverts, 1)
+}
+
+func TestGetSavedByUserId(t *testing.T) {
+	mockPool, _, repo, teardown := setupAdvertTest(t)
+	defer teardown()
+
+	userId := uuid.New()
+
+	rows := pgxmock.NewRows([]string{"id", "title", "description", "price", "location", "has_delivery", "category_id", "seller_id", "image_id", "status", "created_at", "updated_at"}).
+		AddRow(uuid.New(), "Advert 1", "Description 1", uint(100), "Location 1", true, uuid.New(), uuid.New(), uuid.Nil, "active", time.Now(), time.Now())
+
+	mockPool.ExpectQuery(regexp.QuoteMeta(selectSavedAdvertsByUserIdQuery)).
+		WithArgs(userId).
+		WillReturnRows(rows)
+
+	adverts, err := repo.GetSavedByUserId(userId)
+	assert.NoError(t, err)
+	assert.Len(t, adverts, 1)
+}
+
+func TestDeleteFromSaved(t *testing.T) {
+	mockPool, _, repo, teardown := setupAdvertTest(t)
+	defer teardown()
+
+	userId, advertId := uuid.New(), uuid.New()
+
+	mockPool.ExpectExec(regexp.QuoteMeta(deleteSavedAdvertQuery)).
+		WithArgs(pgxmock.AnyArg(), pgxmock.AnyArg()).
+		WillReturnResult(pgxmock.NewResult("DELETE", 1))
+
+	err := repo.DeleteFromSaved(userId, advertId)
 	assert.NoError(t, err)
 }
 
