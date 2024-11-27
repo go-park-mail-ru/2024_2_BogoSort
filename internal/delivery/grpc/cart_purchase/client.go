@@ -61,36 +61,28 @@ func (c *CartPurchaseClient) AddPurchase(ctx context.Context, req dto.PurchaseRe
 		Address:        req.Address,
 		PaymentMethod:  cartPurchaseProto.PaymentMethod(cartPurchaseProto.PaymentMethod_value[string(req.PaymentMethod)]),
 		DeliveryMethod: cartPurchaseProto.DeliveryMethod(cartPurchaseProto.DeliveryMethod_value[string(req.DeliveryMethod)]),
+		UserId:         req.UserID.String(),
 	}
 
 	resp, err := c.client.AddPurchase(ctx, protoReq)
 	if err != nil {
-		return nil, errors.Wrap(ErrPurchaseNotFound, "purchase not found")
+		return nil, errors.Wrap(ErrPurchaseNotFound, err.Error())
 	}
 
-	purchaseStatus, ok := cartPurchaseProto.PurchaseStatus_value[string(resp.Status)]
-	if !ok {
-		return nil, errors.Wrap(ErrInvalidPurchaseStatus, "invalid purchase status")
-	}
+	purchaseStatus:= ConvertPurchaseStatusToDB(resp.Status)
+	paymentMethod := ConvertPaymentMethodToDB(resp.PaymentMethod)
+	deliveryMethod := ConvertDeliveryMethodToDB(resp.DeliveryMethod)
 
-	paymentMethod, ok := cartPurchaseProto.PaymentMethod_value[string(resp.PaymentMethod)]
-	if !ok {
-		return nil, errors.Wrap(ErrInvalidPaymentMethod, "invalid payment method")
-	}
-
-	deliveryMethod, ok := cartPurchaseProto.DeliveryMethod_value[string(resp.DeliveryMethod)]
-	if !ok {
-		return nil, errors.Wrap(ErrInvalidDeliveryMethod, "invalid delivery method")
-	}
-
-	return &dto.PurchaseResponse{
+	response := &dto.PurchaseResponse{
 		ID:             uuid.MustParse(resp.Id),
 		CartID:         uuid.MustParse(resp.CartId),
 		Address:        resp.Address,
 		Status:         dto.PurchaseStatus(purchaseStatus),
 		PaymentMethod:  dto.PaymentMethod(paymentMethod),
 		DeliveryMethod: dto.DeliveryMethod(deliveryMethod),
-	}, nil
+	}
+
+	return response, nil
 }
 
 func (c *CartPurchaseClient) GetPurchasesByUserID(ctx context.Context, userID uuid.UUID) ([]*dto.PurchaseResponse, error) {
@@ -105,20 +97,9 @@ func (c *CartPurchaseClient) GetPurchasesByUserID(ctx context.Context, userID uu
 
 	var purchases []*dto.PurchaseResponse
 	for _, p := range resp.Purchases {
-		purchaseStatus, ok := cartPurchaseProto.PurchaseStatus_value[string(p.Status)]
-		if !ok {
-			return nil, errors.Wrap(ErrInvalidPurchaseStatus, "invalid purchase status")
-		}
-
-		paymentMethod, ok := cartPurchaseProto.PaymentMethod_value[string(p.PaymentMethod)]
-		if !ok {
-			return nil, errors.Wrap(ErrInvalidPaymentMethod, "invalid payment method")
-		}
-
-		deliveryMethod, ok := cartPurchaseProto.DeliveryMethod_value[string(p.DeliveryMethod)]
-		if !ok {
-			return nil, errors.Wrap(ErrInvalidDeliveryMethod, "invalid delivery method")
-		}
+		purchaseStatus := ConvertPurchaseStatusToDB(p.Status)
+		paymentMethod := ConvertPaymentMethodToDB(p.PaymentMethod)
+		deliveryMethod := ConvertDeliveryMethodToDB(p.DeliveryMethod)
 
 		purchases = append(purchases, &dto.PurchaseResponse{
 			ID:             uuid.MustParse(p.Id),
@@ -161,7 +142,7 @@ func (c *CartPurchaseClient) GetCartByID(ctx context.Context, cartID uuid.UUID) 
 				Location:    advert.Preview.Location,
 				HasDelivery: advert.Preview.HasDelivery,
 			},
-			IsSaved: advert.IsSaved,
+			IsSaved:  advert.IsSaved,
 			IsViewed: advert.IsViewed,
 		}
 		cart.Adverts = append(cart.Adverts, ad)
@@ -198,7 +179,7 @@ func (c *CartPurchaseClient) GetCartByUserID(ctx context.Context, userID uuid.UU
 				Location:    advert.Preview.Location,
 				HasDelivery: advert.Preview.HasDelivery,
 			},
-			IsSaved: advert.IsSaved,
+			IsSaved:  advert.IsSaved,
 			IsViewed: advert.IsViewed,
 		}
 		cart.Adverts = append(cart.Adverts, ad)
@@ -235,17 +216,17 @@ func (c *CartPurchaseClient) DeleteAdvertFromCart(ctx context.Context, cartID uu
 	return resp.Message, nil
 }
 
-func (c *CartPurchaseClient) CheckCartExists(ctx context.Context, userID uuid.UUID) (bool, error) {
+func (c *CartPurchaseClient) CheckCartExists(ctx context.Context, userID uuid.UUID) (uuid.UUID, error) {
 	protoReq := &cartPurchaseProto.CheckCartExistsRequest{
 		UserId: userID.String(),
 	}
 
 	resp, err := c.client.CheckCartExists(ctx, protoReq)
 	if err != nil {
-		return false, errors.Wrap(ErrCartNotFound, "cart not found")
+		return uuid.Nil, errors.Wrap(ErrCartNotFound, "cart not found")
 	}
 
-	return resp.Exists, nil
+	return uuid.MustParse(resp.CartId), nil
 }
 
 func (c *CartPurchaseClient) Ping(ctx context.Context) error {

@@ -41,7 +41,7 @@ message CheckCartExistsRequest {
 }
 
 message CheckCartExistsResponse {
-  bool exists = 1;
+  string cart_id = 1;
 }
 
 message AddPurchaseRequest {
@@ -120,29 +120,30 @@ message PurchaseResponse {
 }
 
 enum PurchaseStatus {
-  PENDING = 0;
-  COMPLETED = 1;
-  FAILED = 2;
-  CANCELED = 3;
+  PURCHASE_STATUS_PENDING = 0;
+  PURCHASE_STATUS_IN_PROGRESS = 1;
+  PURCHASE_STATUS_COMPLETED = 2;
+  PURCHASE_STATUS_CANCELED = 3;
 }
 
 enum PaymentMethod {
-  CARD = 0;
-  CASH = 1;
+  PAYMENT_METHOD_CARD = 0;
+  PAYMENT_METHOD_CASH = 1;
 }
 
 enum DeliveryMethod {
-  PICKUP = 0;
-  DELIVERY = 1;
+  DELIVERY_METHOD_PICKUP = 0;
+  DELIVERY_METHOD_DELIVERY = 1;
 }
 
 enum CartStatus {
-  ACTIVE = 0;
-  CLOSED = 1;
+  CART_STATUS_ACTIVE = 0;
+  CART_STATUS_INACTIVE = 1;
+  CART_STATUS_DELETED = 2;
 }
 
 enum AdvertStatus {
-  ADVERT_ACTIVE = 0;
-  ADVERT_PENDING = 1;
-  ADVERT_INACTIVE = 2;
+  ADVERT_STATUS_ACTIVE = 0;
+  ADVERT_STATUS_INACTIVE = 1;
+  ADVERT_STATUS_RESERVED = 2;
 }
