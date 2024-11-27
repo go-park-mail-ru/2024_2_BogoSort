@@ -18,6 +18,7 @@ import (
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/interceptors"
 	"net/http"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 func main() {
@@ -45,13 +46,26 @@ func main() {
 
 	metrics, err := metrics.NewGRPCMetrics("static")
 	if err != nil {
-		zap.L().Fatal("Ошибка при инициализации метрик", zap.Error(err))
+		zap.L().Fatal("Error initializing metrics", zap.Error(err))
 	}
 
-	staticService := static.NewStaticGrpc(staticUseCase)
-	server := grpc.NewServer(
-		grpc.UnaryInterceptor(interceptors.CreateMetricsInterceptor(*metrics).ServeMetricsInterceptor),
+	metricsInterceptor := interceptors.NewMetricsInterceptor(*metrics)
+
+	grpcConn, err := grpc.NewClient(
+		config.GetAuthAddress(),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithUnaryInterceptor(metricsInterceptor.ServeMetricsClientInterceptor),
 	)
+	if err != nil {
+		zap.L().Fatal("Error occurred while starting grpc connection on auth service", zap.Error(err))
+
+		return
+	}
+
+	defer grpcConn.Close()
+	staticService := static.NewStaticGrpc(staticUseCase)
+
+	server := grpc.NewServer()
 	staticProto.RegisterStaticServiceServer(server, staticService)
 	addr := cfg.StaticHost + ":" + strconv.Itoa(cfg.StaticPort)
 

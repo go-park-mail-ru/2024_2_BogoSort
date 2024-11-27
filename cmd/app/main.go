@@ -142,6 +142,7 @@ func Init(cfg config.Config) (*mux.Router, error) {
 	if err != nil {
 		return nil, handleRepoError(err, "unable to create grpc client")
 	}
+	
 	cartPurchaseClient, err := cart_purchase.NewCartPurchaseClient(config.GetCartPurchaseAddress())
 	if err != nil {
 		return nil, handleRepoError(err, "unable to create cart purchase client")

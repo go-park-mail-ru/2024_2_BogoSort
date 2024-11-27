@@ -14,6 +14,7 @@ import (
 	"github.com/go-park-mail-ru/2024_2_BogoSort/pkg/connector"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/health"
 	"net/http"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -46,9 +47,21 @@ func main() {
 		zap.L().Fatal("Error initializing metrics", zap.Error(err))
 	}
 
-	server := grpc.NewServer(
-		grpc.UnaryInterceptor(interceptors.CreateMetricsInterceptor(*metrics).ServeMetricsInterceptor),
+	metricsInterceptor := interceptors.NewMetricsInterceptor(*metrics)
+
+	grpcConn, err := grpc.NewClient(
+		config.GetAuthAddress(),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithUnaryInterceptor(metricsInterceptor.ServeMetricsClientInterceptor),
 	)
+	if err != nil {
+		zap.L().Fatal("Error occurred while starting grpc connection on auth service", zap.Error(err))
+
+		return
+	}
+	defer grpcConn.Close()
+
+	server := grpc.NewServer()
 	authServer := auth.NewGrpcServer(authService)
 
 	healthServer := health.NewServer()
