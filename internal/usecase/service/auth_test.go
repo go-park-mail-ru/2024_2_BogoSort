@@ -24,7 +24,6 @@ func TestAuthService_Logout(t *testing.T) {
 
 	session := "valid-session-id"
 
-	// Исправление для метода TestAuthService_Logout
 	gomock.InOrder(
 		sessionRepo.EXPECT().Delete(session).Return(nil),
 	)
