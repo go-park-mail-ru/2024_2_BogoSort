@@ -7,6 +7,7 @@ import (
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/utils"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase"
 	"github.com/gorilla/mux"
+	"context"
 	"go.uber.org/zap"
 )
 
@@ -59,7 +60,7 @@ func (a *AuthEndpoint) Logout(w http.ResponseWriter, r *http.Request) {
 		a.handleError(w, err, "Logout", nil)
 		return
 	}
-	err = a.sessionManager.DeleteSession(cookie.Value)
+	err = a.sessionManager.DeleteSession(context.Background(), cookie.Value)
 	if err != nil {
 		a.handleError(w, err, "Logout", map[string]string{"userID": userID.String()})
 		return

@@ -53,9 +53,7 @@ func main() {
 
 	grpcConn, err := grpc.NewClient(
 		config.GetAuthAddress(),
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithUnaryInterceptor(metricsInterceptor.ServeMetricsClientInterceptor),
-	)
+		grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		zap.L().Fatal("Error occurred while starting grpc connection on auth service", zap.Error(err))
 
@@ -65,7 +63,9 @@ func main() {
 	defer grpcConn.Close()
 	staticService := static.NewStaticGrpc(staticUseCase)
 
-	server := grpc.NewServer()
+	server := grpc.NewServer(
+		grpc.UnaryInterceptor(metricsInterceptor.ServeMetricsInterceptor),
+	)
 	staticProto.RegisterStaticServiceServer(server, staticService)
 	addr := cfg.StaticHost + ":" + strconv.Itoa(cfg.StaticPort)
 
@@ -75,6 +75,7 @@ func main() {
             zap.L().Fatal("Failed to start metrics HTTP server", zap.Error(err))
         }
     }()
+
 
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {

@@ -22,8 +22,11 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/gorilla/mux"
 	"github.com/microcosm-cc/bluemonday"
+	authProto "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/auth/proto"
+	cartPurchaseProto "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/cart_purchase/proto"
 	"github.com/rs/cors"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
 
 	"github.com/pkg/errors"
 )
@@ -138,12 +141,28 @@ func Init(cfg config.Config) (*mux.Router, error) {
 	if err != nil {
 		return nil, handleRepoError(err, "unable to create csrf token")
 	}
-	authGrpcClient, err := auth.NewGrpcClient(config.GetAuthAddress())
+	cartRepo, err := postgres.NewCartRepository(dbPool, ctx, zap.L())
+	if err != nil {
+		return nil, handleRepoError(err, "unable to create cart repository")
+	}
+	purchaseRepo, err := postgres.NewPurchaseRepository(dbPool, zap.L(), ctx, cfg.PGTimeout)
+	if err != nil {
+		return nil, handleRepoError(err, "unable to create purchase repository")
+	}
+
+	authUC := service.NewAuthService(sessionRepo, logger)
+	cartUC := service.NewCartService(cartRepo, advertsRepo, logger)
+	purchaseUC := service.NewPurchaseService(purchaseRepo, advertsRepo, cartRepo, logger)
+
+	server := grpc.NewServer()
+	authGrpcServer := auth.NewGrpcServer(authUC)
+	authProto.RegisterAuthServiceServer(server, authGrpcServer)
 	if err != nil {
 		return nil, handleRepoError(err, "unable to create grpc client")
 	}
 	
-	cartPurchaseClient, err := cart_purchase.NewCartPurchaseClient(config.GetCartPurchaseAddress())
+	cartPurchaseServer := cart_purchase.NewGrpcServer(cartUC, purchaseUC)
+	cartPurchaseProto.RegisterCartPurchaseServiceServer(server, cartPurchaseServer)
 	if err != nil {
 		return nil, handleRepoError(err, "unable to create cart purchase client")
 	}
@@ -156,15 +175,15 @@ func Init(cfg config.Config) (*mux.Router, error) {
 	categoryUseCase := service.NewCategoryService(categoryRepo, logger)
 	userUC := service.NewUserService(userRepo, sellerRepo, logger)
 	sessionUC := service.NewAuthService(sessionRepo, logger)
-	sessionManager := utils.NewSessionManager(authGrpcClient, int(cfg.Session.ExpirationTime.Seconds()), cfg.Session.SecureCookie, logger)
+	sessionManager := utils.NewSessionManager(authGrpcServer, int(cfg.Session.ExpirationTime.Seconds()), cfg.Session.SecureCookie, logger)
 	router.Use(middleware.NewAuthMiddleware(sessionManager).AuthMiddleware)
 
 	advertsHandler := http3.NewAdvertEndpoint(advertsUseCase, *staticClient, sessionManager, logger, policy)
 	authHandler := http3.NewAuthEndpoint(sessionUC, sessionManager, logger)
 	userHandler := http3.NewUserEndpoint(userUC, sessionUC, sessionManager, *staticClient, logger, policy)
 	sellerHandler := http3.NewSellerEndpoint(sellerRepo, logger)
-	purchaseHandler := http3.NewPurchaseEndpoint(cartPurchaseClient, logger)
-	cartHandler := http3.NewCartEndpoint(cartPurchaseClient, logger)
+	purchaseHandler := http3.NewPurchaseEndpoint(cartPurchaseServer, logger)
+	cartHandler := http3.NewCartEndpoint(cartPurchaseServer, logger)
 	categoryHandler := http3.NewCategoryEndpoint(categoryUseCase, logger)
 	staticHandler := http3.NewStaticEndpoint(*staticClient, logger)
 

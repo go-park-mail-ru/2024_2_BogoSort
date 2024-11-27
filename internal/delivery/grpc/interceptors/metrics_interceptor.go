@@ -7,38 +7,38 @@ import (
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/metrics"
 	"google.golang.org/grpc"
-	"go.uber.org/zap"
 	"strconv"
 )
 
-type MetricsInterceptor struct {
+type Interceptor struct {
 	metrics metrics.GRPCMetrics
 }
 
-func NewMetricsInterceptor(metrics metrics.GRPCMetrics) *MetricsInterceptor {
-	return &MetricsInterceptor{metrics: metrics}
+func NewMetricsInterceptor(metrics metrics.GRPCMetrics) *Interceptor {
+	return &Interceptor{metrics: metrics}
 }
 
-func (m *MetricsInterceptor) ServeMetricsClientInterceptor(ctx context.Context, method string, req interface{}, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+func (interceptor *Interceptor) ServeMetricsInterceptor(ctx context.Context, req interface{},
+	info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 	start := time.Now()
-	err := invoker(ctx, method, req, reply, cc, opts...)
-	duration := time.Since(start)
-
+	h, err := handler(ctx, req)
+	end := time.Since(start)
 	code := http.StatusOK
+
 	if err != nil {
 		code = getCode(err.Error())
 	}
 
-	zap.L().Info("method", zap.String("method", method))
 	codeStr := strconv.Itoa(code)
-	m.metrics.AddDuration(codeStr, method, duration)
-	m.metrics.IncTotalHits(codeStr, method)
-	if code >= 400 {
-		m.metrics.IncTotalErrors(codeStr, method)
+	interceptor.metrics.AddDuration(codeStr, info.FullMethod, end)
+	interceptor.metrics.IncTotalHits(codeStr, info.FullMethod)
+	if code >= 400  {
+		interceptor.metrics.IncTotalErrors(codeStr, info.FullMethod)
 	}
 
-	return err
+	return h, err
 }
+
 
 func getCode(err string) int {
 	switch err {

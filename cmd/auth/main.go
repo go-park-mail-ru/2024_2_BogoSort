@@ -51,9 +51,7 @@ func main() {
 
 	grpcConn, err := grpc.NewClient(
 		config.GetAuthAddress(),
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithUnaryInterceptor(metricsInterceptor.ServeMetricsClientInterceptor),
-	)
+		grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		zap.L().Fatal("Error occurred while starting grpc connection on auth service", zap.Error(err))
 
@@ -61,7 +59,9 @@ func main() {
 	}
 	defer grpcConn.Close()
 
-	server := grpc.NewServer()
+	server := grpc.NewServer(
+		grpc.UnaryInterceptor(metricsInterceptor.ServeMetricsInterceptor),
+	)
 	authServer := auth.NewGrpcServer(authService)
 
 	healthServer := health.NewServer()

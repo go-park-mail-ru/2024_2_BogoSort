@@ -59,11 +59,10 @@ func main() {
 	}
 
 	metricsInterceptor := interceptors.NewMetricsInterceptor(*metrics)
+
 	grpcConn, err := grpc.NewClient(
 		config.GetAuthAddress(),
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithUnaryInterceptor(metricsInterceptor.ServeMetricsClientInterceptor),
-	)
+		grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		zap.L().Fatal("Error occurred while starting grpc connection on auth service", zap.Error(err))
 
@@ -71,7 +70,9 @@ func main() {
 	}
 	defer grpcConn.Close()
 
-	server := grpc.NewServer()
+	server := grpc.NewServer(
+		grpc.UnaryInterceptor(metricsInterceptor.ServeMetricsInterceptor),
+	)
 	cartUC := service.NewCartService(cartRepo, advertRepo, zap.L())
 	purchaseUC := service.NewPurchaseService(purchaseRepo, advertRepo, cartRepo, zap.L())
 	cartPurchaseServer := cart_purchase.NewGrpcServer(cartUC, purchaseUC)

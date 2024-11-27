@@ -9,18 +9,19 @@ import (
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/cart_purchase"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/utils"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
+	proto "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/cart_purchase/proto"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 )
 
 type PurchaseEndpoint struct {
-	purchaseClient *cart_purchase.CartPurchaseClient
+	purchaseServer *cart_purchase.GrpcServer
 	logger         *zap.Logger
 }
 
-func NewPurchaseEndpoint(purchaseClient *cart_purchase.CartPurchaseClient, logger *zap.Logger) *PurchaseEndpoint {
-	return &PurchaseEndpoint{purchaseClient: purchaseClient, logger: logger}
+func NewPurchaseEndpoint(purchaseServer *cart_purchase.GrpcServer, logger *zap.Logger) *PurchaseEndpoint {
+	return &PurchaseEndpoint{purchaseServer: purchaseServer, logger: logger}
 }
 
 func (h *PurchaseEndpoint) ConfigureRoutes(router *mux.Router) {
@@ -58,7 +59,7 @@ func (h *PurchaseEndpoint) Add(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Hour)
 	defer cancel()
 
-	purchaseResponse, err := h.purchaseClient.AddPurchase(ctx, purchase)
+	purchaseResponse, err := h.purchaseServer.AddPurchase(ctx, &proto.AddPurchaseRequest{CartId: purchase.CartID.String(), Address: purchase.Address, PaymentMethod: proto.PaymentMethod(proto.PaymentMethod_value[string(purchase.PaymentMethod)]), DeliveryMethod: proto.DeliveryMethod(proto.DeliveryMethod_value[string(purchase.DeliveryMethod)]), UserId: purchase.UserID.String()})
 	if err != nil {
 		h.logger.Error("failed to add purchase", zap.Error(err))
 		utils.SendErrorResponse(w, http.StatusInternalServerError, "internal server error")
@@ -90,7 +91,7 @@ func (h *PurchaseEndpoint) GetByUserID(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	purchases, err := h.purchaseClient.GetPurchasesByUserID(ctx, userID)
+	purchases, err := h.purchaseServer.GetPurchasesByUserID(ctx, &proto.GetPurchasesByUserIDRequest{UserId: userID.String()})
 	if err != nil {
 		h.handleError(w, err, "failed to get purchases")
 		return
