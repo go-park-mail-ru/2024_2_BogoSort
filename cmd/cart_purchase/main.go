@@ -5,20 +5,18 @@ import (
 	"net"
 	"time"
 
-	"net/http"
-
 	"github.com/go-park-mail-ru/2024_2_BogoSort/config"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/cart_purchase"
 	cartPurchaseProto "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/cart_purchase/proto"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/interceptors"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/metrics"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository/postgres"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase/service"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/metrics"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/interceptors"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/pkg/connector"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
+	"net/http"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/health"
 	healthProto "google.golang.org/grpc/health/grpc_health_v1"
 )
@@ -59,20 +57,9 @@ func main() {
 		zap.L().Fatal("Ошибка при инициализации метрик", zap.Error(err))
 	}
 
-	metricsInterceptor := interceptors.NewMetricsInterceptor(*metrics)
-	grpcConn, err := grpc.NewClient(
-		config.GetAuthAddress(),
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithUnaryInterceptor(metricsInterceptor.ServeMetricsClientInterceptor),
+	server := grpc.NewServer(
+		grpc.UnaryInterceptor(interceptors.NewMetricsInterceptor(*metrics).NewMetricsInterceptor),
 	)
-	if err != nil {
-		zap.L().Fatal("Error occurred while starting grpc connection on auth service", zap.Error(err))
-
-		return
-	}
-	defer grpcConn.Close()
-
-	server := grpc.NewServer()
 	cartUC := service.NewCartService(cartRepo, advertRepo)
 	purchaseUC := service.NewPurchaseService(purchaseRepo, advertRepo, cartRepo)
 	cartPurchaseServer := cart_purchase.NewGrpcServer(cartUC, purchaseUC)
@@ -85,11 +72,11 @@ func main() {
 	address := config.GetCartPurchaseAddress()
 
 	http.Handle("/api/v1/metrics", promhttp.Handler())
-	go func() {
-		if err := http.ListenAndServe(":7052", nil); err != nil {
-			zap.L().Fatal("Failed to start metrics HTTP server", zap.Error(err))
-		}
-	}()
+    go func() {
+        if err := http.ListenAndServe(":7052", nil); err != nil {
+            zap.L().Fatal("Failed to start metrics HTTP server", zap.Error(err))
+        }
+    }()
 
 	lis, err := net.Listen("tcp", address)
 	if err != nil {

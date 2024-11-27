@@ -6,8 +6,6 @@ import (
 	cartPurchaseProto "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/cart_purchase/proto"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity/dto"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/metrics"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/interceptors"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
@@ -28,12 +26,7 @@ type CartPurchaseClient struct {
 }
 
 func NewCartPurchaseClient(addr string) (*CartPurchaseClient, error) {
-	metrics, err := metrics.NewGRPCMetrics("cart_purchase")
-	if err != nil {
-		return nil, err
-	}
-	metricsInterceptor := interceptors.NewMetricsInterceptor(*metrics)
-	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithUnaryInterceptor(metricsInterceptor.ServeMetricsClientInterceptor))
+	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, err
 	}
