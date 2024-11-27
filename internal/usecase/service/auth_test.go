@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
@@ -84,4 +85,47 @@ func TestAuthService_GetUserIdBySession_SessionNotFound(t *testing.T) {
 	userId, err := service.GetUserIdBySession(session)
 	assert.ErrorIs(t, err, usecase.ErrUserNotFound)
 	assert.Equal(t, uuid.Nil, userId)
+}
+
+func TestAuthService_CreateSession_FailureInRepository(t *testing.T) {
+	service, sessionRepo, ctrl := setupAuthService(t)
+	defer ctrl.Finish()
+
+	userId := uuid.New()
+	expectedError := errors.New("repository error")
+	sessionRepo.EXPECT().Create(userId).Return("", expectedError)
+
+	session, err := service.CreateSession(userId)
+
+	assert.Error(t, err)
+	assert.Equal(t, "", session)
+}
+
+func TestAuthService_GetUserIdBySession_RepositoryError(t *testing.T) {
+	service, sessionRepo, ctrl := setupAuthService(t)
+	defer ctrl.Finish()
+
+	session := "some-session-id"
+	expectedError := errors.New("database error")
+
+	sessionRepo.EXPECT().Get(session).Return(uuid.Nil, expectedError)
+
+	userId, err := service.GetUserIdBySession(session)
+
+	assert.Error(t, err)
+	assert.Equal(t, uuid.Nil, userId)
+}
+
+func TestAuthService_Logout_FailureInRepository(t *testing.T) {
+	service, sessionRepo, ctrl := setupAuthService(t)
+	defer ctrl.Finish()
+
+	session := "some-session-id"
+	expectedError := errors.New("delete session error")
+
+	sessionRepo.EXPECT().Delete(session).Return(expectedError)
+
+	err := service.Logout(session)
+
+	assert.Error(t, err)
 }
