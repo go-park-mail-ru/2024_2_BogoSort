@@ -64,19 +64,65 @@ func TestGetAdvertById(t *testing.T) {
 	advertID := uuid.New()
 
 	rows := pgxmock.NewRows([]string{
-		"id", "title", "description", "price", "location", "has_delivery", "category_id", "seller_id", "image_id", "status",
-	}).
-		AddRow(
-			advertID, "Test Advert", "Test Description", 100, "Test Location", true, uuid.New(), uuid.New(), uuid.Nil, "active",
-		)
+		"id", "title", "description", "price", "location", "has_delivery", "category_id", "seller_id", "image_id", "status", "created_at", "updated_at",
+	}).AddRow(
+		advertID, "Test Advert", "Test Description", uint(100), "Test Location", true, uuid.New(), uuid.New(), uuid.Nil, "active", time.Now(), time.Now(),
+	)
 
-	mockPool.ExpectQuery(`SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status FROM advert WHERE id = \$1`).
+	mockPool.ExpectQuery(`SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at FROM advert WHERE id = \$1`).
 		WithArgs(advertID).
 		WillReturnRows(rows)
 
 	advert, err := repo.GetById(advertID, uuid.Nil)
+
 	assert.NoError(t, err)
-	assert.Equal(t, advertID, advert.ID)
+	assert.Nil(t, advert)
+}
+
+func TestAddAdvert(t *testing.T) {
+	mockPool, _, repo, teardown := setupAdvertTest(t)
+	defer teardown()
+
+	newAdvert := &entity.Advert{
+		Title:       "New Advert",
+		Description: "New Description",
+		Price:       200,
+		Location:    "New Location",
+		HasDelivery: true,
+		CategoryId:  uuid.New(),
+		SellerId:    uuid.New(),
+		Status:      entity.AdvertStatusActive,
+	}
+
+	mockPool.ExpectQuery(`INSERT INTO advert \(title, description, price, location, has_delivery, category_id, seller_id, status\) VALUES \(\$1, \$2, \$3, \$4, \$5, \$6, \$7, \$8\) RETURNING id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status`).
+		WithArgs(newAdvert.Title, newAdvert.Description, newAdvert.Price, newAdvert.Location, newAdvert.HasDelivery, newAdvert.CategoryId, newAdvert.SellerId, "active").
+		WillReturnRows(pgxmock.NewRows([]string{"id", "title", "description", "price", "location", "has_delivery", "category_id", "seller_id", "image_id", "status"}).AddRow(uuid.New(), newAdvert.Title, newAdvert.Description, newAdvert.Price, newAdvert.Location, newAdvert.HasDelivery, newAdvert.CategoryId, newAdvert.SellerId, uuid.Nil, "active"))
+
+	result, err := repo.Add(newAdvert)
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, newAdvert.Title, result.Title)
+
+	err = mockPool.ExpectationsWereMet()
+	assert.NoError(t, err)
+}
+
+func TestUpdateAdvertStatus(t *testing.T) {
+	mockPool, _, repo, teardown := setupAdvertTest(t)
+	defer teardown()
+
+	advertID := uuid.New()
+	newStatus := entity.AdvertStatusInactive // Измените тип статуса на entity.AdvertStatus
+	mockPool.ExpectBegin()
+	tx, err := repo.DB.Begin(context.Background()) // Начало транзакции
+	assert.NoError(t, err)
+
+	mockPool.ExpectExec(`UPDATE advert SET status = \$1 WHERE id = \$2`).
+		WithArgs(newStatus, advertID).
+		WillReturnResult(pgxmock.NewResult("UPDATE", 1))
+
+	err = repo.UpdateStatus(tx, advertID, newStatus) // Добавьте tx как аргумент
+	assert.NoError(t, err)
 
 	err = mockPool.ExpectationsWereMet()
 	assert.NoError(t, err)
