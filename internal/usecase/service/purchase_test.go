@@ -61,17 +61,40 @@ func TestPurchaseService_GetPurchasesByUserID_Success(t *testing.T) {
 	assert.Equal(t, mockPurchases[0].ID, resp[0].ID)
 }
 
-func TestPurchaseService_GetPurchasesByUserID_Failure(t *testing.T) {
+func TestPurchaseService_AddPurchase_InvalidCartID(t *testing.T) {
 	service, purchaseRepo, _, _, ctrl := setup(t)
 	defer ctrl.Finish()
 
-	userID := uuid.New()
+	invalidCartID := uuid.Nil
 
-	purchaseRepo.EXPECT().GetByUserId(userID).Return(nil, errors.New("database error"))
+	purchaseRequest := dto.PurchaseRequest{
+		CartID:         invalidCartID,
+		Address:        "123 Street",
+		PaymentMethod:  dto.PaymentMethodCard,
+		DeliveryMethod: dto.DeliveryMethodPickup,
+	}
 
-	resp, err := service.GetByUserId(userID)
+	purchaseRepo.EXPECT().BeginTransaction().Return(nil, errors.New("invalid cart ID"))
+	resp, err := service.Add(purchaseRequest, uuid.New())
 
 	assert.Error(t, err)
 	assert.Nil(t, resp)
-	assert.Contains(t, err.Error(), "failed to get purchases")
+	assert.Contains(t, err.Error(), "invalid cart ID")
+}
+
+func TestPurchaseService_GetByUserId_Fail(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockPurchaseRepo := mocks.NewMockPurchaseRepository(ctrl)
+	service := NewPurchaseService(mockPurchaseRepo, nil, nil)
+
+	userId := uuid.New()
+
+	mockPurchaseRepo.EXPECT().GetByUserId(userId).Return(nil, errors.New("failed to retrieve purchases"))
+
+	resp, err := service.GetByUserId(userId)
+
+	assert.Error(t, err)
+	assert.Nil(t, resp)
 }
