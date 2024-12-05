@@ -29,4 +29,10 @@ go.work.sum
 
 .DS_Store
 
+dump.rdb
+
+app
+
 .idea/
+
+.vscode/
