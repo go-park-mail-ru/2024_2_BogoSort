@@ -101,6 +101,7 @@ func (c *CartPurchaseClient) GetPurchasesByUserID(ctx context.Context, userID uu
 		response := &dto.PurchaseResponse{
 			ID:             uuid.MustParse(p.Id),
 			SellerID:       uuid.MustParse(p.SellerId),
+			CustomerID:     uuid.MustParse(p.CustomerId),
 			Address:        p.Address,
 			Adverts:        dtoAdverts,
 			Status:         dto.PurchaseStatus(ConvertPurchaseStatusToDB(p.Status)),
