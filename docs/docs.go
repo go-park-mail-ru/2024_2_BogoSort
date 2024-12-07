@@ -728,7 +728,7 @@ const docTemplate = `{
         },
         "/api/v1/cart/add": {
             "post": {
-                "description": "Adds a new advert to the cart associated with a user",
+                "description": "Adds an advertisement to a user's cart",
                 "consumes": [
                     "application/json"
                 ],
@@ -738,11 +738,11 @@ const docTemplate = `{
                 "tags": [
                     "Cart"
                 ],
-                "summary": "Add advert to user's cart",
+                "summary": "Add item to cart",
                 "parameters": [
                     {
-                        "description": "Data to add advert to cart",
-                        "name": "purchase",
+                        "description": "Add to cart request containing user_id and advert_id",
+                        "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
@@ -752,7 +752,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successfully added advert",
+                        "description": "Successfully added item to cart",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -761,7 +761,13 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Invalid request data",
+                        "description": "Invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Cart not found",
                         "schema": {
                             "$ref": "#/definitions/utils.ErrResponse"
                         }
@@ -777,7 +783,7 @@ const docTemplate = `{
         },
         "/api/v1/cart/delete": {
             "delete": {
-                "description": "Deletes an advert from the cart associated with a user",
+                "description": "Removes an advertisement from a user's cart",
                 "consumes": [
                     "application/json"
                 ],
@@ -787,11 +793,11 @@ const docTemplate = `{
                 "tags": [
                     "Cart"
                 ],
-                "summary": "Delete advert from user's cart",
+                "summary": "Remove item from cart",
                 "parameters": [
                     {
-                        "description": "Data to delete advert from cart",
-                        "name": "purchase",
+                        "description": "Delete from cart request containing cart_id and advert_id",
+                        "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
@@ -801,7 +807,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successfully deleted advert from user cart",
+                        "description": "Successfully removed item from cart",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -810,13 +816,13 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Invalid request data",
+                        "description": "Invalid request body",
                         "schema": {
                             "$ref": "#/definitions/utils.ErrResponse"
                         }
                     },
                     "404": {
-                        "description": "Cart or advert not found",
+                        "description": "Cart or item not found",
                         "schema": {
                             "$ref": "#/definitions/utils.ErrResponse"
                         }
@@ -832,7 +838,7 @@ const docTemplate = `{
         },
         "/api/v1/cart/exists/{user_id}": {
             "get": {
-                "description": "Checks if a cart exists for a user by their ID",
+                "description": "Checks if a cart exists for a specific user",
                 "consumes": [
                     "application/json"
                 ],
@@ -842,11 +848,11 @@ const docTemplate = `{
                 "tags": [
                     "Cart"
                 ],
-                "summary": "Check if cart exists for user",
+                "summary": "Check cart existence",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "User ID",
+                        "description": "User ID (UUID format)",
                         "name": "user_id",
                         "in": "path",
                         "required": true
@@ -854,16 +860,66 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Cart existence check result",
+                        "description": "Cart existence status with cart_id if exists",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
-                                "type": "boolean"
+                                "type": "string"
                             }
                         }
                     },
                     "400": {
-                        "description": "Invalid user ID format",
+                        "description": "Invalid user ID format or missing user_id",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/cart/user/{user_id}": {
+            "get": {
+                "description": "Retrieves a cart associated with a specific user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Cart"
+                ],
+                "summary": "Get cart by user ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID (UUID format)",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Cart details successfully retrieved",
+                        "schema": {
+                            "$ref": "#/definitions/dto.CartResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid user ID format or missing user_id",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Cart not found for user",
                         "schema": {
                             "$ref": "#/definitions/utils.ErrResponse"
                         }
@@ -879,7 +935,7 @@ const docTemplate = `{
         },
         "/api/v1/cart/{cart_id}": {
             "get": {
-                "description": "Retrieves detailed information about a cart using its unique identifier",
+                "description": "Retrieves a cart by its unique identifier",
                 "consumes": [
                     "application/json"
                 ],
@@ -889,11 +945,11 @@ const docTemplate = `{
                 "tags": [
                     "Cart"
                 ],
-                "summary": "Retrieve cart by ID",
+                "summary": "Get cart by ID",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Cart ID",
+                        "description": "Cart ID (UUID format)",
                         "name": "cart_id",
                         "in": "path",
                         "required": true
@@ -901,13 +957,19 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successfully retrieved cart",
+                        "description": "Cart details successfully retrieved",
                         "schema": {
                             "$ref": "#/definitions/dto.CartResponse"
                         }
                     },
                     "400": {
-                        "description": "Invalid cart ID format",
+                        "description": "Invalid cart ID format or missing cart_id",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Cart not found",
                         "schema": {
                             "$ref": "#/definitions/utils.ErrResponse"
                         }
@@ -1376,9 +1438,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/purchase": {
-            "post": {
-                "description": "Accepts purchase data, validates it, and adds it to the system. Returns a response with purchase data or an error.",
+        "/api/v1/purchase/{user_id}": {
+            "get": {
+                "description": "Retrieves all purchases associated with a specific user ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -1388,27 +1450,29 @@ const docTemplate = `{
                 "tags": [
                     "Purchases"
                 ],
-                "summary": "Adds a purchase",
+                "summary": "Get user purchases",
                 "parameters": [
                     {
-                        "description": "Purchase request",
-                        "name": "purchase",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.PurchaseRequest"
-                        }
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
-                    "201": {
-                        "description": "Successful purchase",
+                    "200": {
+                        "description": "List of user purchases",
                         "schema": {
-                            "$ref": "#/definitions/dto.PurchaseResponse"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.PurchaseResponse"
+                            }
                         }
                     },
                     "400": {
-                        "description": "Invalid request parameters",
+                        "description": "Invalid user ID",
                         "schema": {
                             "$ref": "#/definitions/utils.ErrResponse"
                         }
@@ -1420,11 +1484,9 @@ const docTemplate = `{
                         }
                     }
                 }
-            }
-        },
-        "/api/v1/purchase/{user_id}": {
-            "get": {
-                "description": "Accepts a user ID, validates it, and retrieves purchases from the system. Returns a response with purchase data or an error.",
+            },
+            "post": {
+                "description": "Creates a new purchase record for a user",
                 "consumes": [
                     "application/json"
                 ],
@@ -1434,28 +1496,35 @@ const docTemplate = `{
                 "tags": [
                     "Purchases"
                 ],
-                "summary": "Retrieves purchases by user ID",
+                "summary": "Create new purchase",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
+                        "format": "uuid",
                         "description": "User ID",
                         "name": "user_id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "description": "Purchase details",
+                        "name": "purchase",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.PurchaseRequest"
+                        }
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "Successful purchase",
+                    "201": {
+                        "description": "Purchase created successfully",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/dto.PurchaseResponse"
-                            }
+                            "$ref": "#/definitions/dto.PurchaseResponse"
                         }
                     },
                     "400": {
-                        "description": "Invalid user ID",
+                        "description": "Invalid request parameters or user ID",
                         "schema": {
                             "$ref": "#/definitions/utils.ErrResponse"
                         }
@@ -1665,50 +1734,6 @@ const docTemplate = `{
                     }
                 }
             }
-        },
-        "/cart/user/{user_id}": {
-            "get": {
-                "description": "Retrieves detailed information about a cart associated with a specific user",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Cart"
-                ],
-                "summary": "Retrieve cart by User ID",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "User ID",
-                        "name": "user_id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successfully retrieved cart",
-                        "schema": {
-                            "$ref": "#/definitions/dto.CartResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid user ID format",
-                        "schema": {
-                            "$ref": "#/definitions/utils.ErrResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/utils.ErrResponse"
-                        }
-                    }
-                }
-            }
         }
     },
     "definitions": {
@@ -1826,10 +1851,10 @@ const docTemplate = `{
         "dto.Cart": {
             "type": "object",
             "properties": {
-                "adverts": {
+                "cart_purchases": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/dto.PreviewAdvertCard"
+                        "$ref": "#/definitions/dto.CartPurchase"
                     }
                 },
                 "id": {
@@ -1839,6 +1864,20 @@ const docTemplate = `{
                     "$ref": "#/definitions/entity.CartStatus"
                 },
                 "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.CartPurchase": {
+            "type": "object",
+            "properties": {
+                "adverts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.PreviewAdvertCard"
+                    }
+                },
+                "seller_id": {
                     "type": "string"
                 }
             }
@@ -1969,6 +2008,9 @@ const docTemplate = `{
                 },
                 "payment_method": {
                     "$ref": "#/definitions/dto.PaymentMethod"
+                },
+                "user_id": {
+                    "type": "string"
                 }
             }
         },
@@ -1978,7 +2020,13 @@ const docTemplate = `{
                 "address": {
                     "type": "string"
                 },
-                "cart_id": {
+                "adverts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.PreviewAdvertCard"
+                    }
+                },
+                "customer_id": {
                     "type": "string"
                 },
                 "delivery_method": {
@@ -1989,6 +2037,9 @@ const docTemplate = `{
                 },
                 "payment_method": {
                     "$ref": "#/definitions/dto.PaymentMethod"
+                },
+                "seller_id": {
+                    "type": "string"
                 },
                 "status": {
                     "$ref": "#/definitions/dto.PurchaseStatus"
