@@ -160,6 +160,15 @@ definitions:
       preview:
         $ref: '#/definitions/dto.PreviewAdvert'
     type: object
+  dto.PriceHistoryResponse:
+    properties:
+      advert_history:
+        items:
+          $ref: '#/definitions/entity.PriceHistory'
+        type: array
+      advert_id:
+        type: string
+    type: object
   dto.PurchaseRequest:
     properties:
       address:
@@ -170,6 +179,8 @@ definitions:
         $ref: '#/definitions/dto.DeliveryMethod'
       payment_method:
         $ref: '#/definitions/dto.PaymentMethod'
+      user_id:
+        type: string
     type: object
   dto.PurchaseResponse:
     properties:
@@ -258,6 +269,19 @@ definitions:
         type: string
       title:
         type: string
+    type: object
+  entity.PriceHistory:
+    properties:
+      advertID:
+        type: string
+      changedAt:
+        type: string
+      id:
+        type: string
+      newPrice:
+        type: integer
+      oldPrice:
+        type: integer
     type: object
   entity.Seller:
     properties:
@@ -985,6 +1009,33 @@ paths:
       summary: Get static file stream by ID
       tags:
       - static
+  /api/v1/history/{advert_id}:
+    get:
+      consumes:
+      - application/json
+      description: Получает историю изменения цены для указанного объявления
+      parameters:
+      - description: Advert ID
+        in: path
+        name: advert_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.PriceHistoryResponse'
+            type: array
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Get Advert Price History
+      tags:
+      - History
   /api/v1/login:
     post:
       consumes:
@@ -1178,37 +1229,6 @@ paths:
       summary: Get user profile
       tags:
       - Users
-  /api/v1/purchase:
-    post:
-      consumes:
-      - application/json
-      description: Accepts purchase data, validates it, and adds it to the system.
-        Returns a response with purchase data or an error.
-      parameters:
-      - description: Purchase request
-        in: body
-        name: purchase
-        required: true
-        schema:
-          $ref: '#/definitions/dto.PurchaseRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Successful purchase
-          schema:
-            $ref: '#/definitions/dto.PurchaseResponse'
-        "400":
-          description: Invalid request parameters
-          schema:
-            $ref: '#/definitions/utils.ErrResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/utils.ErrResponse'
-      summary: Adds a purchase
-      tags:
-      - Purchases
   /api/v1/purchase/{user_id}:
     get:
       consumes:
@@ -1239,6 +1259,36 @@ paths:
           schema:
             $ref: '#/definitions/utils.ErrResponse'
       summary: Retrieves purchases by user ID
+      tags:
+      - Purchases
+    post:
+      consumes:
+      - application/json
+      description: Accepts purchase data, validates it, and adds it to the system.
+        Returns a response with purchase data or an error.
+      parameters:
+      - description: Purchase request
+        in: body
+        name: purchase
+        required: true
+        schema:
+          $ref: '#/definitions/dto.PurchaseRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successful purchase
+          schema:
+            $ref: '#/definitions/dto.PurchaseResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Adds a purchase
       tags:
       - Purchases
   /api/v1/seller/{seller_id}:

@@ -1082,6 +1082,47 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/history/{advert_id}": {
+            "get": {
+                "description": "Получает историю изменения цены для указанного объявления",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "History"
+                ],
+                "summary": "Get Advert Price History",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Advert ID",
+                        "name": "advert_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.PriceHistoryResponse"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/login": {
             "post": {
                 "description": "Allows a user to log into the system",
@@ -1376,52 +1417,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/purchase": {
-            "post": {
-                "description": "Accepts purchase data, validates it, and adds it to the system. Returns a response with purchase data or an error.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Purchases"
-                ],
-                "summary": "Adds a purchase",
-                "parameters": [
-                    {
-                        "description": "Purchase request",
-                        "name": "purchase",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.PurchaseRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Successful purchase",
-                        "schema": {
-                            "$ref": "#/definitions/dto.PurchaseResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request parameters",
-                        "schema": {
-                            "$ref": "#/definitions/utils.ErrResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/utils.ErrResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/api/v1/purchase/{user_id}": {
             "get": {
                 "description": "Accepts a user ID, validates it, and retrieves purchases from the system. Returns a response with purchase data or an error.",
@@ -1456,6 +1451,50 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Invalid user ID",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Accepts purchase data, validates it, and adds it to the system. Returns a response with purchase data or an error.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Purchases"
+                ],
+                "summary": "Adds a purchase",
+                "parameters": [
+                    {
+                        "description": "Purchase request",
+                        "name": "purchase",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.PurchaseRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successful purchase",
+                        "schema": {
+                            "$ref": "#/definitions/dto.PurchaseResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameters",
                         "schema": {
                             "$ref": "#/definitions/utils.ErrResponse"
                         }
@@ -1955,6 +1994,20 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.PriceHistoryResponse": {
+            "type": "object",
+            "properties": {
+                "advert_history": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/entity.PriceHistory"
+                    }
+                },
+                "advert_id": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.PurchaseRequest": {
             "type": "object",
             "properties": {
@@ -1969,6 +2022,9 @@ const docTemplate = `{
                 },
                 "payment_method": {
                     "$ref": "#/definitions/dto.PaymentMethod"
+                },
+                "user_id": {
+                    "type": "string"
                 }
             }
         },
@@ -2099,6 +2155,26 @@ const docTemplate = `{
                 },
                 "title": {
                     "type": "string"
+                }
+            }
+        },
+        "entity.PriceHistory": {
+            "type": "object",
+            "properties": {
+                "advertID": {
+                    "type": "string"
+                },
+                "changedAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "newPrice": {
+                    "type": "integer"
+                },
+                "oldPrice": {
+                    "type": "integer"
                 }
             }
         },
