@@ -213,7 +213,7 @@ func convertPreviewAdvertCardFromProto(advert *cartPurchaseProto.PreviewAdvertCa
 			ImageId:     uuid.MustParse(advert.Preview.ImageId),
 			CategoryId:  uuid.MustParse(advert.Preview.CategoryId),
 			SellerId:    uuid.MustParse(advert.Preview.SellerId),
-			Status:      dto.AdvertStatus(advert.Preview.Status),
+			Status:      dto.AdvertStatus(ConvertAdvertStatusToDB(advert.Preview.Status)),
 			Location:    advert.Preview.Location,
 			HasDelivery: advert.Preview.HasDelivery,
 		},
@@ -226,7 +226,7 @@ func convertCartFromProto(protoCart *cartPurchaseProto.Cart) *dto.Cart {
 	cart := &dto.Cart{
 		ID:            uuid.MustParse(protoCart.Id),
 		UserID:        uuid.MustParse(protoCart.UserId),
-		Status:        entity.CartStatus(protoCart.Status),
+		Status:        entity.CartStatus(ConvertCartStatusToDB(protoCart.Status)),
 		CartPurchases: make([]dto.CartPurchase, 0),
 	}
 
