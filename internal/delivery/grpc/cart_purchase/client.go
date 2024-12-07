@@ -62,17 +62,20 @@ func (c *CartPurchaseClient) AddPurchase(ctx context.Context, req dto.PurchaseRe
 		return nil, errors.Wrap(ErrPurchaseNotFound, err.Error())
 	}
 
-	purchaseStatus:= ConvertPurchaseStatusToDB(resp.Status)
-	paymentMethod := ConvertPaymentMethodToDB(resp.PaymentMethod)
-	deliveryMethod := ConvertDeliveryMethodToDB(resp.DeliveryMethod)
+	dtoAdverts := make([]dto.PreviewAdvertCard, 0)
+	for _, a := range resp.Adverts {
+		dtoAdverts = append(dtoAdverts, convertPreviewAdvertCardFromProto(a))
+	}
 
 	response := &dto.PurchaseResponse{
 		ID:             uuid.MustParse(resp.Id),
-		CartID:         uuid.MustParse(resp.CartId),
+		SellerID:       uuid.MustParse(resp.SellerId),
+		CustomerID:     uuid.MustParse(resp.CustomerId),
+		Adverts:        dtoAdverts,
 		Address:        resp.Address,
-		Status:         dto.PurchaseStatus(purchaseStatus),
-		PaymentMethod:  dto.PaymentMethod(paymentMethod),
-		DeliveryMethod: dto.DeliveryMethod(deliveryMethod),
+		Status:         dto.PurchaseStatus(ConvertPurchaseStatusToDB(resp.Status)),
+		PaymentMethod:  dto.PaymentMethod(ConvertPaymentMethodToDB(resp.PaymentMethod)),
+		DeliveryMethod: dto.DeliveryMethod(ConvertDeliveryMethodToDB(resp.DeliveryMethod)),
 	}
 
 	return response, nil
@@ -90,18 +93,22 @@ func (c *CartPurchaseClient) GetPurchasesByUserID(ctx context.Context, userID uu
 
 	var purchases []*dto.PurchaseResponse
 	for _, p := range resp.Purchases {
-		purchaseStatus := ConvertPurchaseStatusToDB(p.Status)
-		paymentMethod := ConvertPaymentMethodToDB(p.PaymentMethod)
-		deliveryMethod := ConvertDeliveryMethodToDB(p.DeliveryMethod)
+		dtoAdverts := make([]dto.PreviewAdvertCard, 0)
+		for _, a := range p.Adverts {
+			dtoAdverts = append(dtoAdverts, convertPreviewAdvertCardFromProto(a))
+		}
 
-		purchases = append(purchases, &dto.PurchaseResponse{
+		response := &dto.PurchaseResponse{
 			ID:             uuid.MustParse(p.Id),
-			CartID:         uuid.MustParse(p.CartId),
+			SellerID:       uuid.MustParse(p.SellerId),
 			Address:        p.Address,
-			Status:         dto.PurchaseStatus(purchaseStatus),
-			PaymentMethod:  dto.PaymentMethod(paymentMethod),
-			DeliveryMethod: dto.DeliveryMethod(deliveryMethod),
-		})
+			Adverts:        dtoAdverts,
+			Status:         dto.PurchaseStatus(ConvertPurchaseStatusToDB(p.Status)),
+			PaymentMethod:  dto.PaymentMethod(ConvertPaymentMethodToDB(p.PaymentMethod)),
+			DeliveryMethod: dto.DeliveryMethod(ConvertDeliveryMethodToDB(p.DeliveryMethod)),
+		}
+
+		purchases = append(purchases, response)
 	}
 
 	return purchases, nil
@@ -117,31 +124,7 @@ func (c *CartPurchaseClient) GetCartByID(ctx context.Context, cartID uuid.UUID) 
 		return nil, errors.Wrap(ErrCartNotFound, "cart not found")
 	}
 
-	cart := &dto.Cart{
-		ID:      uuid.MustParse(resp.Cart.Id),
-		UserID:  uuid.MustParse(resp.Cart.UserId),
-		Status:  entity.CartStatus(resp.Cart.Status),
-		Adverts: []dto.PreviewAdvertCard{},
-	}
-
-	for _, advert := range resp.Cart.Adverts {
-		ad := dto.PreviewAdvertCard{
-			Preview: dto.PreviewAdvert{
-				ID:          uuid.MustParse(advert.Preview.AdvertId),
-				Title:       advert.Preview.Title,
-				Price:       uint(advert.Preview.Price),
-				ImageId:     uuid.MustParse(advert.Preview.ImageId),
-				Status:      dto.AdvertStatus(advert.Preview.Status),
-				Location:    advert.Preview.Location,
-				HasDelivery: advert.Preview.HasDelivery,
-			},
-			IsSaved:  advert.IsSaved,
-			IsViewed: advert.IsViewed,
-		}
-		cart.Adverts = append(cart.Adverts, ad)
-	}
-
-	return cart, nil
+	return convertCartFromProto(resp.Cart), nil
 }
 
 func (c *CartPurchaseClient) GetCartByUserID(ctx context.Context, userID uuid.UUID) (*dto.Cart, error) {
@@ -154,31 +137,7 @@ func (c *CartPurchaseClient) GetCartByUserID(ctx context.Context, userID uuid.UU
 		return nil, errors.Wrap(ErrCartNotFound, "cart not found")
 	}
 
-	cart := &dto.Cart{
-		ID:      uuid.MustParse(resp.Cart.Id),
-		UserID:  uuid.MustParse(resp.Cart.UserId),
-		Status:  entity.CartStatus(resp.Cart.Status),
-		Adverts: []dto.PreviewAdvertCard{},
-	}
-
-	for _, advert := range resp.Cart.Adverts {
-		ad := dto.PreviewAdvertCard{
-			Preview: dto.PreviewAdvert{
-				ID:          uuid.MustParse(advert.Preview.AdvertId),
-				Title:       advert.Preview.Title,
-				Price:       uint(advert.Preview.Price),
-				ImageId:     uuid.MustParse(advert.Preview.ImageId),
-				Status:      dto.AdvertStatus(advert.Preview.Status),
-				Location:    advert.Preview.Location,
-				HasDelivery: advert.Preview.HasDelivery,
-			},
-			IsSaved:  advert.IsSaved,
-			IsViewed: advert.IsViewed,
-		}
-		cart.Adverts = append(cart.Adverts, ad)
-	}
-
-	return cart, nil
+	return convertCartFromProto(resp.Cart), nil
 }
 
 func (c *CartPurchaseClient) AddAdvertToCart(ctx context.Context, userID uuid.UUID, advertID uuid.UUID) (string, error) {
@@ -225,4 +184,63 @@ func (c *CartPurchaseClient) CheckCartExists(ctx context.Context, userID uuid.UU
 func (c *CartPurchaseClient) Ping(ctx context.Context) error {
 	_, err := c.client.Ping(ctx, &cartPurchaseProto.NoContent{})
 	return err
+}
+
+func convertPreviewAdvertCardToProto(advert dto.PreviewAdvertCard) *cartPurchaseProto.PreviewAdvertCard {
+	return &cartPurchaseProto.PreviewAdvertCard{
+		Preview: &cartPurchaseProto.PreviewAdvert{
+			Id:          advert.Preview.ID.String(),
+			Title:       advert.Preview.Title,
+			Price:       uint64(advert.Preview.Price),
+			CategoryId:  advert.Preview.CategoryId.String(),
+			ImageId:     advert.Preview.ImageId.String(),
+			SellerId:    advert.Preview.SellerId.String(),
+			Status:      cartPurchaseProto.AdvertStatus(cartPurchaseProto.AdvertStatus_value[string(advert.Preview.Status)]),
+			Location:    advert.Preview.Location,
+			HasDelivery: advert.Preview.HasDelivery,
+		},
+		IsSaved:  advert.IsSaved,
+		IsViewed: advert.IsViewed,
+	}
+}
+
+func convertPreviewAdvertCardFromProto(advert *cartPurchaseProto.PreviewAdvertCard) dto.PreviewAdvertCard {
+	return dto.PreviewAdvertCard{
+		Preview: dto.PreviewAdvert{
+			ID:          uuid.MustParse(advert.Preview.Id),
+			Title:       advert.Preview.Title,
+			Price:       uint(advert.Preview.Price),
+			ImageId:     uuid.MustParse(advert.Preview.ImageId),
+			CategoryId:  uuid.MustParse(advert.Preview.CategoryId),
+			SellerId:    uuid.MustParse(advert.Preview.SellerId),
+			Status:      dto.AdvertStatus(advert.Preview.Status),
+			Location:    advert.Preview.Location,
+			HasDelivery: advert.Preview.HasDelivery,
+		},
+		IsSaved:  advert.IsSaved,
+		IsViewed: advert.IsViewed,
+	}
+}
+
+func convertCartFromProto(protoCart *cartPurchaseProto.Cart) *dto.Cart {
+	cart := &dto.Cart{
+		ID:            uuid.MustParse(protoCart.Id),
+		UserID:        uuid.MustParse(protoCart.UserId),
+		Status:        entity.CartStatus(protoCart.Status),
+		CartPurchases: make([]dto.CartPurchase, 0),
+	}
+
+	for _, purchase := range protoCart.CartPurchases {
+		cartPurchase := dto.CartPurchase{
+			SellerID: uuid.MustParse(purchase.SellerId),
+			Adverts:  make([]dto.PreviewAdvertCard, 0),
+		}
+		
+		for _, advert := range purchase.Adverts {
+			cartPurchase.Adverts = append(cartPurchase.Adverts, convertPreviewAdvertCardFromProto(advert))
+		}
+		cart.CartPurchases = append(cart.CartPurchases, cartPurchase)
+	}
+
+	return cart
 }
