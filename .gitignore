@@ -36,3 +36,7 @@ app
 .idea/
 
 .vscode/
+
+# SSL certificates
+db/certs/*.crt
+db/certs/*.key
