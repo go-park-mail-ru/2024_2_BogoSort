@@ -1133,6 +1133,47 @@
                 }
             }
         },
+        "/api/v1/history/{advert_id}": {
+            "get": {
+                "description": "Получает историю изменения цены для указанного объявления",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "History"
+                ],
+                "summary": "Get Advert Price History",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Advert ID",
+                        "name": "advert_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.PriceHistoryResponse"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/login": {
             "post": {
                 "description": "Allows a user to log into the system",
@@ -1983,6 +2024,20 @@
                 }
             }
         },
+        "dto.PriceHistoryResponse": {
+            "type": "object",
+            "properties": {
+                "advert_history": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/entity.PriceHistory"
+                    }
+                },
+                "advert_id": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.PurchaseRequest": {
             "type": "object",
             "properties": {
@@ -2139,6 +2194,26 @@
                 },
                 "title": {
                     "type": "string"
+                }
+            }
+        },
+        "entity.PriceHistory": {
+            "type": "object",
+            "properties": {
+                "advertID": {
+                    "type": "string"
+                },
+                "changedAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "newPrice": {
+                    "type": "integer"
+                },
+                "oldPrice": {
+                    "type": "integer"
                 }
             }
         },

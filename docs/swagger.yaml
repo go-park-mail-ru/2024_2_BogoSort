@@ -169,6 +169,15 @@ definitions:
       preview:
         $ref: '#/definitions/dto.PreviewAdvert'
     type: object
+  dto.PriceHistoryResponse:
+    properties:
+      advert_history:
+        items:
+          $ref: '#/definitions/entity.PriceHistory'
+        type: array
+      advert_id:
+        type: string
+    type: object
   dto.PurchaseRequest:
     properties:
       address:
@@ -275,6 +284,19 @@ definitions:
         type: string
       title:
         type: string
+    type: object
+  entity.PriceHistory:
+    properties:
+      advertID:
+        type: string
+      changedAt:
+        type: string
+      id:
+        type: string
+      newPrice:
+        type: integer
+      oldPrice:
+        type: integer
     type: object
   entity.Seller:
     properties:
@@ -1043,6 +1065,33 @@ paths:
       summary: Get static file stream by ID
       tags:
       - static
+  /api/v1/history/{advert_id}:
+    get:
+      consumes:
+      - application/json
+      description: Получает историю изменения цены для указанного объявления
+      parameters:
+      - description: Advert ID
+        in: path
+        name: advert_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.PriceHistoryResponse'
+            type: array
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Get Advert Price History
+      tags:
+      - History
   /api/v1/login:
     post:
       consumes:

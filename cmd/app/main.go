@@ -158,6 +158,10 @@ func Init(cfg config.Config) (*mux.Router, error) {
 	if err != nil {
 		return nil, handleRepoError(err, "unable to create seller repository")
 	}
+	historyRepo, err := postgres.NewHistoryRepository(dbPool, ctx, cfg.PGTimeout)
+	if err != nil {
+		return nil, handleRepoError(err, "unable to create history repository")
+	}
 	csrfToken, err := utils.NewAesCryptHashToken(zap.L())
 	if err != nil {
 		return nil, handleRepoError(err, "unable to create csrf token")
@@ -166,7 +170,7 @@ func Init(cfg config.Config) (*mux.Router, error) {
 	if err != nil {
 		return nil, handleRepoError(err, "unable to create grpc client")
 	}
-	
+
 	cartPurchaseClient, err := cart_purchase.NewCartPurchaseClient(config.GetCartPurchaseAddress())
 	if err != nil {
 		return nil, handleRepoError(err, "unable to create cart purchase client")
@@ -176,7 +180,7 @@ func Init(cfg config.Config) (*mux.Router, error) {
 		return nil, handleRepoError(err, "unable to create static client")
 	}
 
-	advertsUseCase := service.NewAdvertService(advertsRepo, sellerRepo, userRepo)
+	advertsUseCase := service.NewAdvertService(advertsRepo, sellerRepo, userRepo, historyRepo)
 	categoryUseCase := service.NewCategoryService(categoryRepo)
 	userUC := service.NewUserService(userRepo, sellerRepo)
 	sessionUC := service.NewAuthService(sessionRepo)

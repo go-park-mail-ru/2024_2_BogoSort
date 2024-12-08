@@ -22,18 +22,21 @@ var (
 )
 
 type AdvertService struct {
-	advertRepo repository.AdvertRepository
-	sellerRepo repository.Seller
-	userRepo   repository.User
+	advertRepo  repository.AdvertRepository
+	sellerRepo  repository.Seller
+	userRepo    repository.User
+	historyRepo repository.HistoryRepository
 }
 
 func NewAdvertService(advertRepo repository.AdvertRepository,
 	sellerRepo repository.Seller,
-	userRepo repository.User) *AdvertService {
+	userRepo repository.User,
+	historyRepo repository.HistoryRepository) *AdvertService {
 	return &AdvertService{
-		advertRepo: advertRepo,
-		sellerRepo: sellerRepo,
-		userRepo:   userRepo,
+		advertRepo:  advertRepo,
+		sellerRepo:  sellerRepo,
+		userRepo:    userRepo,
+		historyRepo: historyRepo,
 	}
 }
 
@@ -244,6 +247,11 @@ func (s *AdvertService) Update(advert *dto.AdvertRequest, userId uuid.UUID, adve
 		HasDelivery: advert.HasDelivery,
 		Location:    advert.Location,
 	})
+
+	if existingAdvert.Price != advert.Price {
+		err = s.historyRepo.AddAdvertPriceChange(advertId, int(existingAdvert.Price), int(advert.Price))
+	}
+
 	if err != nil {
 		return entity.UsecaseWrap(ErrAdvertBadRequest, ErrAdvertBadRequest)
 	}
