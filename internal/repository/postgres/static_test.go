@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"context"
-	_ "context"
 	"fmt"
 	"os"
 	"path/filepath"

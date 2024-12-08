@@ -29,14 +29,15 @@ func (h *PurchaseEndpoint) ConfigureRoutes(router *mux.Router) {
 }
 
 // Add processes the addition of a purchase
-// @Summary Adds a purchase
-// @Description Accepts purchase data, validates it, and adds it to the system. Returns a response with purchase data or an error.
+// @Summary Create new purchase
+// @Description Creates a new purchase record for a user
 // @Tags Purchases
 // @Accept json
 // @Produce json
-// @Param purchase body dto.PurchaseRequest true "Purchase request"
-// @Success 201 {object} dto.PurchaseResponse "Successful purchase"
-// @Failure 400 {object} utils.ErrResponse "Invalid request parameters"
+// @Param user_id path string true "User ID" format(uuid)
+// @Param purchase body dto.PurchaseRequest true "Purchase details"
+// @Success 201 {object} dto.PurchaseResponse "Purchase created successfully"
+// @Failure 400 {object} utils.ErrResponse "Invalid request parameters or user ID"
 // @Failure 500 {object} utils.ErrResponse "Internal server error"
 // @Router /api/v1/purchase/{user_id} [post]
 func (h *PurchaseEndpoint) Add(w http.ResponseWriter, r *http.Request) {
@@ -74,13 +75,13 @@ func (h *PurchaseEndpoint) Add(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetByUserID processes the retrieval of purchases by user ID
-// @Summary Retrieves purchases by user ID
-// @Description Accepts a user ID, validates it, and retrieves purchases from the system. Returns a response with purchase data or an error.
+// @Summary Get user purchases
+// @Description Retrieves all purchases associated with a specific user ID
 // @Tags Purchases
 // @Accept json
 // @Produce json
-// @Param user_id path int true "User ID"
-// @Success 200 {array} dto.PurchaseResponse "Successful purchase"
+// @Param user_id path string true "User ID" format(uuid)
+// @Success 200 {array} dto.PurchaseResponse "List of user purchases"
 // @Failure 400 {object} utils.ErrResponse "Invalid user ID"
 // @Failure 500 {object} utils.ErrResponse "Internal server error"
 // @Router /api/v1/purchase/{user_id} [get]
