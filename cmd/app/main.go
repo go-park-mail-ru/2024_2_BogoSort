@@ -195,6 +195,7 @@ func Init(cfg config.Config) (*mux.Router, error) {
 	cartHandler := http3.NewCartEndpoint(cartPurchaseClient)
 	categoryHandler := http3.NewCategoryEndpoint(categoryUseCase)
 	staticHandler := http3.NewStaticEndpoint(*staticClient)
+	historyHandler := http3.NewHistoryEndpoint(historyRepo)
 
 	csrfEndpoints := http3.NewCSRFEndpoint(csrfToken, sessionManager)
 	csrfEndpoints.Configure(router)
@@ -211,6 +212,7 @@ func Init(cfg config.Config) (*mux.Router, error) {
 	cartHandler.Configure(authRouter)
 	purchaseHandler.ConfigureRoutes(authRouter)
 	staticHandler.ConfigureRoutes(router)
+	historyHandler.ConfigureRoutes(authRouter)
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	router.PathPrefix("/api/v1/metrics").Handler(promhttp.Handler())
 
