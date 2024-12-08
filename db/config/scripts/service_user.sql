@@ -29,7 +29,6 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE
     price_history
 TO emporium_service_role;
 
--- Права на последовательности
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO emporium_service_role;
 
 -- Права на функции
@@ -55,7 +54,6 @@ GRANT USAGE ON EXTENSION "uuid-ossp" TO emporium_service_role;
 -- Права на полнотекстовый поиск
 GRANT SELECT ON TABLE pg_ts_dict, pg_ts_parser, pg_ts_config TO emporium_service_role;
 
--- Назначение роли пользователю
 GRANT emporium_service_role TO emporium_service;
 
 -- Отзыв опасных прав

@@ -143,8 +143,14 @@ func GetStaticAddress() string {
 }
 
 func (cfg *Config) GetConnectURL() string {
-	user := cfg.PGUser
-	pass := cfg.PGPass
+	user := os.Getenv("SERVICE_USER")
+	if user == "" {
+		user = cfg.PGUser
+	}
+	pass := os.Getenv("SERVICE_PASSWORD")
+	if pass == "" {
+		pass = cfg.PGPass
+	}
 
 	return fmt.Sprintf(
 		"postgres://%s:%s@%s:%d/%s?sslmode=verify-ca&sslrootcert=/etc/postgresql/certs/root.crt&pool_max_conns=%d&pool_min_conns=%d&pool_max_conn_lifetime=%s&pool_max_conn_idle_time=%s&pool_health_check_period=%s",
