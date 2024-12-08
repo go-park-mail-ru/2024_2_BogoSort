@@ -5,7 +5,7 @@ import (
 )
 
 type PurchaseRequest struct {
-	CartID         uuid.UUID 	`json:"cart_id"`
+	CartID         uuid.UUID   	`json:"cart_id"`
 	Address        string   	`json:"address"`
 	PaymentMethod  PaymentMethod `json:"payment_method"`
 	DeliveryMethod DeliveryMethod `json:"delivery_method"`
@@ -35,7 +35,9 @@ const (
 
 type PurchaseResponse struct {
 	ID uuid.UUID `json:"id"`
-	CartID uuid.UUID `json:"cart_id"`
+	SellerID uuid.UUID `json:"seller_id"`
+	CustomerID uuid.UUID `json:"customer_id"`
+	Adverts []PreviewAdvertCard `json:"adverts"`
 	Address string `json:"address"`
 	Status PurchaseStatus `json:"status"`
 	PaymentMethod PaymentMethod `json:"payment_method"`

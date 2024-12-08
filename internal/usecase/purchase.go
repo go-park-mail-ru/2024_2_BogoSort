@@ -7,7 +7,7 @@ import (
 
 type Purchase interface {
 	// Add добавляет покупку в базу данных
-	Add(purchaseRequest dto.PurchaseRequest, userId uuid.UUID) (*dto.PurchaseResponse, error)
+	Add(purchaseRequest dto.PurchaseRequest, userId uuid.UUID) ([]*dto.PurchaseResponse, error)
 
 	// GetByUserId получает покупки по UserID
 	GetByUserId(userID uuid.UUID) ([]*dto.PurchaseResponse, error)

@@ -15,10 +15,15 @@ type DeleteAdvertFromUserCartRequest struct {
 	AdvertID uuid.UUID `json:"advert_id"`
 }
 
+type CartPurchase struct {
+	SellerID uuid.UUID `json:"seller_id"`
+	Adverts []PreviewAdvertCard `json:"adverts"`
+}
+
 type Cart struct {
 	ID      uuid.UUID         `json:"id"`
 	UserID  uuid.UUID         `json:"user_id"`
-	Adverts []PreviewAdvertCard `json:"adverts"`
+	CartPurchases []CartPurchase `json:"cart_purchases"`
 	Status  entity.CartStatus `json:"status"`
 }
 
