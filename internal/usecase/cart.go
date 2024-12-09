@@ -7,7 +7,7 @@ import (
 
 type Cart interface {
 	// AddAdvert добавляет товар в корзину юзера по его ID
-	AddAdvert(userID uuid.UUID, AdvertID uuid.UUID) error
+	AddAdvert(userID uuid.UUID, advertID uuid.UUID) error
 	// GetByID возвращает корзину по ID корзины
 	GetById(cartID uuid.UUID) (dto.Cart, error)
 	// GetByUserID возвращает корзину по ID юзера

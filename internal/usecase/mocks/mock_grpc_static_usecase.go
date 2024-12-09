@@ -13,30 +13,30 @@ package mocks
 // )
 
 // // MockStaticUseCase is a mock of StaticUseCase interface.
-// type MockStaticUseCase struct {
+// type MockGRPCStaticUseCase struct {
 // 	ctrl     *gomock.Controller
-// 	recorder *MockStaticUseCaseMockRecorder
+// 	recorder *MockGRPCStaticUseCaseMockRecorder
 // }
 
 // // MockStaticUseCaseMockRecorder is the mock recorder for MockStaticUseCase.
-// type MockStaticUseCaseMockRecorder struct {
-// 	mock *MockStaticUseCase
+// type MockGRPCStaticUseCaseMockRecorder struct {
+// 	mock *MockGRPCStaticUseCase
 // }
 
 // // NewMockStaticUseCase creates a new mock instance.
-// func NewMockStaticUseCase(ctrl *gomock.Controller) *MockStaticUseCase {
-// 	mock := &MockStaticUseCase{ctrl: ctrl}
-// 	mock.recorder = &MockStaticUseCaseMockRecorder{mock}
+// func NewMockGRPCStaticUseCase(ctrl *gomock.Controller) *MockGRPCStaticUseCase {
+// 	mock := &MockGRPCStaticUseCase{ctrl: ctrl}
+// 	mock.recorder = &MockGRPCStaticUseCaseMockRecorder{mock}
 // 	return mock
 // }
 
 // // EXPECT returns an object that allows the caller to indicate expected use.
-// func (m *MockStaticUseCase) EXPECT() *MockStaticUseCaseMockRecorder {
+// func (m *MockGRPCStaticUseCase) EXPECT() *MockGRPCStaticUseCaseMockRecorder {
 // 	return m.recorder
 // }
 
 // // GetAvatar mocks base method.
-// func (m *MockStaticUseCase) GetAvatar(staticID uuid.UUID) (string, error) {
+// func (m *MockGRPCStaticUseCase) GetAvatar(staticID uuid.UUID) (string, error) {
 // 	m.ctrl.T.Helper()
 // 	ret := m.ctrl.Call(m, "GetAvatar", staticID)
 // 	ret0, _ := ret[0].(string)
@@ -45,9 +45,9 @@ package mocks
 // }
 
 // // GetAvatar indicates an expected call of GetAvatar.
-// func (mr *MockStaticUseCaseMockRecorder) GetAvatar(staticID interface{}) *gomock.Call {
+// func (mr *MockGRPCStaticUseCaseMockRecorder) GetAvatar(staticID interface{}) *gomock.Call {
 // 	mr.mock.ctrl.T.Helper()
-// 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAvatar", reflect.TypeOf((*MockStaticUseCase)(nil).GetAvatar), staticID)
+// 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAvatar", reflect.TypeOf((*MockGRPCStaticUseCase)(nil).GetAvatar), staticID)
 // }
 
 // // GetStatic mocks base method.
