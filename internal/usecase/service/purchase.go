@@ -102,6 +102,9 @@ func (s *PurchaseService) Add(purchaseRequest dto.PurchaseRequest, userId uuid.U
 		return nil, entity.UsecaseWrap(errors.New("failed to update cart status"), err)
 	}
 
+	logger := middleware.GetLogger(ctx)
+	logger.Info("purchases added", zap.Any("purchases", purchases))
+
 	return purchases, nil
 }
 

@@ -118,6 +118,8 @@ func (r *PurchaseDB) Add(tx pgx.Tx, purchase *entity.Purchase) (*entity.Purchase
 		}
 	}
 
+	logger.Info("purchase added to db", zap.Any("purchase", entityPurchase))
+
 	entityPurchase.Adverts = purchase.Adverts
 	return &entityPurchase, nil
 }

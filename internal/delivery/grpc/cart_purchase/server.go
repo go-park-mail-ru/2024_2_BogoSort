@@ -28,11 +28,14 @@ func NewGrpcServer(cartUC usecase.Cart, purchaseUC usecase.Purchase) *GrpcServer
 }
 
 func (s *GrpcServer) AddPurchase(ctx context.Context, req *proto.AddPurchaseRequest) (*proto.AddPurchaseResponse, error) {
+    paymentMethod := ConvertPaymentMethodToDB(req.PaymentMethod)
+    deliveryMethod := ConvertDeliveryMethodToDB(req.DeliveryMethod)
+
     purchaseReq := dto.PurchaseRequest{
         CartID:         uuid.MustParse(req.CartId),
         Address:        req.Address,
-        PaymentMethod:  dto.PaymentMethod(ConvertPaymentMethodToDB(req.PaymentMethod)),
-        DeliveryMethod: dto.DeliveryMethod(ConvertDeliveryMethodToDB(req.DeliveryMethod)),
+        PaymentMethod:  dto.PaymentMethod(paymentMethod),
+        DeliveryMethod: dto.DeliveryMethod(deliveryMethod),
         UserID:         uuid.MustParse(req.UserId),
     }
 
@@ -47,15 +50,28 @@ func (s *GrpcServer) AddPurchase(ctx context.Context, req *proto.AddPurchaseRequ
         protoAdverts = append(protoAdverts, protoAdvert)
     }
 
+    purchaseStatus, err := ConvertDBPurchaseStatusToEnum(string(purchase[0].Status))
+    if err != nil {
+        return nil, status.Errorf(codes.Internal, "failed to convert purchase status: %v", err)
+    }
+    purchasePaymentMethod, err := ConvertDBPaymentMethodToEnum(string(purchase[0].PaymentMethod))
+    if err != nil {
+        return nil, status.Errorf(codes.Internal, "failed to convert purchase payment method: %v", err)
+    }
+    purchaseDeliveryMethod, err := ConvertDBDeliveryMethodToEnum(string(purchase[0].DeliveryMethod))
+    if err != nil {
+        return nil, status.Errorf(codes.Internal, "failed to convert purchase delivery method: %v", err)
+    }
+
     return &proto.AddPurchaseResponse{
         Id:             purchase[0].ID.String(),
         SellerId:       purchase[0].SellerID.String(),
         CustomerId:     purchase[0].CustomerID.String(),
         Address:        purchase[0].Address,
         Adverts:        protoAdverts,
-        Status:         proto.PurchaseStatus(proto.PurchaseStatus_value[string(purchase[0].Status)]),
-        PaymentMethod:  proto.PaymentMethod(proto.PaymentMethod_value[string(purchase[0].PaymentMethod)]),
-        DeliveryMethod: proto.DeliveryMethod(proto.DeliveryMethod_value[string(purchase[0].DeliveryMethod)]),
+        Status:         purchaseStatus,
+        PaymentMethod:  purchasePaymentMethod,
+        DeliveryMethod: purchaseDeliveryMethod,
     }, nil
 }
 
@@ -88,19 +104,15 @@ func (s *GrpcServer) GetPurchasesByUserID(ctx context.Context, req *proto.GetPur
 			protoAdverts = append(protoAdverts, protoAdvert)
 		}
 
-		purchaseStatus := proto.PurchaseStatus(proto.PurchaseStatus_value[string(p.Status)])
-		purchasePaymentMethod := proto.PaymentMethod(proto.PaymentMethod_value[string(p.PaymentMethod)])
-		purchaseDeliveryMethod := proto.DeliveryMethod(proto.DeliveryMethod_value[string(p.DeliveryMethod)])
-
 		protoPurchases = append(protoPurchases, &proto.PurchaseResponse{
 			Id:             p.ID.String(),
 			SellerId:       p.SellerID.String(),
 			CustomerId:     p.CustomerID.String(),
 			Adverts:        protoAdverts,
 			Address:        p.Address,
-			Status:         purchaseStatus,
-			PaymentMethod:  purchasePaymentMethod,
-			DeliveryMethod: purchaseDeliveryMethod,
+			Status:         proto.PurchaseStatus(proto.PurchaseStatus_value[string(p.Status)]),
+			PaymentMethod:  proto.PaymentMethod(proto.PaymentMethod_value[string(p.PaymentMethod)]),
+			DeliveryMethod: proto.DeliveryMethod(proto.DeliveryMethod_value[string(p.DeliveryMethod)]),
 		})
 	}
 

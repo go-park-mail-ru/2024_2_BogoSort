@@ -54,6 +54,8 @@ func (h *PurchaseEndpoint) Add(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logger.Info("purchase", zap.Any("purchase", purchase))
+
 	if err := json.NewDecoder(r.Body).Decode(&purchase); err != nil {
 		logger.Error("failed to decode purchase request", zap.Error(err))
 		utils.SendErrorResponse(w, http.StatusBadRequest, "invalid request parameters")

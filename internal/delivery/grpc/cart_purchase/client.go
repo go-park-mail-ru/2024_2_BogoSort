@@ -2,6 +2,7 @@ package cart_purchase
 
 import (
 	"context"
+	"fmt"
 
 	cartPurchaseProto "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/cart_purchase/proto"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
@@ -49,11 +50,21 @@ func (c *CartPurchaseClient) Close() error {
 }
 
 func (c *CartPurchaseClient) AddPurchase(ctx context.Context, req dto.PurchaseRequest) (*dto.PurchaseResponse, error) {
+	paymentMethod, err := ConvertDBPaymentMethodToEnum(string(req.PaymentMethod))
+	if err != nil {
+		return nil, err
+	}
+
+	deliveryMethod, err := ConvertDBDeliveryMethodToEnum(string(req.DeliveryMethod))
+	if err != nil {
+		return nil, err
+	}
+
 	protoReq := &cartPurchaseProto.AddPurchaseRequest{
 		CartId:         req.CartID.String(),
 		Address:        req.Address,
-		PaymentMethod:  cartPurchaseProto.PaymentMethod(cartPurchaseProto.PaymentMethod_value[string(req.PaymentMethod)]),
-		DeliveryMethod: cartPurchaseProto.DeliveryMethod(cartPurchaseProto.DeliveryMethod_value[string(req.DeliveryMethod)]),
+		PaymentMethod:  paymentMethod,
+		DeliveryMethod: deliveryMethod,
 		UserId:         req.UserID.String(),
 	}
 
@@ -66,6 +77,14 @@ func (c *CartPurchaseClient) AddPurchase(ctx context.Context, req dto.PurchaseRe
 	for _, a := range resp.Adverts {
 		dtoAdverts = append(dtoAdverts, convertPreviewAdvertCardFromProto(a))
 	}
+
+	fmt.Println("resp.Status", resp.Status)
+	fmt.Println("resp.PaymentMethod", resp.PaymentMethod)
+	fmt.Println("resp.DeliveryMethod", resp.DeliveryMethod)
+
+	fmt.Println("resp.Status", ConvertPurchaseStatusToDB(resp.Status))
+	fmt.Println("resp.PaymentMethod", ConvertPaymentMethodToDB(resp.PaymentMethod))
+	fmt.Println("resp.DeliveryMethod", ConvertDeliveryMethodToDB(resp.DeliveryMethod))
 
 	response := &dto.PurchaseResponse{
 		ID:             uuid.MustParse(resp.Id),
@@ -108,6 +127,8 @@ func (c *CartPurchaseClient) GetPurchasesByUserID(ctx context.Context, userID uu
 			PaymentMethod:  dto.PaymentMethod(ConvertPaymentMethodToDB(p.PaymentMethod)),
 			DeliveryMethod: dto.DeliveryMethod(ConvertDeliveryMethodToDB(p.DeliveryMethod)),
 		}
+
+		fmt.Println("RESPONSE", response)
 
 		purchases = append(purchases, response)
 	}

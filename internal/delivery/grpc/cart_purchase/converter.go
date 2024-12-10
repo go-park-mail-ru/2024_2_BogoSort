@@ -7,13 +7,13 @@ import (
 
 func ConvertDBPurchaseStatusToEnum(dbStatus string) (proto.PurchaseStatus, error) {
 	switch dbStatus {
-	case "PURCHASE_STATUS_PENDING":
+	case "pending":
 		return proto.PurchaseStatus_PURCHASE_STATUS_PENDING, nil
-	case "PURCHASE_STATUS_IN_PROGRESS":
+	case "in_progress":
 		return proto.PurchaseStatus_PURCHASE_STATUS_IN_PROGRESS, nil
-	case "PURCHASE_STATUS_COMPLETED":
+	case "completed":
 		return proto.PurchaseStatus_PURCHASE_STATUS_COMPLETED, nil
-	case "PURCHASE_STATUS_CANCELED":
+	case "canceled":
 		return proto.PurchaseStatus_PURCHASE_STATUS_CANCELED, nil
 	default:
 		return proto.PurchaseStatus_PURCHASE_STATUS_PENDING, errors.New("unknown purchase status")
