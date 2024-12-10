@@ -7,13 +7,13 @@ import (
 
 func ConvertDBPurchaseStatusToEnum(dbStatus string) (proto.PurchaseStatus, error) {
 	switch dbStatus {
-	case "PURCHASE_STATUS_PENDING":
+	case "pending":
 		return proto.PurchaseStatus_PURCHASE_STATUS_PENDING, nil
-	case "PURCHASE_STATUS_IN_PROGRESS":
+	case "in_progress":
 		return proto.PurchaseStatus_PURCHASE_STATUS_IN_PROGRESS, nil
-	case "PURCHASE_STATUS_COMPLETED":
+	case "completed":
 		return proto.PurchaseStatus_PURCHASE_STATUS_COMPLETED, nil
-	case "PURCHASE_STATUS_CANCELED":
+	case "canceled":
 		return proto.PurchaseStatus_PURCHASE_STATUS_CANCELED, nil
 	default:
 		return proto.PurchaseStatus_PURCHASE_STATUS_PENDING, errors.New("unknown purchase status")
@@ -85,8 +85,6 @@ func ConvertDBCartStatusToEnum(dbStatus string) (proto.CartStatus, error) {
 		return proto.CartStatus_CART_STATUS_ACTIVE, nil
 	case "inactive":
 		return proto.CartStatus_CART_STATUS_INACTIVE, nil
-	case "deleted":
-		return proto.CartStatus_CART_STATUS_DELETED, nil
 	default:
 		return proto.CartStatus_CART_STATUS_ACTIVE, errors.New("unknown cart status")
 	}
@@ -98,8 +96,6 @@ func ConvertCartStatusToDB(status proto.CartStatus) string {
 		return "active"
 	case proto.CartStatus_CART_STATUS_INACTIVE:
 		return "inactive"
-	case proto.CartStatus_CART_STATUS_DELETED:
-		return "deleted"
 	default:
 		return "unknown"
 	}
