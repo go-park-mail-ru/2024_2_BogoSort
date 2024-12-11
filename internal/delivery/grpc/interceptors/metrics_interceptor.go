@@ -3,10 +3,11 @@ package interceptors
 import (
 	"context"
 	"net/http"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/metrics"
-	"google.golang.org/grpc"
 	"strconv"
 	"time"
+
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/metrics"
+	"google.golang.org/grpc"
 )
 
 type Interceptor struct {
@@ -37,7 +38,8 @@ func getCode(err string) int {
 }
 
 func (interceptor *Interceptor) NewMetricsInterceptor(ctx context.Context, req interface{},
-	info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	info *grpc.UnaryServerInfo, handler grpc.UnaryHandler,
+) (interface{}, error) {
 	start := time.Now()
 	h, err := handler(ctx, req)
 	end := time.Since(start)
@@ -50,7 +52,7 @@ func (interceptor *Interceptor) NewMetricsInterceptor(ctx context.Context, req i
 	codeStr := strconv.Itoa(code)
 	interceptor.metrics.AddDuration(codeStr, info.FullMethod, end)
 	interceptor.metrics.IncTotalHits(codeStr, info.FullMethod)
-	if code >= 400  {
+	if code >= 400 {
 		interceptor.metrics.IncTotalErrors(codeStr, info.FullMethod)
 	}
 

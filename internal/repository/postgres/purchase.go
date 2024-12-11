@@ -21,9 +21,9 @@ type PurchaseDB struct {
 
 const (
 	addPurchaseQuery = `
-		INSERT INTO purchase (seller_id, customer_id, adress, status, payment_method, delivery_method, cart_id) 
+		INSERT INTO purchase (seller_id, customer_id, address, status, payment_method, delivery_method, cart_id) 
 		VALUES ($1, $2, $3, $4, $5, $6, $7) 
-		RETURNING id, seller_id, customer_id, adress, status, payment_method, delivery_method, cart_id`
+		RETURNING id, seller_id, customer_id, address, status, payment_method, delivery_method, cart_id`
 
 	addPurchaseAdvertQuery = `
 		INSERT INTO purchase_advert (purchase_id, advert_id)
@@ -84,7 +84,7 @@ func (c *PurchaseDB) BeginTransaction() (pgx.Tx, error) {
 func (r *PurchaseDB) Add(tx pgx.Tx, purchase *entity.Purchase) (*entity.Purchase, error) {
 	var entityPurchase entity.Purchase
 	logger := middleware.GetLogger(r.ctx)
-	logger.Info("adding purchase to db", 
+	logger.Info("adding purchase to db",
 		zap.String("seller_id", purchase.SellerID.String()),
 		zap.String("customer_id", purchase.CustomerID.String()),
 		zap.String("cart_id", purchase.CartID.String()))

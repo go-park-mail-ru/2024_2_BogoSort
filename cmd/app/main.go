@@ -36,7 +36,11 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	defer logger.Sync()
+	defer func() {
+		if err := logger.Sync(); err != nil {
+			logger.Error("Error syncing logger", zap.Error(err))
+		}
+	}()
 
 	zap.ReplaceGlobals(logger)
 
@@ -109,7 +113,7 @@ func main() {
 }
 
 func Init(cfg config.Config) (*mux.Router, error) {
-	var logger = zap.L()
+	logger := zap.L()
 
 	router := mux.NewRouter()
 	router.Use(recoveryMiddleware)

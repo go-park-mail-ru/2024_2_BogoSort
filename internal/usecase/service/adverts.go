@@ -31,7 +31,8 @@ type AdvertService struct {
 func NewAdvertService(advertRepo repository.AdvertRepository,
 	sellerRepo repository.Seller,
 	userRepo repository.User,
-	historyRepo repository.HistoryRepository) *AdvertService {
+	historyRepo repository.HistoryRepository,
+) *AdvertService {
 	return &AdvertService{
 		advertRepo:  advertRepo,
 		sellerRepo:  sellerRepo,
@@ -133,7 +134,6 @@ func (s *AdvertService) GetByCartId(cartId, userId uuid.UUID) ([]*dto.PreviewAdv
 
 func (s *AdvertService) GetById(advertId, userId uuid.UUID) (*dto.AdvertCard, error) {
 	advert, err := s.advertRepo.GetById(advertId, userId)
-
 	if err != nil {
 		if errors.Is(err, repository.ErrAdvertNotFound) {
 			return nil, entity.UsecaseWrap(ErrAdvertNotFound, ErrAdvertNotFound)
@@ -293,9 +293,15 @@ func (s *AdvertService) UpdateStatus(advertId, userId uuid.UUID, status dto.Adve
 	}
 	defer func() {
 		if err != nil {
-			tx.Rollback(ctx)
+			if rollbackErr := tx.Rollback(ctx); rollbackErr != nil {
+				logger := middleware.GetLogger(ctx)
+				logger.Error("failed to rollback transaction", zap.Error(rollbackErr))
+			}
 		} else {
-			tx.Commit(ctx)
+			if commitErr := tx.Commit(ctx); commitErr != nil {
+				logger := middleware.GetLogger(ctx)
+				logger.Error("failed to commit transaction", zap.Error(commitErr))
+			}
 		}
 	}()
 

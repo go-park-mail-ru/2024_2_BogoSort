@@ -13,6 +13,4 @@ type Auth interface {
 	GetUserIdBySession(session string) (uuid.UUID, error)
 }
 
-var (
-	ErrSessionNotFound = errors.New("session not found")
-)
+var ErrSessionNotFound = errors.New("session not found")

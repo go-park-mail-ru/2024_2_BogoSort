@@ -17,7 +17,6 @@ type PixSlice []byte
 //
 //	x := make([]X, xLen)
 //	y := AsPixSilce(x)
-//
 func AsPixSilce(slice interface{}) (d PixSlice) {
 	sv := reflect.ValueOf(slice)
 	h := (*reflect.SliceHeader)((unsafe.Pointer(&d)))
@@ -30,9 +29,9 @@ func AsPixSilce(slice interface{}) (d PixSlice) {
 // Slice convert a normal slice to new type slice.
 //
 // Convert []byte to []Y:
+//
 //	x := make([]byte, xLen)
 //	y := PixSlice(x).Slice(reflect.TypeOf([]Y(nil))).([]Y)
-//
 func (d PixSlice) Slice(newSliceType reflect.Type) interface{} {
 	sv := reflect.ValueOf(d)
 	newSlice := reflect.New(newSliceType)

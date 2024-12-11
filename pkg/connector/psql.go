@@ -7,7 +7,7 @@ import (
 )
 
 func GetPostgresConnector(dsn string) (*pgxpool.Pool, error) {
-	var dbPool, err = pgxpool.New(context.Background(), dsn)
+	dbPool, err := pgxpool.New(context.Background(), dsn)
 	if err != nil {
 		return nil, err
 	}

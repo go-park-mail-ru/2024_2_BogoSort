@@ -94,7 +94,7 @@ func (s StaticDB) Upload(path, filename string, data []byte) (uuid.UUID, error) 
 	}
 
 	dir := filepath.Dir(fmt.Sprintf("%s/%s/", s.BasicPath, path))
-	err := os.MkdirAll(dir, 0755)
+	err := os.MkdirAll(dir, 0o755)
 	if err != nil {
 		logger.Error("error creating static directory", zap.String("path", dir), zap.Error(err))
 		return uuid.UUID{}, entity.PSQLWrap(
