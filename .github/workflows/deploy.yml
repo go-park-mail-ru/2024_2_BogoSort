@@ -14,7 +14,10 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: List Files in Workspace
+      - name: Print Current Directory
+        run: pwd
+
+      - name: List Files
         run: ls -R
 
       - name: Run Linters
@@ -22,6 +25,7 @@ jobs:
         with:
           version: v1.56.2
           args: --config .golangci.yaml
+          working-directory: /home/runner/work/2024_2_BogoSort/2024_2_BogoSort
 
   run-tests:
     name: Run Tests
