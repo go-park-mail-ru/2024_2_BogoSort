@@ -41,6 +41,7 @@ type Config struct {
 	PGPass           string        `yaml:"pg_password"`
 	PGTimeout        time.Duration `yaml:"pg_timeout" default:"5s"`
 	PGDB             string        `yaml:"pg_db"`
+	PGMaxConns       int           `yaml:"pg_max_conns" default:"20"`
 	RdAddr           string        `yaml:"rd_addr"`
 	RdPass           string        `yaml:"rd_password"`
 	RdDB             int           `yaml:"rd_db"`
@@ -89,6 +90,11 @@ func Init() (Config, error) {
 	if port := os.Getenv("PG_PORT"); port != "" {
 		if p, err := strconv.Atoi(port); err == nil {
 			cfg.PGPort = p
+		}
+	}
+	if maxConns := os.Getenv("PG_MAX_CONNS"); maxConns != "" {
+		if conns, err := strconv.Atoi(maxConns); err == nil {
+			cfg.PGMaxConns = conns
 		}
 	}
 	if expiration := os.Getenv("SESSION_EXPIRATION_TIME"); expiration != "" {
@@ -189,4 +195,8 @@ func GetStaticConfig() StaticConfig {
 
 func GetCSRFSecret() string {
 	return cfg.CSRFSecret
+}
+
+func (cfg *Config) GetPGMaxConns() int {
+	return cfg.PGMaxConns
 }

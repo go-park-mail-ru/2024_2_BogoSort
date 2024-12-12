@@ -24,6 +24,7 @@ pg_user: "postgres"
 pg_password: "postgres"
 pg_db: "emporiumdb"
 pg_timeout: 5s
+pg_max_conns: 80
 
 rd_addr: "redis:6379"
 rd_password: ""
