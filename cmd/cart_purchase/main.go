@@ -5,17 +5,18 @@ import (
 	"net"
 	"time"
 
+	"net/http"
+
 	"github.com/go-park-mail-ru/2024_2_BogoSort/config"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/cart_purchase"
 	cartPurchaseProto "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/cart_purchase/proto"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/interceptors"
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/metrics"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository/postgres"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase/service"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/metrics"
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/interceptors"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/pkg/connector"
-	"go.uber.org/zap"
-	"net/http"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	healthProto "google.golang.org/grpc/health/grpc_health_v1"
@@ -30,7 +31,7 @@ func main() {
 		zap.L().Fatal("Ошибка при инициализации конфигурации", zap.Error(err))
 	}
 
-	dbPool, err := connector.GetPostgresConnector(cfg.GetConnectURL())
+	dbPool, err := connector.GetPostgresConnector(cfg.GetConnectURL(), int32(cfg.GetPGMaxConns()))
 	if err != nil {
 		zap.L().Error("Failed to connect to Postgres", zap.Error(err))
 		return
@@ -72,11 +73,11 @@ func main() {
 	address := config.GetCartPurchaseAddress()
 
 	http.Handle("/api/v1/metrics", promhttp.Handler())
-    go func() {
-        if err := http.ListenAndServe(":7052", nil); err != nil {
-            zap.L().Fatal("Failed to start metrics HTTP server", zap.Error(err))
-        }
-    }()
+	go func() {
+		if err := http.ListenAndServe(":7052", nil); err != nil {
+			zap.L().Fatal("Failed to start metrics HTTP server", zap.Error(err))
+		}
+	}()
 
 	lis, err := net.Listen("tcp", address)
 	if err != nil {

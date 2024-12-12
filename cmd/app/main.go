@@ -125,7 +125,7 @@ func Init(cfg config.Config) (*mux.Router, error) {
 
 	authRouter := router.PathPrefix("").Subrouter()
 
-	dbPool, err := connector.GetPostgresConnector(cfg.GetConnectURL())
+	dbPool, err := connector.GetPostgresConnector(cfg.GetConnectURL(), int32(cfg.GetPGMaxConns()))
 	if err != nil {
 		zap.L().Error("Failed to connect to Postgres", zap.Error(err))
 		return nil, errors.Wrap(err, "failed to connect to Postgres")
