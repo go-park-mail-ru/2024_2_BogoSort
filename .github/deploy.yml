@@ -1,4 +1,4 @@
-name: IMAO_2024_1 deploy
+name: BogoSort_2024_2 deploy
 
 on:
   push:
@@ -39,6 +39,7 @@ jobs:
 
   deploy:
     if: github.ref == 'refs/heads/main'
+    needs: run-linters
     needs: run-tests
     runs-on: ubuntu-latest
     steps:
@@ -50,7 +51,7 @@ jobs:
           key: ${{ secrets.PRIVATE_KEY }}
           script: | 
             cd /home/${{ secrets.USERNAME }}/server/back
-            git checkout dev
+            git checkout develop
             git fetch && git pull
       - name: Building containers
         uses: appleboy/ssh-action@master
