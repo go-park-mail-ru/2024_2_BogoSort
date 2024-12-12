@@ -14,11 +14,8 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Set up Go
-        uses: actions/setup-go@v4
-        with:
-          go-version: '1.23'
-          cache: false
+      - name: List Files in Workspace
+        run: ls -R
 
       - name: Run Linters
         uses: golangci/golangci-lint-action@v3
