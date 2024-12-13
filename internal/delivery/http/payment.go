@@ -3,12 +3,14 @@ package http
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/middleware"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/utils"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/usecase"
 	"github.com/gorilla/mux"
-	"io/ioutil"
-	"net/http"
+	"go.uber.org/zap"
 )
 
 type PaymentEndpoint struct {
@@ -47,27 +49,29 @@ type PaymentRequest struct {
 // @Produce json
 // @Param paymentRequest body PaymentRequest true "Payment Request"
 // @Success 200 {object} map[string]string "Payment URL"
-// @Failure 400 {string} string "Invalid request body or Payment service error"
-// @Failure 500 {string} string "Payment service error"
+// @Failure 400 {object} utils.ErrResponse "Invalid request or payment service error"
+// @Failure 500 {object} utils.ErrResponse "Internal server error"
 // @Router /api/v1/payment/init [post]
 func (h *PaymentEndpoint) InitPayment(w http.ResponseWriter, r *http.Request) {
 	logger := middleware.GetLogger(r.Context())
 
 	var paymentReq PaymentRequest
 	if err := json.NewDecoder(r.Body).Decode(&paymentReq); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		logger.Error("Invalid request body", zap.Error(err))
+		utils.SendErrorResponse(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
 
 	url, err := h.paymentUC.InitPayment(paymentReq.ItemID)
 	if err != nil {
-		logger.Error(err.Error())
-		http.Error(w, "Payment service error", http.StatusBadRequest)
+		logger.Error("Payment service error", zap.Error(err))
+		utils.SendErrorResponse(w, http.StatusBadRequest, "Payment service error")
 		return
 	}
 
 	if url == nil || *url == "" {
-		http.Error(w, "Payment service error", http.StatusInternalServerError)
+		logger.Error("Payment service returned empty URL")
+		utils.SendErrorResponse(w, http.StatusInternalServerError, "Payment service error")
 		return
 	}
 
@@ -80,15 +84,15 @@ func (h *PaymentEndpoint) InitPayment(w http.ResponseWriter, r *http.Request) {
 
 func (h *PaymentEndpoint) Callback(w http.ResponseWriter, r *http.Request) {
 	logger := middleware.GetLogger(r.Context())
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, "Failed to read request body", http.StatusInternalServerError)
+		logger.Error("Failed to read request body", zap.Error(err))
+		utils.SendErrorResponse(w, http.StatusInternalServerError, "Failed to read request body")
 		return
 	}
-
 	defer r.Body.Close()
 
-	logger.Info(fmt.Sprintf("Callback received: %s\n", string(body)))
+	logger.Info("Callback received", zap.String("body", string(body)))
 
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, "Callback received")

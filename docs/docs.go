@@ -1412,15 +1412,15 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Invalid request body or Payment service error",
+                        "description": "Invalid request or payment service error",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/utils.ErrResponse"
                         }
                     },
                     "500": {
-                        "description": "Payment service error",
+                        "description": "Internal server error",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/utils.ErrResponse"
                         }
                     }
                 }

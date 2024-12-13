@@ -857,7 +857,14 @@ func (r *AdvertDB) GetByUserId(sellerId, userId uuid.UUID) ([]*entity.Advert, er
 
 func (r *AdvertDB) PromoteAdvert(advertID uuid.UUID) (*entity.Advert, error) {
 	var advert entity.Advert
-	err := r.DB.QueryRow(context.Background(), promoteAdvertQuery, advertID).Scan(
+
+	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
+	defer cancel()
+
+	logger := middleware.GetLogger(r.ctx)
+	logger.Info("promoting advert in db", zap.String("advert_id", advertID.String()))
+
+	err := r.DB.QueryRow(ctx, promoteAdvertQuery, advertID).Scan(
 		&advert.ID,
 		&advert.Title,
 		&advert.PromotedUntil,
@@ -866,5 +873,6 @@ func (r *AdvertDB) PromoteAdvert(advertID uuid.UUID) (*entity.Advert, error) {
 		logger.Error("failed to promote advert", zap.Error(err), zap.String("advert_id", advertID.String()))
 		return nil, entity.PSQLWrap(err)
 	}
+
 	return &advert, nil
 }

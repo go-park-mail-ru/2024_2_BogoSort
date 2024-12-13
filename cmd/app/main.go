@@ -217,7 +217,6 @@ func Init(cfg config.Config) (*mux.Router, error) {
 	advertsHandler.ConfigureProtectedRoutes(authRouter)
 	categoryHandler.ConfigureRoutes(authRouter)
 	paymentHandler.ConfigureProtectedRoutes(authRouter)
-	paymentHandler.ConfigureRoutes(authRouter)
 	authHandler.Configure(authRouter)
 	userHandler.ConfigureProtectedRoutes(authRouter)
 	sellerHandler.Configure(authRouter)

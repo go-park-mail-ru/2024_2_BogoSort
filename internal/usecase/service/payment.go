@@ -4,16 +4,17 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
+	"io"
+	"net/http"
+	"sync"
+	"time"
+
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/middleware"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository/postgres"
 	"github.com/google/uuid"
-	"io/ioutil"
-	"log"
-	"net/http"
-	"sync"
-	"time"
+	"go.uber.org/zap"
 )
 
 type PaymentService struct {
@@ -25,7 +26,8 @@ type PaymentService struct {
 }
 
 func NewPaymentService(paymentShopID, paymentSecret string,
-	paymentRepo repository.PaymentRepository, advertRepo repository.AdvertRepository) *PaymentService {
+	paymentRepo repository.PaymentRepository, advertRepo repository.AdvertRepository,
+) *PaymentService {
 	return &PaymentService{
 		paymentSecret: paymentSecret,
 		paymentShopID: paymentShopID,
@@ -36,11 +38,14 @@ func NewPaymentService(paymentShopID, paymentSecret string,
 
 func (s *PaymentService) PaymentProcessor(ctx context.Context) {
 	process := func(order entity.Order) error {
-		url := fmt.Sprintf("https://api.yookassa.ru/v3/payments/%s", order.PaymentID)
+		logger := middleware.GetLogger(ctx)
+
+		url := "https://api.yookassa.ru/v3/payments/" + order.PaymentID
 
 		req, err := http.NewRequest("GET", url, nil)
 		if err != nil {
-			return fmt.Errorf("failed to create request for order %s: %w", order.OrderID, err)
+			logger.Error("failed to create request", zap.String("order_id", order.OrderID), zap.Error(err))
+			return err
 		}
 
 		req.SetBasicAuth(s.paymentShopID, s.paymentSecret)
@@ -48,12 +53,14 @@ func (s *PaymentService) PaymentProcessor(ctx context.Context) {
 		client := &http.Client{Timeout: 10 * time.Second}
 		resp, err := client.Do(req)
 		if err != nil {
-			return fmt.Errorf("failed to send request for order %s: %w", order.OrderID, err)
+			logger.Error("failed to send request", zap.String("order_id", order.OrderID), zap.Error(err))
+			return err
 		}
 		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
-			return fmt.Errorf("unexpected status code %d for order %s", resp.StatusCode, order.OrderID)
+			logger.Error("unexpected status code", zap.Int("status_code", resp.StatusCode), zap.String("order_id", order.OrderID))
+			return err
 		}
 
 		var paymentResponse struct {
@@ -63,7 +70,8 @@ func (s *PaymentService) PaymentProcessor(ctx context.Context) {
 			} `json:"metadata"`
 		}
 		if err := json.NewDecoder(resp.Body).Decode(&paymentResponse); err != nil {
-			return fmt.Errorf("failed to decode response for order %s: %w", order.OrderID, err)
+			logger.Error("failed to decode response", zap.String("order_id", order.OrderID), zap.Error(err))
+			return err
 		}
 
 		if paymentResponse.Status != "succeeded" && paymentResponse.Status != "canceled" {
@@ -80,12 +88,14 @@ func (s *PaymentService) PaymentProcessor(ctx context.Context) {
 
 		_, err = s.paymentRepo.UpdateOrderStatus(order.OrderID, status)
 		if err != nil {
-			return fmt.Errorf("failed to update status for order %s: %w", order.OrderID, err)
+			logger.Error("failed to update status", zap.String("order_id", order.OrderID), zap.Error(err))
+			return err
 		}
 
 		if status == postgres.OrderStatusCompleted {
 			_, err := s.advertRepo.PromoteAdvert(paymentResponse.Metadata.ItemID)
 			if err != nil {
+				logger.Error("failed to promote advert", zap.String("item_id", paymentResponse.Metadata.ItemID.String()), zap.Error(err))
 				return err
 			}
 		}
@@ -107,7 +117,8 @@ func (s *PaymentService) PaymentProcessor(ctx context.Context) {
 			case <-ticker.C:
 				unprocessedOrders, err := s.paymentRepo.GetOrdersInProcess()
 				if err != nil {
-					log.Println("Failed to fetch orders:", err)
+					logger := middleware.GetLogger(ctx)
+					logger.Error("failed to fetch orders", zap.Error(err))
 					continue
 				}
 
@@ -126,7 +137,8 @@ func (s *PaymentService) PaymentProcessor(ctx context.Context) {
 }
 
 func workerPool(ctx context.Context, orders <-chan entity.Order,
-	process func(order entity.Order) error) {
+	process func(order entity.Order) error,
+) {
 	wg := new(sync.WaitGroup)
 
 	for i := 0; i < 5; i++ {
@@ -143,7 +155,8 @@ func workerPool(ctx context.Context, orders <-chan entity.Order,
 					}
 					err := process(order)
 					if err != nil {
-						log.Println("Failed to process order:", err)
+						logger := middleware.GetLogger(ctx)
+						logger.Error("failed to process order", zap.Error(err))
 					}
 				}
 			}
@@ -153,8 +166,10 @@ func workerPool(ctx context.Context, orders <-chan entity.Order,
 	wg.Wait()
 }
 
-const promotionAmount = "123.00"
-const returnURL = "http://5.188.141.136:8008"
+const (
+	promotionAmount = "123.00"
+	returnURL       = "http://5.188.141.136:8008"
+)
 
 type PaymentRequest struct {
 	Amount struct {
@@ -197,12 +212,16 @@ func (s *PaymentService) InitPayment(itemId string) (*string, error) {
 
 	requestBody, err := json.Marshal(paymentReq)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal request body: %v", err)
+		logger := middleware.GetLogger(context.Background())
+		logger.Error("failed to marshal request body", zap.Error(err))
+		return nil, err
 	}
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(requestBody))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %v", err)
+		logger := middleware.GetLogger(context.Background())
+		logger.Error("failed to create request", zap.Error(err))
+		return nil, err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -212,22 +231,30 @@ func (s *PaymentService) InitPayment(itemId string) (*string, error) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("request failed: %v", err)
+		logger := middleware.GetLogger(context.Background())
+		logger.Error("request failed", zap.Error(err))
+		return nil, err
 	}
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %v", err)
+		logger := middleware.GetLogger(context.Background())
+		logger.Error("failed to read response body", zap.Error(err))
+		return nil, err
 	}
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
-		return nil, fmt.Errorf("unexpected status code: %d, response: %s", resp.StatusCode, string(body))
+		logger := middleware.GetLogger(context.Background())
+		logger.Error("unexpected status code", zap.Int("status_code", resp.StatusCode), zap.String("response", string(body)))
+		return nil, err
 	}
 
 	var paymentResp PaymentResponse
 	if err := json.Unmarshal(body, &paymentResp); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal response: %v", err)
+		logger := middleware.GetLogger(context.Background())
+		logger.Error("failed to unmarshal response", zap.Error(err))
+		return nil, err
 	}
 
 	_, err = s.paymentRepo.InsertOrder(paymentReq.Metadata.OrderID,
@@ -235,6 +262,8 @@ func (s *PaymentService) InitPayment(itemId string) (*string, error) {
 		paymentResp.ID,
 		postgres.OrderStatusInProcess)
 	if err != nil {
+		logger := middleware.GetLogger(context.Background())
+		logger.Error("failed to insert order", zap.Error(err))
 		return nil, err
 	}
 
