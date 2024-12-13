@@ -54,17 +54,24 @@ jobs:
       - name: Run Tests
         run: go test ./... -v
 
+  debug-secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create Key File
+        run: echo "${{ secrets.PRIVATE_KEY }}" > key_file
+
+      - name: Check Length of Secret
+        run: wc -c < key_file
+
+      - name: Display First 5 Lines
+        run: head -n 5 key_file
+
   deploy:
     name: Deploy to Server
     if: github.ref == 'refs/heads/TP-34_add_ci'
     needs: [run-linters, run-tests]
     runs-on: ubuntu-latest
     steps:
-      - name: Debug Secret
-        run: |
-          echo "Length: ${#secrets.PRIVATE_KEY}" # Длина секрета
-          echo "${{ secrets.PRIVATE_KEY }}" | head -c 50 # Первые 50 символов
-
       - name: Deploy to Server
         uses: appleboy/ssh-action@v0.1.3
         with:
