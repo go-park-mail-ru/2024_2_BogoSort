@@ -2,10 +2,9 @@ package repository
 
 import (
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
-	"github.com/jackc/pgx/v5"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 )
-
 
 type PurchaseRepository interface {
 	// BeginTransaction начинает транзакцию

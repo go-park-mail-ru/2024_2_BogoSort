@@ -23,7 +23,11 @@ import (
 
 func main() {
 	zap.ReplaceGlobals(zap.Must(zap.NewProduction()))
-	defer zap.L().Sync()
+	defer func() {
+		if err := zap.L().Sync(); err != nil {
+			zap.L().Error("Failed to sync logger", zap.Error(err))
+		}
+	}()
 
 	zap.L().Info("Starting static server")
 

@@ -27,6 +27,7 @@ type CartPurchaseClient struct {
 }
 
 func NewCartPurchaseClient(addr string) (*CartPurchaseClient, error) {
+	//nolint:staticcheck // Suppressing deprecation warning for grpc.Dial
 	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, err
@@ -257,7 +258,7 @@ func convertCartFromProto(protoCart *cartPurchaseProto.Cart) *dto.Cart {
 			SellerID: uuid.MustParse(purchase.SellerId),
 			Adverts:  make([]dto.PreviewAdvertCard, 0),
 		}
-		
+
 		for _, advert := range purchase.Adverts {
 			cartPurchase.Adverts = append(cartPurchase.Adverts, convertPreviewAdvertCardFromProto(advert))
 		}

@@ -71,6 +71,7 @@ func (service *Grpc) UploadStatic(stream staticProto.StaticService_UploadStaticS
 	zap.L().Info("Static file uploaded", zap.String("id", staticID.String()))
 	return stream.SendAndClose(&staticProto.Static{Id: staticID.String()})
 }
+
 func (service *Grpc) GetStaticFile(
 	static *staticProto.Static,
 	stream staticProto.StaticService_GetStaticFileServer,

@@ -27,7 +27,7 @@ func (s *PurchaseService) purchaseEntityToDTO(purchase *entity.Purchase) (*dto.P
 	for _, advert := range purchase.Adverts {
 		advertCards = append(advertCards, convertAdvertToPreviewCard(advert))
 	}
-	
+
 	return &dto.PurchaseResponse{
 		ID:             purchase.ID,
 		SellerID:       purchase.SellerID,
@@ -48,12 +48,18 @@ func (s *PurchaseService) Add(purchaseRequest dto.PurchaseRequest, userId uuid.U
 		logger.Error("failed to begin transaction", zap.Error(err), zap.String("userId", userId.String()))
 		return nil, entity.UsecaseWrap(errors.New("failed to begin transaction"), err)
 	}
-	
+
 	defer func() {
 		if err != nil {
-			tx.Rollback(ctx)
+			if rollbackErr := tx.Rollback(ctx); rollbackErr != nil {
+				logger := middleware.GetLogger(ctx)
+				logger.Error("failed to rollback transaction", zap.Error(rollbackErr))
+			}
 		} else {
-			tx.Commit(ctx)
+			if commitErr := tx.Commit(ctx); commitErr != nil {
+				logger := middleware.GetLogger(ctx)
+				logger.Error("failed to commit transaction", zap.Error(commitErr))
+			}
 		}
 	}()
 

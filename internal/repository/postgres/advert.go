@@ -257,7 +257,6 @@ func (r *AdvertDB) Add(a *entity.Advert) (*entity.Advert, error) {
 		&dbAdvert.ImageId,
 		&dbAdvert.Status,
 	)
-
 	if err != nil {
 		logger.Error("error adding advert", zap.Error(err))
 		return nil, entity.PSQLWrap(err)
@@ -620,7 +619,6 @@ func (r *AdvertDB) AddToSaved(advertId, userId uuid.UUID) error {
 		&savedAdvert.AdvertId,
 		&savedAdvert.CreatedAt,
 	)
-
 	if err != nil {
 		logger.Error("error adding advert to saved", zap.Error(err))
 		return entity.PSQLWrap(err)

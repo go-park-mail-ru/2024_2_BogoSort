@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"net"
+	"net/http"
 	"time"
 
 	"net/http"
@@ -24,7 +25,11 @@ import (
 
 func main() {
 	zap.ReplaceGlobals(zap.Must(zap.NewProduction()))
-	defer zap.L().Sync()
+	defer func() {
+		if err := zap.L().Sync(); err != nil {
+			zap.L().Error("Error syncing logger", zap.Error(err))
+		}
+	}()
 
 	cfg, err := config.Init()
 	if err != nil {

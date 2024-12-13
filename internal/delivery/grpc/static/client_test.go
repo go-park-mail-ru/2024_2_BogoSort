@@ -7,11 +7,11 @@ import (
 	"io"
 	"testing"
 
-	"github.com/google/uuid"
-	"google.golang.org/grpc/metadata"
 	staticProto "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/static/proto"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"google.golang.org/grpc/metadata"
 )
 
 type mockClientStaticUseCase struct {
@@ -67,7 +67,6 @@ func TestClientGetStatic_InvalidUUID(t *testing.T) {
 	assert.Error(t, err)
 	assert.Nil(t, result)
 }
-
 
 func TestClientGetStaticFile_Success(t *testing.T) {
 	mockUC := new(mockClientStaticUseCase)

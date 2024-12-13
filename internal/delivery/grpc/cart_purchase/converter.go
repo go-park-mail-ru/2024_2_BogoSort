@@ -5,33 +5,48 @@ import (
 	"github.com/pkg/errors"
 )
 
+const (
+	StatusPending          = "pending"
+	StatusInProgress       = "in_progress"
+	StatusCompleted        = "completed"
+	StatusCanceled         = "canceled"
+	StatusActive           = "active"
+	StatusInactive         = "inactive"
+	StatusReserved         = "reserved"
+	StatusUnknown          = "unknown"
+	PaymentMethodCard      = "card"
+	PaymentMethodCash      = "cash"
+	DeliveryMethodPickup   = "pickup"
+	DeliveryMethodDelivery = "delivery"
+)
+
 func ConvertDBPurchaseStatusToEnum(dbStatus string) (proto.PurchaseStatus, error) {
 	switch dbStatus {
-	case "pending":
+	case StatusPending:
 		return proto.PurchaseStatus_PURCHASE_STATUS_PENDING, nil
-	case "in_progress":
+	case StatusInProgress:
 		return proto.PurchaseStatus_PURCHASE_STATUS_IN_PROGRESS, nil
-	case "completed":
+	case StatusCompleted:
 		return proto.PurchaseStatus_PURCHASE_STATUS_COMPLETED, nil
-	case "canceled":
+	case StatusCanceled:
 		return proto.PurchaseStatus_PURCHASE_STATUS_CANCELED, nil
 	default:
-		return proto.PurchaseStatus_PURCHASE_STATUS_PENDING, errors.New("unknown purchase status")
+		return proto.PurchaseStatus_PURCHASE_STATUS_PENDING, errors.New(StatusUnknown)
 	}
 }
 
 func ConvertPurchaseStatusToDB(status proto.PurchaseStatus) string {
 	switch status {
 	case proto.PurchaseStatus_PURCHASE_STATUS_PENDING:
-		return "pending"
+		return StatusPending
 	case proto.PurchaseStatus_PURCHASE_STATUS_IN_PROGRESS:
-		return "in_progress"
+		return StatusInProgress
 	case proto.PurchaseStatus_PURCHASE_STATUS_COMPLETED:
-		return "completed"
+		return StatusCompleted
 	case proto.PurchaseStatus_PURCHASE_STATUS_CANCELED:
-		return "canceled"
+		return StatusCanceled
 	default:
-		return "unknown"
+		return StatusUnknown
 	}
 }
 
@@ -81,48 +96,48 @@ func ConvertDeliveryMethodToDB(status proto.DeliveryMethod) string {
 
 func ConvertDBCartStatusToEnum(dbStatus string) (proto.CartStatus, error) {
 	switch dbStatus {
-	case "active":
+	case StatusActive:
 		return proto.CartStatus_CART_STATUS_ACTIVE, nil
-	case "inactive":
+	case StatusInactive:
 		return proto.CartStatus_CART_STATUS_INACTIVE, nil
 	default:
-		return proto.CartStatus_CART_STATUS_ACTIVE, errors.New("unknown cart status")
+		return proto.CartStatus_CART_STATUS_ACTIVE, errors.New(StatusUnknown)
 	}
 }
 
 func ConvertCartStatusToDB(status proto.CartStatus) string {
 	switch status {
 	case proto.CartStatus_CART_STATUS_ACTIVE:
-		return "active"
+		return StatusActive
 	case proto.CartStatus_CART_STATUS_INACTIVE:
-		return "inactive"
+		return StatusInactive
 	default:
-		return "unknown"
+		return StatusUnknown
 	}
 }
 
 func ConvertDBAdvertStatusToEnum(dbStatus string) (proto.AdvertStatus, error) {
 	switch dbStatus {
-	case "active":
+	case StatusActive:
 		return proto.AdvertStatus_ADVERT_STATUS_ACTIVE, nil
-	case "inactive":
+	case StatusInactive:
 		return proto.AdvertStatus_ADVERT_STATUS_INACTIVE, nil
-	case "reserved":
+	case StatusReserved:
 		return proto.AdvertStatus_ADVERT_STATUS_RESERVED, nil
 	default:
-		return proto.AdvertStatus_ADVERT_STATUS_ACTIVE, errors.New("unknown advert status")
+		return proto.AdvertStatus_ADVERT_STATUS_ACTIVE, errors.New(StatusUnknown)
 	}
 }
 
 func ConvertAdvertStatusToDB(status proto.AdvertStatus) string {
 	switch status {
 	case proto.AdvertStatus_ADVERT_STATUS_ACTIVE:
-		return "active"
+		return StatusActive
 	case proto.AdvertStatus_ADVERT_STATUS_INACTIVE:
-		return "inactive"
+		return StatusInactive
 	case proto.AdvertStatus_ADVERT_STATUS_RESERVED:
-		return "reserved"
+		return StatusReserved
 	default:
-		return "unknown"
+		return StatusUnknown
 	}
 }

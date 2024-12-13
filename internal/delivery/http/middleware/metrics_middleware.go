@@ -1,11 +1,12 @@
 package middleware
 
 import (
-	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/metrics"
-	"github.com/gorilla/mux"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/metrics"
+	"github.com/gorilla/mux"
 )
 
 func CreateMetricsMiddleware(metric *metrics.HTTPMetrics) mux.MiddlewareFunc {
