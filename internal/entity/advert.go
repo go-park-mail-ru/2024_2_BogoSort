@@ -17,22 +17,23 @@ var (
 )
 
 type Advert struct {
-	ID          uuid.UUID    `db:"id"`
-	SellerId    uuid.UUID    `db:"seller_id"`
-	CategoryId  uuid.UUID    `db:"category_id"`
-	Title       string       `db:"title"`
-	Description string       `db:"description"`
-	Price       uint         `db:"price"`
-	ImageId     uuid.UUID    `db:"image_id"`
-	Status      AdvertStatus `db:"status"`
-	HasDelivery bool         `db:"has_delivery"`
-	Location    string       `db:"location"`
-	SavesNumber uint
-	ViewsNumber uint
-	CreatedAt   time.Time `db:"created_at"`
-	UpdatedAt   time.Time `db:"updated_at"`
-	IsSaved     bool      `db:"is_saved"`
-	IsViewed    bool      `db:"is_viewed"`
+	ID            uuid.UUID    `db:"id"`
+	SellerId      uuid.UUID    `db:"seller_id"`
+	CategoryId    uuid.UUID    `db:"category_id"`
+	Title         string       `db:"title"`
+	Description   string       `db:"description"`
+	Price         uint         `db:"price"`
+	ImageId       uuid.UUID    `db:"image_id"`
+	Status        AdvertStatus `db:"status"`
+	HasDelivery   bool         `db:"has_delivery"`
+	Location      string       `db:"location"`
+	SavesNumber   uint
+	ViewsNumber   uint
+	CreatedAt     time.Time `db:"created_at"`
+	UpdatedAt     time.Time `db:"updated_at"`
+	IsSaved       bool      `db:"is_saved"`
+	IsViewed      bool      `db:"is_viewed"`
+	PromotedUntil time.Time `db:"promoted_until"`
 }
 
 type AdvertStatus string

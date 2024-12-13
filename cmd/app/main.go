@@ -170,6 +170,10 @@ func Init(cfg config.Config) (*mux.Router, error) {
 	if err != nil {
 		return nil, handleRepoError(err, "unable to create csrf token")
 	}
+	paymentRepo, err := postgres.NewPaymentRepository(dbPool, ctx, cfg.PGTimeout)
+	if err != nil {
+		return nil, handleRepoError(err, "unable to create payment repository")
+	}
 	authGrpcClient, err := auth.NewGrpcClient(config.GetAuthAddress())
 	if err != nil {
 		return nil, handleRepoError(err, "unable to create grpc client")
@@ -185,6 +189,7 @@ func Init(cfg config.Config) (*mux.Router, error) {
 	}
 
 	advertsUseCase := service.NewAdvertService(advertsRepo, sellerRepo, userRepo, historyRepo)
+	paymentUC := service.NewPaymentService(cfg.PaymentShopID, cfg.PaymentSecret, paymentRepo, advertsRepo)
 	categoryUseCase := service.NewCategoryService(categoryRepo)
 	userUC := service.NewUserService(userRepo, sellerRepo)
 	sessionUC := service.NewAuthService(sessionRepo)
@@ -200,6 +205,7 @@ func Init(cfg config.Config) (*mux.Router, error) {
 	categoryHandler := http3.NewCategoryEndpoint(categoryUseCase)
 	staticHandler := http3.NewStaticEndpoint(*staticClient)
 	historyHandler := http3.NewHistoryEndpoint(historyRepo)
+	paymentHandler := http3.NewPaymentEndpoint(paymentUC, sessionManager)
 
 	csrfEndpoints := http3.NewCSRFEndpoint(csrfToken, sessionManager)
 	csrfEndpoints.Configure(router)
@@ -210,6 +216,8 @@ func Init(cfg config.Config) (*mux.Router, error) {
 
 	advertsHandler.ConfigureProtectedRoutes(authRouter)
 	categoryHandler.ConfigureRoutes(authRouter)
+	paymentHandler.ConfigureProtectedRoutes(authRouter)
+	paymentHandler.ConfigureRoutes(authRouter)
 	authHandler.Configure(authRouter)
 	userHandler.ConfigureProtectedRoutes(authRouter)
 	sellerHandler.Configure(authRouter)
@@ -219,6 +227,8 @@ func Init(cfg config.Config) (*mux.Router, error) {
 	historyHandler.ConfigureRoutes(authRouter)
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	router.PathPrefix("/api/v1/metrics").Handler(promhttp.Handler())
+
+	go paymentUC.PaymentProcessor(ctx)
 
 	return router, nil
 }

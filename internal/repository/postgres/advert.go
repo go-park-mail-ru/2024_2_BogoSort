@@ -30,8 +30,12 @@ const (
 		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at
 		FROM advert
 		WHERE status != 'inactive'
-		ORDER BY created_at DESC
-		LIMIT $1 OFFSET $2`
+		ORDER BY 
+    		CASE WHEN promoted_until > CURRENT_TIMESTAMP THEN 1 ELSE 0 END DESC, 
+    		promoted_until DESC NULLS LAST, 
+    		created_at DESC
+		LIMIT $1 OFFSET $2;
+`
 
 	selectSavedAdvertsByUserIdQuery = `
 		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at
@@ -120,6 +124,13 @@ const (
 		LIMIT $2 OFFSET $3`
 
 	countAdvertsQuery = `SELECT COUNT(*) FROM advert`
+
+	promoteAdvertQuery = `
+	UPDATE advert
+	SET promoted_until = CURRENT_TIMESTAMP + INTERVAL '7 days', updated_at = CURRENT_TIMESTAMP
+		WHERE id = $1 AND status != 'inactive'
+		RETURNING id, title, promoted_until;
+	`
 )
 
 type AdvertRepoModel struct {
@@ -842,4 +853,17 @@ func (r *AdvertDB) GetByUserId(sellerId, userId uuid.UUID) ([]*entity.Advert, er
 	}
 
 	return adverts, nil
+}
+
+func (r *AdvertDB) PromoteAdvert(advertID uuid.UUID) (*entity.Advert, error) {
+	var advert entity.Advert
+	err := r.DB.QueryRow(context.Background(), promoteAdvertQuery, advertID).Scan(
+		&advert.ID,
+		&advert.Title,
+		&advert.PromotedUntil,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to promote advert: %w", err)
+	}
+	return &advert, nil
 }
