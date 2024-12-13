@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"net/http"
-
 	"github.com/go-park-mail-ru/2024_2_BogoSort/config"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/cart_purchase"
 	cartPurchaseProto "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/cart_purchase/proto"
