@@ -62,7 +62,10 @@ jobs:
     steps:
       - name: Debug Key
         run: echo "${{ secrets.HOST }}"
+
+      - name: Debug Key2
         run: echo "${{ secrets.USERNAME }}"
+
       - name: Deploy to Server
         uses: appleboy/ssh-action@v0.1.3
         with:
