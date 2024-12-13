@@ -53,7 +53,7 @@ const (
 		LEFT JOIN purchase_advert pa ON p.id = pa.purchase_id
 		LEFT JOIN advert a ON pa.advert_id = a.id
 		WHERE p.customer_id = $1 
-		GROUP BY p.id, p.seller_id, p.customer_id, p.adress, p.status, 
+		GROUP BY p.id, p.seller_id, p.customer_id, p.address, p.status, 
 				 p.payment_method, p.delivery_method, p.cart_id, p.created_at
 		ORDER BY MAX(p.created_at) DESC`
 )
