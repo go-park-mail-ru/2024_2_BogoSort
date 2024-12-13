@@ -8,47 +8,29 @@ on:
 
 jobs:
   run-linters:
-    name: Run Linters
+    name: run-linters
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
+      - name: Check out code into directory
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Print Current Directory
-        run: pwd
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.23
+        id: go
 
-      - name: List Files
-        run: ls -R
-
-      - name: Check for .golangci.yaml
-        run: |
-          if [ -f .golangci.yaml ]; then
-            echo ".golangci.yaml found"
-          else
-            echo ".golangci.yaml not found"
-            exit 1
-          fi
-
-      - name: List Files in Working Directory
-        run: ls -la
-
-      - name: Clear Cache
-        run: |
-          rm -rf ~/.cache/go-build
-          rm -rf ~/go/pkg/mod
-
-      - name: Install Dependencies
+      - name: Install required dependencies
         run: go mod tidy
 
-      - name: Run Linters
-        uses: golangci/golangci-lint-action@v3
+      - name: Run linter
+        uses: golangci/golangci-lint-action@v6
         with:
-          version: v1.56.2
-          args: --config .golangci.yaml --verbose
+          version: latest
           working-directory: .
-          skip-cache: true
-          skip-pkg-cache: true
-          skip-build-cache: true
+          args: -c ./.golangci.yaml
 
   run-tests:
     name: Run Tests
