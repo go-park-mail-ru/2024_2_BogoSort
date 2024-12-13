@@ -863,7 +863,8 @@ func (r *AdvertDB) PromoteAdvert(advertID uuid.UUID) (*entity.Advert, error) {
 		&advert.PromotedUntil,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to promote advert: %w", err)
+		logger.Error("failed to promote advert", zap.Error(err), zap.String("advert_id", advertID.String()))
+		return nil, entity.PSQLWrap(err)
 	}
 	return &advert, nil
 }
