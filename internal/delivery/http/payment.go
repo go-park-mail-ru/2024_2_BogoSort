@@ -39,6 +39,17 @@ type PaymentRequest struct {
 	ItemID string `json:"item_id"`
 }
 
+// InitPayment handles the initialization of a payment process.
+// @Summary Initialize payment
+// @Description Initiates a payment process for a given item ID.
+// @Tags payment
+// @Accept json
+// @Produce json
+// @Param paymentRequest body PaymentRequest true "Payment Request"
+// @Success 200 {object} map[string]string "Payment URL"
+// @Failure 400 {string} string "Invalid request body or Payment service error"
+// @Failure 500 {string} string "Payment service error"
+// @Router /api/v1/payment/init [post]
 func (h *PaymentEndpoint) InitPayment(w http.ResponseWriter, r *http.Request) {
 	logger := middleware.GetLogger(r.Context())
 

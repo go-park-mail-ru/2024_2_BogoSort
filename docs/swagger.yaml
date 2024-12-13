@@ -307,6 +307,11 @@ definitions:
       user_id:
         type: string
     type: object
+  http.PaymentRequest:
+    properties:
+      item_id:
+        type: string
+    type: object
   utils.ErrResponse:
     properties:
       code:
@@ -1218,6 +1223,38 @@ paths:
       summary: Change user password
       tags:
       - Users
+  /api/v1/payment/init:
+    post:
+      consumes:
+      - application/json
+      description: Initiates a payment process for a given item ID.
+      parameters:
+      - description: Payment Request
+        in: body
+        name: paymentRequest
+        required: true
+        schema:
+          $ref: '#/definitions/http.PaymentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Payment URL
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid request body or Payment service error
+          schema:
+            type: string
+        "500":
+          description: Payment service error
+          schema:
+            type: string
+      summary: Initialize payment
+      tags:
+      - payment
   /api/v1/profile:
     put:
       consumes:
