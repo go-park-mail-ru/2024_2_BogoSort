@@ -37,11 +37,14 @@ jobs:
           rm -rf ~/.cache/go-build
           rm -rf ~/go/pkg/mod
 
+      - name: Install Dependencies
+        run: go mod tidy
+
       - name: Run Linters
         uses: golangci/golangci-lint-action@v3
         with:
           version: v1.56.2
-          args: --config .golangci.yaml
+          args: --config .golangci.yaml --verbose
           working-directory: .
 
   run-tests:
