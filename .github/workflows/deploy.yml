@@ -60,11 +60,10 @@ jobs:
     needs: [run-linters, run-tests]
     runs-on: ubuntu-latest
     steps:
-      - name: Debug Key
-        run: echo "${{ secrets.HOST }}"
-
-      - name: Debug Key2
-        run: echo "${{ secrets.USERNAME }}"
+      - name: Debug Secret
+        run: |
+          echo "Length: ${#secrets.PRIVATE_KEY}" # Длина секрета
+          echo "${{ secrets.PRIVATE_KEY }}" | head -c 50 # Первые 50 символов
 
       - name: Deploy to Server
         uses: appleboy/ssh-action@v0.1.3
