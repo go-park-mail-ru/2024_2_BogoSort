@@ -20,12 +20,29 @@ jobs:
       - name: List Files
         run: ls -R
 
+      - name: Check for .golangci.yaml
+        run: |
+          if [ -f .golangci.yaml ]; then
+            echo ".golangci.yaml found"
+          else
+            echo ".golangci.yaml not found"
+            exit 1
+          fi
+
+      - name: List Files in Working Directory
+        run: ls -la
+
+      - name: Clear Cache
+        run: |
+          rm -rf ~/.cache/go-build
+          rm -rf ~/go/pkg/mod
+
       - name: Run Linters
         uses: golangci/golangci-lint-action@v3
         with:
           version: v1.56.2
           args: --config .golangci.yaml
-          working-directory: /home/runner/work/2024_2_BogoSort/2024_2_BogoSort
+          working-directory: .
 
   run-tests:
     name: Run Tests
