@@ -60,6 +60,9 @@ jobs:
     needs: [run-linters, run-tests]
     runs-on: ubuntu-latest
     steps:
+      - name: Debug Key
+        run: echo "${{ secrets.HOST }}"
+        run: echo "${{ secrets.USERNAME }}"
       - name: Deploy to Server
         uses: appleboy/ssh-action@v0.1.3
         with:
