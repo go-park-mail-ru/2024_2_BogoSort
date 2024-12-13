@@ -33,7 +33,7 @@ jobs:
           args: -c ./.golangci.yaml
 
   run-tests:
-    name: Run Tests
+    name: run-tests
     needs: run-linters
     runs-on: ubuntu-latest
     steps:
