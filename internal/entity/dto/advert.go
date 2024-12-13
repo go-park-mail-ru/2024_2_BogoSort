@@ -1,3 +1,4 @@
+//go:generate easyjson -all dto/advert_easyjson.go
 package dto
 
 import (
@@ -29,9 +30,9 @@ type PreviewAdvert struct {
 }
 
 type PreviewAdvertCard struct {
-	Preview     PreviewAdvert `json:"preview"`
-	IsSaved     bool          `json:"is_saved"`
-	IsViewed    bool          `json:"is_viewed"`
+	Preview  PreviewAdvert `json:"preview"`
+	IsSaved  bool          `json:"is_saved"`
+	IsViewed bool          `json:"is_viewed"`
 }
 
 type MyPreviewAdvertCard struct {
@@ -51,16 +52,16 @@ type Advert struct {
 	Status      AdvertStatus `json:"status"`
 	HasDelivery bool         `json:"has_delivery"`
 	Location    string       `json:"location"`
-	SavesNumber uint          `json:"saves_number"`
-	ViewsNumber uint          `json:"views_number"`
+	SavesNumber uint         `json:"saves_number"`
+	ViewsNumber uint         `json:"views_number"`
 	CreatedAt   time.Time    `json:"created_at"`
 	UpdatedAt   time.Time    `json:"updated_at"`
 }
 
 type AdvertCard struct {
-	Advert      Advert       `json:"advert"`
-	IsSaved     bool         `json:"is_saved"`
-	IsViewed    bool         `json:"is_viewed"`
+	Advert   Advert `json:"advert"`
+	IsSaved  bool   `json:"is_saved"`
+	IsViewed bool   `json:"is_viewed"`
 }
 
 type AdvertStatus string

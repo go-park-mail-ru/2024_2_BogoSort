@@ -1,3 +1,4 @@
+//go:generate easyjson -all dto/auth_easyjson.go
 package dto
 
 type Signup struct {

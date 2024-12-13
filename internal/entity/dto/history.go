@@ -1,3 +1,4 @@
+//go:generate easyjson -all dto/history_easyjson.go
 package dto
 
 import (

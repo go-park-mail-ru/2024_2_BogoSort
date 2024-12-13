@@ -1,3 +1,4 @@
+//go:generate easyjson -all dto/cart_easyjson.go
 package dto
 
 import (
@@ -16,15 +17,15 @@ type DeleteAdvertFromUserCartRequest struct {
 }
 
 type CartPurchase struct {
-	SellerID uuid.UUID `json:"seller_id"`
-	Adverts []PreviewAdvertCard `json:"adverts"`
+	SellerID uuid.UUID           `json:"seller_id"`
+	Adverts  []PreviewAdvertCard `json:"adverts"`
 }
 
 type Cart struct {
-	ID      uuid.UUID         `json:"id"`
-	UserID  uuid.UUID         `json:"user_id"`
-	CartPurchases []CartPurchase `json:"cart_purchases"`
-	Status  entity.CartStatus `json:"status"`
+	ID            uuid.UUID         `json:"id"`
+	UserID        uuid.UUID         `json:"user_id"`
+	CartPurchases []CartPurchase    `json:"cart_purchases"`
+	Status        entity.CartStatus `json:"status"`
 }
 
 type CartResponse struct {

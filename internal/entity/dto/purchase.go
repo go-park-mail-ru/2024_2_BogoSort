@@ -1,3 +1,4 @@
+//go:generate easyjson -all dto/purchase_easyjson.go
 package dto
 
 import (
@@ -5,11 +6,11 @@ import (
 )
 
 type PurchaseRequest struct {
-	CartID         uuid.UUID   	`json:"cart_id"`
-	Address        string   	`json:"address"`
-	PaymentMethod  PaymentMethod `json:"payment_method"`
+	CartID         uuid.UUID      `json:"cart_id"`
+	Address        string         `json:"address"`
+	PaymentMethod  PaymentMethod  `json:"payment_method"`
 	DeliveryMethod DeliveryMethod `json:"delivery_method"`
-	UserID         uuid.UUID   	`json:"user_id"`
+	UserID         uuid.UUID      `json:"user_id"`
 }
 
 type PurchaseStatus string
@@ -17,10 +18,10 @@ type PaymentMethod string
 type DeliveryMethod string
 
 const (
-	StatusPending PurchaseStatus = "pending"
+	StatusPending   PurchaseStatus = "pending"
 	StatusCompleted PurchaseStatus = "completed"
-	StatusFailed PurchaseStatus = "in_progress"
-	StatusCanceled PurchaseStatus = "canceled"
+	StatusFailed    PurchaseStatus = "in_progress"
+	StatusCanceled  PurchaseStatus = "canceled"
 )
 
 const (
@@ -29,17 +30,17 @@ const (
 )
 
 const (
-	DeliveryMethodPickup DeliveryMethod = "pickup"
+	DeliveryMethodPickup   DeliveryMethod = "pickup"
 	DeliveryMethodDelivery DeliveryMethod = "delivery"
 )
 
 type PurchaseResponse struct {
-	ID uuid.UUID `json:"id"`
-	SellerID uuid.UUID `json:"seller_id"`
-	CustomerID uuid.UUID `json:"customer_id"`
-	Adverts []PreviewAdvertCard `json:"adverts"`
-	Address string `json:"address"`
-	Status PurchaseStatus `json:"status"`
-	PaymentMethod PaymentMethod `json:"payment_method"`
-	DeliveryMethod DeliveryMethod `json:"delivery_method"`
+	ID             uuid.UUID           `json:"id"`
+	SellerID       uuid.UUID           `json:"seller_id"`
+	CustomerID     uuid.UUID           `json:"customer_id"`
+	Adverts        []PreviewAdvertCard `json:"adverts"`
+	Address        string              `json:"address"`
+	Status         PurchaseStatus      `json:"status"`
+	PaymentMethod  PaymentMethod       `json:"payment_method"`
+	DeliveryMethod DeliveryMethod      `json:"delivery_method"`
 }
