@@ -66,6 +66,7 @@ jobs:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.PRIVATE_KEY }}
+          debug: true
           script: |
             cd /home/${{ secrets.USERNAME }}/server/back
             git checkout develop
