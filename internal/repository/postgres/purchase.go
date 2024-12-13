@@ -34,7 +34,7 @@ const (
 			p.id, 
 			p.seller_id,
 			p.customer_id,
-			p.adress, 
+			p.address, 
 			p.status, 
 			p.payment_method, 
 			p.delivery_method,
