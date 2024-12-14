@@ -192,7 +192,7 @@ func Init(cfg config.Config) (*mux.Router, error) {
 	}
 
 	advertsUseCase := service.NewAdvertService(advertsRepo, sellerRepo, userRepo, historyRepo)
-	paymentUC := service.NewPaymentService(cfg.PaymentShopID, cfg.PaymentSecret, paymentRepo, advertsRepo)
+	paymentUC := service.NewPaymentService(cfg.PaymentShopID, cfg.PaymentSecret, paymentRepo, advertsRepo, promotionRepo)
 	categoryUseCase := service.NewCategoryService(categoryRepo)
 	userUC := service.NewUserService(userRepo, sellerRepo)
 	sessionUC := service.NewAuthService(sessionRepo)

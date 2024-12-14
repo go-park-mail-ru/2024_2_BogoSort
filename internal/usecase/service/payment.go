@@ -21,18 +21,21 @@ type PaymentService struct {
 	paymentSecret string
 	paymentShopID string
 
-	paymentRepo repository.PaymentRepository
-	advertRepo  repository.AdvertRepository
+	paymentRepo   repository.PaymentRepository
+	advertRepo    repository.AdvertRepository
+	promotionRepo repository.PromotionRepository
 }
 
 func NewPaymentService(paymentShopID, paymentSecret string,
 	paymentRepo repository.PaymentRepository, advertRepo repository.AdvertRepository,
+	promotionRepo repository.PromotionRepository,
 ) *PaymentService {
 	return &PaymentService{
 		paymentSecret: paymentSecret,
 		paymentShopID: paymentShopID,
 		paymentRepo:   paymentRepo,
 		advertRepo:    advertRepo,
+		promotionRepo: promotionRepo,
 	}
 }
 
@@ -199,11 +202,18 @@ type PaymentResponse struct {
 func (s *PaymentService) InitPayment(itemId string) (*string, error) {
 	url := "https://api.yookassa.ru/v3/payments"
 
+	promotion, err := s.promotionRepo.GetPromotionInfo()
+	if err != nil {
+		logger := middleware.GetLogger(context.Background())
+		logger.Error("failed to get promotion info", zap.Error(err))
+		return nil, err
+	}
+
 	paymentReq := PaymentRequest{
 		Capture:     true,
 		Description: "Платное продвижение товара",
 	}
-	paymentReq.Amount.Value = promotionAmount
+	paymentReq.Amount.Value = promotion.Amount
 	paymentReq.Amount.Currency = "RUB"
 	paymentReq.Confirmation.Type = "redirect"
 	paymentReq.Confirmation.ReturnURL = returnURL
