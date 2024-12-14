@@ -1528,6 +1528,35 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/promotions": {
+            "get": {
+                "description": "Retrieve promotion info",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "promotions"
+                ],
+                "summary": "Get promotion info",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/entity.Promotion"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/purchase/{user_id}": {
             "get": {
                 "description": "Retrieves all purchases associated with a specific user ID",
@@ -2280,6 +2309,26 @@ const docTemplate = `{
                 },
                 "oldPrice": {
                     "type": "integer"
+                }
+            }
+        },
+        "entity.Promotion": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "days": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
                 }
             }
         },

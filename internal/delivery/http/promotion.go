@@ -26,12 +26,12 @@ func (e *PromotionEndpoint) ConfigureRoutes(router *mux.Router) {
 }
 
 // Get godoc
-// @Summary Get all promotions
-// @Description Retrieve a list of all promotions
+// @Summary Get promotion info
+// @Description Retrieve promotion info
 // @Tags promotions
 // @Accept json
 // @Produce json
-// @Success 200 {array} entity.Promotion
+// @Success 200 {object} entity.Promotion
 // @Failure 500 {object} utils.ErrResponse
 // @Router /api/v1/promotions [get]
 func (e *PromotionEndpoint) Get(w http.ResponseWriter, r *http.Request) {

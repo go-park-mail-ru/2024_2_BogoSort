@@ -302,6 +302,19 @@ definitions:
       oldPrice:
         type: integer
     type: object
+  entity.Promotion:
+    properties:
+      amount:
+        type: string
+      createdAt:
+        type: string
+      days:
+        type: integer
+      id:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
   entity.Seller:
     properties:
       description:
@@ -1326,6 +1339,25 @@ paths:
       summary: Get user profile
       tags:
       - Users
+  /api/v1/promotions:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve promotion info
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.Promotion'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Get promotion info
+      tags:
+      - promotions
   /api/v1/purchase/{user_id}:
     get:
       consumes:
