@@ -2,10 +2,10 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"time"
 
-	"database/sql"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/middleware"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
@@ -135,18 +135,18 @@ const (
 )
 
 type AdvertRepoModel struct {
-	ID          uuid.UUID
-	SellerId    uuid.UUID
-	CategoryId  uuid.UUID
-	Title       string
-	Description string
-	Price       uint
-	ImageId     uuid.UUID
-	Status      string
-	HasDelivery bool
-	Location    string
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	ID            uuid.UUID
+	SellerId      uuid.UUID
+	CategoryId    uuid.UUID
+	Title         string
+	Description   string
+	Price         uint
+	ImageId       uuid.UUID
+	Status        string
+	HasDelivery   bool
+	Location      string
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
 	PromotedUntil sql.NullTime
 }
 
@@ -242,7 +242,7 @@ func (r *AdvertDB) convertToEntityAdvert(dbAdvert AdvertRepoModel, userId uuid.U
 			if dbAdvert.PromotedUntil.Valid {
 				return dbAdvert.PromotedUntil.Time
 			}
-			return time.Time{} 
+			return time.Time{}
 		}(),
 	}
 }
