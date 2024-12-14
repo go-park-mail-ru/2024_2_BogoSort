@@ -24,6 +24,8 @@ definitions:
         type: string
       price:
         type: integer
+      promoted_until:
+        type: string
       saves_number:
         type: integer
       seller_id:
@@ -153,6 +155,8 @@ definitions:
         type: string
       price:
         type: integer
+      promoted_until:
+        type: string
       seller_id:
         type: string
       status:

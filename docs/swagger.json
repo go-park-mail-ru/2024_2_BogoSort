@@ -1854,6 +1854,9 @@
                 "price": {
                     "type": "integer"
                 },
+                "promoted_until": {
+                    "type": "string"
+                },
                 "saves_number": {
                     "type": "integer"
                 },
@@ -2047,6 +2050,9 @@
                 },
                 "price": {
                     "type": "integer"
+                },
+                "promoted_until": {
+                    "type": "string"
                 },
                 "seller_id": {
                     "type": "string"

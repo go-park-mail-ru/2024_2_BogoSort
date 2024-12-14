@@ -1865,6 +1865,9 @@ const docTemplate = `{
                 "price": {
                     "type": "integer"
                 },
+                "promoted_until": {
+                    "type": "string"
+                },
                 "saves_number": {
                     "type": "integer"
                 },
@@ -2058,6 +2061,9 @@ const docTemplate = `{
                 },
                 "price": {
                     "type": "integer"
+                },
+                "promoted_until": {
+                    "type": "string"
                 },
                 "seller_id": {
                     "type": "string"
