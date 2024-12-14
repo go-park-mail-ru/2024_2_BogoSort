@@ -167,7 +167,7 @@ func workerPool(ctx context.Context, orders <-chan entity.Order,
 }
 
 const (
-	promotionAmount = "123.00"
+	promotionAmount = "50.00"
 	returnURL       = "http://5.188.141.136:8008"
 )
 
