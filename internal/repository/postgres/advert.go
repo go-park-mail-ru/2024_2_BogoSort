@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"database/sql"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/middleware"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/entity"
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/repository"
@@ -146,7 +147,7 @@ type AdvertRepoModel struct {
 	Location    string
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
-	PromotedUntil time.Time
+	PromotedUntil sql.NullTime
 }
 
 type SavedAdvertRepoModel struct {
@@ -237,7 +238,12 @@ func (r *AdvertDB) convertToEntityAdvert(dbAdvert AdvertRepoModel, userId uuid.U
 		IsViewed:    isViewed,
 		ViewsNumber: uint(viewedCount),
 		SavesNumber: uint(savedCount),
-		PromotedUntil: dbAdvert.PromotedUntil,
+		PromotedUntil: func() time.Time {
+			if dbAdvert.PromotedUntil.Valid {
+				return dbAdvert.PromotedUntil.Time
+			}
+			return time.Time{} 
+		}(),
 	}
 }
 
