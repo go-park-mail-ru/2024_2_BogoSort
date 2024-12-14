@@ -77,6 +77,9 @@ type AdvertRepository interface {
 
 	// Count возвращает количество объявлений
 	Count() (int, error)
+
+	// PromoteAdvert обновляет дату промоутирования на 7 дней
+	PromoteAdvert(advertID uuid.UUID) (*entity.Advert, error)
 }
 
 var (

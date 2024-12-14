@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"time"
 
@@ -27,38 +28,42 @@ const (
 		RETURNING id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status`
 
 	selectAdvertsQuery = `
-		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at
+		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at, promoted_until
 		FROM advert
 		WHERE status != 'inactive'
-		ORDER BY created_at DESC
-		LIMIT $1 OFFSET $2`
+		ORDER BY 
+    		CASE WHEN promoted_until > CURRENT_TIMESTAMP THEN 1 ELSE 0 END DESC, 
+    		promoted_until DESC NULLS LAST, 
+    		created_at DESC
+		LIMIT $1 OFFSET $2;
+`
 
 	selectSavedAdvertsByUserIdQuery = `
-		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at
+		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at, promoted_until
 		FROM advert
 		WHERE id IN (SELECT advert_id FROM saved_advert WHERE user_id = $1)
 		ORDER BY created_at DESC`
 
 	selectAdvertsBySellerIdQuery = `
-		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at
+		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at, promoted_until
 		FROM advert
 		WHERE seller_id = $1 AND status != 'inactive'
 		ORDER BY created_at DESC`
 
 	selectAdvertsByUserIdQuery = `
-		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at
+		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at, promoted_until
 		FROM advert
 		WHERE seller_id = $1
 		ORDER BY created_at DESC`
 
 	selectAdvertsByCartIdQuery = `
-		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at
+		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at, promoted_until
 		FROM advert
 		WHERE id IN (SELECT advert_id FROM cart_advert WHERE cart_id = $1)
 		ORDER BY created_at DESC`
 
 	selectAdvertByIdQuery = `
-		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at
+		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at, promoted_until
 		FROM advert
 		WHERE id = $1
 		ORDER BY created_at DESC`
@@ -77,7 +82,7 @@ const (
 		WHERE id = $2`
 
 	selectAdvertsByCategoryIdQuery = `
-		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at
+		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at, promoted_until
 		FROM advert
 		WHERE category_id = $1 AND status != 'inactive'
 		ORDER BY created_at DESC`
@@ -113,28 +118,36 @@ const (
 		SELECT EXISTS(SELECT 1 FROM advert WHERE id = $1)`
 
 	searchAdvertsQuery = `
-		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at
+		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at, promoted_until
 		FROM advert
 		WHERE to_tsvector('russian', title || ' ' || description) @@ plainto_tsquery('russian', $1)
 		ORDER BY created_at DESC
 		LIMIT $2 OFFSET $3`
 
 	countAdvertsQuery = `SELECT COUNT(*) FROM advert`
+
+	promoteAdvertQuery = `
+	UPDATE advert
+	SET promoted_until = CURRENT_TIMESTAMP + INTERVAL '7 days', updated_at = CURRENT_TIMESTAMP
+		WHERE id = $1 AND status != 'inactive'
+		RETURNING id, title, promoted_until;
+	`
 )
 
 type AdvertRepoModel struct {
-	ID          uuid.UUID
-	SellerId    uuid.UUID
-	CategoryId  uuid.UUID
-	Title       string
-	Description string
-	Price       uint
-	ImageId     uuid.UUID
-	Status      string
-	HasDelivery bool
-	Location    string
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	ID            uuid.UUID
+	SellerId      uuid.UUID
+	CategoryId    uuid.UUID
+	Title         string
+	Description   string
+	Price         uint
+	ImageId       uuid.UUID
+	Status        string
+	HasDelivery   bool
+	Location      string
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
+	PromotedUntil sql.NullTime
 }
 
 type SavedAdvertRepoModel struct {
@@ -225,6 +238,12 @@ func (r *AdvertDB) convertToEntityAdvert(dbAdvert AdvertRepoModel, userId uuid.U
 		IsViewed:    isViewed,
 		ViewsNumber: uint(viewedCount),
 		SavesNumber: uint(savedCount),
+		PromotedUntil: func() time.Time {
+			if dbAdvert.PromotedUntil.Valid {
+				return dbAdvert.PromotedUntil.Time
+			}
+			return time.Time{}
+		}(),
 	}
 }
 
@@ -308,6 +327,7 @@ func (r *AdvertDB) Get(limit, offset int, userId uuid.UUID) ([]*entity.Advert, e
 			&dbAdvert.Status,
 			&dbAdvert.CreatedAt,
 			&dbAdvert.UpdatedAt,
+			&dbAdvert.PromotedUntil,
 		); err != nil {
 			logger.Error("failed to scan row", zap.Error(err))
 			return nil, entity.PSQLWrap(err)
@@ -353,6 +373,7 @@ func (r *AdvertDB) GetByCategoryId(categoryId, userId uuid.UUID) ([]*entity.Adve
 			&dbAdvert.Status,
 			&dbAdvert.CreatedAt,
 			&dbAdvert.UpdatedAt,
+			&dbAdvert.PromotedUntil,
 		); err != nil {
 			logger.Error("failed to scan row", zap.Error(err), zap.String("category_id", categoryId.String()))
 			return nil, entity.PSQLWrap(err)
@@ -399,6 +420,7 @@ func (r *AdvertDB) GetBySellerId(sellerId, userId uuid.UUID) ([]*entity.Advert, 
 			&dbAdvert.Status,
 			&dbAdvert.CreatedAt,
 			&dbAdvert.UpdatedAt,
+			&dbAdvert.PromotedUntil,
 		); err != nil {
 			logger.Error("failed to scan row", zap.Error(err), zap.String("seller_id", sellerId.String()))
 			return nil, entity.PSQLWrap(err)
@@ -445,6 +467,7 @@ func (r *AdvertDB) GetByCartId(cartId, userId uuid.UUID) ([]*entity.Advert, erro
 			&dbAdvert.Status,
 			&dbAdvert.CreatedAt,
 			&dbAdvert.UpdatedAt,
+			&dbAdvert.PromotedUntil,
 		); err != nil {
 			logger.Error("failed to scan row", zap.Error(err), zap.String("cart_id", cartId.String()))
 			return nil, entity.PSQLWrap(err)
@@ -494,6 +517,7 @@ func (r *AdvertDB) GetById(advertId, userId uuid.UUID) (*entity.Advert, error) {
 		&dbAdvert.Status,
 		&dbAdvert.CreatedAt,
 		&dbAdvert.UpdatedAt,
+		&dbAdvert.PromotedUntil,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -721,6 +745,7 @@ func (r *AdvertDB) GetSavedByUserId(userId uuid.UUID) ([]*entity.Advert, error) 
 			&dbAdvert.Status,
 			&dbAdvert.CreatedAt,
 			&dbAdvert.UpdatedAt,
+			&dbAdvert.PromotedUntil,
 		); err != nil {
 			logger.Error("failed to scan row", zap.Error(err), zap.String("user_id", userId.String()))
 			return nil, entity.PSQLWrap(err)
@@ -767,6 +792,7 @@ func (r *AdvertDB) Search(query string, limit, offset int, userId uuid.UUID) ([]
 			&dbAdvert.Status,
 			&dbAdvert.CreatedAt,
 			&dbAdvert.UpdatedAt,
+			&dbAdvert.PromotedUntil,
 		); err != nil {
 			logger.Error("failed to scan row", zap.Error(err), zap.String("query", query))
 			return nil, entity.PSQLWrap(err)
@@ -829,6 +855,7 @@ func (r *AdvertDB) GetByUserId(sellerId, userId uuid.UUID) ([]*entity.Advert, er
 			&dbAdvert.Status,
 			&dbAdvert.CreatedAt,
 			&dbAdvert.UpdatedAt,
+			&dbAdvert.PromotedUntil,
 		); err != nil {
 			logger.Error("failed to scan row", zap.Error(err), zap.String("seller_id", sellerId.String()))
 			return nil, entity.PSQLWrap(err)
@@ -842,4 +869,26 @@ func (r *AdvertDB) GetByUserId(sellerId, userId uuid.UUID) ([]*entity.Advert, er
 	}
 
 	return adverts, nil
+}
+
+func (r *AdvertDB) PromoteAdvert(advertID uuid.UUID) (*entity.Advert, error) {
+	var advert entity.Advert
+
+	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
+	defer cancel()
+
+	logger := middleware.GetLogger(r.ctx)
+	logger.Info("promoting advert in db", zap.String("advert_id", advertID.String()))
+
+	err := r.DB.QueryRow(ctx, promoteAdvertQuery, advertID).Scan(
+		&advert.ID,
+		&advert.Title,
+		&advert.PromotedUntil,
+	)
+	if err != nil {
+		logger.Error("failed to promote advert", zap.Error(err), zap.String("advert_id", advertID.String()))
+		return nil, entity.PSQLWrap(err)
+	}
+
+	return &advert, nil
 }

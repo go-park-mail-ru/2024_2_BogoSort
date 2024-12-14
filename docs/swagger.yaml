@@ -24,6 +24,8 @@ definitions:
         type: string
       price:
         type: integer
+      promoted_until:
+        type: string
       saves_number:
         type: integer
       seller_id:
@@ -153,6 +155,8 @@ definitions:
         type: string
       price:
         type: integer
+      promoted_until:
+        type: string
       seller_id:
         type: string
       status:
@@ -298,6 +302,19 @@ definitions:
       oldPrice:
         type: integer
     type: object
+  entity.Promotion:
+    properties:
+      amount:
+        type: string
+      createdAt:
+        type: string
+      days:
+        type: integer
+      id:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
   entity.Seller:
     properties:
       description:
@@ -305,6 +322,11 @@ definitions:
       id:
         type: string
       user_id:
+        type: string
+    type: object
+  http.PaymentRequest:
+    properties:
+      item_id:
         type: string
     type: object
   utils.ErrResponse:
@@ -1218,6 +1240,38 @@ paths:
       summary: Change user password
       tags:
       - Users
+  /api/v1/payment/init:
+    post:
+      consumes:
+      - application/json
+      description: Initiates a payment process for a given item ID.
+      parameters:
+      - description: Payment Request
+        in: body
+        name: paymentRequest
+        required: true
+        schema:
+          $ref: '#/definitions/http.PaymentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Payment URL
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid request or payment service error
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Initialize payment
+      tags:
+      - payment
   /api/v1/profile:
     put:
       consumes:
@@ -1285,6 +1339,25 @@ paths:
       summary: Get user profile
       tags:
       - Users
+  /api/v1/promotions:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve promotion info
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.Promotion'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Get promotion info
+      tags:
+      - promotions
   /api/v1/purchase/{user_id}:
     get:
       consumes:

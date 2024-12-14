@@ -54,6 +54,8 @@ type Config struct {
 	StaticHost       string        `yaml:"static_host"`
 	StaticPort       int           `yaml:"static_port"`
 	SearchBatchSize  int           `yaml:"search_batch_size"`
+	PaymentShopID    string        `yaml:"payment_shop_id"`
+	PaymentSecret    string        `yaml:"payment_secret"`
 }
 
 type StaticConfig struct {
