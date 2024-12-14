@@ -60,6 +60,7 @@ func (s *AdvertService) Get(limit, offset int, userId uuid.UUID) ([]*dto.Preview
 				Status:      dto.AdvertStatus(advert.Status),
 				HasDelivery: advert.HasDelivery,
 				Location:    advert.Location,
+				PromotedUntil: advert.PromotedUntil,
 			},
 			IsSaved:  advert.IsSaved,
 			IsViewed: advert.IsViewed,
@@ -94,6 +95,7 @@ func (s *AdvertService) GetByUserId(userId uuid.UUID) ([]*dto.MyPreviewAdvertCar
 				Status:      dto.AdvertStatus(advert.Status),
 				HasDelivery: advert.HasDelivery,
 				Location:    advert.Location,
+				PromotedUntil: advert.PromotedUntil,
 			},
 			ViewsNumber: advert.ViewsNumber,
 			SavesNumber: advert.SavesNumber,
@@ -122,6 +124,7 @@ func (s *AdvertService) GetByCartId(cartId, userId uuid.UUID) ([]*dto.PreviewAdv
 				Status:      dto.AdvertStatus(advert.Status),
 				HasDelivery: advert.HasDelivery,
 				Location:    advert.Location,
+				PromotedUntil: advert.PromotedUntil,
 			},
 			IsSaved:  advert.IsSaved,
 			IsViewed: advert.IsViewed,
@@ -157,6 +160,7 @@ func (s *AdvertService) GetById(advertId, userId uuid.UUID) (*dto.AdvertCard, er
 			UpdatedAt:   advert.UpdatedAt,
 			ViewsNumber: advert.ViewsNumber,
 			SavesNumber: advert.SavesNumber,
+			PromotedUntil: advert.PromotedUntil,
 		},
 		IsSaved:  advert.IsSaved,
 		IsViewed: advert.IsViewed,
@@ -207,7 +211,9 @@ func (s *AdvertService) Add(advert *dto.AdvertRequest, userId uuid.UUID) (*dto.A
 		UpdatedAt:   entityAdvert.UpdatedAt,
 		ViewsNumber: entityAdvert.ViewsNumber,
 		SavesNumber: entityAdvert.SavesNumber,
+		PromotedUntil: entityAdvert.PromotedUntil,
 	}
+	
 	return &advertDTO, nil
 }
 
@@ -347,6 +353,7 @@ func (s *AdvertService) GetByCategoryId(categoryId, userId uuid.UUID) ([]*dto.Pr
 				Status:      dto.AdvertStatus(advert.Status),
 				HasDelivery: advert.HasDelivery,
 				Location:    advert.Location,
+				PromotedUntil: advert.PromotedUntil,
 			},
 			IsSaved:  advert.IsSaved,
 			IsViewed: advert.IsViewed,
@@ -397,6 +404,7 @@ func (s *AdvertService) GetSavedByUserId(userId uuid.UUID) ([]*dto.PreviewAdvert
 				Status:      dto.AdvertStatus(advert.Status),
 				HasDelivery: advert.HasDelivery,
 				Location:    advert.Location,
+				PromotedUntil: advert.PromotedUntil,
 			},
 			IsSaved:  advert.IsSaved,
 			IsViewed: advert.IsViewed,
@@ -485,6 +493,7 @@ func (s *AdvertService) GetBySellerId(userId, sellerId uuid.UUID) ([]*dto.Previe
 				Status:      dto.AdvertStatus(advert.Status),
 				HasDelivery: advert.HasDelivery,
 				Location:    advert.Location,
+				PromotedUntil: advert.PromotedUntil,
 			},
 			IsSaved:  advert.IsSaved,
 			IsViewed: advert.IsViewed,
@@ -549,6 +558,7 @@ func (s *AdvertService) Search(query string, batchSize, limit, offset int, userI
 				Status:      dto.AdvertStatus(advert.Status),
 				HasDelivery: advert.HasDelivery,
 				Location:    advert.Location,
+				PromotedUntil: advert.PromotedUntil,
 			},
 			IsSaved:  advert.IsSaved,
 			IsViewed: advert.IsViewed,

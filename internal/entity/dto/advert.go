@@ -26,6 +26,7 @@ type PreviewAdvert struct {
 	Status      AdvertStatus `json:"status"`
 	Location    string       `json:"location"`
 	HasDelivery bool         `json:"has_delivery"`
+	PromotedUntil time.Time    `json:"promoted_until"`
 }
 
 type PreviewAdvertCard struct {
@@ -55,6 +56,7 @@ type Advert struct {
 	ViewsNumber uint         `json:"views_number"`
 	CreatedAt   time.Time    `json:"created_at"`
 	UpdatedAt   time.Time    `json:"updated_at"`
+	PromotedUntil time.Time    `json:"promoted_until"`
 }
 
 type AdvertCard struct {

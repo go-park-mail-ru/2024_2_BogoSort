@@ -27,7 +27,7 @@ const (
 		RETURNING id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status`
 
 	selectAdvertsQuery = `
-		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at
+		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at, promoted_until
 		FROM advert
 		WHERE status != 'inactive'
 		ORDER BY 
@@ -38,31 +38,31 @@ const (
 `
 
 	selectSavedAdvertsByUserIdQuery = `
-		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at
+		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at, promoted_until
 		FROM advert
 		WHERE id IN (SELECT advert_id FROM saved_advert WHERE user_id = $1)
 		ORDER BY created_at DESC`
 
 	selectAdvertsBySellerIdQuery = `
-		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at
+		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at, promoted_until
 		FROM advert
 		WHERE seller_id = $1 AND status != 'inactive'
 		ORDER BY created_at DESC`
 
 	selectAdvertsByUserIdQuery = `
-		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at
+		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at, promoted_until
 		FROM advert
 		WHERE seller_id = $1
 		ORDER BY created_at DESC`
 
 	selectAdvertsByCartIdQuery = `
-		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at
+		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at, promoted_until
 		FROM advert
 		WHERE id IN (SELECT advert_id FROM cart_advert WHERE cart_id = $1)
 		ORDER BY created_at DESC`
 
 	selectAdvertByIdQuery = `
-		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at
+		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at, promoted_until
 		FROM advert
 		WHERE id = $1
 		ORDER BY created_at DESC`
@@ -81,7 +81,7 @@ const (
 		WHERE id = $2`
 
 	selectAdvertsByCategoryIdQuery = `
-		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at
+		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at, promoted_until
 		FROM advert
 		WHERE category_id = $1 AND status != 'inactive'
 		ORDER BY created_at DESC`
@@ -117,7 +117,7 @@ const (
 		SELECT EXISTS(SELECT 1 FROM advert WHERE id = $1)`
 
 	searchAdvertsQuery = `
-		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at
+		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at, promoted_until
 		FROM advert
 		WHERE to_tsvector('russian', title || ' ' || description) @@ plainto_tsquery('russian', $1)
 		ORDER BY created_at DESC
@@ -146,6 +146,7 @@ type AdvertRepoModel struct {
 	Location    string
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
+	PromotedUntil time.Time
 }
 
 type SavedAdvertRepoModel struct {
@@ -236,6 +237,7 @@ func (r *AdvertDB) convertToEntityAdvert(dbAdvert AdvertRepoModel, userId uuid.U
 		IsViewed:    isViewed,
 		ViewsNumber: uint(viewedCount),
 		SavesNumber: uint(savedCount),
+		PromotedUntil: dbAdvert.PromotedUntil,
 	}
 }
 
@@ -319,6 +321,7 @@ func (r *AdvertDB) Get(limit, offset int, userId uuid.UUID) ([]*entity.Advert, e
 			&dbAdvert.Status,
 			&dbAdvert.CreatedAt,
 			&dbAdvert.UpdatedAt,
+			&dbAdvert.PromotedUntil,
 		); err != nil {
 			logger.Error("failed to scan row", zap.Error(err))
 			return nil, entity.PSQLWrap(err)
@@ -364,6 +367,7 @@ func (r *AdvertDB) GetByCategoryId(categoryId, userId uuid.UUID) ([]*entity.Adve
 			&dbAdvert.Status,
 			&dbAdvert.CreatedAt,
 			&dbAdvert.UpdatedAt,
+			&dbAdvert.PromotedUntil,
 		); err != nil {
 			logger.Error("failed to scan row", zap.Error(err), zap.String("category_id", categoryId.String()))
 			return nil, entity.PSQLWrap(err)
@@ -410,6 +414,7 @@ func (r *AdvertDB) GetBySellerId(sellerId, userId uuid.UUID) ([]*entity.Advert, 
 			&dbAdvert.Status,
 			&dbAdvert.CreatedAt,
 			&dbAdvert.UpdatedAt,
+			&dbAdvert.PromotedUntil,
 		); err != nil {
 			logger.Error("failed to scan row", zap.Error(err), zap.String("seller_id", sellerId.String()))
 			return nil, entity.PSQLWrap(err)
@@ -456,6 +461,7 @@ func (r *AdvertDB) GetByCartId(cartId, userId uuid.UUID) ([]*entity.Advert, erro
 			&dbAdvert.Status,
 			&dbAdvert.CreatedAt,
 			&dbAdvert.UpdatedAt,
+			&dbAdvert.PromotedUntil,
 		); err != nil {
 			logger.Error("failed to scan row", zap.Error(err), zap.String("cart_id", cartId.String()))
 			return nil, entity.PSQLWrap(err)
@@ -505,6 +511,7 @@ func (r *AdvertDB) GetById(advertId, userId uuid.UUID) (*entity.Advert, error) {
 		&dbAdvert.Status,
 		&dbAdvert.CreatedAt,
 		&dbAdvert.UpdatedAt,
+		&dbAdvert.PromotedUntil,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -732,6 +739,7 @@ func (r *AdvertDB) GetSavedByUserId(userId uuid.UUID) ([]*entity.Advert, error) 
 			&dbAdvert.Status,
 			&dbAdvert.CreatedAt,
 			&dbAdvert.UpdatedAt,
+			&dbAdvert.PromotedUntil,
 		); err != nil {
 			logger.Error("failed to scan row", zap.Error(err), zap.String("user_id", userId.String()))
 			return nil, entity.PSQLWrap(err)
@@ -778,6 +786,7 @@ func (r *AdvertDB) Search(query string, limit, offset int, userId uuid.UUID) ([]
 			&dbAdvert.Status,
 			&dbAdvert.CreatedAt,
 			&dbAdvert.UpdatedAt,
+			&dbAdvert.PromotedUntil,
 		); err != nil {
 			logger.Error("failed to scan row", zap.Error(err), zap.String("query", query))
 			return nil, entity.PSQLWrap(err)
@@ -840,6 +849,7 @@ func (r *AdvertDB) GetByUserId(sellerId, userId uuid.UUID) ([]*entity.Advert, er
 			&dbAdvert.Status,
 			&dbAdvert.CreatedAt,
 			&dbAdvert.UpdatedAt,
+			&dbAdvert.PromotedUntil,
 		); err != nil {
 			logger.Error("failed to scan row", zap.Error(err), zap.String("seller_id", sellerId.String()))
 			return nil, entity.PSQLWrap(err)
