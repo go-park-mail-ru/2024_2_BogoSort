@@ -146,10 +146,10 @@ func TestCartDB_GetAdvertsByCartID(t *testing.T) {
 
 	cartID := uuid.New()
 
-	mockPool.ExpectQuery(`SELECT a.id, a.title, a.description, a.price, a.location, a.has_delivery, a.status FROM cart_advert ca JOIN advert a ON ca.advert_id = a.id WHERE ca.cart_id = \$1`).
+	mockPool.ExpectQuery(`SELECT a.id, a.title, a.description, a.price, a.location, a.has_delivery, a.status, a.seller_id, a.category_id, a.image_id FROM cart_advert ca JOIN advert a ON ca.advert_id = a.id WHERE ca.cart_id = \$1`).
 		WithArgs(cartID).
 		WillReturnRows(pgxmock.NewRows([]string{
-			"id", "title", "description", "price", "location", "has_delivery", "status",
+			"id", "title", "description", "price", "location", "has_delivery", "status", "seller_id", "category_id", "image_id",
 		}).
 			AddRow(
 				uuid.New(),
@@ -159,6 +159,9 @@ func TestCartDB_GetAdvertsByCartID(t *testing.T) {
 				"Test Location",
 				true,
 				entity.AdvertStatusActive,
+				uuid.New(),
+				uuid.New(),
+				uuid.New(),
 			))
 
 	adverts, err := repo.GetAdvertsByCartId(cartID)
@@ -166,7 +169,7 @@ func TestCartDB_GetAdvertsByCartID(t *testing.T) {
 	assert.Len(t, adverts, 1)
 	assert.Equal(t, "Test Advert", adverts[0].Title)
 
-	mockPool.ExpectQuery(`SELECT a.id, a.title, a.description, a.price, a.location, a.has_delivery, a.status FROM cart_advert ca JOIN advert a ON ca.advert_id = a.id WHERE ca.cart_id = \$1`).
+	mockPool.ExpectQuery(`SELECT a.id, a.title, a.description, a.price, a.location, a.has_delivery, a.status, a.seller_id, a.category_id, a.image_id FROM cart_advert ca JOIN advert a ON ca.advert_id = a.id WHERE ca.cart_id = \$1`).
 		WithArgs(cartID).
 		WillReturnError(pgx.ErrNoRows)
 
@@ -175,7 +178,7 @@ func TestCartDB_GetAdvertsByCartID(t *testing.T) {
 	assert.Equal(t, repository.ErrCartNotFound, err)
 	assert.Nil(t, adverts)
 
-	mockPool.ExpectQuery(`SELECT a.id, a.title, a.description, a.price, a.location, a.has_delivery, a.status FROM cart_advert ca JOIN advert a ON ca.advert_id = a.id WHERE ca.cart_id = \$1`).
+	mockPool.ExpectQuery(`SELECT a.id, a.title, a.description, a.price, a.location, a.has_delivery, a.status, a.seller_id, a.category_id, a.image_id FROM cart_advert ca JOIN advert a ON ca.advert_id = a.id WHERE ca.cart_id = \$1`).
 		WithArgs(cartID).
 		WillReturnError(errors.New("query error"))
 

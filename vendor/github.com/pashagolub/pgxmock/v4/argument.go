@@ -20,4 +20,3 @@ type anyArgument struct{}
 func (a anyArgument) Match(_ interface{}) bool {
 	return true
 }
-

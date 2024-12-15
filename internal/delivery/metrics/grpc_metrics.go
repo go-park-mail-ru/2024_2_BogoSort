@@ -1,8 +1,9 @@
 package metrics
 
 import (
-	"github.com/prometheus/client_golang/prometheus"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type GRPCMetrics struct {
@@ -60,4 +61,3 @@ func (m *GRPCMetrics) IncTotalErrors(code, method string) {
 func (m *GRPCMetrics) AddDuration(code, method string, duration time.Duration) {
 	m.duration.WithLabelValues(m.serviceName, method, code).Observe(duration.Seconds())
 }
-

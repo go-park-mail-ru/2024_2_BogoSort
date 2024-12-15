@@ -257,6 +257,21 @@ func (mr *MockAdvertRepositoryMockRecorder) GetSavedByUserId(userId interface{})
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSavedByUserId", reflect.TypeOf((*MockAdvertRepository)(nil).GetSavedByUserId), userId)
 }
 
+// PromoteAdvert mocks base method.
+func (m *MockAdvertRepository) PromoteAdvert(advertID uuid.UUID) (*entity.Advert, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PromoteAdvert", advertID)
+	ret0, _ := ret[0].(*entity.Advert)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PromoteAdvert indicates an expected call of PromoteAdvert.
+func (mr *MockAdvertRepositoryMockRecorder) PromoteAdvert(advertID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PromoteAdvert", reflect.TypeOf((*MockAdvertRepository)(nil).PromoteAdvert), advertID)
+}
+
 // Search mocks base method.
 func (m *MockAdvertRepository) Search(query string, limit, offset int, userId uuid.UUID) ([]*entity.Advert, error) {
 	m.ctrl.T.Helper()

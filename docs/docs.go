@@ -1377,6 +1377,55 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/payment/init": {
+            "post": {
+                "description": "Initiates a payment process for a given item ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "payment"
+                ],
+                "summary": "Initialize payment",
+                "parameters": [
+                    {
+                        "description": "Payment Request",
+                        "name": "paymentRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.PaymentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Payment URL",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request or payment service error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/profile": {
             "put": {
                 "description": "Allows a user to update their profile information",
@@ -1472,6 +1521,35 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/promotions": {
+            "get": {
+                "description": "Retrieve promotion info",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "promotions"
+                ],
+                "summary": "Get promotion info",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/entity.Promotion"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/utils.ErrResponse"
                         }
@@ -1816,6 +1894,9 @@ const docTemplate = `{
                 "price": {
                     "type": "integer"
                 },
+                "promoted_until": {
+                    "type": "string"
+                },
                 "saves_number": {
                     "type": "integer"
                 },
@@ -2009,6 +2090,9 @@ const docTemplate = `{
                 },
                 "price": {
                     "type": "integer"
+                },
+                "promoted_until": {
+                    "type": "string"
                 },
                 "seller_id": {
                     "type": "string"
@@ -2228,6 +2312,26 @@ const docTemplate = `{
                 }
             }
         },
+        "entity.Promotion": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "days": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
         "entity.Seller": {
             "type": "object",
             "properties": {
@@ -2238,6 +2342,14 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "http.PaymentRequest": {
+            "type": "object",
+            "properties": {
+                "item_id": {
                     "type": "string"
                 }
             }

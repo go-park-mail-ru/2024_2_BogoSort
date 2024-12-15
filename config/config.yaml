@@ -24,6 +24,7 @@ pg_user: "postgres"
 pg_password: "postgres"
 pg_db: "emporiumdb"
 pg_timeout: 5s
+pg_max_conns: 80
 
 rd_addr: "redis:6379"
 rd_password: ""
@@ -45,3 +46,6 @@ db:
   max_conn_lifetime: 1h
   max_conn_idle_time: 30m
   health_check_period: 1m
+
+payment_shop_id: 998145
+payment_secret: test_LIoGRqJoK8gUtvgGl-6NktRWnWPFFYhggwwvn5aHMZc

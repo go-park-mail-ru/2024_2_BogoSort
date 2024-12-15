@@ -27,6 +27,7 @@ type CartPurchaseClient struct {
 }
 
 func NewCartPurchaseClient(addr string) (*CartPurchaseClient, error) {
+	//nolint:staticcheck // Suppressing deprecation warning for grpc.Dial
 	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, err
@@ -77,14 +78,6 @@ func (c *CartPurchaseClient) AddPurchase(ctx context.Context, req dto.PurchaseRe
 	for _, a := range resp.Adverts {
 		dtoAdverts = append(dtoAdverts, convertPreviewAdvertCardFromProto(a))
 	}
-
-	fmt.Println("resp.Status", resp.Status)
-	fmt.Println("resp.PaymentMethod", resp.PaymentMethod)
-	fmt.Println("resp.DeliveryMethod", resp.DeliveryMethod)
-
-	fmt.Println("resp.Status", ConvertPurchaseStatusToDB(resp.Status))
-	fmt.Println("resp.PaymentMethod", ConvertPaymentMethodToDB(resp.PaymentMethod))
-	fmt.Println("resp.DeliveryMethod", ConvertDeliveryMethodToDB(resp.DeliveryMethod))
 
 	response := &dto.PurchaseResponse{
 		ID:             uuid.MustParse(resp.Id),
@@ -257,7 +250,7 @@ func convertCartFromProto(protoCart *cartPurchaseProto.Cart) *dto.Cart {
 			SellerID: uuid.MustParse(purchase.SellerId),
 			Adverts:  make([]dto.PreviewAdvertCard, 0),
 		}
-		
+
 		for _, advert := range purchase.Adverts {
 			cartPurchase.Adverts = append(cartPurchase.Adverts, convertPreviewAdvertCardFromProto(advert))
 		}

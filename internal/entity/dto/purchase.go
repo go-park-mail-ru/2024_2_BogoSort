@@ -13,9 +13,11 @@ type PurchaseRequest struct {
 	UserID         uuid.UUID      `json:"user_id"`
 }
 
-type PurchaseStatus string
-type PaymentMethod string
-type DeliveryMethod string
+type (
+	PurchaseStatus string
+	PaymentMethod  string
+	DeliveryMethod string
+)
 
 const (
 	StatusPending   PurchaseStatus = "pending"

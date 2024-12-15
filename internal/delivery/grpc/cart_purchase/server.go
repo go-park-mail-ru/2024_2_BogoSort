@@ -28,51 +28,51 @@ func NewGrpcServer(cartUC usecase.Cart, purchaseUC usecase.Purchase) *GrpcServer
 }
 
 func (s *GrpcServer) AddPurchase(ctx context.Context, req *proto.AddPurchaseRequest) (*proto.AddPurchaseResponse, error) {
-    paymentMethod := ConvertPaymentMethodToDB(req.PaymentMethod)
-    deliveryMethod := ConvertDeliveryMethodToDB(req.DeliveryMethod)
+	paymentMethod := ConvertPaymentMethodToDB(req.PaymentMethod)
+	deliveryMethod := ConvertDeliveryMethodToDB(req.DeliveryMethod)
 
-    purchaseReq := dto.PurchaseRequest{
-        CartID:         uuid.MustParse(req.CartId),
-        Address:        req.Address,
-        PaymentMethod:  dto.PaymentMethod(paymentMethod),
-        DeliveryMethod: dto.DeliveryMethod(deliveryMethod),
-        UserID:         uuid.MustParse(req.UserId),
-    }
+	purchaseReq := dto.PurchaseRequest{
+		CartID:         uuid.MustParse(req.CartId),
+		Address:        req.Address,
+		PaymentMethod:  dto.PaymentMethod(paymentMethod),
+		DeliveryMethod: dto.DeliveryMethod(deliveryMethod),
+		UserID:         uuid.MustParse(req.UserId),
+	}
 
-    purchase, err := s.purchaseUC.Add(purchaseReq, purchaseReq.UserID)
-    if err != nil {
-        return nil, status.Errorf(codes.Internal, "failed to add purchase: %v", err)
-    }
+	purchase, err := s.purchaseUC.Add(purchaseReq, purchaseReq.UserID)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to add purchase: %v", err)
+	}
 
-    protoAdverts := make([]*proto.PreviewAdvertCard, 0, len(purchase[0].Adverts))
-    for _, a := range purchase[0].Adverts {
-        protoAdvert := convertPreviewAdvertCardToProto(a)
-        protoAdverts = append(protoAdverts, protoAdvert)
-    }
+	protoAdverts := make([]*proto.PreviewAdvertCard, 0, len(purchase[0].Adverts))
+	for _, a := range purchase[0].Adverts {
+		protoAdvert := convertPreviewAdvertCardToProto(a)
+		protoAdverts = append(protoAdverts, protoAdvert)
+	}
 
-    purchaseStatus, err := ConvertDBPurchaseStatusToEnum(string(purchase[0].Status))
-    if err != nil {
-        return nil, status.Errorf(codes.Internal, "failed to convert purchase status: %v", err)
-    }
-    purchasePaymentMethod, err := ConvertDBPaymentMethodToEnum(string(purchase[0].PaymentMethod))
-    if err != nil {
-        return nil, status.Errorf(codes.Internal, "failed to convert purchase payment method: %v", err)
-    }
-    purchaseDeliveryMethod, err := ConvertDBDeliveryMethodToEnum(string(purchase[0].DeliveryMethod))
-    if err != nil {
-        return nil, status.Errorf(codes.Internal, "failed to convert purchase delivery method: %v", err)
-    }
+	purchaseStatus, err := ConvertDBPurchaseStatusToEnum(string(purchase[0].Status))
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to convert purchase status: %v", err)
+	}
+	purchasePaymentMethod, err := ConvertDBPaymentMethodToEnum(string(purchase[0].PaymentMethod))
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to convert purchase payment method: %v", err)
+	}
+	purchaseDeliveryMethod, err := ConvertDBDeliveryMethodToEnum(string(purchase[0].DeliveryMethod))
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to convert purchase delivery method: %v", err)
+	}
 
-    return &proto.AddPurchaseResponse{
-        Id:             purchase[0].ID.String(),
-        SellerId:       purchase[0].SellerID.String(),
-        CustomerId:     purchase[0].CustomerID.String(),
-        Address:        purchase[0].Address,
-        Adverts:        protoAdverts,
-        Status:         purchaseStatus,
-        PaymentMethod:  purchasePaymentMethod,
-        DeliveryMethod: purchaseDeliveryMethod,
-    }, nil
+	return &proto.AddPurchaseResponse{
+		Id:             purchase[0].ID.String(),
+		SellerId:       purchase[0].SellerID.String(),
+		CustomerId:     purchase[0].CustomerID.String(),
+		Address:        purchase[0].Address,
+		Adverts:        protoAdverts,
+		Status:         purchaseStatus,
+		PaymentMethod:  purchasePaymentMethod,
+		DeliveryMethod: purchaseDeliveryMethod,
+	}, nil
 }
 
 func (s *GrpcServer) GetPurchasesByUserID(ctx context.Context, req *proto.GetPurchasesByUserIDRequest) (*proto.GetPurchasesByUserIDResponse, error) {
@@ -104,15 +104,28 @@ func (s *GrpcServer) GetPurchasesByUserID(ctx context.Context, req *proto.GetPur
 			protoAdverts = append(protoAdverts, protoAdvert)
 		}
 
+		purchaseStatus, err := ConvertDBPurchaseStatusToEnum(string(p.Status))
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to convert purchase status: %v", err)
+		}
+		purchasePaymentMethod, err := ConvertDBPaymentMethodToEnum(string(p.PaymentMethod))
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to convert purchase payment method: %v", err)
+		}
+		purchaseDeliveryMethod, err := ConvertDBDeliveryMethodToEnum(string(p.DeliveryMethod))
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to convert purchase delivery method: %v", err)
+		}
+
 		protoPurchases = append(protoPurchases, &proto.PurchaseResponse{
 			Id:             p.ID.String(),
 			SellerId:       p.SellerID.String(),
 			CustomerId:     p.CustomerID.String(),
 			Adverts:        protoAdverts,
 			Address:        p.Address,
-			Status:         proto.PurchaseStatus(proto.PurchaseStatus_value[string(p.Status)]),
-			PaymentMethod:  proto.PaymentMethod(proto.PaymentMethod_value[string(p.PaymentMethod)]),
-			DeliveryMethod: proto.DeliveryMethod(proto.DeliveryMethod_value[string(p.DeliveryMethod)]),
+			Status:         purchaseStatus,
+			PaymentMethod:  purchasePaymentMethod,
+			DeliveryMethod: purchaseDeliveryMethod,
 		})
 	}
 
@@ -122,138 +135,101 @@ func (s *GrpcServer) GetPurchasesByUserID(ctx context.Context, req *proto.GetPur
 }
 
 func (s *GrpcServer) GetCartByID(ctx context.Context, req *proto.GetCartByIDRequest) (*proto.GetCartByIDResponse, error) {
-    cart, err := s.cartUC.GetById(uuid.MustParse(req.CartId))
-    if err != nil {
-        return nil, status.Errorf(codes.Internal, "failed to get cart: %v", err)
-    }
+	cart, err := s.cartUC.GetById(uuid.MustParse(req.CartId))
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get cart: %v", err)
+	}
 
-    protoCart := &proto.Cart{
-        Id:            cart.ID.String(),
-        UserId:        cart.UserID.String(),
-        Status:        proto.CartStatus(proto.CartStatus_value[string(cart.Status)]),
-        CartPurchases: []*proto.CartPurchase{},
-    }
+	protoCart := &proto.Cart{
+		Id:            cart.ID.String(),
+		UserId:        cart.UserID.String(),
+		Status:        proto.CartStatus(proto.CartStatus_value[string(cart.Status)]),
+		CartPurchases: []*proto.CartPurchase{},
+	}
 
-    for _, purchase := range cart.CartPurchases {
-        protoPurchase := &proto.CartPurchase{
-            SellerId: purchase.SellerID.String(),
-            Adverts:  []*proto.PreviewAdvertCard{},
-        }
+	for _, purchase := range cart.CartPurchases {
+		protoPurchase := &proto.CartPurchase{
+			SellerId: purchase.SellerID.String(),
+			Adverts:  []*proto.PreviewAdvertCard{},
+		}
 
-        for _, advert := range purchase.Adverts {
-            protoPurchase.Adverts = append(protoPurchase.Adverts, convertPreviewAdvertCardToProto(advert))
-        }
-        protoCart.CartPurchases = append(protoCart.CartPurchases, protoPurchase)
-    }
+		for _, advert := range purchase.Adverts {
+			protoPurchase.Adverts = append(protoPurchase.Adverts, convertPreviewAdvertCardToProto(advert))
+		}
+		protoCart.CartPurchases = append(protoCart.CartPurchases, protoPurchase)
+	}
 
-    return &proto.GetCartByIDResponse{
-        Cart: protoCart,
-    }, nil
+	return &proto.GetCartByIDResponse{
+		Cart: protoCart,
+	}, nil
 }
 
 func (s *GrpcServer) GetCartByUserID(ctx context.Context, req *proto.GetCartByUserIDRequest) (*proto.GetCartByUserIDResponse, error) {
-    cart, err := s.cartUC.GetByUserId(uuid.MustParse(req.UserId))
-    if err != nil {
-        if errors.Is(err, repository.ErrCartNotFound) {
-            return nil, status.Errorf(codes.NotFound, "cart not found")
-        }
-        return nil, status.Errorf(codes.Internal, "failed to get cart: %v", err)
-    }
+	cart, err := s.cartUC.GetByUserId(uuid.MustParse(req.UserId))
+	if err != nil {
+		if errors.Is(err, repository.ErrCartNotFound) {
+			return nil, status.Errorf(codes.NotFound, "cart not found")
+		}
+		return nil, status.Errorf(codes.Internal, "failed to get cart: %v", err)
+	}
 
-    protoCart := &proto.Cart{
-        Id:            cart.ID.String(),
-        UserId:        cart.UserID.String(),
-        Status:        proto.CartStatus(proto.CartStatus_value[string(cart.Status)]),
-        CartPurchases: []*proto.CartPurchase{},
-    }
+	protoCart := &proto.Cart{
+		Id:            cart.ID.String(),
+		UserId:        cart.UserID.String(),
+		Status:        proto.CartStatus(proto.CartStatus_value[string(cart.Status)]),
+		CartPurchases: []*proto.CartPurchase{},
+	}
 
-    for _, purchase := range cart.CartPurchases {
-        protoPurchase := &proto.CartPurchase{
-            SellerId: purchase.SellerID.String(),
-            Adverts:  []*proto.PreviewAdvertCard{},
-        }
+	for _, purchase := range cart.CartPurchases {
+		protoPurchase := &proto.CartPurchase{
+			SellerId: purchase.SellerID.String(),
+			Adverts:  []*proto.PreviewAdvertCard{},
+		}
 
-        for _, advert := range purchase.Adverts {
-            protoPurchase.Adverts = append(protoPurchase.Adverts, convertPreviewAdvertCardToProto(advert))
-        }
-        protoCart.CartPurchases = append(protoCart.CartPurchases, protoPurchase)
-    }
+		for _, advert := range purchase.Adverts {
+			protoPurchase.Adverts = append(protoPurchase.Adverts, convertPreviewAdvertCardToProto(advert))
+		}
+		protoCart.CartPurchases = append(protoCart.CartPurchases, protoPurchase)
+	}
 
-    return &proto.GetCartByUserIDResponse{
-        Cart: protoCart,
-    }, nil
+	return &proto.GetCartByUserIDResponse{
+		Cart: protoCart,
+	}, nil
 }
 
 func (s *GrpcServer) AddAdvertToCart(ctx context.Context, req *proto.AddAdvertToCartRequest) (*proto.AddAdvertToCartResponse, error) {
-    err := s.cartUC.AddAdvert(uuid.MustParse(req.UserId), uuid.MustParse(req.AdvertId))
-    if err != nil {
-        return nil, status.Errorf(codes.Internal, "failed to add advert to cart: %v", err)
-    }
+	err := s.cartUC.AddAdvert(uuid.MustParse(req.UserId), uuid.MustParse(req.AdvertId))
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to add advert to cart: %v", err)
+	}
 
-    return &proto.AddAdvertToCartResponse{
-        Message: "advert added to user cart",
-    }, nil
+	return &proto.AddAdvertToCartResponse{
+		Message: "advert added to user cart",
+	}, nil
 }
 
 func (s *GrpcServer) DeleteAdvertFromCart(ctx context.Context, req *proto.DeleteAdvertFromCartRequest) (*proto.DeleteAdvertFromCartResponse, error) {
-    err := s.cartUC.DeleteAdvert(uuid.MustParse(req.CartId), uuid.MustParse(req.AdvertId))
-    if err != nil {
-        return nil, status.Errorf(codes.Internal, "failed to delete advert from cart: %v", err)
-    }
+	err := s.cartUC.DeleteAdvert(uuid.MustParse(req.CartId), uuid.MustParse(req.AdvertId))
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to delete advert from cart: %v", err)
+	}
 
-    return &proto.DeleteAdvertFromCartResponse{
-        Message: "advert deleted from user cart",
-    }, nil
+	return &proto.DeleteAdvertFromCartResponse{
+		Message: "advert deleted from user cart",
+	}, nil
 }
 
 func (s *GrpcServer) CheckCartExists(ctx context.Context, req *proto.CheckCartExistsRequest) (*proto.CheckCartExistsResponse, error) {
-    cart, err := s.cartUC.CheckExists(uuid.MustParse(req.UserId))
-    if err != nil {
-        return nil, status.Errorf(codes.Internal, "failed to check cart existence: %v", err)
-    }
+	cart, err := s.cartUC.CheckExists(uuid.MustParse(req.UserId))
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to check cart existence: %v", err)
+	}
 
-    return &proto.CheckCartExistsResponse{
-        CartId: cart.String(),
-    }, nil
+	return &proto.CheckCartExistsResponse{
+		CartId: cart.String(),
+	}, nil
 }
 
 func (s *GrpcServer) Ping(ctx context.Context, req *proto.NoContent) (*proto.NoContent, error) {
 	return &proto.NoContent{}, nil
-}
-
-func convertCartToProto(cart *dto.Cart) *proto.Cart {
-    protoCart := &proto.Cart{
-        Id:            cart.ID.String(),
-        UserId:        cart.UserID.String(),
-        Status:        proto.CartStatus(proto.CartStatus_value[string(cart.Status)]),
-        CartPurchases: []*proto.CartPurchase{},
-    }
-
-    for _, purchase := range cart.CartPurchases {
-        protoPurchase := &proto.CartPurchase{
-            SellerId: purchase.SellerID.String(),
-            Adverts:  []*proto.PreviewAdvertCard{},
-        }
-
-        for _, advert := range purchase.Adverts {
-            protoPurchase.Adverts = append(protoPurchase.Adverts, convertPreviewAdvertCardToProto(advert))
-        }
-        protoCart.CartPurchases = append(protoCart.CartPurchases, protoPurchase)
-    }
-
-    return protoCart
-}
-
-func convertPreviewAdvertCardToAdvert(card dto.PreviewAdvertCard) dto.Advert {
-    return dto.Advert{
-        ID:          card.Preview.ID,
-        Title:       card.Preview.Title,
-        Price:       card.Preview.Price,
-        ImageId:     card.Preview.ImageId,
-		CategoryId:  card.Preview.CategoryId,
-		SellerId:    card.Preview.SellerId,
-        Status:      card.Preview.Status,
-        Location:    card.Preview.Location,
-        HasDelivery: card.Preview.HasDelivery,
-    }
 }

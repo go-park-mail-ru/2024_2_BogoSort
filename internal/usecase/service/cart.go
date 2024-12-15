@@ -82,7 +82,7 @@ func (c *CartService) GetById(cartID uuid.UUID) (dto.Cart, error) {
 	advertsBySeller := make(map[uuid.UUID][]dto.PreviewAdvertCard)
 	for _, advert := range adverts {
 		advertsBySeller[advert.SellerId] = append(
-			advertsBySeller[advert.SellerId], 
+			advertsBySeller[advert.SellerId],
 			convertAdvertToResponse(advert),
 		)
 	}
