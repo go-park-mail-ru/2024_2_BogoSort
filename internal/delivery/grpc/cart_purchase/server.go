@@ -104,15 +104,28 @@ func (s *GrpcServer) GetPurchasesByUserID(ctx context.Context, req *proto.GetPur
 			protoAdverts = append(protoAdverts, protoAdvert)
 		}
 
+		purchaseStatus, err := ConvertDBPurchaseStatusToEnum(string(p.Status))
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to convert purchase status: %v", err)
+		}
+		purchasePaymentMethod, err := ConvertDBPaymentMethodToEnum(string(p.PaymentMethod))
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to convert purchase payment method: %v", err)
+		}
+		purchaseDeliveryMethod, err := ConvertDBDeliveryMethodToEnum(string(p.DeliveryMethod))
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to convert purchase delivery method: %v", err)
+		}
+
 		protoPurchases = append(protoPurchases, &proto.PurchaseResponse{
 			Id:             p.ID.String(),
 			SellerId:       p.SellerID.String(),
 			CustomerId:     p.CustomerID.String(),
 			Adverts:        protoAdverts,
 			Address:        p.Address,
-			Status:         proto.PurchaseStatus(proto.PurchaseStatus_value[string(p.Status)]),
-			PaymentMethod:  proto.PaymentMethod(proto.PaymentMethod_value[string(p.PaymentMethod)]),
-			DeliveryMethod: proto.DeliveryMethod(proto.DeliveryMethod_value[string(p.DeliveryMethod)]),
+			Status:         purchaseStatus,
+			PaymentMethod:  purchasePaymentMethod,
+			DeliveryMethod: purchaseDeliveryMethod,
 		})
 	}
 

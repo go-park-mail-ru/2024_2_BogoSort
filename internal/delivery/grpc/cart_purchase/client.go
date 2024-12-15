@@ -79,14 +79,6 @@ func (c *CartPurchaseClient) AddPurchase(ctx context.Context, req dto.PurchaseRe
 		dtoAdverts = append(dtoAdverts, convertPreviewAdvertCardFromProto(a))
 	}
 
-	fmt.Println("resp.Status", resp.Status)
-	fmt.Println("resp.PaymentMethod", resp.PaymentMethod)
-	fmt.Println("resp.DeliveryMethod", resp.DeliveryMethod)
-
-	fmt.Println("resp.Status", ConvertPurchaseStatusToDB(resp.Status))
-	fmt.Println("resp.PaymentMethod", ConvertPaymentMethodToDB(resp.PaymentMethod))
-	fmt.Println("resp.DeliveryMethod", ConvertDeliveryMethodToDB(resp.DeliveryMethod))
-
 	response := &dto.PurchaseResponse{
 		ID:             uuid.MustParse(resp.Id),
 		SellerID:       uuid.MustParse(resp.SellerId),
