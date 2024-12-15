@@ -36,6 +36,7 @@ const (
 	DeliveryMethodDelivery DeliveryMethod = "delivery"
 )
 
+//easyjson:json
 type PurchaseResponse struct {
 	ID             uuid.UUID           `json:"id"`
 	SellerID       uuid.UUID           `json:"seller_id"`

@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 )
 
+//easyjson:json
 type PriceHistoryResponse struct {
 	AdvertID      uuid.UUID             `json:"advert_id"`
 	AdvertHistory []entity.PriceHistory `json:"advert_history"`
