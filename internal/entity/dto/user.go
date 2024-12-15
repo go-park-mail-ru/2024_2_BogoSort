@@ -1,4 +1,4 @@
-//go:generate easyjson -all dto/user_easyjson.go
+//go:generate easyjson -all .
 package dto
 
 import (

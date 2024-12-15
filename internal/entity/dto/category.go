@@ -1,4 +1,4 @@
-//go:generate easyjson -all category.go
+//go:generate easyjson -all .
 package dto
 
 import "github.com/google/uuid"
