@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"sync"
 	"time"
 
 	"github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/http/middleware"
@@ -106,67 +105,23 @@ func (s *PaymentService) PaymentProcessor(ctx context.Context) {
 		return nil
 	}
 
-	orders := make(chan entity.Order, 25)
+	for {
+		time.Sleep(1 * time.Minute)
+		unprocessedOrders, err := s.paymentRepo.GetOrdersInProcess()
+		if err != nil {
+			logger := middleware.GetLogger(ctx)
+			logger.Error("failed to fetch orders", zap.Error(err))
+			continue
+		}
 
-	go func() {
-		defer close(orders)
-		ticker := time.NewTicker(1 * time.Minute)
-		defer ticker.Stop()
-
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				unprocessedOrders, err := s.paymentRepo.GetOrdersInProcess()
-				if err != nil {
-					logger := middleware.GetLogger(ctx)
-					logger.Error("failed to fetch orders", zap.Error(err))
-					continue
-				}
-
-				for _, order := range unprocessedOrders {
-					select {
-					case orders <- order:
-					case <-ctx.Done():
-						return
-					}
-				}
+		for _, order := range unprocessedOrders {
+			logger := middleware.GetLogger(ctx)
+			err := process(order)
+			if err != nil {
+				logger.Error("failed to process order", zap.Error(err))
 			}
 		}
-	}()
-
-	workerPool(ctx, orders, process)
-}
-
-func workerPool(ctx context.Context, orders <-chan entity.Order,
-	process func(order entity.Order) error,
-) {
-	wg := new(sync.WaitGroup)
-
-	for i := 0; i < 5; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for {
-				select {
-				case <-ctx.Done():
-					return
-				case order, ok := <-orders:
-					if !ok {
-						return
-					}
-					err := process(order)
-					if err != nil {
-						logger := middleware.GetLogger(ctx)
-						logger.Error("failed to process order", zap.Error(err))
-					}
-				}
-			}
-		}()
 	}
-
-	wg.Wait()
 }
 
 const (
