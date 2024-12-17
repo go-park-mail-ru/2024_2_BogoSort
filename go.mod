@@ -17,6 +17,7 @@ require (
 	github.com/golang/mock v1.6.0
 	github.com/grafana/loki-client-go v0.0.0-20240913122146-e119d400c3a5
 	github.com/jackc/pgx/v5 v5.7.1
+	github.com/mailru/easyjson v0.9.0
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/pashagolub/pgxmock/v4 v4.3.0
 	github.com/prometheus/client_golang v1.20.5
@@ -77,7 +78,6 @@ require (
 	github.com/go-openapi/spec v0.21.0 // indirect
 	github.com/go-openapi/swag v0.23.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
-	github.com/mailru/easyjson v0.9.0
 	github.com/pkg/errors v0.9.1
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	golang.org/x/text v0.20.0 // indirect
