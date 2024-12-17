@@ -74,6 +74,7 @@ jobs:
 
   deploy:
     name: Deploy to Server
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
     needs: [run-linters, run-tests]
     runs-on: ubuntu-latest
     timeout-minutes: 10
