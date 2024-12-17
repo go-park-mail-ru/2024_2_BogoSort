@@ -73,7 +73,7 @@ func (h *PurchaseEndpoint) Add(w http.ResponseWriter, r *http.Request) {
 	}
 
 	logger.Info("purchase added", zap.Any("purchase", purchaseResponse))
-	utils.SendJSONResponse(w, http.StatusCreated, purchaseResponse)
+	utils.WriteJSON(w, purchaseResponse, http.StatusCreated)
 }
 
 // GetByUserID processes the retrieval of purchases by user ID

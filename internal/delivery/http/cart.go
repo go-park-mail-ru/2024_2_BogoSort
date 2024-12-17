@@ -78,7 +78,7 @@ func (h *CartEndpoint) GetByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	logger.Info("cart", zap.Any("cart", cart))
-	utils.SendJSONResponse(w, http.StatusOK, cart)
+	utils.WriteJSON(w, cart, http.StatusOK)
 }
 
 // GetByUserID godoc
@@ -124,7 +124,7 @@ func (h *CartEndpoint) GetByUserID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.SendJSONResponse(w, http.StatusOK, cart)
+	utils.WriteJSON(w, cart, http.StatusOK)
 }
 
 // AddToCart godoc
@@ -180,7 +180,7 @@ func (h *CartEndpoint) DeleteFromCart(w http.ResponseWriter, r *http.Request) {
 	logger := middleware.GetLogger(r.Context())
 	logger.Info("delete advert from user cart request")
 	var req dto.DeleteAdvertFromUserCartRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := utils.ReadJSON(r, &req); err != nil {
 		utils.SendErrorResponse(w, http.StatusBadRequest, "invalid request body")
 		return
 	}

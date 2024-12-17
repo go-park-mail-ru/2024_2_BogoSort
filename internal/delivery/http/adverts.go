@@ -3,7 +3,6 @@ package http
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
@@ -278,7 +277,7 @@ func (h *AdvertEndpoint) GetById(writer http.ResponseWriter, r *http.Request) {
 	}
 	logger.Info("advert sent", zap.Any("advert", advert))
 	utils.SanitizeAdvert(&advert.Advert, h.policy)
-	utils.SendJSONResponse(writer, http.StatusOK, advert)
+	utils.WriteJSON(writer, advert, http.StatusOK)
 }
 
 // Add godoc
@@ -337,7 +336,7 @@ func (h *AdvertEndpoint) Update(writer http.ResponseWriter, r *http.Request) {
 	logger := middleware.GetLogger(r.Context())
 	logger.Info("update advert request")
 	var advert dto.AdvertRequest
-	if err := json.NewDecoder(r.Body).Decode(&advert); err != nil {
+	if err := utils.ReadJSON(r, &advert); err != nil {
 		h.sendError(writer, http.StatusBadRequest, ErrInvalidAdvertData, "invalid advert data", nil)
 		return
 	}

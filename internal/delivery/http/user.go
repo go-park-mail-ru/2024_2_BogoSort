@@ -3,7 +3,6 @@ package http
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
@@ -163,7 +162,7 @@ func (u *UserEndpoint) Login(w http.ResponseWriter, r *http.Request) {
 	logger.Info("login request")
 
 	var credentials dto.Login
-	if err := json.NewDecoder(r.Body).Decode(&credentials); err != nil {
+	if err := utils.ReadJSON(r, &credentials); err != nil {
 		u.sendError(w, http.StatusBadRequest, err, "error decoding login request", nil)
 		return
 	}
@@ -212,7 +211,7 @@ func (u *UserEndpoint) ChangePassword(w http.ResponseWriter, r *http.Request) {
 	logger.Info("change password request")
 
 	var updatePassword dto.UpdatePassword
-	if err := json.NewDecoder(r.Body).Decode(&updatePassword); err != nil {
+	if err := utils.ReadJSON(r, &updatePassword); err != nil {
 		u.sendError(w, http.StatusBadRequest, err, "error decoding change password request", nil)
 		return
 	}
@@ -252,7 +251,7 @@ func (u *UserEndpoint) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	logger.Info("update profile request")
 
 	var user dto.UserUpdate
-	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+	if err := utils.ReadJSON(r, &user); err != nil {
 		u.sendError(w, http.StatusBadRequest, err, "error decoding update profile request", nil)
 		return
 	}
@@ -305,7 +304,7 @@ func (u *UserEndpoint) GetProfile(w http.ResponseWriter, r *http.Request) {
 
 	logger.Info("get profile successful", zap.String("userID", userID.String()))
 	utils.SanitizeResponseUser(user, u.policy)
-	utils.SendJSONResponse(w, http.StatusOK, user)
+	utils.WriteJSON(w, user, http.StatusOK)
 }
 
 // GetMe
@@ -336,7 +335,7 @@ func (u *UserEndpoint) GetMe(w http.ResponseWriter, r *http.Request) {
 
 	logger.Info("get me successful", zap.String("userID", userID.String()))
 	utils.SanitizeResponseUser(user, u.policy)
-	utils.SendJSONResponse(w, http.StatusOK, user)
+	utils.WriteJSON(w, user, http.StatusOK)
 }
 
 // UploadImage godoc
