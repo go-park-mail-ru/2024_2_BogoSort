@@ -70,10 +70,15 @@ jobs:
         run: go build ./...
 
       - name: Run Tests
-        run: go test ./... -v
+        run: |
+          go test -json ./... -coverprofile coverprofile_.tmp -coverpkg=./... ; \
+          grep -v -e '/mocks' -e 'mock_repository.go' -e 'mock.go' -e 'docs.go' -e '_easyjson.go' -e '.pb.go' -e 'gen.go' -e '/cmd/' -e '/config/' -e '/pkg/connector/' coverprofile_.tmp > coverprofile.tmp ; \
+          rm coverprofile_.tmp ; \
+          go tool cover -html coverprofile.tmp -o ../heatmap.html; \
+          go tool cover -func coverprofile.tmp
 
   deploy:
-    name: Deploy to Server
+    name: deploy to server
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
     needs: [run-linters, run-tests]
     runs-on: ubuntu-latest
