@@ -68,7 +68,7 @@ jobs:
           key: ${{ secrets.PRIVATE_KEY }}
           debug: true
           script: |
-            cd /home/${{ secrets.USERNAME }}/server/back
+            cd /home/${{ secrets.USERNAME }}/2024_2_BogoSort
             git checkout develop
             git fetch && git pull
             sudo docker-compose build
