@@ -296,7 +296,7 @@ func (h *AdvertEndpoint) Add(writer http.ResponseWriter, r *http.Request) {
 	logger := middleware.GetLogger(r.Context())
 	logger.Info("add advert request")
 	var advert dto.AdvertRequest
-	if err := json.NewDecoder(r.Body).Decode(&advert); err != nil {
+	if err := utils.ReadJSON(r, &advert); err != nil {
 		h.sendError(writer, http.StatusBadRequest, ErrInvalidAdvertData, "invalid advert data", nil)
 		return
 	}

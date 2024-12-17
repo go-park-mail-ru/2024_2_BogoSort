@@ -111,7 +111,7 @@ func (u *UserEndpoint) Signup(w http.ResponseWriter, r *http.Request) {
 	logger.Info("signup request")
 
 	var credentials dto.Signup
-	if err := json.NewDecoder(r.Body).Decode(&credentials); err != nil {
+	if err := utils.ReadJSON(r, &credentials); err != nil {
 		u.sendError(w, http.StatusBadRequest, err, "error decoding signup request", nil)
 		return
 	}

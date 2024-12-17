@@ -7,7 +7,7 @@ import (
 	"github.com/mailru/easyjson"
 )
 
-func writeJSON(w http.ResponseWriter, v easyjson.Marshaler, status int) error {
+func WriteJSON(w http.ResponseWriter, v easyjson.Marshaler, status int) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 
@@ -16,7 +16,7 @@ func writeJSON(w http.ResponseWriter, v easyjson.Marshaler, status int) error {
 	return err
 }
 
-func readJSON(r *http.Request, v easyjson.Unmarshaler) error {
+func ReadJSON(r *http.Request, v easyjson.Unmarshaler) error {
 	if err := easyjson.UnmarshalFromReader(r.Body, v); err != nil {
 		return err
 	}
