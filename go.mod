@@ -14,6 +14,7 @@ require github.com/google/uuid v1.6.0
 
 require (
 	github.com/chai2010/webp v1.1.1
+	github.com/go-redis/redis/v8 v8.11.5
 	github.com/golang/mock v1.6.0
 	github.com/grafana/loki-client-go v0.0.0-20240913122146-e119d400c3a5
 	github.com/jackc/pgx/v5 v5.7.1
