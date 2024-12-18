@@ -170,69 +170,69 @@ services:
   # ----------------------------------------------
   # Prometheus и Grafana
   # ----------------------------------------------
-  # node_exporter:
-  #   image: prom/node-exporter
-  #   restart: always
-  #   ports:
-  #     - "9100:9100"
-  #   networks:
-  #     - app-network
+  node_exporter:
+    image: prom/node-exporter
+    restart: always
+    ports:
+      - "9100:9100"
+    networks:
+      - app-network
 
-  # prometheus:
-  #   image: prom/prometheus:latest
-  #   restart: always
+  prometheus:
+    image: prom/prometheus:latest
+    restart: always
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    depends_on:
+      node_exporter:
+        condition: service_started
+      app:
+        condition: service_started
+    networks:
+      - app-network
+
+  # loki:
+  #   image: grafana/loki:2.7.1
   #   ports:
-  #     - "9090:9090"
+  #     - "3100:3100"
+  #   command: -config.file=/etc/loki/local-config.yaml
   #   volumes:
-  #     - ./prometheus.yml:/etc/prometheus/prometheus.yml
-  #     - prometheus_data:/prometheus
-  #   command:
-  #     - '--config.file=/etc/prometheus/prometheus.yml'
-  #     - '--storage.tsdb.path=/prometheus'
-  #   depends_on:
-  #     node_exporter:
-  #       condition: service_started
-  #     app:
-  #       condition: service_started
+  #     - ./loki-config.yml:/etc/loki/local-config.yaml
+  #     - loki_data:/loki
   #   networks:
   #     - app-network
 
-  # # loki:
-  # #   image: grafana/loki:2.7.1
-  # #   ports:
-  # #     - "3100:3100"
-  # #   command: -config.file=/etc/loki/local-config.yaml
-  # #   volumes:
-  # #     - ./loki-config.yml:/etc/loki/local-config.yaml
-  # #     - loki_data:/loki
-  # #   networks:
-  # #     - app-network
-
-  # # promtail:
-  # #   image: grafana/promtail:2.7.1
-  # #   volumes:
-  # #     - ./promtail-config.yml:/etc/promtail/config.yml
-  # #     - /var/log:/var/log
-  # #   command: -config.file=/etc/promtail/config.yml
-  # #   networks:
-  # #     - app-network
+  # promtail:
+  #   image: grafana/promtail:2.7.1
+  #   volumes:
+  #     - ./promtail-config.yml:/etc/promtail/config.yml
+  #     - /var/log:/var/log
+  #   command: -config.file=/etc/promtail/config.yml
+  #   networks:
+  #     - app-network
       
-  # grafana:
-  #   image: grafana/grafana:latest
-  #   container_name: grafana
-  #   ports:
-  #     - "8010:3000"
-  #   volumes:
-  #     - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
-  #     - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
-  #     - ./grafana/dashboards:/var/lib/grafana/dashboards
-  #   environment:
-  #     - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER}
-  #     - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
-  #   depends_on:
-  #     - prometheus
-  #   networks:
-  #     - app-network
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "8010:3000"
+    volumes:
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+    depends_on:
+      - prometheus
+    networks:
+      - app-network
       
 networks:
   app-network:
