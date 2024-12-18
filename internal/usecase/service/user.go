@@ -61,11 +61,18 @@ func (u *UserService) Signup(signupInfo *dto.Signup) (uuid.UUID, error) {
 		logger.Error("failed to begin transaction", zap.Error(err))
 		return uuid.Nil, entity.UsecaseWrap(errors.New("failed to begin transaction"), err)
 	}
+
 	defer func() {
 		if err != nil {
-			tx.Rollback(ctx)
+			if rollbackErr := tx.Rollback(ctx); rollbackErr != nil {
+				logger := middleware.GetLogger(ctx)
+				logger.Error("failed to rollback transaction", zap.Error(rollbackErr))
+			}
 		} else {
-			tx.Commit(ctx)
+			if commitErr := tx.Commit(ctx); commitErr != nil {
+				logger := middleware.GetLogger(ctx)
+				logger.Error("failed to commit transaction", zap.Error(commitErr))
+			}
 		}
 	}()
 

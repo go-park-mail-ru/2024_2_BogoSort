@@ -22,18 +22,22 @@ var (
 )
 
 type AdvertService struct {
-	advertRepo repository.AdvertRepository
-	sellerRepo repository.Seller
-	userRepo   repository.User
+	advertRepo  repository.AdvertRepository
+	sellerRepo  repository.Seller
+	userRepo    repository.User
+	historyRepo repository.HistoryRepository
 }
 
 func NewAdvertService(advertRepo repository.AdvertRepository,
 	sellerRepo repository.Seller,
-	userRepo repository.User) *AdvertService {
+	userRepo repository.User,
+	historyRepo repository.HistoryRepository,
+) *AdvertService {
 	return &AdvertService{
-		advertRepo: advertRepo,
-		sellerRepo: sellerRepo,
-		userRepo:   userRepo,
+		advertRepo:  advertRepo,
+		sellerRepo:  sellerRepo,
+		userRepo:    userRepo,
+		historyRepo: historyRepo,
 	}
 }
 
@@ -47,15 +51,16 @@ func (s *AdvertService) Get(limit, offset int, userId uuid.UUID) ([]*dto.Preview
 	for _, advert := range adverts {
 		advertDTO := dto.PreviewAdvertCard{
 			Preview: dto.PreviewAdvert{
-				ID:          advert.ID,
-				SellerId:    advert.SellerId,
-				CategoryId:  advert.CategoryId,
-				Title:       advert.Title,
-				Price:       advert.Price,
-				ImageId:     advert.ImageId,
-				Status:      dto.AdvertStatus(advert.Status),
-				HasDelivery: advert.HasDelivery,
-				Location:    advert.Location,
+				ID:            advert.ID,
+				SellerId:      advert.SellerId,
+				CategoryId:    advert.CategoryId,
+				Title:         advert.Title,
+				Price:         advert.Price,
+				ImageId:       advert.ImageId,
+				Status:        dto.AdvertStatus(advert.Status),
+				HasDelivery:   advert.HasDelivery,
+				Location:      advert.Location,
+				PromotedUntil: advert.PromotedUntil,
 			},
 			IsSaved:  advert.IsSaved,
 			IsViewed: advert.IsViewed,
@@ -81,15 +86,16 @@ func (s *AdvertService) GetByUserId(userId uuid.UUID) ([]*dto.MyPreviewAdvertCar
 	for _, advert := range adverts {
 		advertDTO := dto.MyPreviewAdvertCard{
 			Preview: dto.PreviewAdvert{
-				ID:          advert.ID,
-				SellerId:    advert.SellerId,
-				CategoryId:  advert.CategoryId,
-				Title:       advert.Title,
-				Price:       advert.Price,
-				ImageId:     advert.ImageId,
-				Status:      dto.AdvertStatus(advert.Status),
-				HasDelivery: advert.HasDelivery,
-				Location:    advert.Location,
+				ID:            advert.ID,
+				SellerId:      advert.SellerId,
+				CategoryId:    advert.CategoryId,
+				Title:         advert.Title,
+				Price:         advert.Price,
+				ImageId:       advert.ImageId,
+				Status:        dto.AdvertStatus(advert.Status),
+				HasDelivery:   advert.HasDelivery,
+				Location:      advert.Location,
+				PromotedUntil: advert.PromotedUntil,
 			},
 			ViewsNumber: advert.ViewsNumber,
 			SavesNumber: advert.SavesNumber,
@@ -109,15 +115,16 @@ func (s *AdvertService) GetByCartId(cartId, userId uuid.UUID) ([]*dto.PreviewAdv
 	for _, advert := range adverts {
 		advertDTO := dto.PreviewAdvertCard{
 			Preview: dto.PreviewAdvert{
-				ID:          advert.ID,
-				SellerId:    advert.SellerId,
-				CategoryId:  advert.CategoryId,
-				Title:       advert.Title,
-				Price:       advert.Price,
-				ImageId:     advert.ImageId,
-				Status:      dto.AdvertStatus(advert.Status),
-				HasDelivery: advert.HasDelivery,
-				Location:    advert.Location,
+				ID:            advert.ID,
+				SellerId:      advert.SellerId,
+				CategoryId:    advert.CategoryId,
+				Title:         advert.Title,
+				Price:         advert.Price,
+				ImageId:       advert.ImageId,
+				Status:        dto.AdvertStatus(advert.Status),
+				HasDelivery:   advert.HasDelivery,
+				Location:      advert.Location,
+				PromotedUntil: advert.PromotedUntil,
 			},
 			IsSaved:  advert.IsSaved,
 			IsViewed: advert.IsViewed,
@@ -130,7 +137,6 @@ func (s *AdvertService) GetByCartId(cartId, userId uuid.UUID) ([]*dto.PreviewAdv
 
 func (s *AdvertService) GetById(advertId, userId uuid.UUID) (*dto.AdvertCard, error) {
 	advert, err := s.advertRepo.GetById(advertId, userId)
-
 	if err != nil {
 		if errors.Is(err, repository.ErrAdvertNotFound) {
 			return nil, entity.UsecaseWrap(ErrAdvertNotFound, ErrAdvertNotFound)
@@ -140,20 +146,21 @@ func (s *AdvertService) GetById(advertId, userId uuid.UUID) (*dto.AdvertCard, er
 
 	advertDTO := dto.AdvertCard{
 		Advert: dto.Advert{
-			ID:          advert.ID,
-			SellerId:    advert.SellerId,
-			CategoryId:  advert.CategoryId,
-			Description: advert.Description,
-			Title:       advert.Title,
-			Price:       advert.Price,
-			ImageId:     advert.ImageId,
-			Status:      dto.AdvertStatus(advert.Status),
-			HasDelivery: advert.HasDelivery,
-			Location:    advert.Location,
-			CreatedAt:   advert.CreatedAt,
-			UpdatedAt:   advert.UpdatedAt,
-			ViewsNumber: advert.ViewsNumber,
-			SavesNumber: advert.SavesNumber,
+			ID:            advert.ID,
+			SellerId:      advert.SellerId,
+			CategoryId:    advert.CategoryId,
+			Description:   advert.Description,
+			Title:         advert.Title,
+			Price:         advert.Price,
+			ImageId:       advert.ImageId,
+			Status:        dto.AdvertStatus(advert.Status),
+			HasDelivery:   advert.HasDelivery,
+			Location:      advert.Location,
+			CreatedAt:     advert.CreatedAt,
+			UpdatedAt:     advert.UpdatedAt,
+			ViewsNumber:   advert.ViewsNumber,
+			SavesNumber:   advert.SavesNumber,
+			PromotedUntil: advert.PromotedUntil,
 		},
 		IsSaved:  advert.IsSaved,
 		IsViewed: advert.IsViewed,
@@ -190,21 +197,23 @@ func (s *AdvertService) Add(advert *dto.AdvertRequest, userId uuid.UUID) (*dto.A
 	}
 
 	advertDTO := dto.Advert{
-		ID:          entityAdvert.ID,
-		CategoryId:  entityAdvert.CategoryId,
-		SellerId:    entityAdvert.SellerId,
-		Title:       entityAdvert.Title,
-		Description: entityAdvert.Description,
-		Price:       entityAdvert.Price,
-		Status:      dto.AdvertStatus(entityAdvert.Status),
-		HasDelivery: entityAdvert.HasDelivery,
-		Location:    entityAdvert.Location,
-		ImageId:     entityAdvert.ImageId,
-		CreatedAt:   entityAdvert.CreatedAt,
-		UpdatedAt:   entityAdvert.UpdatedAt,
-		ViewsNumber: entityAdvert.ViewsNumber,
-		SavesNumber: entityAdvert.SavesNumber,
+		ID:            entityAdvert.ID,
+		CategoryId:    entityAdvert.CategoryId,
+		SellerId:      entityAdvert.SellerId,
+		Title:         entityAdvert.Title,
+		Description:   entityAdvert.Description,
+		Price:         entityAdvert.Price,
+		Status:        dto.AdvertStatus(entityAdvert.Status),
+		HasDelivery:   entityAdvert.HasDelivery,
+		Location:      entityAdvert.Location,
+		ImageId:       entityAdvert.ImageId,
+		CreatedAt:     entityAdvert.CreatedAt,
+		UpdatedAt:     entityAdvert.UpdatedAt,
+		ViewsNumber:   entityAdvert.ViewsNumber,
+		SavesNumber:   entityAdvert.SavesNumber,
+		PromotedUntil: entityAdvert.PromotedUntil,
 	}
+
 	return &advertDTO, nil
 }
 
@@ -244,6 +253,11 @@ func (s *AdvertService) Update(advert *dto.AdvertRequest, userId uuid.UUID, adve
 		HasDelivery: advert.HasDelivery,
 		Location:    advert.Location,
 	})
+
+	if existingAdvert.Price != advert.Price {
+		err = s.historyRepo.AddAdvertPriceChange(advertId, int(existingAdvert.Price), int(advert.Price))
+	}
+
 	if err != nil {
 		return entity.UsecaseWrap(ErrAdvertBadRequest, ErrAdvertBadRequest)
 	}
@@ -285,9 +299,15 @@ func (s *AdvertService) UpdateStatus(advertId, userId uuid.UUID, status dto.Adve
 	}
 	defer func() {
 		if err != nil {
-			tx.Rollback(ctx)
+			if rollbackErr := tx.Rollback(ctx); rollbackErr != nil {
+				logger := middleware.GetLogger(ctx)
+				logger.Error("failed to rollback transaction", zap.Error(rollbackErr))
+			}
 		} else {
-			tx.Commit(ctx)
+			if commitErr := tx.Commit(ctx); commitErr != nil {
+				logger := middleware.GetLogger(ctx)
+				logger.Error("failed to commit transaction", zap.Error(commitErr))
+			}
 		}
 	}()
 
@@ -324,15 +344,16 @@ func (s *AdvertService) GetByCategoryId(categoryId, userId uuid.UUID) ([]*dto.Pr
 	for _, advert := range adverts {
 		advertDTO := dto.PreviewAdvertCard{
 			Preview: dto.PreviewAdvert{
-				ID:          advert.ID,
-				SellerId:    advert.SellerId,
-				CategoryId:  advert.CategoryId,
-				Title:       advert.Title,
-				Price:       advert.Price,
-				ImageId:     advert.ImageId,
-				Status:      dto.AdvertStatus(advert.Status),
-				HasDelivery: advert.HasDelivery,
-				Location:    advert.Location,
+				ID:            advert.ID,
+				SellerId:      advert.SellerId,
+				CategoryId:    advert.CategoryId,
+				Title:         advert.Title,
+				Price:         advert.Price,
+				ImageId:       advert.ImageId,
+				Status:        dto.AdvertStatus(advert.Status),
+				HasDelivery:   advert.HasDelivery,
+				Location:      advert.Location,
+				PromotedUntil: advert.PromotedUntil,
 			},
 			IsSaved:  advert.IsSaved,
 			IsViewed: advert.IsViewed,
@@ -374,15 +395,16 @@ func (s *AdvertService) GetSavedByUserId(userId uuid.UUID) ([]*dto.PreviewAdvert
 	for _, advert := range adverts {
 		advertDTO := dto.PreviewAdvertCard{
 			Preview: dto.PreviewAdvert{
-				ID:          advert.ID,
-				SellerId:    advert.SellerId,
-				CategoryId:  advert.CategoryId,
-				Title:       advert.Title,
-				Price:       advert.Price,
-				ImageId:     advert.ImageId,
-				Status:      dto.AdvertStatus(advert.Status),
-				HasDelivery: advert.HasDelivery,
-				Location:    advert.Location,
+				ID:            advert.ID,
+				SellerId:      advert.SellerId,
+				CategoryId:    advert.CategoryId,
+				Title:         advert.Title,
+				Price:         advert.Price,
+				ImageId:       advert.ImageId,
+				Status:        dto.AdvertStatus(advert.Status),
+				HasDelivery:   advert.HasDelivery,
+				Location:      advert.Location,
+				PromotedUntil: advert.PromotedUntil,
 			},
 			IsSaved:  advert.IsSaved,
 			IsViewed: advert.IsViewed,
@@ -462,15 +484,16 @@ func (s *AdvertService) GetBySellerId(userId, sellerId uuid.UUID) ([]*dto.Previe
 	for _, advert := range adverts {
 		advertDTO := dto.PreviewAdvertCard{
 			Preview: dto.PreviewAdvert{
-				ID:          advert.ID,
-				SellerId:    advert.SellerId,
-				CategoryId:  advert.CategoryId,
-				Title:       advert.Title,
-				Price:       advert.Price,
-				ImageId:     advert.ImageId,
-				Status:      dto.AdvertStatus(advert.Status),
-				HasDelivery: advert.HasDelivery,
-				Location:    advert.Location,
+				ID:            advert.ID,
+				SellerId:      advert.SellerId,
+				CategoryId:    advert.CategoryId,
+				Title:         advert.Title,
+				Price:         advert.Price,
+				ImageId:       advert.ImageId,
+				Status:        dto.AdvertStatus(advert.Status),
+				HasDelivery:   advert.HasDelivery,
+				Location:      advert.Location,
+				PromotedUntil: advert.PromotedUntil,
 			},
 			IsSaved:  advert.IsSaved,
 			IsViewed: advert.IsViewed,
@@ -526,15 +549,16 @@ func (s *AdvertService) Search(query string, batchSize, limit, offset int, userI
 	for _, advert := range uniqueAdverts {
 		dtoAdverts = append(dtoAdverts, &dto.PreviewAdvertCard{
 			Preview: dto.PreviewAdvert{
-				ID:          advert.ID,
-				SellerId:    advert.SellerId,
-				CategoryId:  advert.CategoryId,
-				Title:       advert.Title,
-				Price:       advert.Price,
-				ImageId:     advert.ImageId,
-				Status:      dto.AdvertStatus(advert.Status),
-				HasDelivery: advert.HasDelivery,
-				Location:    advert.Location,
+				ID:            advert.ID,
+				SellerId:      advert.SellerId,
+				CategoryId:    advert.CategoryId,
+				Title:         advert.Title,
+				Price:         advert.Price,
+				ImageId:       advert.ImageId,
+				Status:        dto.AdvertStatus(advert.Status),
+				HasDelivery:   advert.HasDelivery,
+				Location:      advert.Location,
+				PromotedUntil: advert.PromotedUntil,
 			},
 			IsSaved:  advert.IsSaved,
 			IsViewed: advert.IsViewed,

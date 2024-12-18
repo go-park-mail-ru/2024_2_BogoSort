@@ -64,12 +64,12 @@ func TestGetAdvertById(t *testing.T) {
 	advertID := uuid.New()
 
 	rows := pgxmock.NewRows([]string{
-		"id", "title", "description", "price", "location", "has_delivery", "category_id", "seller_id", "image_id", "status", "created_at", "updated_at",
+		"id", "title", "description", "price", "location", "has_delivery", "category_id", "seller_id", "image_id", "status", "created_at", "updated_at", "promoted_until",
 	}).AddRow(
-		advertID, "Test Advert", "Test Description", uint(100), "Test Location", true, uuid.New(), uuid.New(), uuid.Nil, "active", time.Now(), time.Now(),
+		advertID, "Test Advert", "Test Description", uint(100), "Test Location", true, uuid.New(), uuid.New(), uuid.Nil, "active", time.Now(), time.Now(), time.Now(),
 	)
 
-	mockPool.ExpectQuery(`SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at FROM advert WHERE id = \$1`).
+	mockPool.ExpectQuery(`SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at, promoted_until FROM advert WHERE id = \$1`).
 		WithArgs(advertID).
 		WillReturnRows(rows)
 
@@ -92,6 +92,7 @@ func TestAddAdvert(t *testing.T) {
 		CategoryId:  uuid.New(),
 		SellerId:    uuid.New(),
 		Status:      entity.AdvertStatusActive,
+		PromotedUntil: time.Now().Add(24 * time.Hour),
 	}
 
 	mockPool.ExpectQuery(`INSERT INTO advert \(title, description, price, location, has_delivery, category_id, seller_id, status\) VALUES \(\$1, \$2, \$3, \$4, \$5, \$6, \$7, \$8\) RETURNING id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status`).
@@ -112,16 +113,16 @@ func TestUpdateAdvertStatus(t *testing.T) {
 	defer teardown()
 
 	advertID := uuid.New()
-	newStatus := entity.AdvertStatusInactive // Измените тип статуса на entity.AdvertStatus
+	newStatus := entity.AdvertStatusInactive
 	mockPool.ExpectBegin()
-	tx, err := repo.DB.Begin(context.Background()) // Начало транзакции
+	tx, err := repo.DB.Begin(context.Background())
 	assert.NoError(t, err)
 
 	mockPool.ExpectExec(`UPDATE advert SET status = \$1 WHERE id = \$2`).
 		WithArgs(newStatus, advertID).
 		WillReturnResult(pgxmock.NewResult("UPDATE", 1))
 
-	err = repo.UpdateStatus(tx, advertID, newStatus) // Добавьте tx как аргумент
+	err = repo.UpdateStatus(tx, advertID, newStatus)
 	assert.NoError(t, err)
 
 	err = mockPool.ExpectationsWereMet()
