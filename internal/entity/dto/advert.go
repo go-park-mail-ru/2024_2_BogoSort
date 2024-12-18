@@ -1,3 +1,4 @@
+//go:generate easyjson -all .
 package dto
 
 import (
@@ -6,6 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
+//easyjson:json
 type AdvertRequest struct {
 	CategoryId  uuid.UUID    `json:"category_id"`
 	Title       string       `json:"title"`
@@ -16,6 +18,7 @@ type AdvertRequest struct {
 	Location    string       `json:"location"`
 }
 
+//easyjson:json
 type PreviewAdvert struct {
 	ID            uuid.UUID    `json:"id"`
 	SellerId      uuid.UUID    `json:"seller_id"`
@@ -29,18 +32,21 @@ type PreviewAdvert struct {
 	PromotedUntil time.Time    `json:"promoted_until"`
 }
 
+//easyjson:json
 type PreviewAdvertCard struct {
 	Preview  PreviewAdvert `json:"preview"`
 	IsSaved  bool          `json:"is_saved"`
 	IsViewed bool          `json:"is_viewed"`
 }
 
+//easyjson:json
 type MyPreviewAdvertCard struct {
 	Preview     PreviewAdvert `json:"preview"`
 	ViewsNumber uint          `json:"views_number"`
 	SavesNumber uint          `json:"saves_number"`
 }
 
+//easyjson:json
 type Advert struct {
 	ID            uuid.UUID    `json:"id"`
 	SellerId      uuid.UUID    `json:"seller_id"`
@@ -59,6 +65,7 @@ type Advert struct {
 	PromotedUntil time.Time    `json:"promoted_until"`
 }
 
+//easyjson:json
 type AdvertCard struct {
 	Advert   Advert `json:"advert"`
 	IsSaved  bool   `json:"is_saved"`
