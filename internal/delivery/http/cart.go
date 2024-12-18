@@ -78,7 +78,10 @@ func (h *CartEndpoint) GetByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	logger.Info("cart", zap.Any("cart", cart))
-	utils.WriteJSON(w, cart, http.StatusOK)
+	if err := utils.WriteJSON(w, cart, http.StatusOK); err != nil {
+		utils.SendErrorResponse(w, http.StatusInternalServerError, "failed to send cart")
+		return
+	}
 }
 
 // GetByUserID godoc
@@ -124,7 +127,10 @@ func (h *CartEndpoint) GetByUserID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.WriteJSON(w, cart, http.StatusOK)
+	if err := utils.WriteJSON(w, cart, http.StatusOK); err != nil {
+		utils.SendErrorResponse(w, http.StatusInternalServerError, "failed to send cart")
+		return
+	}
 }
 
 // AddToCart godoc

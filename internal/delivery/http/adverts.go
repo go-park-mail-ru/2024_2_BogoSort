@@ -277,7 +277,10 @@ func (h *AdvertEndpoint) GetById(writer http.ResponseWriter, r *http.Request) {
 	}
 	logger.Info("advert sent", zap.Any("advert", advert))
 	utils.SanitizeAdvert(&advert.Advert, h.policy)
-	utils.WriteJSON(writer, advert, http.StatusOK)
+	if err := utils.WriteJSON(writer, advert, http.StatusOK); err != nil {
+		h.handleError(writer, err, "failed to send advert")
+		return
+	}
 }
 
 // Add godoc

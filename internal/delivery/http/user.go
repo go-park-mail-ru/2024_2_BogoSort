@@ -335,7 +335,7 @@ func (u *UserEndpoint) GetMe(w http.ResponseWriter, r *http.Request) {
 
 	logger.Info("get me successful", zap.String("userID", userID.String()))
 	utils.SanitizeResponseUser(user, u.policy)
-	utils.WriteJSON(w, user, http.StatusOK)
+	utils.SendJSONResponse(w, http.StatusOK, user)
 }
 
 // UploadImage godoc
