@@ -304,7 +304,10 @@ func (u *UserEndpoint) GetProfile(w http.ResponseWriter, r *http.Request) {
 
 	logger.Info("get profile successful", zap.String("userID", userID.String()))
 	utils.SanitizeResponseUser(user, u.policy)
-	utils.WriteJSON(w, user, http.StatusOK)
+	if err := utils.WriteJSON(w, user, http.StatusOK); err != nil {
+		u.handleError(w, err, "GetProfile", map[string]string{"userID": userID.String()})
+		return
+	}
 }
 
 // GetMe
