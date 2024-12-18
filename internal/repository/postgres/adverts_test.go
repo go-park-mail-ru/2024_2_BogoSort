@@ -84,14 +84,14 @@ func TestAddAdvert(t *testing.T) {
 	defer teardown()
 
 	newAdvert := &entity.Advert{
-		Title:       "New Advert",
-		Description: "New Description",
-		Price:       200,
-		Location:    "New Location",
-		HasDelivery: true,
-		CategoryId:  uuid.New(),
-		SellerId:    uuid.New(),
-		Status:      entity.AdvertStatusActive,
+		Title:         "New Advert",
+		Description:   "New Description",
+		Price:         200,
+		Location:      "New Location",
+		HasDelivery:   true,
+		CategoryId:    uuid.New(),
+		SellerId:      uuid.New(),
+		Status:        entity.AdvertStatusActive,
 		PromotedUntil: time.Now().Add(24 * time.Hour),
 	}
 
