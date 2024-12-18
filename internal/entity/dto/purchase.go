@@ -1,11 +1,9 @@
-//go:generate easyjson -all .
 package dto
 
 import (
 	"github.com/google/uuid"
 )
 
-//easyjson:json
 type PurchaseRequest struct {
 	CartID         uuid.UUID      `json:"cart_id"`
 	Address        string         `json:"address"`
@@ -37,7 +35,6 @@ const (
 	DeliveryMethodDelivery DeliveryMethod = "delivery"
 )
 
-//easyjson:json
 type PurchaseResponse struct {
 	ID             uuid.UUID           `json:"id"`
 	SellerID       uuid.UUID           `json:"seller_id"`

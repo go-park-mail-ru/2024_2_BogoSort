@@ -1,4 +1,3 @@
-//go:generate easyjson -all .
 package dto
 
 import (
@@ -7,7 +6,6 @@ import (
 	"github.com/google/uuid"
 )
 
-//easyjson:json
 type User struct {
 	ID        uuid.UUID `json:"id"`
 	Email     string    `json:"email"`
@@ -19,7 +17,6 @@ type User struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-//easyjson:json
 type UserUpdate struct {
 	ID       uuid.UUID `json:"id"`
 	Email    string    `json:"email"`
