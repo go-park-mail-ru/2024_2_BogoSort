@@ -26,10 +26,9 @@ jobs:
       - name: Cache Go modules
         uses: actions/cache@v2
         with:
-          path: /tmp/go-build
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          path: /path/to/your/cache
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}
           restore-keys: |
-            ${{ runner.os }}-go-${{ github.sha }}
             ${{ runner.os }}-go-
 
       - name: Install required dependencies
@@ -59,10 +58,9 @@ jobs:
       - name: Cache Go modules
         uses: actions/cache@v2
         with:
-          path: /tmp/go-build
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          path: /path/to/your/cache
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}
           restore-keys: |
-            ${{ runner.os }}-go-${{ github.sha }}
             ${{ runner.os }}-go-
 
       - name: Get Dependencies
