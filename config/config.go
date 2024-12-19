@@ -23,15 +23,25 @@ type SessionConfig struct {
 	SecureCookie   bool          `yaml:"secure_cookie" default:"false"`
 }
 
+type DBConfig struct {
+	MaxConns          int           `yaml:"max_conns" default:"10"`
+	MinConns          int           `yaml:"min_conns" default:"2"`
+	MaxConnLifetime   time.Duration `yaml:"max_conn_lifetime" default:"1h"`
+	MaxConnIdleTime   time.Duration `yaml:"max_conn_idle_time" default:"30m"`
+	HealthCheckPeriod time.Duration `yaml:"health_check_period" default:"1m"`
+}
+
 type Config struct {
 	Server           ServerConfig  `yaml:"server"`
 	Session          SessionConfig `yaml:"session"`
+	DB               DBConfig      `yaml:"db"`
 	PGIP             string        `yaml:"pg_ip"`
 	PGPort           int           `yaml:"pg_port"`
 	PGUser           string        `yaml:"pg_user"`
 	PGPass           string        `yaml:"pg_password"`
 	PGTimeout        time.Duration `yaml:"pg_timeout" default:"5s"`
 	PGDB             string        `yaml:"pg_db"`
+	PGMaxConns       int           `yaml:"pg_max_conns" default:"20"`
 	RdAddr           string        `yaml:"rd_addr"`
 	RdPass           string        `yaml:"rd_password"`
 	RdDB             int           `yaml:"rd_db"`
@@ -44,6 +54,8 @@ type Config struct {
 	StaticHost       string        `yaml:"static_host"`
 	StaticPort       int           `yaml:"static_port"`
 	SearchBatchSize  int           `yaml:"search_batch_size"`
+	PaymentShopID    string        `yaml:"payment_shop_id"`
+	PaymentSecret    string        `yaml:"payment_secret"`
 }
 
 type StaticConfig struct {
@@ -80,6 +92,11 @@ func Init() (Config, error) {
 	if port := os.Getenv("PG_PORT"); port != "" {
 		if p, err := strconv.Atoi(port); err == nil {
 			cfg.PGPort = p
+		}
+	}
+	if maxConns := os.Getenv("PG_MAX_CONNS"); maxConns != "" {
+		if conns, err := strconv.Atoi(maxConns); err == nil {
+			cfg.PGMaxConns = conns
 		}
 	}
 	if expiration := os.Getenv("SESSION_EXPIRATION_TIME"); expiration != "" {
@@ -134,9 +151,28 @@ func GetStaticAddress() string {
 }
 
 func (cfg *Config) GetConnectURL() string {
+	user := os.Getenv("SERVICE_USER")
+	if user == "" {
+		user = cfg.PGUser
+	}
+	pass := os.Getenv("SERVICE_PASSWORD")
+	if pass == "" {
+		pass = cfg.PGPass
+	}
+
 	return fmt.Sprintf(
-		"postgres://%s:%s@%s:%d/%s?sslmode=disable",
-		cfg.PGUser, cfg.PGPass, cfg.PGIP, cfg.PGPort, cfg.PGDB)
+		"postgres://%s:%s@%s:%d/%s?sslmode=verify-ca&sslrootcert=/etc/postgresql/certs/root.crt&pool_max_conns=%d&pool_min_conns=%d&pool_max_conn_lifetime=%s&pool_max_conn_idle_time=%s&pool_health_check_period=%s",
+		user,
+		pass,
+		cfg.PGIP,
+		cfg.PGPort,
+		cfg.PGDB,
+		cfg.DB.MaxConns,
+		cfg.DB.MinConns,
+		cfg.DB.MaxConnLifetime,
+		cfg.DB.MaxConnIdleTime,
+		cfg.DB.HealthCheckPeriod,
+	)
 }
 
 func GetReadTimeout() time.Duration {
@@ -161,4 +197,8 @@ func GetStaticConfig() StaticConfig {
 
 func GetCSRFSecret() string {
 	return cfg.CSRFSecret
+}
+
+func (cfg *Config) GetPGMaxConns() int {
+	return cfg.PGMaxConns
 }

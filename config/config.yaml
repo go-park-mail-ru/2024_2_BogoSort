@@ -12,20 +12,21 @@ session:
 auth_port: 50051
 auth_host: "auth"
 
-cart_purchase_host: "localhost"
+cart_purchase_host: "cart_purchase"
 cart_purchase_port: 50052
 
-static_host: "localhost"
+static_host: "static"
 static_port: 50053
 
-pg_ip: "localhost"
+pg_ip: "postgres"
 pg_port: 5432
 pg_user: "postgres"
 pg_password: "postgres"
 pg_db: "emporiumdb"
 pg_timeout: 5s
+pg_max_conns: 80
 
-rd_addr: "localhost:6379"
+rd_addr: "redis:6379"
 rd_password: ""
 rd_db: 0
 
@@ -38,3 +39,13 @@ static:
   port: 8081
 
 search_batch_size: 100
+
+db:
+  max_conns: 10
+  min_conns: 2
+  max_conn_lifetime: 1h
+  max_conn_idle_time: 30m
+  health_check_period: 1m
+
+payment_shop_id: 998145
+payment_secret: test_LIoGRqJoK8gUtvgGl-6NktRWnWPFFYhggwwvn5aHMZc

@@ -26,6 +26,8 @@ func convertAdvertToResponse(advert entity.Advert) dto.PreviewAdvertCard {
 		Preview: dto.PreviewAdvert{
 			ID:          advert.ID,
 			Title:       advert.Title,
+			CategoryId:  advert.CategoryId,
+			SellerId:    advert.SellerId,
 			Price:       advert.Price,
 			ImageId:     advert.ImageId,
 			Status:      dto.AdvertStatus(advert.Status),
@@ -65,6 +67,7 @@ func (c *CartService) DeleteAdvert(cartID uuid.UUID, advertID uuid.UUID) error {
 
 func (c *CartService) GetById(cartID uuid.UUID) (dto.Cart, error) {
 	adverts, err := c.cartRepo.GetAdvertsByCartId(cartID)
+
 	switch {
 	case errors.Is(err, repository.ErrCartNotFound):
 		return dto.Cart{}, entity.UsecaseWrap(errors.New("cart not found"), err)
@@ -76,11 +79,28 @@ func (c *CartService) GetById(cartID uuid.UUID) (dto.Cart, error) {
 		return dto.Cart{}, entity.PSQLWrap(errors.New("error getting cart by id"), err)
 	}
 
-	advertsResponse := make([]dto.PreviewAdvertCard, len(adverts))
-	for i, advert := range adverts {
-		advertsResponse[i] = convertAdvertToResponse(advert)
+	advertsBySeller := make(map[uuid.UUID][]dto.PreviewAdvertCard)
+	for _, advert := range adverts {
+		advertsBySeller[advert.SellerId] = append(
+			advertsBySeller[advert.SellerId],
+			convertAdvertToResponse(advert),
+		)
 	}
-	return dto.Cart{Adverts: advertsResponse, ID: cart.ID, UserID: cart.UserID, Status: cart.Status}, nil
+
+	cartPurchases := make([]dto.CartPurchase, 0, len(advertsBySeller))
+	for sellerID, sellerAdverts := range advertsBySeller {
+		cartPurchases = append(cartPurchases, dto.CartPurchase{
+			SellerID: sellerID,
+			Adverts:  sellerAdverts,
+		})
+	}
+
+	return dto.Cart{
+		ID:            cart.ID,
+		UserID:        cart.UserID,
+		Status:        cart.Status,
+		CartPurchases: cartPurchases,
+	}, nil
 }
 
 func (c *CartService) GetByUserId(userID uuid.UUID) (dto.Cart, error) {
@@ -91,11 +111,12 @@ func (c *CartService) GetByUserId(userID uuid.UUID) (dto.Cart, error) {
 	case err != nil:
 		return dto.Cart{}, entity.PSQLWrap(errors.New("error getting cart by user id"), err)
 	}
+
 	return dto.Cart{
-		ID:      cart.ID,
-		UserID:  cart.UserID,
-		Status:  cart.Status,
-		Adverts: []dto.PreviewAdvertCard{},
+		ID:            cart.ID,
+		UserID:        cart.UserID,
+		Status:        cart.Status,
+		CartPurchases: []dto.CartPurchase{},
 	}, nil
 }
 

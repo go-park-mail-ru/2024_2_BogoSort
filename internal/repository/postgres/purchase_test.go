@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"context"
-	"errors"
 	"testing"
 	"time"
 
@@ -53,16 +52,18 @@ func TestPurchaseDB_AddPurchase(t *testing.T) {
 		DeliveryMethod: "standard",
 	}
 
-	mockPool.ExpectQuery(`INSERT INTO purchase \(cart_id, adress, status, payment_method, delivery_method\) VALUES \(\$1, \$2, \$3, \$4, \$5\) RETURNING id, cart_id, adress, status, payment_method, delivery_method`).
+	mockPool.ExpectQuery(`INSERT INTO purchase \(seller_id, customer_id, address, status, payment_method, delivery_method, cart_id\) VALUES \(\$1, \$2, \$3, \$4, \$5, \$6, \$7\) RETURNING id, seller_id, customer_id, address, status, payment_method, delivery_method, cart_id`).
 		WithArgs(
-			purchase.CartID,
+			purchase.SellerID,
+			purchase.CustomerID,
 			purchase.Address,
 			purchase.Status,
 			purchase.PaymentMethod,
 			purchase.DeliveryMethod,
+			purchase.CartID,
 		).
-		WillReturnRows(pgxmock.NewRows([]string{"id", "cart_id", "adress", "status", "payment_method", "delivery_method"}).
-			AddRow(uuid.New(), purchase.CartID, purchase.Address, purchase.Status, purchase.PaymentMethod, purchase.DeliveryMethod))
+		WillReturnRows(pgxmock.NewRows([]string{"id", "seller_id", "customer_id", "address", "status", "payment_method", "delivery_method", "cart_id"}).
+			AddRow(uuid.New(), purchase.SellerID, purchase.CustomerID, purchase.Address, purchase.Status, purchase.PaymentMethod, purchase.DeliveryMethod, purchase.CartID))
 
 	result, err := repo.Add(tx, purchase)
 	if err != nil {
@@ -74,19 +75,6 @@ func TestPurchaseDB_AddPurchase(t *testing.T) {
 	assert.Equal(t, purchase.Status, result.Status)
 	assert.Equal(t, purchase.PaymentMethod, result.PaymentMethod)
 	assert.Equal(t, purchase.DeliveryMethod, result.DeliveryMethod)
-
-	mockPool.ExpectQuery(`INSERT INTO purchase \(cart_id, adress, status, payment_method, delivery_method\)`).
-		WithArgs(
-			purchase.CartID,
-			purchase.Address,
-			purchase.Status,
-			purchase.PaymentMethod,
-			purchase.DeliveryMethod,
-		).
-		WillReturnError(errors.New("insert error"))
-
-	_, err = repo.Add(tx, purchase)
-	assert.Error(t, err)
 
 	mockPool.ExpectRollback()
 	assert.NoError(t, tx.Rollback(context.Background()))

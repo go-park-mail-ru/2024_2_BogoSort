@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS price_history;
+DROP EXTENSION IF EXISTS "uuid-ossp";

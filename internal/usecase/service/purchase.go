@@ -23,17 +23,24 @@ func NewPurchaseService(purchaseRepo repository.PurchaseRepository, advertRepo r
 }
 
 func (s *PurchaseService) purchaseEntityToDTO(purchase *entity.Purchase) (*dto.PurchaseResponse, error) {
+	var advertCards []dto.PreviewAdvertCard
+	for _, advert := range purchase.Adverts {
+		advertCards = append(advertCards, convertAdvertToPreviewCard(advert))
+	}
+
 	return &dto.PurchaseResponse{
 		ID:             purchase.ID,
-		CartID:         purchase.CartID,
+		SellerID:       purchase.SellerID,
+		CustomerID:     purchase.CustomerID,
 		Address:        purchase.Address,
 		Status:         dto.PurchaseStatus(purchase.Status),
 		PaymentMethod:  dto.PaymentMethod(purchase.PaymentMethod),
 		DeliveryMethod: dto.DeliveryMethod(purchase.DeliveryMethod),
+		Adverts:        advertCards,
 	}, nil
 }
 
-func (s *PurchaseService) Add(purchaseRequest dto.PurchaseRequest, userId uuid.UUID) (*dto.PurchaseResponse, error) {
+func (s *PurchaseService) Add(purchaseRequest dto.PurchaseRequest, userId uuid.UUID) ([]*dto.PurchaseResponse, error) {
 	ctx := context.Background()
 	tx, err := s.purchaseRepo.BeginTransaction()
 	if err != nil {
@@ -41,43 +48,70 @@ func (s *PurchaseService) Add(purchaseRequest dto.PurchaseRequest, userId uuid.U
 		logger.Error("failed to begin transaction", zap.Error(err), zap.String("userId", userId.String()))
 		return nil, entity.UsecaseWrap(errors.New("failed to begin transaction"), err)
 	}
+
 	defer func() {
 		if err != nil {
-			tx.Rollback(ctx)
+			if rollbackErr := tx.Rollback(ctx); rollbackErr != nil {
+				logger := middleware.GetLogger(ctx)
+				logger.Error("failed to rollback transaction", zap.Error(rollbackErr))
+			}
 		} else {
-			tx.Commit(ctx)
+			if commitErr := tx.Commit(ctx); commitErr != nil {
+				logger := middleware.GetLogger(ctx)
+				logger.Error("failed to commit transaction", zap.Error(commitErr))
+			}
 		}
 	}()
 
-	purchase, err := s.purchaseRepo.Add(tx, &entity.Purchase{
-		CartID:         purchaseRequest.CartID,
-		Address:        purchaseRequest.Address,
-		Status:         entity.StatusPending,
-		PaymentMethod:  entity.PaymentMethod(purchaseRequest.PaymentMethod),
-		DeliveryMethod: entity.DeliveryMethod(purchaseRequest.DeliveryMethod),
-	})
+	cart, err := s.cartRepo.GetById(purchaseRequest.CartID)
 	if err != nil {
-		return nil, entity.UsecaseWrap(errors.New("failed to add purchase"), err)
+		return nil, entity.UsecaseWrap(errors.New("failed to get cart"), err)
 	}
 
-	err = s.cartRepo.UpdateStatus(tx, purchase.CartID, entity.CartStatusInactive)
+	if cart.UserID != userId {
+		return nil, entity.UsecaseWrap(errors.New("cart does not belong to user"), nil)
+	}
+
+	var purchases []*dto.PurchaseResponse
+
+	for _, cartPurchase := range cart.CartPurchases {
+		purchase, err := s.purchaseRepo.Add(tx, &entity.Purchase{
+			SellerID:       cartPurchase.SellerID,
+			CustomerID:     userId,
+			CartID:         purchaseRequest.CartID,
+			Address:        purchaseRequest.Address,
+			Status:         entity.StatusPending,
+			PaymentMethod:  entity.PaymentMethod(purchaseRequest.PaymentMethod),
+			DeliveryMethod: entity.DeliveryMethod(purchaseRequest.DeliveryMethod),
+			Adverts:        cartPurchase.Adverts,
+		})
+		if err != nil {
+			return nil, entity.UsecaseWrap(errors.New("failed to add purchase"), err)
+		}
+
+		for _, advert := range cartPurchase.Adverts {
+			err = s.advertRepo.UpdateStatus(tx, advert.ID, entity.AdvertStatusReserved)
+			if err != nil {
+				return nil, entity.UsecaseWrap(errors.New("failed to update advert status"), err)
+			}
+		}
+
+		purchaseDTO, err := s.purchaseEntityToDTO(purchase)
+		if err != nil {
+			return nil, err
+		}
+		purchases = append(purchases, purchaseDTO)
+	}
+
+	err = s.cartRepo.UpdateStatus(tx, cart.ID, entity.CartStatusInactive)
 	if err != nil {
 		return nil, entity.UsecaseWrap(errors.New("failed to update cart status"), err)
 	}
 
-	adverts, err := s.advertRepo.GetByCartId(purchase.CartID, userId)
-	if err != nil {
-		return nil, entity.UsecaseWrap(errors.New("failed to get adverts"), err)
-	}
+	logger := middleware.GetLogger(ctx)
+	logger.Info("purchases added", zap.Any("purchases", purchases))
 
-	for _, advert := range adverts {
-		err = s.advertRepo.UpdateStatus(tx, advert.ID, entity.AdvertStatusReserved)
-		if err != nil {
-			return nil, entity.UsecaseWrap(errors.New("failed to update advert status"), err)
-		}
-	}
-
-	return s.purchaseEntityToDTO(purchase)
+	return purchases, nil
 }
 
 func (s *PurchaseService) GetByUserId(userID uuid.UUID) ([]*dto.PurchaseResponse, error) {
@@ -104,4 +138,22 @@ func (s *PurchaseService) purchaseEntitiesToDTO(purchases []*entity.Purchase) ([
 	}
 
 	return purchaseDTOs, nil
+}
+
+func convertAdvertToPreviewCard(advert entity.Advert) dto.PreviewAdvertCard {
+	return dto.PreviewAdvertCard{
+		Preview: dto.PreviewAdvert{
+			ID:          advert.ID,
+			SellerId:    advert.SellerId,
+			CategoryId:  advert.CategoryId,
+			Title:       advert.Title,
+			Price:       advert.Price,
+			ImageId:     advert.ImageId,
+			Status:      dto.AdvertStatus(advert.Status),
+			Location:    advert.Location,
+			HasDelivery: advert.HasDelivery,
+		},
+		IsSaved:  advert.IsSaved,
+		IsViewed: advert.IsViewed,
+	}
 }
