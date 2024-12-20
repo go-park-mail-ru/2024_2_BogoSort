@@ -48,7 +48,10 @@ const (
 		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at, promoted_until
 		FROM advert
 		WHERE seller_id = $1 AND status != 'inactive'
-		ORDER BY created_at DESC`
+		ORDER BY 
+    		CASE WHEN promoted_until > CURRENT_TIMESTAMP THEN 1 ELSE 0 END DESC, 
+    		promoted_until DESC NULLS LAST, 
+    		created_at DESC`
 
 	selectAdvertsByUserIdQuery = `
 		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at, promoted_until
@@ -85,7 +88,10 @@ const (
 		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at, promoted_until
 		FROM advert
 		WHERE category_id = $1 AND status != 'inactive'
-		ORDER BY created_at DESC`
+		ORDER BY 
+    		CASE WHEN promoted_until > CURRENT_TIMESTAMP THEN 1 ELSE 0 END DESC, 
+    		promoted_until DESC NULLS LAST, 
+    		created_at DESC`
 
 	uploadImageQuery = `
 		UPDATE advert
@@ -121,7 +127,10 @@ const (
 		SELECT id, title, description, price, location, has_delivery, category_id, seller_id, image_id, status, created_at, updated_at, promoted_until
 		FROM advert
 		WHERE to_tsvector('russian', title || ' ' || description) @@ plainto_tsquery('russian', $1)
-		ORDER BY created_at DESC
+		ORDER BY 
+    		CASE WHEN promoted_until > CURRENT_TIMESTAMP THEN 1 ELSE 0 END DESC, 
+    		promoted_until DESC NULLS LAST, 
+    		created_at DESC
 		LIMIT $2 OFFSET $3`
 
 	countAdvertsQuery = `SELECT COUNT(*) FROM advert`
