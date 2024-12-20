@@ -75,7 +75,7 @@ func main() {
 			"http://5.188.141.136:8008",
 			"http://localhost:8008",
 			"http://emporium-bs.ru",
-			"http://bs-emporium.ru"
+			"http://bs-emporium.ru",
 		},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
 		AllowedHeaders:   []string{"Content-Type", "Authorization", "X-CSRF-Token"},
