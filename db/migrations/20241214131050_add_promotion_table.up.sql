@@ -1,4 +1,4 @@
-CREATE TABLE promotion (
+CREATE TABLE IF NOT EXISTS promotion (
     id SERIAL PRIMARY KEY,
     amount VARCHAR(255) NOT NULL,
     days INT NOT NULL DEFAULT 7

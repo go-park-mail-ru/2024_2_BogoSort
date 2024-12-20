@@ -31,8 +31,13 @@ CREATE TABLE IF NOT EXISTS purchase_advert (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Добавление индекса для оптимизации поиска по purchase_id
-CREATE INDEX idx_purchase_advert_purchase_id ON purchase_advert(purchase_id);
+-- Добавление индекса для оптимизации поиска по purchase_id, если он не существует
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_purchase_advert_purchase_id') THEN
+        CREATE INDEX idx_purchase_advert_purchase_id ON purchase_advert(purchase_id);
+    END IF;
+END $$;
 
 -- Обновление таблицы purchase
 ALTER TABLE purchase 
