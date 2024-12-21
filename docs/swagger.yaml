@@ -24,6 +24,8 @@ definitions:
         type: string
       price:
         type: integer
+      promoted_until:
+        type: string
       saves_number:
         type: integer
       seller_id:
@@ -75,15 +77,24 @@ definitions:
     - AdvertStatusReserved
   dto.Cart:
     properties:
-      adverts:
+      cart_purchases:
         items:
-          $ref: '#/definitions/dto.PreviewAdvertCard'
+          $ref: '#/definitions/dto.CartPurchase'
         type: array
       id:
         type: string
       status:
         $ref: '#/definitions/entity.CartStatus'
       user_id:
+        type: string
+    type: object
+  dto.CartPurchase:
+    properties:
+      adverts:
+        items:
+          $ref: '#/definitions/dto.PreviewAdvertCard'
+        type: array
+      seller_id:
         type: string
     type: object
   dto.CartResponse:
@@ -144,6 +155,8 @@ definitions:
         type: string
       price:
         type: integer
+      promoted_until:
+        type: string
       seller_id:
         type: string
       status:
@@ -160,6 +173,15 @@ definitions:
       preview:
         $ref: '#/definitions/dto.PreviewAdvert'
     type: object
+  dto.PriceHistoryResponse:
+    properties:
+      advert_history:
+        items:
+          $ref: '#/definitions/entity.PriceHistory'
+        type: array
+      advert_id:
+        type: string
+    type: object
   dto.PurchaseRequest:
     properties:
       address:
@@ -170,12 +192,18 @@ definitions:
         $ref: '#/definitions/dto.DeliveryMethod'
       payment_method:
         $ref: '#/definitions/dto.PaymentMethod'
+      user_id:
+        type: string
     type: object
   dto.PurchaseResponse:
     properties:
       address:
         type: string
-      cart_id:
+      adverts:
+        items:
+          $ref: '#/definitions/dto.PreviewAdvertCard'
+        type: array
+      customer_id:
         type: string
       delivery_method:
         $ref: '#/definitions/dto.DeliveryMethod'
@@ -183,6 +211,8 @@ definitions:
         type: string
       payment_method:
         $ref: '#/definitions/dto.PaymentMethod'
+      seller_id:
+        type: string
       status:
         $ref: '#/definitions/dto.PurchaseStatus'
     type: object
@@ -259,6 +289,32 @@ definitions:
       title:
         type: string
     type: object
+  entity.PriceHistory:
+    properties:
+      advertID:
+        type: string
+      changedAt:
+        type: string
+      id:
+        type: string
+      newPrice:
+        type: integer
+      oldPrice:
+        type: integer
+    type: object
+  entity.Promotion:
+    properties:
+      amount:
+        type: string
+      createdAt:
+        type: string
+      days:
+        type: integer
+      id:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
   entity.Seller:
     properties:
       description:
@@ -266,6 +322,11 @@ definitions:
       id:
         type: string
       user_id:
+        type: string
+    type: object
+  http.PaymentRequest:
+    properties:
+      item_id:
         type: string
     type: object
   utils.ErrResponse:
@@ -752,9 +813,9 @@ paths:
     get:
       consumes:
       - application/json
-      description: Retrieves detailed information about a cart using its unique identifier
+      description: Retrieves a cart by its unique identifier
       parameters:
-      - description: Cart ID
+      - description: Cart ID (UUID format)
         in: path
         name: cart_id
         required: true
@@ -763,29 +824,33 @@ paths:
       - application/json
       responses:
         "200":
-          description: Successfully retrieved cart
+          description: Cart details successfully retrieved
           schema:
             $ref: '#/definitions/dto.CartResponse'
         "400":
-          description: Invalid cart ID format
+          description: Invalid cart ID format or missing cart_id
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "404":
+          description: Cart not found
           schema:
             $ref: '#/definitions/utils.ErrResponse'
         "500":
           description: Internal server error
           schema:
             $ref: '#/definitions/utils.ErrResponse'
-      summary: Retrieve cart by ID
+      summary: Get cart by ID
       tags:
       - Cart
   /api/v1/cart/add:
     post:
       consumes:
       - application/json
-      description: Adds a new advert to the cart associated with a user
+      description: Adds an advertisement to a user's cart
       parameters:
-      - description: Data to add advert to cart
+      - description: Add to cart request containing user_id and advert_id
         in: body
-        name: purchase
+        name: request
         required: true
         schema:
           $ref: '#/definitions/dto.AddAdvertToUserCartRequest'
@@ -793,31 +858,35 @@ paths:
       - application/json
       responses:
         "200":
-          description: Successfully added advert
+          description: Successfully added item to cart
           schema:
             additionalProperties:
               type: string
             type: object
         "400":
-          description: Invalid request data
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "404":
+          description: Cart not found
           schema:
             $ref: '#/definitions/utils.ErrResponse'
         "500":
           description: Internal server error
           schema:
             $ref: '#/definitions/utils.ErrResponse'
-      summary: Add advert to user's cart
+      summary: Add item to cart
       tags:
       - Cart
   /api/v1/cart/delete:
     delete:
       consumes:
       - application/json
-      description: Deletes an advert from the cart associated with a user
+      description: Removes an advertisement from a user's cart
       parameters:
-      - description: Data to delete advert from cart
+      - description: Delete from cart request containing cart_id and advert_id
         in: body
-        name: purchase
+        name: request
         required: true
         schema:
           $ref: '#/definitions/dto.DeleteAdvertFromUserCartRequest'
@@ -825,33 +894,33 @@ paths:
       - application/json
       responses:
         "200":
-          description: Successfully deleted advert from user cart
+          description: Successfully removed item from cart
           schema:
             additionalProperties:
               type: string
             type: object
         "400":
-          description: Invalid request data
+          description: Invalid request body
           schema:
             $ref: '#/definitions/utils.ErrResponse'
         "404":
-          description: Cart or advert not found
+          description: Cart or item not found
           schema:
             $ref: '#/definitions/utils.ErrResponse'
         "500":
           description: Internal server error
           schema:
             $ref: '#/definitions/utils.ErrResponse'
-      summary: Delete advert from user's cart
+      summary: Remove item from cart
       tags:
       - Cart
   /api/v1/cart/exists/{user_id}:
     get:
       consumes:
       - application/json
-      description: Checks if a cart exists for a user by their ID
+      description: Checks if a cart exists for a specific user
       parameters:
-      - description: User ID
+      - description: User ID (UUID format)
         in: path
         name: user_id
         required: true
@@ -860,20 +929,53 @@ paths:
       - application/json
       responses:
         "200":
-          description: Cart existence check result
+          description: Cart existence status with cart_id if exists
           schema:
             additionalProperties:
-              type: boolean
+              type: string
             type: object
         "400":
-          description: Invalid user ID format
+          description: Invalid user ID format or missing user_id
           schema:
             $ref: '#/definitions/utils.ErrResponse'
         "500":
           description: Internal server error
           schema:
             $ref: '#/definitions/utils.ErrResponse'
-      summary: Check if cart exists for user
+      summary: Check cart existence
+      tags:
+      - Cart
+  /api/v1/cart/user/{user_id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a cart associated with a specific user
+      parameters:
+      - description: User ID (UUID format)
+        in: path
+        name: user_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Cart details successfully retrieved
+          schema:
+            $ref: '#/definitions/dto.CartResponse'
+        "400":
+          description: Invalid user ID format or missing user_id
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "404":
+          description: Cart not found for user
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Get cart by user ID
       tags:
       - Cart
   /api/v1/categories:
@@ -985,6 +1087,33 @@ paths:
       summary: Get static file stream by ID
       tags:
       - static
+  /api/v1/history/{advert_id}:
+    get:
+      consumes:
+      - application/json
+      description: Получает историю изменения цены для указанного объявления
+      parameters:
+      - description: Advert ID
+        in: path
+        name: advert_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.PriceHistoryResponse'
+            type: array
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Get Advert Price History
+      tags:
+      - History
   /api/v1/login:
     post:
       consumes:
@@ -1111,6 +1240,38 @@ paths:
       summary: Change user password
       tags:
       - Users
+  /api/v1/payment/init:
+    post:
+      consumes:
+      - application/json
+      description: Initiates a payment process for a given item ID.
+      parameters:
+      - description: Payment Request
+        in: body
+        name: paymentRequest
+        required: true
+        schema:
+          $ref: '#/definitions/http.PaymentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Payment URL
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid request or payment service error
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Initialize payment
+      tags:
+      - payment
   /api/v1/profile:
     put:
       consumes:
@@ -1178,54 +1339,42 @@ paths:
       summary: Get user profile
       tags:
       - Users
-  /api/v1/purchase:
-    post:
-      consumes:
-      - application/json
-      description: Accepts purchase data, validates it, and adds it to the system.
-        Returns a response with purchase data or an error.
-      parameters:
-      - description: Purchase request
-        in: body
-        name: purchase
-        required: true
-        schema:
-          $ref: '#/definitions/dto.PurchaseRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Successful purchase
-          schema:
-            $ref: '#/definitions/dto.PurchaseResponse'
-        "400":
-          description: Invalid request parameters
-          schema:
-            $ref: '#/definitions/utils.ErrResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/utils.ErrResponse'
-      summary: Adds a purchase
-      tags:
-      - Purchases
-  /api/v1/purchase/{user_id}:
+  /api/v1/promotions:
     get:
       consumes:
       - application/json
-      description: Accepts a user ID, validates it, and retrieves purchases from the
-        system. Returns a response with purchase data or an error.
-      parameters:
-      - description: User ID
-        in: path
-        name: user_id
-        required: true
-        type: integer
+      description: Retrieve promotion info
       produces:
       - application/json
       responses:
         "200":
-          description: Successful purchase
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.Promotion'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Get promotion info
+      tags:
+      - promotions
+  /api/v1/purchase/{user_id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves all purchases associated with a specific user ID
+      parameters:
+      - description: User ID
+        format: uuid
+        in: path
+        name: user_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of user purchases
           schema:
             items:
               $ref: '#/definitions/dto.PurchaseResponse'
@@ -1238,7 +1387,42 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/utils.ErrResponse'
-      summary: Retrieves purchases by user ID
+      summary: Get user purchases
+      tags:
+      - Purchases
+    post:
+      consumes:
+      - application/json
+      description: Creates a new purchase record for a user
+      parameters:
+      - description: User ID
+        format: uuid
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: Purchase details
+        in: body
+        name: purchase
+        required: true
+        schema:
+          $ref: '#/definitions/dto.PurchaseRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Purchase created successfully
+          schema:
+            $ref: '#/definitions/dto.PurchaseResponse'
+        "400":
+          description: Invalid request parameters or user ID
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrResponse'
+      summary: Create new purchase
       tags:
       - Purchases
   /api/v1/seller/{seller_id}:
@@ -1371,34 +1555,4 @@ paths:
       summary: Upload an image for an advert
       tags:
       - adverts
-  /cart/user/{user_id}:
-    get:
-      consumes:
-      - application/json
-      description: Retrieves detailed information about a cart associated with a specific
-        user
-      parameters:
-      - description: User ID
-        in: path
-        name: user_id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Successfully retrieved cart
-          schema:
-            $ref: '#/definitions/dto.CartResponse'
-        "400":
-          description: Invalid user ID format
-          schema:
-            $ref: '#/definitions/utils.ErrResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/utils.ErrResponse'
-      summary: Retrieve cart by User ID
-      tags:
-      - Cart
 swagger: "2.0"

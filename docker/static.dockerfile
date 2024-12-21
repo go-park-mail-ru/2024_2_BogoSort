@@ -4,26 +4,36 @@
 # Этап сборки
 FROM golang:1.23-alpine AS build
 
-RUN apk add --no-cache gcc libc-dev git
-WORKDIR /src
-COPY cmd cmd
-COPY internal internal
-COPY docs docs
-COPY go.mod go.mod
-COPY config config
-COPY static_files static_files
-COPY pkg pkg
-COPY db/migrations db/migrations
-RUN go mod tidy
-RUN go build -o static cmd/static/main.go
+# Установка зависимостей для сборки
+RUN apk add --no-cache git build-base musl-dev gcc
 
-# --------------------------------------------
+WORKDIR /src
+
+# Сначала копируем файлы go.mod и go.sum, чтобы использовать кеш для зависимостей
+COPY go.mod go.sum ./
+
+# Загрузка зависимостей (если go.mod и go.sum не менялись, этот шаг закешируется)
+RUN go mod download
+
+# Копируем остальные файлы проекта
+COPY . .
+
+# Сборка проекта
+RUN go mod tidy
+RUN CGO_ENABLED=1 GOOS=linux go build -o /app/static cmd/static/main.go
+
 # Этап запуска
 FROM alpine:latest
 
-WORKDIR /app
-COPY --from=build /src/static /app
-COPY config/config.yaml /app/config/config.yaml
-COPY ./static_files /src/static_files/
+# Добавление минимально необходимых пакетов для выполнения
+RUN apk add --no-cache ca-certificates
 
+WORKDIR /app
+
+# Копируем только то, что нужно для выполнения
+COPY --from=build /app/static /app/
+COPY config/config.yaml /app/config/config.yaml
+COPY static_files /app/static_files/
+
+# Устанавливаем команду запуска
 CMD ["./static"]

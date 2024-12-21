@@ -29,4 +29,13 @@ go.work.sum
 
 .DS_Store
 
+dump.rdb
+app
+
 .idea/
+
+.vscode/
+
+# SSL certificates
+db/certs/*.crt
+db/certs/*.key

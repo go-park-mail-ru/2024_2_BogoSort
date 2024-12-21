@@ -3,7 +3,6 @@ syntax = "proto3";
 option go_package = "./;cart_purchase";
 
 package cart_purchase;
-// protoc --go_out=. *.proto --go-grpc_out=.
 
 service CartPurchaseService {
   rpc AddPurchase(AddPurchaseRequest) returns (AddPurchaseResponse);
@@ -54,11 +53,13 @@ message AddPurchaseRequest {
 
 message AddPurchaseResponse {
   string id = 1;
-  string cart_id = 2;
-  string address = 3;
-  PurchaseStatus status = 4;
-  PaymentMethod payment_method = 5;
-  DeliveryMethod delivery_method = 6;
+  string seller_id = 2;
+  string customer_id = 3;
+  string address = 4;
+  repeated PreviewAdvertCard adverts = 5;
+  PurchaseStatus status = 6;
+  PaymentMethod payment_method = 7;
+  DeliveryMethod delivery_method = 8;
 }
 
 message GetPurchasesByUserIDRequest {
@@ -86,12 +87,12 @@ message GetCartByUserIDResponse {
 }
 
 message PreviewAdvert {
-  string advert_id = 1;
-  string seller_id = 2;
-  string category_id = 3;
-  string title = 4;
-  uint64 price = 5;
-  string image_id = 6;
+  string id = 1;
+  string title = 2;
+  uint64 price = 3;
+  string image_id = 4;
+  string category_id = 5;
+  string seller_id = 6;
   AdvertStatus status = 7;
   string location = 8;
   bool has_delivery = 9;
@@ -103,20 +104,35 @@ message PreviewAdvertCard {
   bool is_viewed = 3;
 }
 
+message CartPurchase {
+  string seller_id = 1;
+  repeated PreviewAdvertCard adverts = 2;
+}
+
 message Cart {
   string id = 1;
   string user_id = 2;
-  repeated PreviewAdvertCard adverts = 3;
+  repeated CartPurchase cart_purchases = 3;
   CartStatus status = 4;
+}
+
+message PurchaseRequest {
+  repeated PreviewAdvertCard adverts = 1;
+  string address = 2;
+  PaymentMethod payment_method = 3;
+  DeliveryMethod delivery_method = 4;
+  string user_id = 5;
 }
 
 message PurchaseResponse {
   string id = 1;
-  string cart_id = 2;
-  string address = 3;
-  PurchaseStatus status = 4;
-  PaymentMethod payment_method = 5;
-  DeliveryMethod delivery_method = 6;
+  string seller_id = 2;
+  string customer_id = 3;
+  repeated PreviewAdvertCard adverts = 4;
+  string address = 5;
+  PurchaseStatus status = 6;
+  PaymentMethod payment_method = 7;
+  DeliveryMethod delivery_method = 8;
 }
 
 enum PurchaseStatus {
@@ -139,7 +155,6 @@ enum DeliveryMethod {
 enum CartStatus {
   CART_STATUS_ACTIVE = 0;
   CART_STATUS_INACTIVE = 1;
-  CART_STATUS_DELETED = 2;
 }
 
 enum AdvertStatus {

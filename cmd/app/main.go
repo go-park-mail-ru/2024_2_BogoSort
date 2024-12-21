@@ -36,7 +36,11 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	defer logger.Sync()
+	defer func() {
+		if err := logger.Sync(); err != nil {
+			logger.Error("Error syncing logger", zap.Error(err))
+		}
+	}()
 
 	zap.ReplaceGlobals(logger)
 
@@ -70,6 +74,8 @@ func main() {
 		AllowedOrigins: []string{
 			"http://5.188.141.136:8008",
 			"http://localhost:8008",
+			"http://emporium-bs.ru",
+			"http://bs-emporium.ru",
 		},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
 		AllowedHeaders:   []string{"Content-Type", "Authorization", "X-CSRF-Token"},
@@ -109,7 +115,7 @@ func main() {
 }
 
 func Init(cfg config.Config) (*mux.Router, error) {
-	var logger = zap.L()
+	logger := zap.L()
 
 	router := mux.NewRouter()
 	router.Use(recoveryMiddleware)
@@ -125,7 +131,7 @@ func Init(cfg config.Config) (*mux.Router, error) {
 
 	authRouter := router.PathPrefix("").Subrouter()
 
-	dbPool, err := connector.GetPostgresConnector(cfg.GetConnectURL())
+	dbPool, err := connector.GetPostgresConnector(cfg.GetConnectURL(), int32(cfg.GetPGMaxConns()))
 	if err != nil {
 		zap.L().Error("Failed to connect to Postgres", zap.Error(err))
 		return nil, errors.Wrap(err, "failed to connect to Postgres")
@@ -158,15 +164,26 @@ func Init(cfg config.Config) (*mux.Router, error) {
 	if err != nil {
 		return nil, handleRepoError(err, "unable to create seller repository")
 	}
+	historyRepo, err := postgres.NewHistoryRepository(dbPool, ctx, cfg.PGTimeout)
+	if err != nil {
+		return nil, handleRepoError(err, "unable to create history repository")
+	}
 	csrfToken, err := utils.NewAesCryptHashToken(zap.L())
 	if err != nil {
 		return nil, handleRepoError(err, "unable to create csrf token")
+	}
+	paymentRepo, err := postgres.NewPaymentRepository(dbPool, ctx, cfg.PGTimeout)
+	if err != nil {
+		return nil, handleRepoError(err, "unable to create payment repository")
+	}
+	promotionRepo, err := postgres.NewPromotionRepository(dbPool, ctx, cfg.PGTimeout)
+	if err != nil {
+		return nil, handleRepoError(err, "unable to create promotion repository")
 	}
 	authGrpcClient, err := auth.NewGrpcClient(config.GetAuthAddress())
 	if err != nil {
 		return nil, handleRepoError(err, "unable to create grpc client")
 	}
-	
 	cartPurchaseClient, err := cart_purchase.NewCartPurchaseClient(config.GetCartPurchaseAddress())
 	if err != nil {
 		return nil, handleRepoError(err, "unable to create cart purchase client")
@@ -176,10 +193,12 @@ func Init(cfg config.Config) (*mux.Router, error) {
 		return nil, handleRepoError(err, "unable to create static client")
 	}
 
-	advertsUseCase := service.NewAdvertService(advertsRepo, sellerRepo, userRepo)
+	advertsUseCase := service.NewAdvertService(advertsRepo, sellerRepo, userRepo, historyRepo)
+	paymentUC := service.NewPaymentService(cfg.PaymentShopID, cfg.PaymentSecret, paymentRepo, advertsRepo, promotionRepo)
 	categoryUseCase := service.NewCategoryService(categoryRepo)
 	userUC := service.NewUserService(userRepo, sellerRepo)
 	sessionUC := service.NewAuthService(sessionRepo)
+	promotionUC := service.NewPromotionService(promotionRepo)
 	sessionManager := utils.NewSessionManager(authGrpcClient, int(cfg.Session.ExpirationTime.Seconds()), cfg.Session.SecureCookie, logger)
 	router.Use(middleware.NewAuthMiddleware(sessionManager).AuthMiddleware)
 
@@ -191,7 +210,9 @@ func Init(cfg config.Config) (*mux.Router, error) {
 	cartHandler := http3.NewCartEndpoint(cartPurchaseClient)
 	categoryHandler := http3.NewCategoryEndpoint(categoryUseCase)
 	staticHandler := http3.NewStaticEndpoint(*staticClient)
-
+	historyHandler := http3.NewHistoryEndpoint(historyRepo)
+	paymentHandler := http3.NewPaymentEndpoint(paymentUC, sessionManager)
+	promotionHandler := http3.NewPromotionEndpoint(promotionUC)
 	csrfEndpoints := http3.NewCSRFEndpoint(csrfToken, sessionManager)
 	csrfEndpoints.Configure(router)
 	userHandler.ConfigureUnprotectedRoutes(router)
@@ -201,14 +222,19 @@ func Init(cfg config.Config) (*mux.Router, error) {
 
 	advertsHandler.ConfigureProtectedRoutes(authRouter)
 	categoryHandler.ConfigureRoutes(authRouter)
+	paymentHandler.ConfigureProtectedRoutes(authRouter)
+	promotionHandler.ConfigureRoutes(authRouter)
 	authHandler.Configure(authRouter)
 	userHandler.ConfigureProtectedRoutes(authRouter)
 	sellerHandler.Configure(authRouter)
 	cartHandler.Configure(authRouter)
 	purchaseHandler.ConfigureRoutes(authRouter)
 	staticHandler.ConfigureRoutes(router)
+	historyHandler.ConfigureRoutes(authRouter)
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	router.PathPrefix("/api/v1/metrics").Handler(promhttp.Handler())
+
+	go paymentUC.PaymentProcessor(ctx)
 
 	return router, nil
 }

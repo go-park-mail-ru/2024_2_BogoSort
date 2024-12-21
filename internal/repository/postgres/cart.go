@@ -24,7 +24,8 @@ var (
 		DELETE FROM cart_advert WHERE cart_id = $1 AND advert_id = $2
 	`
 	queryGetAdvertsByCartID = `
-		SELECT a.id, a.title, a.description, a.price, a.location, a.has_delivery, a.status
+		SELECT a.id, a.title, a.description, a.price, a.location, 
+			   a.has_delivery, a.status, a.seller_id, a.category_id, a.image_id
 		FROM cart_advert ca
 		JOIN advert a ON ca.advert_id = a.id
 		WHERE ca.cart_id = $1
@@ -137,17 +138,17 @@ func (c *CartDB) GetAdvertsByCartId(cartID uuid.UUID) ([]entity.Advert, error) {
 	}
 	defer rows.Close()
 
-	var Adverts []entity.Advert
+	var adverts []entity.Advert
 	for rows.Next() {
-		var Advert entity.Advert
-		if err := rows.Scan(&Advert.ID, &Advert.Title, &Advert.Description, &Advert.Price, &Advert.Location, &Advert.HasDelivery, &Advert.Status); err != nil {
+		var advert entity.Advert
+		if err := rows.Scan(&advert.ID, &advert.Title, &advert.Description, &advert.Price, &advert.Location, &advert.HasDelivery, &advert.Status, &advert.SellerId, &advert.CategoryId, &advert.ImageId); err != nil {
 			logger.Error("error scanning adverts", zap.String("cart_id", cartID.String()), zap.Error(err))
 			return nil, entity.PSQLWrap(errors.New("error scanning adverts"), err)
 		}
-		Adverts = append(Adverts, Advert)
+		adverts = append(adverts, advert)
 	}
 
-	return Adverts, nil
+	return adverts, nil
 }
 
 func (c *CartDB) UpdateStatus(tx pgx.Tx, cartID uuid.UUID, status entity.CartStatus) error {
@@ -180,5 +181,24 @@ func (c *CartDB) GetById(cartID uuid.UUID) (entity.Cart, error) {
 		logger.Error("error getting cart by id", zap.String("cart_id", cartID.String()), zap.Error(err))
 		return entity.Cart{}, entity.PSQLWrap(errors.New("error getting cart by id"), err)
 	}
+
+	adverts, err := c.GetAdvertsByCartId(cartID)
+	if err != nil && !errors.Is(err, repository.ErrCartNotFound) {
+		return entity.Cart{}, err
+	}
+
+	advertsBySeller := make(map[uuid.UUID][]entity.Advert)
+	for _, advert := range adverts {
+		advertsBySeller[advert.SellerId] = append(advertsBySeller[advert.SellerId], advert)
+	}
+
+	cart.CartPurchases = make([]entity.CartPurchase, 0, len(advertsBySeller))
+	for sellerID, sellerAdverts := range advertsBySeller {
+		cart.CartPurchases = append(cart.CartPurchases, entity.CartPurchase{
+			SellerID: sellerID,
+			Adverts:  sellerAdverts,
+		})
+	}
+
 	return cart, nil
 }

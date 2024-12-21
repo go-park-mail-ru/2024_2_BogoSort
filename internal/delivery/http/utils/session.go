@@ -10,9 +10,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var (
-	ErrSessionExpired = errors.New("session has expired")
-)
+var ErrSessionExpired = errors.New("session has expired")
 
 type SessionManager struct {
 	GrpcClient       *auth.GrpcClient
@@ -58,7 +56,9 @@ func (s *SessionManager) GetUserID(r *http.Request) (uuid.UUID, error) {
 	userID, err := s.GrpcClient.GetUserIDBySession(cookie.Value)
 	if err != nil {
 		s.Logger.Error("session expired or not found", zap.String("sessionID", cookie.Value))
-		s.DeleteSession(cookie.Value)
+		if err := s.DeleteSession(cookie.Value); err != nil {
+			s.Logger.Error("failed to delete session", zap.String("sessionID", cookie.Value), zap.Error(err))
+		}
 		return uuid.Nil, ErrSessionExpired
 	}
 

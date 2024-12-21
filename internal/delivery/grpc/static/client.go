@@ -29,6 +29,7 @@ type StaticGrpcClient struct {
 }
 
 func NewStaticGrpcClient(connectAddr string, timeout time.Duration) (*StaticGrpcClient, error) {
+	//nolint:staticcheck // Suppressing deprecation warning for grpc.Dial
 	grpcConn, err := grpc.Dial(
 		connectAddr,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
@@ -189,26 +190,4 @@ func removeMetadata(imgData []byte) ([]byte, error) {
 
 	zap.L().Info("Метаданные успешно удалены")
 	return buf.Bytes(), nil
-}
-
-func isAnimatedWebP(data []byte) (bool, error) {
-	const (
-		webpHeader = "RIFF"
-		webpType   = "WEBP"
-		animChunk  = "ANIM"
-	)
-
-	if len(data) < 12 {
-		return false, errors.New("data too short to be a valid WebP")
-	}
-
-	if string(data[:4]) != webpHeader || string(data[8:12]) != webpType {
-		return false, errors.New("not a WebP file")
-	}
-
-	if bytes.Contains(data, []byte(animChunk)) {
-		return true, nil
-	}
-
-	return false, nil
 }
