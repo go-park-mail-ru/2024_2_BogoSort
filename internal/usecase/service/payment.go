@@ -126,7 +126,7 @@ func (s *PaymentService) PaymentProcessor(ctx context.Context) {
 
 const (
 	promotionAmount = "50.00"
-	returnURL       = "http://emporium-bs.ru"
+	returnURL       = "https://bs-emporium.ru/"
 )
 
 type PaymentRequest struct {
