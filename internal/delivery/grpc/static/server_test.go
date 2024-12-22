@@ -7,9 +7,9 @@ import (
 	"io"
 	"testing"
 
-	"google.golang.org/grpc/metadata"
-	"github.com/google/uuid"
 	staticProto "github.com/go-park-mail-ru/2024_2_BogoSort/internal/delivery/grpc/static/proto"
+	"github.com/google/uuid"
+	"google.golang.org/grpc/metadata"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

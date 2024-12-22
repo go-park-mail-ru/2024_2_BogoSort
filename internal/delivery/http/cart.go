@@ -34,15 +34,16 @@ func (h *CartEndpoint) Configure(router *mux.Router) {
 	router.HandleFunc("/api/v1/cart/exists/{user_id}", h.CheckExists).Methods(http.MethodGet)
 }
 
-// GetByID Retrieves the cart by its ID
-// @Summary Retrieve cart by ID
-// @Description Retrieves detailed information about a cart using its unique identifier
+// GetByID godoc
+// @Summary Get cart by ID
+// @Description Retrieves a cart by its unique identifier
 // @Tags Cart
 // @Accept json
 // @Produce json
-// @Param cart_id path string true "Cart ID"
-// @Success 200 {object} dto.CartResponse "Successfully retrieved cart"
-// @Failure 400 {object} utils.ErrResponse "Invalid cart ID format"
+// @Param cart_id path string true "Cart ID (UUID format)"
+// @Success 200 {object} dto.CartResponse "Cart details successfully retrieved"
+// @Failure 400 {object} utils.ErrResponse "Invalid cart ID format or missing cart_id"
+// @Failure 404 {object} utils.ErrResponse "Cart not found"
 // @Failure 500 {object} utils.ErrResponse "Internal server error"
 // @Router /api/v1/cart/{cart_id} [get]
 func (h *CartEndpoint) GetByID(w http.ResponseWriter, r *http.Request) {
@@ -80,17 +81,18 @@ func (h *CartEndpoint) GetByID(w http.ResponseWriter, r *http.Request) {
 	utils.SendJSONResponse(w, http.StatusOK, cart)
 }
 
-// GetByUserID Retrieves the cart by the user's ID
-// @Summary Retrieve cart by User ID
-// @Description Retrieves detailed information about a cart associated with a specific user
+// GetByUserID godoc
+// @Summary Get cart by user ID
+// @Description Retrieves a cart associated with a specific user
 // @Tags Cart
 // @Accept json
 // @Produce json
-// @Param user_id path string true "User ID"
-// @Success 200 {object} dto.CartResponse "Successfully retrieved cart"
-// @Failure 400 {object} utils.ErrResponse "Invalid user ID format"
+// @Param user_id path string true "User ID (UUID format)"
+// @Success 200 {object} dto.CartResponse "Cart details successfully retrieved"
+// @Failure 400 {object} utils.ErrResponse "Invalid user ID format or missing user_id"
+// @Failure 404 {object} utils.ErrResponse "Cart not found for user"
 // @Failure 500 {object} utils.ErrResponse "Internal server error"
-// @Router /cart/user/{user_id} [get]
+// @Router /api/v1/cart/user/{user_id} [get]
 func (h *CartEndpoint) GetByUserID(w http.ResponseWriter, r *http.Request) {
 	logger := middleware.GetLogger(r.Context())
 	logger.Info("get cart by user id request")
@@ -125,15 +127,16 @@ func (h *CartEndpoint) GetByUserID(w http.ResponseWriter, r *http.Request) {
 	utils.SendJSONResponse(w, http.StatusOK, cart)
 }
 
-// AddToCart Adds an advert to the user's cart
-// @Summary Add advert to user's cart
-// @Description Adds a new advert to the cart associated with a user
+// AddToCart godoc
+// @Summary Add item to cart
+// @Description Adds an advertisement to a user's cart
 // @Tags Cart
 // @Accept json
 // @Produce json
-// @Param purchase body dto.AddAdvertToUserCartRequest true "Data to add advert to cart"
-// @Success 200 {object} map[string]string "Successfully added advert"
-// @Failure 400 {object} utils.ErrResponse "Invalid request data"
+// @Param request body dto.AddAdvertToUserCartRequest true "Add to cart request containing user_id and advert_id"
+// @Success 200 {object} map[string]string "Successfully added item to cart"
+// @Failure 400 {object} utils.ErrResponse "Invalid request body"
+// @Failure 404 {object} utils.ErrResponse "Cart not found"
 // @Failure 500 {object} utils.ErrResponse "Internal server error"
 // @Router /api/v1/cart/add [post]
 func (h *CartEndpoint) AddToCart(w http.ResponseWriter, r *http.Request) {
@@ -161,16 +164,16 @@ func (h *CartEndpoint) AddToCart(w http.ResponseWriter, r *http.Request) {
 	utils.SendJSONResponse(w, http.StatusOK, map[string]string{"message": "advert added to user cart"})
 }
 
-// DeleteFromCart Deletes an advert from the user's cart
-// @Summary Delete advert from user's cart
-// @Description Deletes an advert from the cart associated with a user
+// DeleteFromCart godoc
+// @Summary Remove item from cart
+// @Description Removes an advertisement from a user's cart
 // @Tags Cart
 // @Accept json
 // @Produce json
-// @Param purchase body dto.DeleteAdvertFromUserCartRequest true "Data to delete advert from cart"
-// @Success 200 {object} map[string]string "Successfully deleted advert from user cart"
-// @Failure 400 {object} utils.ErrResponse "Invalid request data"
-// @Failure 404 {object} utils.ErrResponse "Cart or advert not found"
+// @Param request body dto.DeleteAdvertFromUserCartRequest true "Delete from cart request containing cart_id and advert_id"
+// @Success 200 {object} map[string]string "Successfully removed item from cart"
+// @Failure 400 {object} utils.ErrResponse "Invalid request body"
+// @Failure 404 {object} utils.ErrResponse "Cart or item not found"
 // @Failure 500 {object} utils.ErrResponse "Internal server error"
 // @Router /api/v1/cart/delete [delete]
 func (h *CartEndpoint) DeleteFromCart(w http.ResponseWriter, r *http.Request) {
@@ -196,15 +199,15 @@ func (h *CartEndpoint) DeleteFromCart(w http.ResponseWriter, r *http.Request) {
 	utils.SendJSONResponse(w, http.StatusOK, map[string]string{"message": "advert deleted from user cart"})
 }
 
-// CheckExists Checks if a cart exists for a user
-// @Summary Check if cart exists for user
-// @Description Checks if a cart exists for a user by their ID
+// CheckExists godoc
+// @Summary Check cart existence
+// @Description Checks if a cart exists for a specific user
 // @Tags Cart
 // @Accept json
 // @Produce json
-// @Param user_id path string true "User ID"
-// @Success 200 {object} map[string]bool "Cart existence check result"
-// @Failure 400 {object} utils.ErrResponse "Invalid user ID format"
+// @Param user_id path string true "User ID (UUID format)"
+// @Success 200 {object} map[string]string "Cart existence status with cart_id if exists"
+// @Failure 400 {object} utils.ErrResponse "Invalid user ID format or missing user_id"
 // @Failure 500 {object} utils.ErrResponse "Internal server error"
 // @Router /api/v1/cart/exists/{user_id} [get]
 func (h *CartEndpoint) CheckExists(w http.ResponseWriter, r *http.Request) {

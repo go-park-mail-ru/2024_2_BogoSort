@@ -1,0 +1,8 @@
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE TABLE IF NOT EXISTS price_history (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4() NOT NULL,
+    advert_id UUID NOT NULL REFERENCES advert(id) ON DELETE CASCADE,
+    old_price INTEGER NOT NULL,
+    new_price INTEGER NOT NULL,
+    changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

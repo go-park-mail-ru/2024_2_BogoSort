@@ -31,7 +31,7 @@ package http
 // 	router := mux.NewRouter()
 // 	advertUC := new(MockAdvertUseCase)
 // 	sessionManager := utils.NewSessionManager(nil, 0, false, zap.NewNop())
-// 	policy := bluemonday.UGCPolicy() 
+// 	policy := bluemonday.UGCPolicy()
 // 	staticGrpcClient := static.NewStaticGrpcClient(nil)
 // 	advertEndpoint := NewAdvertEndpoint(advertUC, staticGrpcClient, sessionManager, policy)
 // 	advertEndpoint.ConfigureRoutes(router)

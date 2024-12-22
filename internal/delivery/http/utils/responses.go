@@ -13,7 +13,6 @@ type ErrResponse struct {
 func SendErrorResponse(w http.ResponseWriter, code int, status string) {
 	w.WriteHeader(code)
 	err := json.NewEncoder(w).Encode(ErrResponse{Code: code, Status: status})
-
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		errResponse := ErrResponse{
@@ -21,14 +20,15 @@ func SendErrorResponse(w http.ResponseWriter, code int, status string) {
 			Status: "Failed to encode response",
 		}
 		errJSON, _ := json.Marshal(errResponse)
-		w.Write(errJSON)
+		if _, err := w.Write(errJSON); err != nil {
+			SendErrorResponse(w, http.StatusInternalServerError, "Failed to encode response")
+		}
 	}
 }
 
 func SendJSONResponse(w http.ResponseWriter, code int, payload interface{}) {
 	w.WriteHeader(code)
 	err := json.NewEncoder(w).Encode(payload)
-
 	if err != nil {
 		SendErrorResponse(w, http.StatusInternalServerError, "Failed to encode response")
 	}

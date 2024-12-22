@@ -8,16 +8,24 @@ services:
     ports:
       - "5432:5432"
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=emporiumdb
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - SERVICE_USER=${SERVICE_USER}
+      - SERVICE_PASSWORD=${SERVICE_PASSWORD}
+      - POSTGRES_SSL=on
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./db/config/postgres_custom.conf:/etc/postgresql/postgresql.conf
+      - ./db/config/pg_hba.conf:/etc/postgresql/pg_hba.conf
+      - ./db/config/scripts/00_init_postgres_db.sh:/docker-entrypoint-initdb.d/00_init_postgres_db.sh
+    entrypoint: ["/bin/sh", "-c", "chmod +x /docker-entrypoint-initdb.d/00_init_postgres_db.sh && /docker-entrypoint-initdb.d/00_init_postgres_db.sh"]
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "postgres"]
-      interval: 10s
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 10s
     networks:
       - app-network
 
@@ -25,7 +33,7 @@ services:
     image: redis:6
     restart: always
     ports:
-      - "6379:6379"
+      - "6381:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -39,16 +47,16 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    entrypoint: [
-      "migrate",
-      "-path=/db/migrations",
-      "-database=postgres://postgres:postgres@postgres:5432/emporiumdb?sslmode=disable",
+    command: [
+      "-path", "/db/migrations",
+      "-database", "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable",
       "up"
     ]
     volumes:
       - ./db/migrations:/db/migrations
     networks:
       - app-network
+    restart: on-failure:3
 
   # ----------------------------------------------
   # Сервисы
@@ -71,6 +79,7 @@ services:
     volumes:
       - ./config/config.yaml:/config/config.yaml
       - ./static_files:/app/static_files/
+      - pgdata:/etc/postgresql/certs:ro
     healthcheck:
       test: ["CMD", "grpc_health_probe", "-addr=:50051"]
       interval: 30s
@@ -97,6 +106,7 @@ services:
     volumes:
       - ./config/config.yaml:/config/config.yaml
       - ./static_files:/app/static_files/
+      - pgdata:/etc/postgresql/certs:ro
     healthcheck:
       test: ["CMD", "grpc_health_probe", "-addr=:50053"]
       interval: 30s
@@ -123,6 +133,7 @@ services:
     volumes:
       - ./config/config.yaml:/config/config.yaml
       - ./static_files:/app/static_files/
+      - pgdata:/etc/postgresql/certs:ro
     healthcheck:
       test: ["CMD", "grpc_health_probe", "-addr=:50052"]
       interval: 30s
@@ -139,7 +150,9 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/emporiumdb
+      - DATABASE_URL=${DATABASE_URL}
+      - PAYMENT_SHOP_ID=${PAYMENT_SHOP_ID}
+      - PAYMENT_SECRET=${PAYMENT_SECRET}
     depends_on:
       - postgres
       - redis
@@ -150,6 +163,7 @@ services:
     volumes:
       - ./config/config.yaml:/config/config.yaml
       - ./static_files:/app/static_files/
+      - pgdata:/etc/postgresql/certs:ro
     networks:
       - app-network
 
@@ -213,8 +227,8 @@ services:
       - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
       - ./grafana/dashboards:/var/lib/grafana/dashboards
     environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
     depends_on:
       - prometheus
     networks:

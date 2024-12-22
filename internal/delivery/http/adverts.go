@@ -50,7 +50,8 @@ type AdvertEndpoint struct {
 func NewAdvertEndpoint(advertUC usecase.AdvertUseCase,
 	staticGrpcClient static.StaticGrpcClient,
 	sessionManager *utils.SessionManager,
-	policy *bluemonday.Policy) *AdvertEndpoint {
+	policy *bluemonday.Policy,
+) *AdvertEndpoint {
 	return &AdvertEndpoint{
 		advertUC:         advertUC,
 		staticGrpcClient: staticGrpcClient,

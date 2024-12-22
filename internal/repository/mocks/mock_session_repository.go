@@ -38,6 +38,7 @@ func (m *MockSession) Delete(sessionID string) error {
 	ret0, _ := ret[0].(error)
 	return ret0
 }
+
 func (mr *MockSessionMockRecorder) Delete(sessionID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockSession)(nil).Delete), sessionID)

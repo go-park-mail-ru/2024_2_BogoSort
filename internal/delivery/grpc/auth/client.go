@@ -14,6 +14,7 @@ type GrpcClient struct {
 }
 
 func NewGrpcClient(addr string) (*GrpcClient, error) {
+	//nolint:staticcheck // Suppressing deprecation warning for grpc.Dial
 	conn, err := grpc.Dial(
 		addr,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
