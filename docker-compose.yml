@@ -81,7 +81,7 @@ services:
       - ./static_files:/app/static_files/
       - pgdata:/etc/postgresql/certs:ro
     healthcheck:
-      test: ["CMD", "grpc_health_probe", "-addr=:50051"]
+      test: ["CMD", "grpc_health_probe", "-addr=auth:50051"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -108,7 +108,7 @@ services:
       - ./static_files:/app/static_files/
       - pgdata:/etc/postgresql/certs:ro
     healthcheck:
-      test: ["CMD", "grpc_health_probe", "-addr=:50053"]
+      test: ["CMD", "grpc_health_probe", "-addr=static:50053"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -135,7 +135,7 @@ services:
       - ./static_files:/app/static_files/
       - pgdata:/etc/postgresql/certs:ro
     healthcheck:
-      test: ["CMD", "grpc_health_probe", "-addr=:50052"]
+      test: ["CMD", "grpc_health_probe", "-addr=cart_purchase:50052"]
       interval: 30s
       timeout: 10s
       retries: 3
