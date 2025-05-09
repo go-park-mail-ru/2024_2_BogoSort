@@ -1,0 +1,4 @@
+POST http://localhost:8080/api/adverts
+Content-Type: application/json
+
+{"title":"Объявление","description":"Описание","price":100,"location":"Москва","status":"active"}

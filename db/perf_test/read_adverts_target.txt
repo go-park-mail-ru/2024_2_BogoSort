@@ -1,0 +1,2 @@
+```shell:perf_test/read_adverts_target.txt
+GET http://localhost:8080/api/adverts/{id}
